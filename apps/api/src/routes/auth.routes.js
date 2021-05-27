@@ -1,0 +1,36 @@
+const { Router } = require('express');
+const router = new Router();
+
+const permissionValidator = require('./../middlewares/permissionVerification.middleware');
+const requestValidator = require('../middlewares/requestValidator.middleware');
+
+const controller = require('./../controllers/auth.controller');
+const validator = require('./../validators/auth.validator');
+
+router.post('/register', requestValidator(validator.registerPayload), controller.register);
+
+router.get('/verify-email', requestValidator(validator.verifyEmail), controller.verifyEmail);
+
+router.post('/login', requestValidator(validator.login), controller.login);
+router.get('/me', permissionValidator(), controller.me);
+router.put('/me', permissionValidator(), requestValidator(validator.updateProfile), controller.updateProfile);
+
+router.delete('/me', permissionValidator(), requestValidator(validator.deleteAccount), controller.deleteAccount);
+
+router.put('/password', permissionValidator(), requestValidator(validator.updatePassword), controller.updatePassword);
+
+router.post('/forgotPassword', requestValidator(validator.forgotPassword), controller.forgotPassword);
+
+router.post('/resetPassword', requestValidator(validator.resetPassword), controller.resetPassword);
+
+router.get('/logout', permissionValidator(), controller.logout);
+
+router.post('/resendVerifyEmail', requestValidator(validator.resendVerificationEmail), controller.resendVerificationEmail);
+
+router.get('/recoverAccount', permissionValidator(), controller.recoverAccount);
+
+router.put('/avatar', permissionValidator(), controller.updateAvatar);
+
+router.put('/fcmtoken', permissionValidator(), requestValidator(validator.updateFcmToken), controller.updateFcmToken);
+
+module.exports = router;

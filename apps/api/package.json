@@ -1,0 +1,45 @@
+{
+  "name": "nodejs-express-boilerplate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "cp modified/sqlite.js node_modules/better-queue-sql/sqlite.js",
+    "start": "node .",
+    "start:stag": "npm run build:stag && npm run stop:stag && docker-compose -f docker-compose-stag.yml up -d && docker ps -a && npm run prune",
+    "build:stag": "sudo chown -R $(whoami):$(id -gn) data/ && docker-compose -f docker-compose-stag.yml build",
+    "stop:stag": "docker-compose -f docker-compose-stag.yml down",
+    "prune": "docker system prune --volumes -f"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@sendgrid/mail": "^6.5.4",
+    "better-queue": "^3.8.10",
+    "better-queue-sql": "^1.0.3",
+    "body-parser": "^1.19.0",
+    "compression": "^1.7.4",
+    "config": "^3.3.0",
+    "cors": "^2.8.5",
+    "cron": "^1.8.2",
+    "ejs": "^3.0.1",
+    "express": "^4.17.1",
+    "fcm-node": "^1.5.2",
+    "i18n": "^0.8.6",
+    "joi": "^14.3.1",
+    "lodash": "^4.17.15",
+    "mkdirp": "^1.0.3",
+    "moment": "^2.24.0",
+    "mongoose": "^5.9.5",
+    "morgan": "^1.9.1",
+    "multer": "^1.4.2",
+    "random-base64-string": "^1.0.1",
+    "rmdir-recursive": "0.0.1",
+    "sqlite3": "^4.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "prettier": "^1.19.1"
+  }
+}
