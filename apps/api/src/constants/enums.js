@@ -44,4 +44,27 @@ module.exports = {
     DELIVERED: 'DELIVERED',
     FAILED: 'FAILED',
   },
+  PAYMENT_STAGES: {
+    CREATED: 'created',
+    AUTHORIZED: 'authorized',
+    CAPTURED: 'captured',
+    REFUNDED: 'refunded',
+    FAILED: 'failed',
+  },
+  ORDER_STAGES: {
+    CREATED: 'created',
+    ATTEMPTED: 'attempted',
+    PAID: 'paid'
+  },
+  SUBSCRIPTION_STATUSES: {
+    CREATED: 'created',
+    AUTHENTICATED: 'authenticated',
+    ACTIVE: 'active',
+    PENDING: 'pending',
+    HALTED: 'halted',
+    CANCELLED: 'cancelled',
+    COMPLETED: 'completed',
+    EXPIRED: 'expired',
+  },
+
 };

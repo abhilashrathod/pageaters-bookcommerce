@@ -56,6 +56,8 @@ const schema = new Schema(
       activities: { type: Boolean, default: true },
     },
 
+    razorPayCustId: { type: 'String', default: '' }, // cust_1Aa00000000004
+
     __v: { type: Number, select: false },
   },
   {
