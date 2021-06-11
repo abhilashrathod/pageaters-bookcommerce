@@ -1,0 +1,18 @@
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+  <div class="position-sticky pt-3">
+    <div class="position-sticky pt-3">
+      <mat-list>
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link active" *ngFor="let menuItem of menuItems" [routerLink]="menuItem.path">
+              <mat-list-item>
+                <mat-icon mat-list-icon>{{menuItem.icon}}</mat-icon>
+                <div mat-line>{{menuItem.title}}</div>
+              </mat-list-item>
+            </a>
+          </li>
+        </ul>
+      </mat-list>
+    </div>
+  </div>
+</nav>
