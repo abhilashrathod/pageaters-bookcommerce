@@ -49,7 +49,7 @@ module.exports.logout = async (req, res) => {
 
 module.exports.register = async (req, res) => {
   try {
-    let { email, password, name, telephone, role } = req.allParams();
+    let { email, password, firstName, lastName } = req.allParams();
 
     const isEmailAvailable = await User.isEmailAvailable(email);
 
@@ -57,25 +57,57 @@ module.exports.register = async (req, res) => {
       return res.error('EMAIL_UNAVAILABLE');
     }
 
-    const user = await User.create({ role, email, name, telephone });
+    const user = await User.create({ email, firstName, lastName });
 
     await user.setPassword(password);
 
-    const token = await user.generateVerifyEmailToken();
+    // const token = await user.generateVerifyEmailToken();
 
-    sendMailQueue.add({
-      emailModule: 'REGISTRATION',
-      to: user.email,
-      data: {
-        LINK: `${HOST}/auth/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`,
-      },
-    });
+    const token = user.generateAuthToken(user._id, user.email, user.role);
 
-    return res.ok('REGISTRATION_SUCCESS');
+    const profile = await User.getProfile(user._id); // TODO: Improvement could be made
+
+    // TODO: Uncomment later when Sendgrid replies
+    // sendMailQueue.add({
+    //   emailModule: 'REGISTRATION',
+    //   to: user.email,
+    //   data: {
+    //    NAME: `${firstName} ${lastName}`
+    //   },
+    // });
+
+    return res.ok({message: 'REGISTRATION_SUCCESS', data: { profile, token }});
   } catch (e) {
     return res.internalServerError(e);
   }
 };
+
+module.exports.adminRegister = async (req, res) => {
+  try {
+    let { email, password, firstName, lastName, role } = req.allParams();
+
+    const isEmailAvailable = await User.isEmailAvailable(email);
+
+    if (!isEmailAvailable) {
+      return res.error('EMAIL_UNAVAILABLE');
+    }
+
+    const user = await User.create({ email, firstName, lastName, role });
+
+    await user.setPassword(password);
+
+    // const token = await user.generateVerifyEmailToken();
+
+    const token = user.generateAuthToken(user._id, user.email, user.role);
+
+    const profile = await User.getProfile(user._id); // TODO: Improvement could be made
+
+    return res.ok({message: 'REGISTRATION_SUCCESS', data: { profile, token }});
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
 
 module.exports.me = async (req, res) => {
   try {

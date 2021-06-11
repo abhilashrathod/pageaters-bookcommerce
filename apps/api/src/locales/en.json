@@ -68,5 +68,13 @@
 	"EMAIL_VERIFIED": "Email successfully verified. You can now log in.",
 	"INVALID_TOKEN": "Invalid Token",
 	"PASSWORDS_DO_NOT_MATCH": "Passwords do not match",
-	"FILE_UPLOADED": "FILE_UPLOADED"
+	"FILE_UPLOADED": "FILE_UPLOADED",
+	"BOOK_LIST_SUCCESS": "All book info listed",
+
+	"BOOK_CREATE_SUCCESS": "New Book Added to the Inventory",
+	"AUTHOR_LIST_SUCCESS": "Author list success",
+	"AUTHOR_CREATE_SUCCESS": "New Author Created",
+
+	"CATEGORY_LIST_SUCCESS": "Category listed",
+	"CATEGORY_CREATE_SUCCESS": "New Category Created"
 }

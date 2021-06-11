@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { v4 } = require('uuid');
 
 const algorithm = 'aes-256-cbc';
 const { ENCRYPTION_KEY } = require('./../appConfig');
@@ -17,6 +18,10 @@ module.exports.hashString = (value, salt) => {
 
   return hashString;
 };
+
+module.exports.secureRandom = (length = 32) => `${crypto.randomBytes(length).toString('hex')}-${process.pid}-${v4()}`;
+
+module.exports.randomHex = (length = 32) => crypto.randomBytes(length).toString('hex');
 
 module.exports.encrypt = text => {
   const iv = crypto.randomBytes(16);

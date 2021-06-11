@@ -28,17 +28,19 @@ async function logRequest(req, message = '', resPayload = '') {
     ),
   );
 
-  await ApiLogs.findOneAndUpdate(
-    { hostname, ip, method, originalUrl, message },
-    { hostname, ip, method, originalUrl, headers, user, params: req.allParams(), message },
-    { upsert: true },
-  );
+  if (method === 'POST' || method === 'DELETE' || method === 'PUT') {
+    await ApiLogs.findOneAndUpdate(
+      { hostname, ip, method, originalUrl, message },
+      { hostname, ip, method, originalUrl, headers, user, params: req.allParams(), message },
+      { upsert: true },
+    );
+  }
 }
 
 module.exports = (req, res, next) => {
   req.allParams = () => _.merge(req.params, req.query, req.body);
 
-  res.set('x-application-identifier', `boilerplate-${ENVIRONMENT}`);
+  res.set('x-application-identifier', `PAGEATERS-${ENVIRONMENT}`);
 
   res.ok = (resPayload = {}) => {
     if (typeof resPayload === 'string') {

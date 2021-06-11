@@ -4,7 +4,7 @@ const { models } = require('./../src/constants');
 
 require('../src/models');
 
-const modelsToLoad = [{ name: models.API_CLIENT, forceUpdate: false }];
+const modelsToLoad = [];
 
 /**
  * Load Seed data to get started with some basic stuff.

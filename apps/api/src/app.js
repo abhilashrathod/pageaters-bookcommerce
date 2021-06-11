@@ -35,7 +35,6 @@ this.app.use(i18n.init);
 
 // extend req and res
 this.app.use(require('./middlewares/extendReq.middleware'));
-this.app.use(require('./middlewares/perfApi.middleware'));
 
 // Disable x-powered-by header
 this.app.disable('x-powered-by');

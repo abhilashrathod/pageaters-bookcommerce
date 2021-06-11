@@ -1,53 +1,67 @@
 const fs = require('fs');
 const { Schema, model } = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const { API_URL } = require('./../appConfig');
 const { hashString, encrypt, generateRandomString, decrypt } = require('./../helpers/encryption.helper');
 
 const { enums, models } = require('./../constants');
 
+// lastViewedAt: { type: String, default: '' },
+
 const schema = new Schema(
   {
     firstName: { type: String, default: '' },
     lastName: { type: String, default: '' },
+
     email: { type: String, default: '' },
+    contactNo: { type: String, default: '' },
+    role: { type: String, enum: Object.values(enums.USER_ROLES), default: enums.USER_ROLES.USER },
+
     salt: { type: String, default: '' },
     password: { type: String, default: '' },
-    status: { type: String, enum: Object.values(enums.USER_STATUS), default: enums.USER_STATUS.PENDING_REGISTRATION },
-    role: { type: String, enum: Object.values(enums.USER_ROLES), default: enums.USER_ROLES.USER },
+    status: { type: String, enum: Object.values(enums.USER_STATUS), default: enums.USER_STATUS.ACTIVE },
+
     isDeleted: { type: Boolean, default: false },
-    telephone: { type: String, default: '' },
-    avatar: {
-      src: {
-        type: String,
-        default: '',
-        get: function(value) {
-          const relativePath = `./resources/${this._id}/avatar/${value}`;
 
-          if (fs.existsSync(relativePath)) {
-            return `${API_URL}/resources/${this._id}/avatar/${value}`;
-          }
-
-          return '';
-        },
-      },
-      mimeType: { type: String, default: '' },
-    },
-    lastViewedAt: { type: String, default: '' },
-    __v: { type: Number, select: false },
     verifyEmailToken: { type: String, default: '' },
     emailVerified: { type: Boolean, default: false },
+    contactVerified: { type: Boolean, default: false },
+
     forgotPasswordToken: { type: String, default: '' },
     lastPasswordSetAt: { type: String, default: '' },
-    allowAuthTokenGeneratedAfter: { type: String, default: '' },
+
+    lastLoginAt: { type: String, default: '' },
+
+    subscription: {
+      isActive: { type: Boolean, default: false },
+      plan: {type: Schema.Types.ObjectId, ref: models.PLAN},
+    },
+
+    rental: {
+      currentlyRented: {type: Schema.Types.ObjectId, ref: models.BOOK},
+      lastRentDate: { type: String, default: '' },
+    },
+
+    wishlist: [
+      {type: Schema.Types.ObjectId, ref: models.STORE_BOOK}
+    ],
+
+    rewardPoints: {
+      type: String, default: ''
+    },
+
+    notifications: {
+      discounts: { type: Boolean, default: true },
+      activities: { type: Boolean, default: true },
+    },
+
+    __v: { type: Number, select: false },
   },
   {
     timestamps: true,
     toJSON: {
       getters: true,
-      transform: function(doc, ret) {
-        delete ret.id;
-      },
     },
   },
 );
@@ -145,17 +159,16 @@ class User {
     return token;
   }
 
-  generateAuthToken() {
-    const datatToEncrypt = {
-      userId: this._id,
+  generateAuthToken(id, email, role) {
+    const dataToEncrypt = {
+      userId: id,
       createdAt: Date.now(),
+      role,
       motive: 'AUTH',
-      email: this.email,
+      email: email,
     };
 
-    const token = encrypt(JSON.stringify(datatToEncrypt));
-
-    return token;
+    return encrypt(JSON.stringify(dataToEncrypt));
   }
 
   async setPassword(password) {
@@ -170,5 +183,7 @@ class User {
 }
 
 schema.loadClass(User);
+
+schema.plugin(mongoosePaginate);
 
 module.exports = model(models.USER, schema);

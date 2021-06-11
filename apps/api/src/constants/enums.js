@@ -6,7 +6,6 @@ module.exports = {
     IOS: 'IOS',
   },
   USER_STATUS: {
-    PENDING_REGISTRATION: 'PENDING_REGISTRATION',
     ACTIVE: 'ACTIVE',
     INACTIVE: 'INACTIVE',
     BLOCKED: 'BLOCKED',
@@ -20,6 +19,25 @@ module.exports = {
   },
   NOTIFICATION_TYPES: {
     MISCELLANEOUS: 'MISCELLANEOUS',
+  },
+  ADDRESS_TYPES: {
+    HOME: 'home',
+    OFFICE: 'office',
+  },
+  DISCOUNT_TYPES: {
+     CUSTOMER: 'customer',
+     CART: 'cart',
+     RENT: 'rent',
+     PURCHASE: 'purchase',
+     BUNDLE: 'bundle',
+     TRIAL: 'trial',
+     SHIPPING: 'shipping',
+     AFFILIATE: 'affiliate',
+     REFERRAL: 'referral',
+  },
+  BOOK_VERSIONS: {
+    HARDCOVER: 'hardcover',
+    PAPERBACK: 'paperback',
   },
   NOTIFICATION_STATUS: {
     WAITING_FOR_DELIVERY: 'WAITING_FOR_DELIVERY',

@@ -3,6 +3,7 @@ const router = new Router();
 
 const { client } = require('../middlewares/apiClientValidator.middleware');
 const requestValidator = require('./../middlewares/requestValidator.middleware');
+
 const authValidator = require('./../validators/auth.validator');
 const authController = require('./../controllers/auth.controller');
 
@@ -19,5 +20,10 @@ router.get('/verify-email', requestValidator(authValidator.verifyEmail), authCon
 router.use('/public', client, require('./public.routes'));
 router.use('/private', require('./private.routes'));
 router.use('/file', client, require('./file.routes'));
+router.use('/books', require('./book.routes'));
+router.use('/admin', client, require('./admin.routes'));
+router.use('/store-books', require('./storeBooks.routes'));
+router.use('/authors', require('./author.routes'));
+router.use('/categories', require('./category.routes'));
 
 module.exports = router;
