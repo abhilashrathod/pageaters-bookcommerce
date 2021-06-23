@@ -3,6 +3,7 @@ const compression = require('compression');
 const cors = require('cors');
 const path = require('path');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const i18n = require('i18n');
 const morgan = require('morgan');
@@ -24,7 +25,7 @@ if (ENVIRONMENT !== 'test') {
 // body-parser needed to parse form-data bodies
 this.app.use(bodyParser.json({ limit: '100mb' }));
 this.app.use(bodyParser.urlencoded({ extended: true, limit: '100mb', parameterLimit: 100000 }));
-
+this.app.use(cookieParser());
 this.app.set('views', path.join(PROJECT_ROOT, 'src', 'views'));
 this.app.set('view engine', 'ejs');
 

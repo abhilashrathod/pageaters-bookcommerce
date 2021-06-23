@@ -7,8 +7,6 @@ const { hashString, encrypt, generateRandomString, decrypt } = require('./../hel
 
 const { enums, models } = require('./../constants');
 
-// lastViewedAt: { type: String, default: '' },
-
 const schema = new Schema(
   {
     firstName: { type: String, default: '' },
@@ -48,7 +46,7 @@ const schema = new Schema(
     ],
 
     rewardPoints: {
-      type: String, default: ''
+      type: Number, default: 0
     },
 
     notifications: {
@@ -77,7 +75,7 @@ class User {
 
   static async getProfile(userId) {
     const user = await this.findById(userId).select(
-      '-isDeleted -createdAt -updatedAt -salt -password -forgotPasswordToken -verifyEmailToken',
+      '-isDeleted -createdAt -updatedAt -salt -password -forgotPasswordToken -verifyEmailToken -forgotPasswordToken -lastPasswordSetAt -lastLoginAt -notifications -razorPayCustId',
     );
 
     return user;
@@ -128,14 +126,14 @@ class User {
   }
 
   async generateVerifyEmailToken() {
-    const datatToEncrypt = {
+    const dataToEncrypt = {
       userId: this._id,
       createdAt: Date.now(),
       motive: 'VERIFY_EMAIL',
       email: this.email,
     };
 
-    const token = encrypt(JSON.stringify(datatToEncrypt));
+    const token = encrypt(JSON.stringify(dataToEncrypt));
 
     this.verifyEmailToken = token;
     this.lastverifyEmailSentOn = new Date().toISOString();
@@ -145,14 +143,14 @@ class User {
   }
 
   async generateForgotPasswordToken() {
-    const datatToEncrypt = {
+    const dataToEncrypt = {
       userId: user._id,
       createdAt: Date.now(),
       motive: 'FORGOT_PASSWORD',
       email: this.email,
     };
 
-    const token = encrypt(JSON.stringify(datatToEncrypt));
+    const token = encrypt(JSON.stringify(dataToEncrypt));
 
     this.forgotPasswordToken = token;
     this.lastForgotPasswordSentOn = new Date().toISOString();
@@ -167,7 +165,7 @@ class User {
       createdAt: Date.now(),
       role,
       motive: 'AUTH',
-      email: email,
+      email,
     };
 
     return encrypt(JSON.stringify(dataToEncrypt));

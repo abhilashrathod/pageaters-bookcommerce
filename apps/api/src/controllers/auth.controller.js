@@ -3,69 +3,39 @@ const moment = require('moment');
 const path = require('path');
 
 const { HOST, PROJECT_ROOT } = require('./../appConfig');
-const { models } = require('../constants');
+const { models, enums } = require('../constants');
 
-const { encrypt, decrypt } = require('../helpers/encryption.helper');
+const { encrypt, decrypt, generateJwtToken, generateRefreshToken } = require('../helpers/encryption.helper');
 const { writeFile } = require('./../helpers/utils.helper');
 const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const User = mongoose.model(models.USER);
-
-module.exports.login = async (req, res) => {
-  try {
-    const { email, password } = req.allParams();
-
-    let user = await User.findOne({ email, status: 'ACTIVE' });
-
-    if (!user) {
-      return res.error('INVALID_LOGIN_ATTEMPT', 'INVALID_USER');
-    }
-
-    if (!user.isPasswordValid(password)) {
-      return res.error('INVALID_LOGIN_ATTEMPT', 'INVALID_PASSWORD');
-    }
-
-    const token = user.generateAuthToken();
-
-    user = await User.getProfile(user._id);
-
-    if (!user.emailVerified) {
-      return res.ok({ message: 'EMAIL_VERIFICATION_PENDING', data: { user, token } });
-    }
-
-    return res.ok({ message: 'LOGIN_SUCCESS', data: { user, token } });
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-module.exports.logout = async (req, res) => {
-  try {
-    return res.ok('LOGOUT_SUCCESS');
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
+const RefreshTokens = mongoose.model(models.REFRESH_TOKEN);
 
 module.exports.register = async (req, res) => {
   try {
     let { email, password, firstName, lastName } = req.allParams();
+    const ipAddress = req.ip;
 
     const isEmailAvailable = await User.isEmailAvailable(email);
 
     if (!isEmailAvailable) {
-      return res.error('EMAIL_UNAVAILABLE');
+      return res.error('USER_ALREADY_REGISTERED');
     }
 
     const user = await User.create({ email, firstName, lastName });
 
     await user.setPassword(password);
 
-    // const token = await user.generateVerifyEmailToken();
+    user.verifyEmailToken = await user.generateVerifyEmailToken();
 
-    const token = user.generateAuthToken(user._id, user.email, user.role);
+    user.save();
+
+    const jwtToken = generateJwtToken(user);
+    const refreshToken = await generateRefreshToken(user, ipAddress);
 
     const profile = await User.getProfile(user._id); // TODO: Improvement could be made
+
 
     // TODO: Uncomment later when Sendgrid replies
     // sendMailQueue.add({
@@ -76,7 +46,119 @@ module.exports.register = async (req, res) => {
     //   },
     // });
 
-    return res.ok({message: 'REGISTRATION_SUCCESS', data: { profile, token }});
+    // create a refresh token cookie that will also expires in 7 days
+    const cookieOptions = {
+      httpOnly: true,
+      expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
+    };
+    res.cookie('refreshToken', refreshToken.token, cookieOptions);
+
+    return res.ok({ message: 'REGISTRATION_SUCCESS', data: { profile, token: jwtToken } });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.allParams();
+    const ipAddress = req.ip;
+
+    let user = await User.findOne({ email, status: enums.USER_STATUS.ACTIVE });
+
+    if (!user) {
+      return res.error('INVALID_LOGIN_ATTEMPT', 'INVALID_USER');
+    }
+
+    if (!user.isPasswordValid(password)) {
+      return res.error('INVALID_LOGIN_ATTEMPT', 'INVALID_PASSWORD');
+    }
+
+    const jwtToken = generateJwtToken(user);
+    const refreshToken = await generateRefreshToken(user, ipAddress);
+
+    user = await User.getProfile(user._id);
+
+    // create a refresh token cookie that will also expires in 7 days
+    const cookieOptions = {
+      httpOnly: true,
+      expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
+    };
+    res.cookie('refreshToken', refreshToken.token, cookieOptions);
+
+    if (!user.emailVerified) {
+      return res.ok({ message: 'EMAIL_VERIFICATION_PENDING', data: { user, token: jwtToken } });
+    }
+
+    return res.ok({ message: 'LOGIN_SUCCESS', data: { user, token: jwtToken } });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.refreshToken = async (req, res) => {
+  try {
+    const token = req.cookies.refreshToken;
+    const ipAddress = req.ip;
+
+    const refreshToken = await RefreshTokens.findOne({ token });
+
+    if (!refreshToken || !refreshToken.isActive) {
+      return res.unauthorized('INVALID_TOKEN');
+    }
+    const { account } = refreshToken;
+
+    // replace old refresh token with a new one and save
+    const newRefreshToken = await generateRefreshToken(account, ipAddress);
+    refreshToken.revoked = Date.now();
+    refreshToken.revokedByIp = ipAddress;
+    refreshToken.replacedByToken = newRefreshToken.token;
+    await refreshToken.save();
+    await newRefreshToken.save();
+
+    const userRes = User.findOne({_id: account}).select('email role');
+
+    // generate new jwt
+    const dataToEncrypt = {
+      id: account,
+      role: userRes.role,
+      email: userRes.email,
+    };
+    const jwtToken = generateJwtToken(dataToEncrypt);
+
+    // create a refresh token cookie that will also expires in 7 days
+    const cookieOptions = {
+      httpOnly: true,
+      expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
+    };
+    res.cookie('refreshToken', refreshToken.token, cookieOptions);
+
+    return res.ok({ message: 'TOKEN_UPDATED', data: { token: jwtToken } });
+
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.revokeToken = async (req, res) => {
+
+};
+
+module.exports.me = async (req, res) => {
+  try {
+    let { user } = req;
+
+    user = await User.getProfile(user.userId);
+
+    return res.ok({ message: 'ME_SUCCESS', data: user });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.logout = async (req, res) => {
+  try {
+    return res.ok('LOGOUT_SUCCESS');
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -102,20 +184,7 @@ module.exports.adminRegister = async (req, res) => {
 
     const profile = await User.getProfile(user._id); // TODO: Improvement could be made
 
-    return res.ok({message: 'REGISTRATION_SUCCESS', data: { profile, token }});
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-
-module.exports.me = async (req, res) => {
-  try {
-    let { user } = req;
-
-    user = await User.getProfile(user._id);
-
-    return res.ok({ message: 'ME_SUCCESS', data: user });
+    return res.ok({ message: 'REGISTRATION_SUCCESS', data: { profile, token } });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -187,10 +256,10 @@ module.exports.forgotPassword = async (req, res) => {
     const limitExceeded =
       user.lastForgotPasswordSentOn &&
       user.lastForgotPasswordSentOn >=
-        moment()
-          .subtract(30, 'm')
-          .toDate()
-          .toISOString();
+      moment()
+        .subtract(30, 'm')
+        .toDate()
+        .toISOString();
 
     if (limitExceeded) {
       return res.error('FORGOT_PASSWORD_LIMIT_EXCEEDED');
@@ -305,10 +374,10 @@ module.exports.resendVerificationEmail = async (req, res) => {
     const limitExceeded =
       user.lastverifyEmailSentOn &&
       user.lastverifyEmailSentOn >=
-        moment()
-          .subtract(30, 'm')
-          .toDate()
-          .toISOString();
+      moment()
+        .subtract(30, 'm')
+        .toDate()
+        .toISOString();
 
     if (limitExceeded) {
       return res.error('VERIFY_EMAIL_LIMIT_EXCEEDED');

@@ -21,4 +21,6 @@ module.exports = {
   AUTHOR: 'author',
   PLAN: 'plan',
   DISCOUNT: 'discount',
+  REFRESH_TOKEN: 'refresh_token',
+  SUBSCRIBER: 'subscriber',
 };

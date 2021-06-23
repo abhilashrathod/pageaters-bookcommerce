@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "postinstall": "cp modified/sqlite.js node_modules/better-queue-sql/sqlite.js",
     "start": "node .",
     "start:stag": "npm run build:stag && npm run stop:stag && docker-compose -f docker-compose-stag.yml up -d && docker ps -a && npm run prune",
     "build:stag": "sudo chown -R $(whoami):$(id -gn) data/ && docker-compose -f docker-compose-stag.yml build",
@@ -16,6 +15,10 @@
   "license": "ISC",
   "dependencies": {
     "@sendgrid/mail": "^6.5.4",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.5",
+    "express-jwt": "^6.0.0",
+    "jsonwebtoken": "^8.5.1",
     "better-queue": "^3.8.10",
     "better-queue-sql": "^1.0.3",
     "body-parser": "^1.19.0",

@@ -113,9 +113,9 @@ module.exports = (req, res, next) => {
     return res.status(401).send({
       statusCode: 401,
       status: 'UNAUTHORIZED',
-      message: res.__('UNAUTHORIZED'),
+      message: res.__(message || 'UNAUTHORIZED'),
       data: {},
-      error: res.__('UNAUTHORIZED'),
+      error: res.__(message || 'UNAUTHORIZED'),
     });
   };
 

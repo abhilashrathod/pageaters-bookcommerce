@@ -62,6 +62,10 @@ module.exports.resendVerificationEmail = Joi.object({
   email,
 });
 
+module.exports.revokeValidation = Joi.object({
+  token: Joi.string().empty('')
+});
+
 module.exports.deleteAccount = Joi.object({
   password: Joi.string()
     .required()

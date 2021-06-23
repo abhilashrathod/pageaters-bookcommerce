@@ -1,6 +1,11 @@
 const { Router } = require('express');
 const router = new Router();
 
+const jwt = require('express-jwt');
+
+const { ENCRYPTION_KEY } = require('./../appConfig');
+const { USER_ROLES } = require('./../constants/enums');
+
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
 const requestValidator = require('../middlewares/requestValidator.middleware');
 
@@ -12,7 +17,11 @@ router.post('/register', requestValidator(validator.registerPayload), controller
 router.get('/verify-email', requestValidator(validator.verifyEmail), controller.verifyEmail);
 
 router.post('/login', requestValidator(validator.login), controller.login);
-router.get('/me', permissionValidator(), controller.me);
+
+router.post('/refresh-token', controller.refreshToken);
+router.post('/revoke-token', permissionValidator(), requestValidator(validator.revokeValidation), controller.revokeToken);
+
+router.get('/me', permissionValidator(USER_ROLES.USER), controller.me);
 router.put('/me', permissionValidator(), requestValidator(validator.updateProfile), controller.updateProfile);
 
 router.delete('/me', permissionValidator(), requestValidator(validator.deleteAccount), controller.deleteAccount);

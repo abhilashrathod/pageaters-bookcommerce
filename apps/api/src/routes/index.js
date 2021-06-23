@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const router = new Router();
 
-const { client } = require('../middlewares/apiClientValidator.middleware');
+// const { client } = require('../middlewares/apiClientValidator.middleware');
 const requestValidator = require('./../middlewares/requestValidator.middleware');
 
 const authValidator = require('./../validators/auth.validator');
@@ -15,15 +15,15 @@ router.get('/', async (req, res) => {
   });
 });
 
-router.use('/auth', client, require('./auth.routes'));
-router.get('/verify-email', requestValidator(authValidator.verifyEmail), authController.verifyEmail);
-router.use('/public', client, require('./public.routes'));
+router.use('/auth', require('./auth.routes'));
+router.use('/public', require('./public.routes'));
 router.use('/private', require('./private.routes'));
-router.use('/file', client, require('./file.routes'));
+router.use('/file', require('./file.routes'));
 router.use('/books', require('./book.routes'));
-router.use('/admin', client, require('./admin.routes'));
+router.use('/admin', require('./admin.routes'));
 router.use('/store-books', require('./storeBooks.routes'));
 router.use('/authors', require('./author.routes'));
 router.use('/categories', require('./category.routes'));
+router.use('/subscribers', require('./subscriber.route'));
 
 module.exports = router;

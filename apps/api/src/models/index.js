@@ -1,4 +1,5 @@
 require('./apiClient.model');
+require('./token.model');
 require('./device.model');
 require('./file.model');
 require('./log_api.model');
@@ -12,3 +13,4 @@ require('./bundle.model');
 require('./store.model');
 require('./author.model');
 require('./categories.model');
+require('./subscribers.model');
