@@ -6,7 +6,10 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const i18n = require('i18n');
+const helmet = require("helmet");
 const morgan = require('morgan');
+const rateLimit = require("express-rate-limit");
+const slowDown = require("express-slow-down");
 
 const { PORT, PROJECT_ROOT, DEFAULT_LANGUAGE, AVAILABLE_LOCALES, PROJECT_NAME, ENVIRONMENT } = require('./appConfig');
 const connectToDb = require('./helpers/connectToDb.helper');
@@ -22,12 +25,25 @@ if (ENVIRONMENT !== 'test') {
   this.app.use(morgan(':method :url :status - :response-time ms'));
 }
 
+// Helmet
+this.app.use(helmet());
+
+// For NGINX
+this.app.set('trust proxy', 1);
+
 // body-parser needed to parse form-data bodies
 this.app.use(bodyParser.json({ limit: '100mb' }));
 this.app.use(bodyParser.urlencoded({ extended: true, limit: '100mb', parameterLimit: 100000 }));
 this.app.use(cookieParser());
 this.app.set('views', path.join(PROJECT_ROOT, 'src', 'views'));
 this.app.set('view engine', 'ejs');
+
+// slow down before threshold
+const speedLimiter = slowDown({
+  windowMs: 60 * 1000, // 1 minute
+  delayAfter: 50,
+  delayMs: 500
+});
 
 // i18n
 i18n.configure({ locales: AVAILABLE_LOCALES, directory: path.join(PROJECT_ROOT, 'src', 'locales'), defaultLocale: DEFAULT_LANGUAGE });
@@ -76,9 +92,16 @@ this.app.use(`/resources`, express.static(path.join(PROJECT_ROOT, 'resources')))
 // multer for file upload
 this.app.use(multer().any());
 
+// rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute will have "max" 75 API request
+  max: 75,
+  message: "Too many accounts created from this IP, please try again after an hour. Contact support in such case if you were not responsible"
+});
+
 // load routes
 const router = require('./routes');
-this.app.use('/api/v1', router);
+this.app.use('/api/v1', apiLimiter, speedLimiter, router);
 
 // static files middleware
 this.app.use('/', express.static(path.join(PROJECT_ROOT, 'public')));

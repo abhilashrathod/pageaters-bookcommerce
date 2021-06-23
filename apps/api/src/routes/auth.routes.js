@@ -1,9 +1,6 @@
 const { Router } = require('express');
 const router = new Router();
 
-const jwt = require('express-jwt');
-
-const { ENCRYPTION_KEY } = require('./../appConfig');
 const { USER_ROLES } = require('./../constants/enums');
 
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');

@@ -28,6 +28,12 @@ module.exports.create = async (req, res) => {
   try {
     let { email } = req.allParams();
 
+    const isFound = await Subscriber.findOne({email});
+
+    if (isFound) {
+      return res.ok({ message: 'SUBSCRIBER_EXIST', data: {} });
+    }
+
     await Subscriber.create({ email });
 
     return res.ok({ message: 'SUBSCRIBER_CREATE_SUCCESS', data: {} });

@@ -78,7 +78,8 @@
 	"CATEGORY_CREATE_SUCCESS": "New Category Created",
 
 	"SUBSCRIBER_LIST_SUCCESS": "Subscribers listed",
-	"SUBSCRIBER_CREATE_SUCCESS": "Subscriber Created",
+	"SUBSCRIBER_CREATE_SUCCESS": "Thank you for subscribing to our waitlist. We shall keep in touch!",
+	"SUBSCRIBER_EXIST": "This email is already in the waitlist. Thank you!",
 
 	"EMAIL_VERIFICATION_PENDING": "EMAIL_VERIFICATION_PENDING"
 }
