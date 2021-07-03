@@ -3,13 +3,12 @@ const { models } = require('../constants');
 
 const schema = new Schema({
   account: { type: Schema.Types.ObjectId, ref: models.USER },
-  token: String,
-  expires: Date,
-  created: { type: Date, default: Date.now },
-  createdByIp: String,
-  revoked: Date,
-  revokedByIp: String,
-  replacedByToken: String,
+  token: { type: String, default: '' },
+  expires: { type: Date, default: new Date() },
+  created: { type: Date, default: Date.now() },
+  createdByIp: {type: String, default: ''},
+  revoked: { type: Date, default: null },
+  revokedByIp: { type: String, default: '' }
 });
 
 schema.virtual('isExpired').get(function() {

@@ -22,30 +22,15 @@ module.exports.generateJwtToken = (account) => {
   return jwt.sign(dataToEncrypt, ENCRYPTION_KEY, { expiresIn: '15m' });
 };
 
-module.exports.generateRefreshToken = async (account, ipAddress) => {
+module.exports.generateRefreshToken = (account, ipAddress) => {
   // create a refresh token that expires in 7 days
-  const token = {
+  return {
     account: account.id,
     token: randomTokenString(),
     expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
     createdByIp: ipAddress,
   };
-  return RefreshToken.create(token);
 };
-
-async function getAccount(id) {
-  if (!db.isValidId(id)) throw 'Account not found';
-  const account = await db.Account.findById(id);
-  if (!account) throw 'Account not found';
-  return account;
-}
-
-async function getRefreshToken(token) {
-  const refreshToken = await RefreshToken.findOne({ token }).populate('account');
-  if (!refreshToken || !refreshToken.isActive) throw 'Invalid token';
-  return refreshToken;
-}
-
 
 function randomTokenString() {
   return crypto.randomBytes(40).toString('hex');

@@ -32,8 +32,9 @@ module.exports.register = async (req, res) => {
     user.save();
 
     const jwtToken = generateJwtToken(user);
-    const refreshToken = await generateRefreshToken(user, ipAddress);
+    const refreshToken = generateRefreshToken(user, ipAddress);
 
+    await RefreshTokens.create(refreshToken);
     const profile = await User.getProfile(user._id); // TODO: Improvement could be made
 
 
@@ -75,8 +76,9 @@ module.exports.login = async (req, res) => {
     }
 
     const jwtToken = generateJwtToken(user);
-    const refreshToken = await generateRefreshToken(user, ipAddress);
+    const refreshToken = generateRefreshToken(user, ipAddress);
 
+    await RefreshTokens.create(refreshToken);
     user = await User.getProfile(user._id);
 
     // create a refresh token cookie that will also expires in 7 days
@@ -109,14 +111,12 @@ module.exports.refreshToken = async (req, res) => {
     const { account } = refreshToken;
 
     // replace old refresh token with a new one and save
-    const newRefreshToken = await generateRefreshToken(account, ipAddress);
-    refreshToken.revoked = Date.now();
-    refreshToken.revokedByIp = ipAddress;
-    refreshToken.replacedByToken = newRefreshToken.token;
-    await refreshToken.save();
-    await newRefreshToken.save();
+    const newRefreshToken = generateRefreshToken(account, ipAddress);
 
-    const userRes = User.findOne({_id: account}).select('email role');
+    refreshToken.token = newRefreshToken.token;
+    await refreshToken.save();
+
+    const userRes = await User.findOne({ _id: account }).select('email role');
 
     // generate new jwt
     const dataToEncrypt = {
@@ -131,7 +131,7 @@ module.exports.refreshToken = async (req, res) => {
       httpOnly: true,
       expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
     };
-    res.cookie('refreshToken', refreshToken.token, cookieOptions);
+    res.cookie('refreshToken', newRefreshToken.token, cookieOptions);
 
     return res.ok({ message: 'TOKEN_UPDATED', data: { token: jwtToken } });
 
@@ -141,7 +141,37 @@ module.exports.refreshToken = async (req, res) => {
 };
 
 module.exports.revokeToken = async (req, res) => {
+  try {
+    const token = req.cookies.refreshToken;
+    const ipAddress = req.ip;
 
+    if (!token) {
+      return res.unauthorized('INVALID_TOKEN');
+    }
+
+    // users can revoke their own tokens and admins can revoke any tokens
+    if (!req.user.ownsToken(token) && req.user.role !== enums.USER_ROLES.ADMIN) {
+      return res.unauthorized('TOKEN_UNMATCHED');
+    }
+
+    const refreshToken = await RefreshTokens.findOne({ token });
+
+    // revoke token and save
+    refreshToken.revoked = Date.now();
+    refreshToken.revokedByIp = ipAddress;
+    await refreshToken.save();
+
+    // revoke refresh token cookie
+    const cookieOptions = {
+      httpOnly: true,
+      expires: 0,
+    };
+    res.cookie('refreshToken', '', cookieOptions);
+
+    return res.ok({ message: 'TOKEN_REVOKED', data: {}});
+  } catch (e) {
+    return res.internalServerError(e);
+  }
 };
 
 module.exports.me = async (req, res) => {
