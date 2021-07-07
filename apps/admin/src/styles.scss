@@ -6,7 +6,7 @@ html, body {
 
 body {
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-family: 'Rubik', sans-serif;
 }
 
 .page-actions {
@@ -24,3 +24,7 @@ body {
     }
   }
 }
+
+/* APP STYLES */
+
+@import "assets/styles/index";

@@ -17,10 +17,29 @@ const routes: Routes = [
       {
         path: 'dashboard',
         component: DashboardComponent
+      },
+      {
+        path: 'books',
+        loadChildren: () => import('./books/books.module').then(m => m.BooksModule)
+      },
+      {
+        path: 'authors',
+        loadChildren: () => import('./authors/author.module').then(m => m.AuthorModule)
+      },
+      {
+        path: 'categories',
+        loadChildren: () => import('./categories/category.module').then(m => m.CategoryModule)
+      },
+      {
+        path: 'collections',
+        loadChildren: () => import('./collections/collection.module').then(m => m.CollectionModule)
+      },
+      {
+        path: 'customers',
+        loadChildren: () => import('./customers/customer.module').then(m => m.CustomerModule)
       }
     ]
   }
-
 ];
 
 @NgModule({

@@ -1,0 +1,41 @@
+<mat-table #table [dataSource]="dataSource" class="entity-table">
+  <ng-container *ngFor="let col of columns" [matColumnDef]="col.columnDef">
+    <mat-header-cell *matHeaderCellDef> {{col.header}}</mat-header-cell>
+    <mat-cell *matCellDef="let row">
+      <span *ngIf="col.columnDef == 'action'">
+          <button mat-icon-button color="primary" [routerLink]="col.cell(row)" matTooltip="Edit" class="me-1">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deleteRecord(col.cell(row))" matTooltip="Delete">
+            <mat-icon>delete</mat-icon>
+          </button>
+      </span>
+
+      <span *ngIf="col.columnDef == 'view'">
+        <button class="btn-action" [routerLink]="col.cell(row)">
+            View Orders
+          </button>
+      </span>
+
+      <span *ngIf="col.columnDef == 'image'">
+        <img *ngIf="col.cell(row)" width="100px" height="100px" class="img-responsive" [src]="col.cell(row)"/>
+      </span>
+
+      <span *ngIf="col.columnDef !== 'action' && col.columnDef !== 'view' && col.columnDef !== 'image'"
+            [title]="col.isShortText ? col.cell(row) : ''"
+            [innerHTML]="col.cell(row)">
+      </span>
+    </mat-cell>
+  </ng-container>
+
+  <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+
+  <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+
+</mat-table>
+<mat-paginator #paginator
+               [length]="total"
+               [pageSize]="filterObject.limit"
+               [pageSizeOptions]="[5, 10, 25, 100]"
+               (page)="onPageChange($event)">
+</mat-paginator>

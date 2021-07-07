@@ -16,27 +16,27 @@ export class SidebarComponent implements OnInit {
     },
     {
       icon: 'book',
-      path: [],
+      path: ['/', 'admin', 'books'],
       title: 'Books'
     },
     {
       icon: 'brush',
-      path: [],
-      title: 'Authors'
+      path: ['/', 'admin', 'authors'],
+      title: 'Authors',
     },
     {
       icon: 'auto_awesome_motion',
-      path: [],
+      path: ['/', 'admin', 'categories'],
       title: 'Categories'
     },
     {
       icon: 'collections',
-      path: [],
+      path: ['/', 'admin', 'collections'],
       title: 'Collections'
     },
     {
       icon: 'person',
-      path: [],
+      path: ['/', 'admin', 'customers'],
       title: 'Customers'
     },
     {
