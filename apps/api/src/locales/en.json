@@ -30,6 +30,7 @@
 	"PROFILE_UPDATED": "Profile updated",
 	"PASSWORD_UPDATED": "Password updated",
 	"INVALID_FILE": "Invalid file",
+	"UNSUPPORTED_FILE_TYPE": "Invalid file",
 	"ME_SUCCESS": "Me Success",
 	"TOKEN_UPDATED": "Token updated",
 	"INVALID_CLINICAL_TRIAL_IDENTIFIER": "Invalid clinical trial identifier",
@@ -72,16 +73,32 @@
 	"TOKEN_UNMATCHED": "User doesn't own this token and rights to account",
 	"PASSWORDS_DO_NOT_MATCH": "Passwords do not match",
 	"FILE_UPLOADED": "FILE_UPLOADED",
+
 	"BOOK_LIST_SUCCESS": "All book info listed",
 	"BOOK_CREATE_SUCCESS": "New Book Added to the Inventory",
+	"BOOK_SEARCH_SUCCESS": "Search Successful",
+
+	"USER_LIST_SUCCESS": "User list success",
+	"USER_UPDATE_SUCCESS": "User Information Updated",
+
 	"AUTHOR_LIST_SUCCESS": "Author list success",
+	"AUTHOR_NOT_EXIST": "Author doesn't exist",
 	"AUTHOR_CREATE_SUCCESS": "New Author Created",
+	"AUTHOR_UPDATE_SUCCESS": "Author Information Updated",
+	"AUTHOR_SEARCH_SUCCESS": "Author Search Successful",
+	"AUTHOR_DELETE_SUCCESS": "Author Deleted Successfully",
+
 	"CATEGORY_LIST_SUCCESS": "Category listed",
 	"CATEGORY_CREATE_SUCCESS": "New Category Created",
+
+	"COLLECTION_LIST_SUCCESS": "Collection listed",
+	"COLLECTION_CREATE_SUCCESS": "New Collection Created",
 
 	"SUBSCRIBER_LIST_SUCCESS": "Subscribers listed",
 	"SUBSCRIBER_CREATE_SUCCESS": "Thank you for subscribing to our waitlist. We shall keep in touch!",
 	"SUBSCRIBER_EXIST": "This email is already in the waitlist. Thank you!",
 
-	"EMAIL_VERIFICATION_PENDING": "EMAIL_VERIFICATION_PENDING"
+	"EMAIL_VERIFICATION_PENDING": "EMAIL_VERIFICATION_PENDING",
+
+	"NO_AUTH_HEADER": "NO_AUTH_HEADER"
 }

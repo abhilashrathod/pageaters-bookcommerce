@@ -1,5 +1,6 @@
 const randomString = require('random-base64-string');
 const mkdirp = require('mkdirp');
+const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 
@@ -47,4 +48,17 @@ module.exports.checkEnvVariables = async () => {
 
 module.exports.generateRandomString = (length = 12) => {
   return randomString(length);
+};
+
+module.exports.generateRandomNumber = () => {
+  return Math.floor(Math.random() * 9000000000) + 1000000000;
+};
+
+module.exports.getId = (id) => {
+  if (id) {
+    if (id.length !== 24) {
+      return id;
+    }
+  }
+  return mongoose.Types.ObjectId(id);
 };

@@ -3,7 +3,11 @@ output.log
 *.sqlite
 *.png
 
+
 .vscode/
 .idea/
 .DS_Store/
 .DS_Store
+
+# File Uploads
+resources/

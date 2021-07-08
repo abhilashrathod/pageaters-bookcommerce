@@ -4,6 +4,7 @@ const router = new Router();
 const controller = require('./../controllers/book.controller');
 
 router.get('/', controller.getAll);
+router.get('/search/:q', controller.search);
 
 module.exports = router;
 

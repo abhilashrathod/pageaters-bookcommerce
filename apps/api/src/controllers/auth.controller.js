@@ -23,11 +23,9 @@ module.exports.register = async (req, res) => {
       return res.error('USER_ALREADY_REGISTERED');
     }
 
-    const user = await User.create({ email, firstName, lastName });
+    const user = await User.create({ email, firstName, lastName, role: enums.USER_ROLES.ADMIN, emailVerified: true, contactVerified: true, });
 
     await user.setPassword(password);
-
-    user.verifyEmailToken = await user.generateVerifyEmailToken();
 
     user.save();
 
@@ -75,10 +73,16 @@ module.exports.login = async (req, res) => {
       return res.error('INVALID_LOGIN_ATTEMPT', 'INVALID_PASSWORD');
     }
 
+    // update last login to latest
+    user.lastLoginAt = new Date();
+    user.save();
+
+    // generate necessary tokens
     const jwtToken = generateJwtToken(user);
     const refreshToken = generateRefreshToken(user, ipAddress);
-
     await RefreshTokens.create(refreshToken);
+
+    // get user profile
     user = await User.getProfile(user._id);
 
     // create a refresh token cookie that will also expires in 7 days

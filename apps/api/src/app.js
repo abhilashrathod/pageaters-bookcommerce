@@ -6,10 +6,10 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const i18n = require('i18n');
-const helmet = require("helmet");
+const helmet = require('helmet');
 const morgan = require('morgan');
-const rateLimit = require("express-rate-limit");
-const slowDown = require("express-slow-down");
+const rateLimit = require('express-rate-limit');
+const slowDown = require('express-slow-down');
 
 const { PORT, PROJECT_ROOT, DEFAULT_LANGUAGE, AVAILABLE_LOCALES, PROJECT_NAME, ENVIRONMENT } = require('./appConfig');
 const connectToDb = require('./helpers/connectToDb.helper');
@@ -42,16 +42,24 @@ this.app.set('view engine', 'ejs');
 const speedLimiter = slowDown({
   windowMs: 60 * 1000, // 1 minute
   delayAfter: 50,
-  delayMs: 500
+  delayMs: 500,
 });
 
 // i18n
-i18n.configure({ locales: AVAILABLE_LOCALES, directory: path.join(PROJECT_ROOT, 'src', 'locales'), defaultLocale: DEFAULT_LANGUAGE });
+i18n.configure({
+  locales: AVAILABLE_LOCALES,
+  directory: path.join(PROJECT_ROOT, 'src', 'locales'),
+  defaultLocale: DEFAULT_LANGUAGE,
+});
 
 this.app.use(i18n.init);
 
 // extend req and res
 this.app.use(require('./middlewares/extendReq.middleware'));
+
+// for indexing
+const { runIndexing } = require('./libs/indexing');
+runIndexing(this.app);
 
 // Disable x-powered-by header
 this.app.disable('x-powered-by');
@@ -96,7 +104,7 @@ this.app.use(multer().any());
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute will have "max" 75 API request
   max: 75,
-  message: "Too many accounts created from this IP, please try again after an hour. Contact support in such case if you were not responsible"
+  message: 'Too many accounts created from this IP, please try again after an hour. Contact support in such case if you were not responsible',
 });
 
 // load routes
@@ -131,7 +139,7 @@ module.exports.startServer = async () => {
     // load seed data.
     await require('../scripts/seedData').initSeedData();
 
-    this.app.listen(PORT, () => {
+    this.app.listen(PORT, async () => {
       console.log(`Listening on port ${PORT}`);
 
       // schedule cron jobs after server starts.

@@ -1,9 +1,7 @@
 const { Schema, model } = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 
-const { API_URL } = require('./../appConfig');
-
-const { enums, models } = require('./../constants');
+const { models } = require('./../constants');
 
 const schema = new Schema({
     ISBN: { type: 'String', default: '' },

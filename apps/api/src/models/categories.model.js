@@ -9,7 +9,7 @@ const schema = new Schema({
     title: { type: String, default: '' },
     description: { type: String, default: '' },
 
-    imageUrl: { type: String, default: '' },
+    thumbnail: { type: String, default: '' },
     poster: { type: String, default: '' },
   },
   {

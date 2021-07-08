@@ -21,9 +21,11 @@ router.use('/private', require('./private.routes'));
 router.use('/file', require('./file.routes'));
 router.use('/books', require('./book.routes'));
 router.use('/admin', require('./admin.routes'));
+router.use('/users', require('./users.routes'));
 router.use('/store-books', require('./storeBooks.routes'));
 router.use('/authors', require('./author.routes'));
 router.use('/categories', require('./category.routes'));
+router.use('/collections', require('./collection.routes'));
 router.use('/subscribers', require('./subscriber.route'));
 
 module.exports = router;

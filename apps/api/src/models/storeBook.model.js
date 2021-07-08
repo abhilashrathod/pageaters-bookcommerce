@@ -22,9 +22,7 @@ const schema = new Schema({
     publicationYear: { type: String, default: '' },
     publisher: { type: String, default: '' },
 
-    imageSmall: { type: String, default: '' },
-    imageMedium: { type: String, default: '' },
-    imageLarge: { type: String, default: '' },
+    poster: { type: String, default: '' },
 
     totalReviews: { type: Number, default: 0 },
     averageReviews: { type: Number, default: 0 },
@@ -33,6 +31,8 @@ const schema = new Schema({
     inventory: { type: Number, default: 0 },
 
     currentDiscount: { type: Number, default: 0 },
+
+    popularity: {type: Number, default: 0},
 
     relatedBooks: [{ type: Schema.Types.ObjectId, default: models.STORE_BOOK }],
     partOfBundle: [{ type: Schema.Types.ObjectId, default: models.BUNDLE }],

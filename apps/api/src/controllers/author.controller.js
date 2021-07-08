@@ -1,15 +1,11 @@
 const mongoose = require('mongoose');
-const moment = require('moment');
-const path = require('path');
+const { generateRandomNumber, getId } = require('../helpers/utils.helper');
 
-const { HOST, PROJECT_ROOT } = require('./../appConfig');
 const { models } = require('../constants');
 
-const { encrypt, decrypt } = require('../helpers/encryption.helper');
-const { writeFile } = require('./../helpers/utils.helper');
-const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const Author = mongoose.model(models.AUTHOR);
+const Books = mongoose.model(models.STORE_BOOK);
 
 
 module.exports.getAll = async (req, res) => {
@@ -20,7 +16,8 @@ module.exports.getAll = async (req, res) => {
 
     const options = {
       page,
-      limit
+      limit,
+      select: `name books popularity isDeleted deletedAt`,
     };
 
     const author = await Author.paginate(query, options);
@@ -33,13 +30,140 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    let { authorId, intro, title, description, avatar, books } = req.allParams();
+    let { name, intro, avatar, books } = req.allParams();
 
-    const payload = { authorId, intro, title, description, avatar, books };
+    let authorId = `AU-${generateRandomNumber()}`;
+    const payload = {
+      authorId,
+      name, intro,
+      avatar,
+      books,
+    };
 
-    const authorList = await Author.create(payload);
+    const author = await Author.create(payload);
 
-    return res.ok({ message: 'AUTHOR_CREATE_SUCCESS', data: authorList });
+    if (books.length > 0) {
+      await Books.updateMany({ _id: { $in: books } }, { $set: { author: author._id } }, { multi: true });
+    }
+
+    return res.ok({ message: 'AUTHOR_CREATE_SUCCESS', data: author });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.update = async (req, res) => {
+  try {
+    let { id, name, intro, avatar, books } = req.allParams();
+
+    const author = await Author.findOne({ _id: id });
+
+    if (!author) {
+      return res.error('AUTHOR_NOT_EXIST');
+    }
+
+    const payload = {
+      name, intro,
+      avatar,
+      books,
+    };
+
+    const authorRes = await Author.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
+
+    if (books.length > 0) {
+      await Books.updateMany({ _id: { $in: books } }, { $set: { author: author._id } }, { multi: true });
+    }
+
+    return res.ok({ message: 'AUTHOR_UPDATE_SUCCESS', data: authorRes });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.search = async (req, res) => {
+  try {
+    let { q } = req.allParams();
+    const authorIndex = req.app.authorIndex;
+
+
+    const lunrIdArray = [];
+    authorIndex.search(`${q}*`).forEach((id) => {
+      lunrIdArray.push(getId(id.ref));
+    });
+
+    const query = { _id: { $in: lunrIdArray } };
+
+
+    const books = await Author.find(query);
+
+    return res.ok({ message: 'AUTHOR_SEARCH_SUCCESS', data: books });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.getById = async (req, res) => {
+  try {
+    let { id } = req.allParams();
+
+    const populateOptions = {
+      path: 'books',
+      select: '_id title'
+    };
+
+    const author = await Author.findOne({ _id: id }).populate(populateOptions);
+
+    if (author) {
+      return res.ok({ message: 'AUTHOR_LIST_SUCCESS', data: author })
+    } else {
+      return res.error('AUTHOR_NOT_EXIST');
+    }
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.getByUniqueId = async (req, res) => {
+  try {
+    let { id } = req.allParams();
+
+    const populateOptions = {
+      path: 'books',
+      select: '_id title'
+    };
+
+    const author = await Author.findOne({ authorId: id }).populate(populateOptions);
+
+    if (author) {
+      return res.ok({ message: 'AUTHOR_LIST_SUCCESS', data: author });
+    } else {
+      return res.error('AUTHOR_NOT_EXIST');
+    }
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.destroy = async (req, res) => {
+  try {
+    let { id } = req.allParams();
+
+    const author = await Author.findOne({ _id: id });
+
+    if (author) {
+      author.isDeleted = true;
+      author.deletedAt = new Date();
+
+      if (author.books.length > 0) {
+        await Books.updateMany({ _id: { $in: author.books } }, { $set: { author: null } }, { multi: true });
+      }
+
+      author.books = [];
+      await author.save();
+      return res.ok('AUTHOR_DELETE_SUCCESS');
+    } else {
+      return res.error('AUTHOR_NOT_EXIST');
+    }
   } catch (e) {
     return res.internalServerError(e);
   }

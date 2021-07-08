@@ -13,4 +13,5 @@ require('./bundle.model');
 require('./store.model');
 require('./author.model');
 require('./categories.model');
+require('./collection.model');
 require('./subscribers.model');

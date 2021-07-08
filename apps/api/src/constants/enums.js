@@ -16,6 +16,17 @@ module.exports = {
   },
   FILE_MODULES: {
     DEFAULT: 'DEFAULT',
+    STORE_BOOK: 'STORE_BOOK',
+    AUTHOR: 'AUTHOR',
+  },
+  BUCKETS: {
+    AUTHOR: 'pageaters-authors',
+    BOOK: 'storebooks'
+  },
+  VALID_FILE_TYPES: {
+    JPG: 'jpg',
+    PNG: 'png',
+    JPEG: 'jpeg',
   },
   NOTIFICATION_TYPES: {
     MISCELLANEOUS: 'MISCELLANEOUS',
