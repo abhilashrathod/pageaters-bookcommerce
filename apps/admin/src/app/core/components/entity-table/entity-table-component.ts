@@ -3,11 +3,15 @@ import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
 
 import {merge, of} from 'rxjs';
-import {catchError, map, startWith, switchMap, tap} from 'rxjs/operators';
+import {catchError, debounceTime, map, startWith, switchMap} from 'rxjs/operators';
 
 import {SharedService} from '../../services/shared.service';
 
 import {IPaginationResponse} from '../../schema/responses';
+import {FormControl} from '@angular/forms';
+import {AppConfirmService} from '../app-confirm/app-confirm.service';
+import {AppLoaderService} from '../app-loader/app-loader.service';
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 
 @Component({
@@ -17,10 +21,13 @@ import {IPaginationResponse} from '../../schema/responses';
 
 export class EntityTableComponent implements OnInit, AfterViewInit {
 
+  search = new FormControl();
+
   // inputs
   @Input('columns') public columns;
   @Input('getResource') public getResource;
   @Input('editResource') public editResource;
+  @Input('searchResource') public searchResource;
   @Input('deleteResource') public deleteResource;
   @Input('statusResource') public statusResource;
   @Input('checkResource') public checkResource;
@@ -42,12 +49,27 @@ export class EntityTableComponent implements OnInit, AfterViewInit {
   page: any;
   displayedColumns: any;
 
-  constructor(private sharedService: SharedService) {
+  constructor(private sharedService: SharedService,
+              private loading: AppLoaderService,
+              private snack: MatSnackBar,
+              private confirm: AppConfirmService,) {
 
   }
 
   ngOnInit(): void {
     this.displayedColumns = this.columns.map(c => c.columnDef);
+    this.search
+      .valueChanges
+      .pipe(
+        debounceTime(750),
+      )
+      .subscribe((text) => {
+        if (text) {
+          this.searchTable(text);
+        } else {
+          this.ngAfterViewInit();
+        }
+      });
   }
 
   ngAfterViewInit(): void {
@@ -65,6 +87,11 @@ export class EntityTableComponent implements OnInit, AfterViewInit {
       ).subscribe(data => this.dataSource.data = data);
   }
 
+  searchTable(query): void {
+    this.sharedService.search(this.searchResource, query)
+      .subscribe(data => this.dataSource.data = data);
+  }
+
   onPageChange(event): void {
     this.filterObject.limit = event.pageSize;
     this.filterObject.offset = this.filterObject.limit * event.pageIndex;
@@ -72,21 +99,21 @@ export class EntityTableComponent implements OnInit, AfterViewInit {
   }
 
   deleteRecord(row): void {
-    // const id = row.pop();
-    // const confirm = this.confirm.confirm('Warning!', 'Are you sure you want to delete this record');
-    // confirm.subscribe(res => {
-    //   if (res) {
-    //     const delete$ = this.rest.remove(this.deleteResource + id);
-    //     this.loading.open();
-    //     delete$.subscribe(() => {
-    //       this.loading.close();
-    //       this.message.open('Record deleted', 'OKAY', {duration: 3000});
-    //       this.ngAfterViewInit();
-    //     }, err => {
-    //       this.loading.close();
-    //       this.message.open(err.message.toString(), 'OKAY', {duration: 5000});
-    //     });
-    //   }
-    // });
+    const id = row.pop();
+    const confirm = this.confirm.confirm('Warning!', 'Are you sure you want to delete this record');
+    confirm.subscribe(res => {
+      if (res) {
+        const delete$ = this.sharedService.destroy(this.deleteResource, id);
+        this.loading.open();
+        delete$.subscribe(() => {
+          this.loading.close();
+          this.snack.open('Record deleted', 'OKAY', {duration: 3000});
+          this.ngAfterViewInit();
+        }, err => {
+          this.loading.close();
+          this.snack.open(err.message.toString(), 'OKAY', {duration: 5000});
+        });
+      }
+    });
   }
 }

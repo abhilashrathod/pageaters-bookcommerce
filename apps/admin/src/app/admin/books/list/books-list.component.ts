@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-
+import {get} from 'lodash';
 
 @Component({
   selector: 'app-books-list',
@@ -25,8 +25,13 @@ export class BooksListComponent implements OnInit {
   public resourceColumns: any[] = [
     {
       header: 'Title',
-      columnDef: 'author',
+      columnDef: 'title',
       cell: (element) => `${element.title}`,
+    },
+    {
+      header: 'Author',
+      columnDef: 'author',
+      cell: (element) => `${get(element, 'author.name', 'No Author Assigned')}`,
     },
     {
       header: 'Action',
@@ -37,6 +42,7 @@ export class BooksListComponent implements OnInit {
 
   public deleteBaseUrl = `/store-books`;
   public getAllBaseUrl = '/store-books';
+  public searchBaseUrl = '/store-books/search';
 
   constructor() {
   }

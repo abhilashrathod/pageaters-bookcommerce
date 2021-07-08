@@ -26,9 +26,18 @@ export class SharedService {
       );
   }
 
-  destroy(url, payload?): Observable<any> {
-    url = environment.BASE_PATH + url;
-    return this.httpClient.delete(url, payload);
+  search(url, query): Observable<any> {
+    url = `${environment.BASE_PATH}${url}/${query}`;
+    return this.httpClient.get(url)
+      .pipe(
+        map((res: IResponse) => res.data),
+        catchError(err => this.handleError(err))
+      );
+  }
+
+  destroy(url, id): Observable<any> {
+    url = `${environment.BASE_PATH}${url}/${id}`;
+    return this.httpClient.delete(url);
   }
 
   put(url, payload?): Observable<any> {

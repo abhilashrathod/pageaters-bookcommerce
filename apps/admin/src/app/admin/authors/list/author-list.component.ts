@@ -32,6 +32,16 @@ export class AuthorListComponent implements OnInit {
       cell: (element) => `${element.books.length}`,
     },
     {
+      header: 'Popularity',
+      columnDef: 'popularity',
+      cell: (element) => `${element.popularity}`,
+    },
+    {
+      header: 'Deleted',
+      columnDef: 'isDeleted',
+      cell: (el) => el.isDeleted ? `${new Date(el.deletedAt).toDateString()}` : '',
+    },
+    {
       header: 'Action',
       columnDef: 'action',
       cell: (element) => [...this.editResourceUrl, element._id],
@@ -40,6 +50,7 @@ export class AuthorListComponent implements OnInit {
 
   public deleteBaseUrl = `/authors`;
   public getAllBaseUrl = '/authors';
+  public searchBaseUrl = '/authors/search';
 
   constructor() {
   }

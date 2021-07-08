@@ -1,3 +1,12 @@
+<div class="row">
+  <div class="col-6">
+    <mat-form-field appearance="standard" class="w-100">
+      <mat-label>Search..</mat-label>
+      <input matInput type="search" [formControl]="search">
+    </mat-form-field>
+  </div>
+</div>
+
 <mat-table #table [dataSource]="dataSource" class="entity-table">
   <ng-container *ngFor="let col of columns" [matColumnDef]="col.columnDef">
     <mat-header-cell *matHeaderCellDef> {{col.header}}</mat-header-cell>
@@ -18,7 +27,7 @@
       </span>
 
       <span *ngIf="col.columnDef == 'image'">
-        <img *ngIf="col.cell(row)" width="100px" height="100px" class="img-responsive" [src]="col.cell(row)"/>
+        <img *ngIf="col.cell(row)" width="100px" class="img-fluid img-thumbnail" [src]="col.cell(row)"/>
       </span>
 
       <span *ngIf="col.columnDef !== 'action' && col.columnDef !== 'view' && col.columnDef !== 'image'"

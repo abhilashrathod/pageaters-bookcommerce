@@ -1,0 +1,3 @@
+export const FILE_UPLOAD_MODULES = {
+  AUTHOR: 'AUTHOR',
+};

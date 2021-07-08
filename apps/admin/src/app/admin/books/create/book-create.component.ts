@@ -46,6 +46,6 @@ export class BookCreateComponent implements OnInit {
 
   private _filterValues(value: string) {
     const filterValue = value.toLowerCase();
-    return this._books.searchBooksByTitle(filterValue);
+    return this._books.searchBooks(filterValue);
   }
 }

@@ -3,6 +3,7 @@ import {CommonModule} from '@angular/common';
 
 import {MatAutocompleteModule} from '@angular/material/autocomplete';
 import {MatButtonModule} from '@angular/material/button';
+import {MatSnackBarModule} from '@angular/material/snack-bar';
 import {MatButtonToggleModule} from '@angular/material/button-toggle';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatChipsModule} from '@angular/material/chips';
@@ -42,6 +43,7 @@ import {MatSelectModule} from '@angular/material/select';
     MatSlideToggleModule,
     MatTableModule,
     MatTabsModule,
+    MatSnackBarModule,
     MatTooltipModule,
   ],
   declarations: [],

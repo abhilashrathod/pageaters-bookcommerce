@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {Observable, throwError} from 'rxjs';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {environment} from '../../../environments/environment';
-import {catchError, map, tap} from 'rxjs/operators';
+import {catchError, map} from 'rxjs/operators';
 import {IResponse} from '../schema/responses';
 
 
@@ -26,14 +26,25 @@ export class BooksService {
       );
   }
 
-  searchBooksByTitle(title): Observable<any> {
-    const url = `${environment.BASE_PATH}/books/search/${title}`;
+  searchBooks(title): Observable<any> {
+    const url = `${environment.BASE_PATH}/store-books/search/${title}`;
     return this._http.get(url)
       .pipe(
         map((dt: IResponse) => dt.data),
         catchError((err) => this.handleError(err))
       );
   }
+
+  create(payload): Observable<any> {
+    const url = `${environment.BASE_PATH}/store-books`;
+    return this._http.post(url, payload)
+      .pipe(
+        map((dt: IResponse) => dt.data),
+        catchError((err) => this.handleError(err))
+      );
+  }
+
+
 
   handleError(err: any): any {
     return throwError(err.error);
