@@ -8,7 +8,7 @@ module.exports.getAll = async (req, res) => {
   try {
     let { page, limit } = req.allParams();
 
-    const query = {};
+    const query = {isDeleted: false};
 
     const options = {
       page,
@@ -81,11 +81,11 @@ module.exports.search = async (req, res) => {
     };
 
     const lunrIdArray = [];
-    booksIndex.search(q).forEach((id) => {
+    booksIndex.search(`${q}*`).forEach((id) => {
       lunrIdArray.push(getId(id.ref));
     });
 
-    const query = { _id: { $in: lunrIdArray } };
+    const query = { _id: { $in: lunrIdArray }, isDeleted: false };
 
     const books = await Book.find(query)
       .select('title ISBN author poster`')

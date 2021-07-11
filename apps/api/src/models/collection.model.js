@@ -10,15 +10,19 @@ const schema = new Schema({
     description: { type: String, default: '' },
     tags: [{ type: String, default: '' }],
 
-    thumbnail: { type: String, default: '' },
     poster: { type: String, default: '' },
 
     priority: { type: Number, default: 0 },
     popularity: { type: Number, default: 0 },
 
     books: [{ type: Schema.Types.ObjectId, ref: models.STORE_BOOK }],
+
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: String, default: '' },
+
     relatedCollections: [{ type: Schema.Types.ObjectId, ref: models.COLLECTION }],
     relatedCategories: [{ type: Schema.Types.ObjectId, ref: models.CATEGORY }],
+    featuredAuthors: [{ type: Schema.Types.ObjectId, ref: models.AUTHOR }],
   },
   {
     timestamps: true,

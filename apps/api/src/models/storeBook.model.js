@@ -22,6 +22,9 @@ const schema = new Schema({
     publicationYear: { type: String, default: '' },
     publisher: { type: String, default: '' },
 
+    editorsPick: {},
+    bestSeller: {},
+
     poster: { type: String, default: '' },
 
     totalReviews: { type: Number, default: 0 },

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { generateRandomNumber } = require('../helpers/utils.helper');
+const { generateRandomNumber, getId } = require('../helpers/utils.helper');
 
 const { models, enums } = require('../constants');
 
@@ -9,7 +9,7 @@ module.exports.getAll = async (req, res) => {
   try {
     let { page, limit } = req.allParams();
 
-    const query = {};
+    const query = {isDeleted: false};
 
     const options = {
       page,
@@ -26,19 +26,146 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    let { title, description, tags, books, thumbnail, poster, relatedCollections, relatedCategories } = req.allParams();
+    let { title, description, tags, books, poster, relatedCollections, relatedCategories, featuredAuthors } = req.allParams();
 
     let collectionId = `CL-${generateRandomNumber()}`;
 
     const payload = {
       collectionId, title, description, tags,
-      poster, thumbnail,
-      books, relatedCollections, relatedCategories,
+      poster,
+      books,
+      relatedCollections, relatedCategories, featuredAuthors
     };
 
     const collection = await Collection.create(payload);
 
     return res.ok({ message: 'COLLECTION_CREATE_SUCCESS', data: collection });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.update = async (req, res) => {
+  try {
+    let { id, title, description, tags, books, poster, relatedCollections, relatedCategories, featuredAuthors } = req.allParams();
+
+    const collection = await Collection.findOne({_id: id, isDeleted: false });
+
+    if (!collection) {
+      return res.error('COLLECTION_NOT_EXIST');
+    }
+
+    const payload = {
+      title, description, tags,
+      poster,
+      books,
+      relatedCollections, relatedCategories, featuredAuthors
+    };
+
+    const collectionRes = await Collection.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
+
+    return res.ok({ message: 'COLLECTION_UPDATE_SUCCESS', data: collectionRes });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.search = async (req, res) => {
+  try {
+    let { q } = req.allParams();
+    const collectionIndex = req.app.collectionIndex;
+
+
+    const lunrIdArray = [];
+    collectionIndex.search(`${q}*`).forEach((id) => {
+      lunrIdArray.push(getId(id.ref));
+    });
+
+    const query = { _id: { $in: lunrIdArray }, isDeleted: false };
+
+
+    const collections = await Collection.find(query);
+
+    return res.ok({ message: 'COLLECTION_SEARCH_SUCCESS', data: collections });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.getById = async (req, res) => {
+  try {
+    let { id } = req.allParams();
+
+    const populateOptions = [{
+      path: 'books',
+      select: 'title poster'
+    }, {
+      path: 'relatedCategories',
+      select: 'title thumbnail'
+    }, {
+      path: 'featuredAuthors',
+      select: 'name avatar'
+    }, {
+      path: 'relatedCollections',
+      select: 'title tags poster'
+    }];
+
+    const collection = await Collection.findOne({ _id: id, isDeleted: false }).populate(populateOptions);
+
+    if (collection) {
+      return res.ok({ message: 'COLLECTION_LIST_SUCCESS', data: collection })
+    } else {
+      return res.error('COLLECTION_NOT_EXIST');
+    }
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.getByUniqueId = async (req, res) => {
+  try {
+    let { id } = req.allParams();
+
+    const populateOptions = [{
+      path: 'books',
+      select: 'title poster'
+    }, {
+      path: 'relatedCategories',
+      select: 'title thumbnail'
+    }, {
+      path: 'featuredAuthors',
+      select: 'name avatar'
+    }, {
+      path: 'relatedCollections',
+      select: 'title tags poster'
+    }];
+
+    const collection = await Collection.findOne({ collectionId: id, isDeleted: false }).populate(populateOptions);
+
+    if (collection) {
+      return res.ok({ message: 'COLLECTION_LIST_SUCCESS', data: collection });
+    } else {
+      return res.error('COLLECTION_NOT_EXIST');
+    }
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.destroy = async (req, res) => {
+  try {
+    let { id } = req.allParams();
+
+    const collection = await Collection.findOne({ _id: id, isDeleted: false });
+
+    if (collection) {
+      collection.isDeleted = true;
+      collection.deletedAt = new Date();
+      await collection.save();
+      return res.ok('COLLECTION_DELETE_SUCCESS');
+    } else {
+      return res.error('COLLECTION_NOT_EXIST');
+    }
   } catch (e) {
     return res.internalServerError(e);
   }

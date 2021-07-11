@@ -18,9 +18,11 @@ module.exports = {
     DEFAULT: 'DEFAULT',
     STORE_BOOK: 'STORE_BOOK',
     AUTHOR: 'AUTHOR',
+    COLLECTION: 'COLLECTION'
   },
   BUCKETS: {
     AUTHOR: 'pageaters-authors',
+    COLLECTIONS: 'pageaters-collections',
     BOOK: 'storebooks'
   },
   VALID_FILE_TYPES: {

@@ -1,13 +1,6 @@
 const mongoose = require('mongoose');
-const moment = require('moment');
-const path = require('path');
 
-const { HOST, PROJECT_ROOT } = require('./../appConfig');
 const { models } = require('../constants');
-
-const { encrypt, decrypt } = require('../helpers/encryption.helper');
-const { writeFile } = require('./../helpers/utils.helper');
-const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const Category = mongoose.model(models.CATEGORY);
 
@@ -16,7 +9,7 @@ module.exports.getAll = async (req, res) => {
   try {
     let { page, limit } = req.allParams();
 
-    const query = {};
+    const query = {isDeleted: false};
 
     const options = {
       page,

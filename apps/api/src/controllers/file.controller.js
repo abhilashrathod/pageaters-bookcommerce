@@ -102,6 +102,9 @@ const getBucketName = (module) => {
     case enums.FILE_MODULES.AUTHOR:
       return enums.BUCKETS.AUTHOR;
 
+    case enums.FILE_MODULES.COLLECTION:
+      return enums.BUCKETS.COLLECTIONS;
+
     default:
       return enums.BUCKETS.BOOK;
   }

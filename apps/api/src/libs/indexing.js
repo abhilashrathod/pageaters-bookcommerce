@@ -7,6 +7,7 @@ const { ENVIRONMENT } = require('../appConfig');
 
 const Books = mongoose.model(models.STORE_BOOK);
 const Authors = mongoose.model(models.AUTHOR);
+const Collections = mongoose.model(models.COLLECTION);
 
 const indexBooks = (app) => {
   // index all books in lunr on startup
@@ -27,7 +28,7 @@ const indexBooks = (app) => {
         const doc = {
           title: product.title,
           authorName: product.authorName,
-          tags: product.tags,
+          tags: product.tags.join(', '),
           description: product.description,
           id: product._id,
         };
@@ -43,7 +44,7 @@ const indexBooks = (app) => {
 };
 
 const indexAuthors = (app) => {
-  // index all books in lunr on startup
+  // index all authors in lunr on startup
   return new Promise(async (resolve, reject) => {
     const allAuthors = await Authors.find({});
 
@@ -72,8 +73,39 @@ const indexAuthors = (app) => {
   });
 };
 
+const indexCollections = (app) => {
+  return new Promise(async (resolve, reject) => {
+    const allCollections = await Collections.find({});
 
-// start indexing products and orders
+    // setup lunr indexing
+    const collectionIndex = lunr(function() {
+      this.field('title', { boost: 10 });
+      this.field('tags', { boost: 5 });
+      this.field('description');
+
+      const lunrIndex = this;
+
+      // add to lunr index
+      allCollections.forEach((collection) => {
+        const doc = {
+          title: collection.title,
+          description: collection.description,
+          tags: collection.tags.join(', '),
+          id: collection._id,
+        };
+        lunrIndex.add(doc);
+      });
+    });
+
+    app.collectionIndex = collectionIndex;
+    if (ENVIRONMENT !== 'test') {
+      console.log(colors.cyan('- Collection indexing complete'));
+    }
+  });
+};
+
+
+// start indexing
 const runIndexing = (app) => {
   if (ENVIRONMENT !== 'test') {
     console.info(colors.yellow('Setting up indexes..'));
@@ -86,6 +118,7 @@ const runIndexing = (app) => {
   return Promise.all([
     indexBooks(app),
     indexAuthors(app),
+    indexCollections(app),
   ])
     .catch((err) => {
       console.info(colors.yellow('Error setting up indexes', err));
@@ -94,7 +127,5 @@ const runIndexing = (app) => {
 };
 
 module.exports = {
-  indexBooks,
-  indexAuthors,
   runIndexing,
 };

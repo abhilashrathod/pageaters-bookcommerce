@@ -10,7 +10,6 @@ const schema = new Schema({
     description: { type: String, default: '' },
 
     thumbnail: { type: String, default: '' },
-    poster: { type: String, default: '' },
   },
   {
     timestamps: true,

@@ -12,7 +12,7 @@ module.exports.getAll = async (req, res) => {
   try {
     let { page, limit } = req.allParams();
 
-    const query = {};
+    const query = {isDeleted: false};
 
     const options = {
       page,
@@ -56,7 +56,7 @@ module.exports.update = async (req, res) => {
   try {
     let { id, name, intro, avatar, books } = req.allParams();
 
-    const author = await Author.findOne({ _id: id });
+    const author = await Author.findOne({ _id: id, isDeleted: false });
 
     if (!author) {
       return res.error('AUTHOR_NOT_EXIST');
@@ -91,12 +91,11 @@ module.exports.search = async (req, res) => {
       lunrIdArray.push(getId(id.ref));
     });
 
-    const query = { _id: { $in: lunrIdArray } };
+    const query = { _id: { $in: lunrIdArray }, isDeleted: false };
 
+    const authors = await Author.find(query);
 
-    const books = await Author.find(query);
-
-    return res.ok({ message: 'AUTHOR_SEARCH_SUCCESS', data: books });
+    return res.ok({ message: 'AUTHOR_SEARCH_SUCCESS', data: authors });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -111,7 +110,7 @@ module.exports.getById = async (req, res) => {
       select: '_id title'
     };
 
-    const author = await Author.findOne({ _id: id }).populate(populateOptions);
+    const author = await Author.findOne({ _id: id, isDeleted: false }).populate(populateOptions);
 
     if (author) {
       return res.ok({ message: 'AUTHOR_LIST_SUCCESS', data: author })
@@ -132,7 +131,7 @@ module.exports.getByUniqueId = async (req, res) => {
       select: '_id title'
     };
 
-    const author = await Author.findOne({ authorId: id }).populate(populateOptions);
+    const author = await Author.findOne({ authorId: id, isDeleted: false }).populate(populateOptions);
 
     if (author) {
       return res.ok({ message: 'AUTHOR_LIST_SUCCESS', data: author });
@@ -148,7 +147,7 @@ module.exports.destroy = async (req, res) => {
   try {
     let { id } = req.allParams();
 
-    const author = await Author.findOne({ _id: id });
+    const author = await Author.findOne({ _id: id, isDeleted: false });
 
     if (author) {
       author.isDeleted = true;
