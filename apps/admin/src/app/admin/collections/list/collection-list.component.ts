@@ -40,6 +40,7 @@ export class CollectionListComponent implements OnInit {
 
   public deleteBaseUrl = `/collections`;
   public getAllBaseUrl = '/collections';
+  public searchBaseUrl = '/collections/search';
 
   constructor() {
   }
