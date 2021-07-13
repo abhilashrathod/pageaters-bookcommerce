@@ -36,6 +36,7 @@ export class CategoryListComponent implements OnInit {
 
   public deleteBaseUrl = `/categories`;
   public getAllBaseUrl = '/categories';
+  public searchBaseUrl = '/categories/search';
 
   constructor() {
   }

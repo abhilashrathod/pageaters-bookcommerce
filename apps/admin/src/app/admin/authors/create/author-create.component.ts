@@ -93,6 +93,10 @@ export class AuthorCreateComponent implements OnInit {
       return this.snackBar.open('Please enter the name first before file upload', 'OKAY', {duration: 3000});
     }
 
+    if (!this.selectedFile) {
+      return this.snackBar.open('Please select a file to upload', 'OKAY', {duration: 3000});
+    }
+
     const formData: FormData = new FormData();
     formData.append('file', this.selectedFile, this.selectedFile.name);
     formData.append('title', this.authorFormGroup.get('name').value);

@@ -1,1 +1,52 @@
-<h1>Cat Create</h1>
+<form [formGroup]="categoryFormGroup">
+  <div class="row">
+    <div class="col-12">
+      <h1>Add Category</h1>
+    </div>
+  </div>
+
+  <div class="shadow-sm mb-5 bg-body rounded form-card">
+    <div class="row">
+      <div class="col-5">
+        <div class="mb-4">
+          <div *ngIf="!avatar" class="image-upload-thumbnail" (click)="profileImage.click()">Category Thumbnail</div>
+          <img *ngIf="avatar" class="pointer img-fluid img-thumbnail" [src]="avatar" (click)="profileImage.click()"/>
+          <input #profileImage class="d-none" type="file" (change)="previewImage($event)">
+        </div>
+        <p class="text-center">
+          <button mat-stroked-button [color]="'accent'" (click)="uploadImage()">
+            Upload
+          </button>
+        </p>
+      </div>
+      <div class="col-7">
+        <div class="mb-3">
+          <mat-form-field class="w-100">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="title">
+          </mat-form-field>
+        </div>
+        <div class="mb-3">
+          <mat-form-field class="w-100">
+            <mat-label>Description</mat-label>
+            <textarea matInput
+                      cdkTextareaAutosize
+                      #autosize="cdkTextareaAutosize"
+                      cdkAutosizeMinRows="10"
+                      cdkAutosizeMaxRows="25"
+                      formControlName="description"></textarea>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+<div class="action-button-row">
+  <button class="me-3" mat-fab color="warn" [routerLink]="['/', 'admin', 'categories']">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+
+  <button mat-fab color="primary" (click)="onSubmit()" >
+    <mat-icon>check</mat-icon>
+  </button>
+</div>
