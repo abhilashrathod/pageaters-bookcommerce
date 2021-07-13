@@ -8,11 +8,12 @@ const { ENVIRONMENT } = require('../appConfig');
 const Books = mongoose.model(models.STORE_BOOK);
 const Authors = mongoose.model(models.AUTHOR);
 const Collections = mongoose.model(models.COLLECTION);
+const Categories = mongoose.model(models.CATEGORY);
 
 const indexBooks = (app) => {
   // index all books in lunr on startup
   return new Promise(async (resolve, reject) => {
-    const allBooks = await Books.find({});
+    const allBooks = await Books.find({isDeleted: false});
 
     // setup lunr indexing
     const booksIndex = lunr(function() {
@@ -46,7 +47,7 @@ const indexBooks = (app) => {
 const indexAuthors = (app) => {
   // index all authors in lunr on startup
   return new Promise(async (resolve, reject) => {
-    const allAuthors = await Authors.find({});
+    const allAuthors = await Authors.find({isDeleted: false});
 
     // setup lunr indexing
     const authorIndex = lunr(function() {
@@ -75,7 +76,7 @@ const indexAuthors = (app) => {
 
 const indexCollections = (app) => {
   return new Promise(async (resolve, reject) => {
-    const allCollections = await Collections.find({});
+    const allCollections = await Collections.find({isDeleted: false});
 
     // setup lunr indexing
     const collectionIndex = lunr(function() {
@@ -104,6 +105,34 @@ const indexCollections = (app) => {
   });
 };
 
+const indexCategories = (app) => {
+  return new Promise(async (resolve, reject) => {
+    const allCategories = await Categories.find({isDeleted: false});
+
+    // setup lunr indexing
+    const categoryIndex = lunr(function() {
+      this.field('title', { boost: 10 });
+      this.field('description');
+
+      const lunrIndex = this;
+
+      // add to lunr index
+      allCategories.forEach((category) => {
+        const doc = {
+          title: category.title,
+          description: category.description,
+          id: category._id,
+        };
+        lunrIndex.add(doc);
+      });
+    });
+
+    app.categoryIndex = categoryIndex;
+    if (ENVIRONMENT !== 'test') {
+      console.log(colors.cyan('- Category indexing complete'));
+    }
+  });
+};
 
 // start indexing
 const runIndexing = (app) => {
@@ -111,14 +140,11 @@ const runIndexing = (app) => {
     console.info(colors.yellow('Setting up indexes..'));
   }
 
-  // indexOrders(app),
-  // indexCustomers(app),
-  // indexReviews(app),
-
   return Promise.all([
     indexBooks(app),
     indexAuthors(app),
     indexCollections(app),
+    indexCategories(app),
   ])
     .catch((err) => {
       console.info(colors.yellow('Error setting up indexes', err));

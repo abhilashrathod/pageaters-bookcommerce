@@ -95,5 +95,10 @@
 	"SUBSCRIBER_EXIST": "This email is already in the waitlist. Thank you!",
 	"EMAIL_VERIFICATION_PENDING": "EMAIL_VERIFICATION_PENDING",
 	"NO_AUTH_HEADER": "NO_AUTH_HEADER",
-	"CATEGORY_LIST_SUCCESS": "CATEGORY_LIST_SUCCESS"
+	"CATEGORY_LIST_SUCCESS": "Category list success",
+	"CATEGORY_NOT_EXIST": "Category doesn't exist",
+	"CATEGORY_CREATE_SUCCESS": "New Category Created",
+	"CATEGORY_UPDATE_SUCCESS": "Category Information Updated",
+	"CATEGORY_SEARCH_SUCCESS": "Category Search Successful",
+	"CATEGORY_DELETE_SUCCESS": "Category Deleted Successfully"
 }

@@ -18,11 +18,13 @@ module.exports = {
     DEFAULT: 'DEFAULT',
     STORE_BOOK: 'STORE_BOOK',
     AUTHOR: 'AUTHOR',
-    COLLECTION: 'COLLECTION'
+    COLLECTION: 'COLLECTION',
+    CATEGORY: 'CATEGORY',
   },
   BUCKETS: {
     AUTHOR: 'pageaters-authors',
     COLLECTIONS: 'pageaters-collections',
+    CATEGORIES: 'pageaters-categories',
     BOOK: 'storebooks'
   },
   VALID_FILE_TYPES: {

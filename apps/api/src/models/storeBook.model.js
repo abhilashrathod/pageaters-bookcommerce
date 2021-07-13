@@ -16,7 +16,7 @@ const schema = new Schema({
     version: { type: String, enum: Object.values(enums.BOOK_VERSIONS) },
     dimensions: { type: String, default: 0 },
     weight: { type: Number, default: 0 },
-    category: { type: Schema.Types.ObjectId, ref: models.CATEGORY },
+    categories: [{ type: Schema.Types.ObjectId, ref: models.CATEGORY }],
 
     ISBN: { type: String, default: '' },
     publicationYear: { type: String, default: '' },
