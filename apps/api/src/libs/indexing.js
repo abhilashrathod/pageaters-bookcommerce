@@ -9,6 +9,7 @@ const Books = mongoose.model(models.STORE_BOOK);
 const Authors = mongoose.model(models.AUTHOR);
 const Collections = mongoose.model(models.COLLECTION);
 const Categories = mongoose.model(models.CATEGORY);
+const Bundles = mongoose.model(models.BUNDLE);
 
 const indexBooks = (app) => {
   // index all books in lunr on startup
@@ -90,8 +91,8 @@ const indexCollections = (app) => {
       allCollections.forEach((collection) => {
         const doc = {
           title: collection.title,
-          description: collection.description,
           tags: collection.tags.join(', '),
+          description: collection.description,
           id: collection._id,
         };
         lunrIndex.add(doc);
@@ -134,6 +135,34 @@ const indexCategories = (app) => {
   });
 };
 
+const indexBundles = (app) => {
+  return new Promise(async (resolve, reject) => {
+    const allBundles = await Bundles.find({isDeleted: false});
+    // setup lunr indexing
+    const bundlesIndex = lunr(function() {
+      this.field('title', { boost: 10 });
+      this.field('tags', { boost: 5 });
+
+      const lunrIndex = this;
+
+      // add to lunr index
+      allBundles.forEach((bundle) => {
+        const doc = {
+          title: bundle.title,
+          tags: bundle.tags.join(', '),
+          id: bundle._id,
+        };
+        lunrIndex.add(doc);
+      });
+    });
+
+    app.bundlesIndex = bundlesIndex;
+    if (ENVIRONMENT !== 'test') {
+      console.log(colors.cyan('- Bundles indexing complete'));
+    }
+  });
+};
+
 // start indexing
 const runIndexing = (app) => {
   if (ENVIRONMENT !== 'test') {
@@ -145,6 +174,7 @@ const runIndexing = (app) => {
     indexAuthors(app),
     indexCollections(app),
     indexCategories(app),
+    indexBundles(app),
   ])
     .catch((err) => {
       console.info(colors.yellow('Error setting up indexes', err));

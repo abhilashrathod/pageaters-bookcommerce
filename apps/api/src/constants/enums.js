@@ -20,11 +20,13 @@ module.exports = {
     AUTHOR: 'AUTHOR',
     COLLECTION: 'COLLECTION',
     CATEGORY: 'CATEGORY',
+    BUNDLE: 'BUNDLE',
   },
   BUCKETS: {
     AUTHOR: 'pageaters-authors',
     COLLECTIONS: 'pageaters-collections',
     CATEGORIES: 'pageaters-categories',
+    BUNDLES: 'pageaters-bundles',
     BOOK: 'storebooks'
   },
   VALID_FILE_TYPES: {

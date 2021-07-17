@@ -14,6 +14,8 @@ const schema = new Schema({
     priority: { type: Number, default: 0 },
     popularity: { type: Number, default: 0 },
 
+    numberOfBooks: { type: Number, default: 0 },
+
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: String, default: '' },
   },

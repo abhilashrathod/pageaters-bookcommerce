@@ -73,11 +73,17 @@
 	"TOKEN_UNMATCHED": "User doesn't own this token and rights to account",
 	"PASSWORDS_DO_NOT_MATCH": "Passwords do not match",
 	"FILE_UPLOADED": "FILE_UPLOADED",
+
 	"BOOK_LIST_SUCCESS": "All book info listed",
-	"BOOK_CREATE_SUCCESS": "New Book Added to the Inventory",
-	"BOOK_SEARCH_SUCCESS": "Search Successful",
+	"BOOK_NOT_EXIST": "Book doesn't exist",
+	"BOOK_CREATE_SUCCESS": "New Book Created",
+	"BOOK_UPDATE_SUCCESS": "Book Information Updated",
+	"BOOK_SEARCH_SUCCESS": "Book Search Successful",
+	"BOOK_DELETE_SUCCESS": "Book Deleted Successfully",
+
 	"USER_LIST_SUCCESS": "User list success",
 	"USER_UPDATE_SUCCESS": "User Information Updated",
+
 	"AUTHOR_LIST_SUCCESS": "Author list success",
 	"AUTHOR_NOT_EXIST": "Author doesn't exist",
 	"AUTHOR_CREATE_SUCCESS": "New Author Created",
@@ -100,5 +106,12 @@
 	"CATEGORY_CREATE_SUCCESS": "New Category Created",
 	"CATEGORY_UPDATE_SUCCESS": "Category Information Updated",
 	"CATEGORY_SEARCH_SUCCESS": "Category Search Successful",
-	"CATEGORY_DELETE_SUCCESS": "Category Deleted Successfully"
+	"CATEGORY_DELETE_SUCCESS": "Category Deleted Successfully",
+
+	"BUNDLE_LIST_SUCCESS": "Bundle list success",
+	"BUNDLE_NOT_EXIST": "Bundle doesn't exist",
+	"BUNDLE_CREATE_SUCCESS": "New Bundle Created",
+	"BUNDLE_UPDATE_SUCCESS": "Bundle Information Updated",
+	"BUNDLE_SEARCH_SUCCESS": "Bundle Search Successful",
+	"BUNDLE_DELETE_SUCCESS": "Bundle Deleted Successfully"
 }

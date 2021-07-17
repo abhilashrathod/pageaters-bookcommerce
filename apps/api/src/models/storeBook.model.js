@@ -6,17 +6,19 @@ const { API_URL } = require('./../appConfig');
 const { enums, models } = require('./../constants');
 
 const schema = new Schema({
-    bookNo: { type: String, default: '' },
+    bookId: { type: String, default: '' },
     title: { type: String, default: '' },
+    tagline: { type: String, default: '' },
     author: { type: Schema.Types.ObjectId, ref: models.AUTHOR },
     description: { type: String, default: '' },
     tags: [{ type: String, default: '' }],
+
     language: { type: String, default: '' },
     pages: { type: Number, default: 0 },
     version: { type: String, enum: Object.values(enums.BOOK_VERSIONS) },
+
     dimensions: { type: String, default: 0 },
     weight: { type: Number, default: 0 },
-    categories: [{ type: Schema.Types.ObjectId, ref: models.CATEGORY }],
 
     ISBN: { type: String, default: '' },
     publicationYear: { type: String, default: '' },
@@ -35,21 +37,23 @@ const schema = new Schema({
 
     currentDiscount: { type: Number, default: 0 },
 
-    popularity: {type: Number, default: 0},
+    popularity: { type: Number, default: 0 },
 
+    categories: [{ type: Schema.Types.ObjectId, ref: models.CATEGORY }],
     relatedBooks: [{ type: Schema.Types.ObjectId, default: models.STORE_BOOK }],
-    partOfBundle: [{ type: Schema.Types.ObjectId, default: models.BUNDLE }],
+    relatedBundles: [{ type: Schema.Types.ObjectId, default: models.BUNDLE }],
+    relatedCollections: [{ type: Schema.Types.ObjectId, ref: models.COLLECTION }],
 
     price: { type: Number, default: 0 },
     rentPrice: { type: Number, default: 0 },
     membersPrice: { type: Number, default: 0 },
     membersRentPrice: { type: Number, default: 0 },
+
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: String, default: '' },
   },
   {
     timestamps: true,
-    toJSON: {
-      getters: true,
-    },
   },
 );
 

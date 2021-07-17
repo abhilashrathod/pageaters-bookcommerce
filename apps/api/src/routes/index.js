@@ -20,6 +20,7 @@ router.use('/public', require('./public.routes'));
 router.use('/private', require('./private.routes'));
 router.use('/file', require('./file.routes'));
 router.use('/books', require('./book.routes'));
+router.use('/bundles', require('./bundle.routes'));
 router.use('/admin', require('./admin.routes'));
 router.use('/users', require('./users.routes'));
 router.use('/store-books', require('./storeBooks.routes'));

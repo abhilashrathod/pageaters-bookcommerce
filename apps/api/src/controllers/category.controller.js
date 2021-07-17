@@ -13,7 +13,8 @@ module.exports.getAll = async (req, res) => {
 
     const options = {
       page,
-      limit
+      limit,
+      sort: {title: 1}
     };
 
     const author = await Category.paginate(query, options);
