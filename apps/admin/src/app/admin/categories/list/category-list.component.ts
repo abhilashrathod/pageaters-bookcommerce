@@ -28,6 +28,11 @@ export class CategoryListComponent implements OnInit {
       cell: (element) => `${element.title}`,
     },
     {
+      header: 'Numer of Books',
+      columnDef: 'numberOfBooks',
+      cell: (element) => `${element.numberOfBooks}`,
+    },
+    {
       header: 'Action',
       columnDef: 'action',
       cell: (element) => [...this.editResourceUrl, element._id],

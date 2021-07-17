@@ -10,6 +10,7 @@ import {BooksRoutingModule} from './books-routing.module';
 import {BooksListComponent} from './list/books-list.component';
 import {BookUpdateComponent} from './update/book-update.component';
 import {BookCreateComponent} from './create/book-create.component';
+import {AngularMultiSelectModule} from 'angular2-multiselect-dropdown';
 
 
 
@@ -21,6 +22,7 @@ import {BookCreateComponent} from './create/book-create.component';
     EntityTableModule,
     FormsModule,
     ReactiveFormsModule,
+    AngularMultiSelectModule,
     BooksRoutingModule,
   ],
   exports: [],

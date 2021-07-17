@@ -11,13 +11,18 @@ export class SidebarComponent implements OnInit {
   menuItems = [
     {
       icon: 'dashboard',
-      path: [],
+      path: ['/', 'admin', 'dashboard'],
       title: 'Dashboard'
     },
     {
       icon: 'book',
       path: ['/', 'admin', 'books'],
       title: 'Books'
+    },
+    {
+      icon: 'group_work',
+      path: ['/', 'admin', 'bundles'],
+      title: 'Bundles'
     },
     {
       icon: 'brush',

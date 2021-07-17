@@ -41,7 +41,7 @@ export class EntityTableComponent implements OnInit, AfterViewInit {
   @Output() onEmptyRecords = new EventEmitter<any>();
 
   dataSource = new MatTableDataSource();
-  filterObject: any = {
+  public filterObject = {
     limit: 25,
     page: 1,
   };
@@ -94,8 +94,7 @@ export class EntityTableComponent implements OnInit, AfterViewInit {
 
   onPageChange(event): void {
     this.filterObject.limit = event.pageSize;
-    this.filterObject.offset = this.filterObject.limit * event.pageIndex;
-    this.page = event.pageIndex;
+    this.filterObject.page = event.pageIndex + 1;
   }
 
   deleteRecord(row): void {

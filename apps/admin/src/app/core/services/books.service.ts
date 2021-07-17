@@ -45,6 +45,33 @@ export class BooksService {
   }
 
 
+  getById(id): Observable<any> {
+    const url = `${environment.BASE_PATH}/store-books/${id}`;
+    return this._http.get(url)
+      .pipe(
+        map((dt: IResponse) => dt.data),
+        catchError((err) => this.handleError(err))
+      );
+  }
+
+  getByUniqueId(id): Observable<any> {
+    const url = `${environment.BASE_PATH}/store-books/unique/${id}`;
+    return this._http.get(url)
+      .pipe(
+        map((dt: IResponse) => dt.data),
+        catchError((err) => this.handleError(err))
+      );
+  }
+
+
+  update(id, payload): Observable<any> {
+    const url = `${environment.BASE_PATH}/store-books/${id}`;
+    return this._http.put(url, payload)
+      .pipe(
+        map((dt: IResponse) => dt.data),
+        catchError((err) => this.handleError(err))
+      );
+  }
 
   handleError(err: any): any {
     return throwError(err.error);

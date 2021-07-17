@@ -21,6 +21,14 @@
   border-radius: 15px;
 }
 
+.thumbnail-container {
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  padding: 2.5rem;
+  display: flex;
+  justify-content: center;
+}
+
 .custom-dropdown {
   .c-btn {
     border: none !important;
