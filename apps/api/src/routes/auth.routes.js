@@ -25,13 +25,13 @@ router.delete('/me', permissionValidator(), requestValidator(validator.deleteAcc
 
 router.put('/password', permissionValidator(), requestValidator(validator.updatePassword), controller.updatePassword);
 
-router.post('/forgotPassword', requestValidator(validator.forgotPassword), controller.forgotPassword);
+router.post('/forgot-password', requestValidator(validator.forgotPassword), controller.forgotPassword);
 
-router.post('/resetPassword', requestValidator(validator.resetPassword), controller.resetPassword);
+router.post('/reset-password', requestValidator(validator.resetPassword), controller.resetPassword);
 
 router.get('/logout', permissionValidator(), controller.logout);
 
-router.post('/resendVerifyEmail', requestValidator(validator.resendVerificationEmail), controller.resendVerificationEmail);
+router.post('/resend-verify-email', requestValidator(validator.resendVerificationEmail), controller.resendVerificationEmail);
 
 router.get('/recoverAccount', permissionValidator(), controller.recoverAccount);
 

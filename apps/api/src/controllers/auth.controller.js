@@ -14,7 +14,7 @@ const RefreshTokens = mongoose.model(models.REFRESH_TOKEN);
 
 module.exports.register = async (req, res) => {
   try {
-    let { email, password, firstName, lastName } = req.allParams();
+    let { email, password } = req.allParams();
     const ipAddress = req.ip;
 
     const isEmailAvailable = await User.isEmailAvailable(email);
@@ -23,7 +23,7 @@ module.exports.register = async (req, res) => {
       return res.error('USER_ALREADY_REGISTERED');
     }
 
-    const user = await User.create({ email, firstName, lastName, role: enums.USER_ROLES.ADMIN, emailVerified: true, contactVerified: true, });
+    const user = await User.create({ email, role: enums.USER_ROLES.USER });
 
     await user.setPassword(password);
 
