@@ -113,5 +113,15 @@
 	"BUNDLE_CREATE_SUCCESS": "New Bundle Created",
 	"BUNDLE_UPDATE_SUCCESS": "Bundle Information Updated",
 	"BUNDLE_SEARCH_SUCCESS": "Bundle Search Successful",
-	"BUNDLE_DELETE_SUCCESS": "Bundle Deleted Successfully"
+	"BUNDLE_DELETE_SUCCESS": "Bundle Deleted Successfully",
+
+	"CART_LIST_SUCCESS": "Cart info fetched",
+	"CART_NOT_EXIST": "Cart doesn't exist",
+	"CART_CREATE_SUCCESS": "Cart Created",
+	"CART_UPDATE_SUCCESS": "Cart Information Updated",
+	"CART_SEARCH_SUCCESS": "Cart Search Successful",
+	"CART_DELETE_SUCCESS": "Cart Clear Successfully",
+	"CART_ADD_SUCCESS": "Product Added Successfully",
+
+	"INVALID_QUANTITY": "Requested quantity higher than available stock."
 }

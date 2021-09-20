@@ -4,13 +4,10 @@ const jwt = require('express-jwt');
 const { ENCRYPTION_KEY } = require('./../appConfig');
 const { models, enums } = require('./../constants');
 
-const { decrypt } = require('./../helpers/encryption.helper');
-
 const User = mongoose.model(models.USER);
 const RefreshToken = mongoose.model(models.REFRESH_TOKEN);
 
 const SELECTION_STRING = '-isDeleted -createdAt -updatedAt -salt -password -forgotPasswordToken -verifyEmailToken -forgotPasswordToken -lastPasswordSetAt -lastLoginAt -notifications -razorPayCustId';
-
 
 module.exports = (...permissionsRequired) => {
   return [

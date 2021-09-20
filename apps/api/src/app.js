@@ -58,8 +58,8 @@ this.app.use(i18n.init);
 this.app.use(require('./middlewares/extendReq.middleware'));
 
 // for indexing
-const { runIndexing } = require('./libs/indexing');
-runIndexing(this.app);
+// const { runIndexing } = require('./libs/indexing');
+// runIndexing(this.app);
 
 // Disable x-powered-by header
 this.app.disable('x-powered-by');
@@ -67,12 +67,13 @@ this.app.set('env', ENVIRONMENT);
 
 // Handle `OPTIONS` request.
 this.app.all('*', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Origin', 'http://localhost:2305');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
   res.header(
     'Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content-Type, Accept, Authorization, Accept-Language, x-client-id, x-client-secret, x-client-device',
   );
+  res.header('Access-Control-Allow-Credentials', 'true');
 
   if (req.method == 'OPTIONS') {
     return res.status(200).end();
@@ -93,7 +94,18 @@ this.app.use((req, res, next) => {
 this.app.use(compression({ threshold: 512 }));
 
 // enabling CORS for all routes.
-this.app.use(cors());
+// const corsOptions = {
+//   origin: true, //included origin as true
+//   credentials: true, //included credentials as true
+// };
+
+let whitelist = ['http://localhost:2305', undefined];
+
+let corsOptions = {
+  origin: true,
+  credentials: true,
+};
+this.app.use(cors(corsOptions));
 
 this.app.use(`/resources`, express.static(path.join(PROJECT_ROOT, 'resources')));
 
@@ -124,7 +136,7 @@ this.app.get('/', (req, res) => {
   return res.send({
     name: PROJECT_NAME,
     status: 'IT_WORKS',
-    message: 'This is not the api basepath though. Try looking a little deeper..',
+    message: 'API basepath works!',
   });
 });
 

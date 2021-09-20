@@ -36,10 +36,12 @@ const schema = new Schema(
       plan: {type: Schema.Types.ObjectId, ref: models.PLAN},
     },
 
-    rental: {
-      currentlyRented: {type: Schema.Types.ObjectId, ref: models.BOOK},
-      lastRentDate: { type: String, default: '' },
-    },
+    // rental: {
+    //   currentlyRented: {type: Schema.Types.ObjectId, ref: models.BOOK},
+    //   lastRentDate: { type: String, default: '' },
+    // },
+
+    cart: {type: Schema.Types.ObjectId, ref: models.CART},
 
     wishlist: [
       {type: Schema.Types.ObjectId, ref: models.STORE_BOOK}

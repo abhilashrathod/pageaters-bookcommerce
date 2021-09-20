@@ -16,6 +16,7 @@ module.exports.register = async (req, res) => {
   try {
     let { email, password } = req.allParams();
     const ipAddress = req.ip;
+    const cart = req.cookies.cart;
 
     const isEmailAvailable = await User.isEmailAvailable(email);
 
@@ -181,6 +182,8 @@ module.exports.revokeToken = async (req, res) => {
 module.exports.me = async (req, res) => {
   try {
     let { user } = req;
+
+    console.log("user", user);
 
     user = await User.getProfile(user.userId);
 
