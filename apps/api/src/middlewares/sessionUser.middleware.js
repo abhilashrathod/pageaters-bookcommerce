@@ -20,7 +20,7 @@ module.exports = (req, res, next) => {
     try {
       req.user = jwt.verify(token, ENCRYPTION_KEY);
     } catch (err) {
-      console.error('err', JSON.stringify(err));
+      // do nothing
     }
   }
 

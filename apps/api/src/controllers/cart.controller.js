@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { get } = require('lodash');
-const { generateRandomString } = require('../helpers/utils.helper');
+const { getId } = require('../helpers/utils.helper');
 const { models } = require('../constants');
 
 const Cart = mongoose.model(models.CART);
@@ -20,77 +20,106 @@ module.exports.retrieve = async (req, res) => {
     const cart = get(req, 'cookies.cart', '');
     const userId = get(req, 'user.userId', '');
 
-    console.log("cart", cart);
-    console.log("cookies", JSON.stringify(req.cookies));
+    if (userId) {
+      const userCart = await Cart.findOne({ user: userId });
+
+      if (userCart) {
+        return res.ok({ message: 'CART_LIST_SUCCESS', data: userCart });
+      } else {
+        const payload = {
+          user: userId,
+        };
+
+        const newUserCart = await Cart.create(payload);
+
+        const cookieOptions = {
+          httpOnly: true,
+        };
+        res.cookie('cart', newUserCart._id, cookieOptions);
+
+        return res.ok({ message: 'CART_LIST_SUCCESS', data: newUserCart });
+      }
+    }
 
     if (cart) {
-      console.info("inside in");
       const retrievedCart = await Cart.findOne({ _id: cart });
 
-      console.log("retrievedCart", retrievedCart);
-
       if (retrievedCart) {
-        console.info("inside if II");
         return res.ok({ message: 'CART_LIST_SUCCESS', data: retrievedCart });
+      } else {
+        const payload = {
+          user: null,
+        };
+
+        const newUserCart = await Cart.create(payload);
+
+        const cookieOptions = {
+          httpOnly: true,
+        };
+        res.cookie('cart', newUserCart._id, cookieOptions);
+
+        return res.ok({ message: 'CART_LIST_SUCCESS', data: newUserCart });
       }
-
-      return res.ok({ message: 'CART_NOT_EXIST', data: {} });
     }
-    else {
-      const payload = {
-        user: userId ? userId : null,
-      };
 
-      const newUserCart = await Cart.create(payload);
+    return res.ok({ message: 'CART_NOT_EXIST', data: {} });
 
-      const cookieOptions = {
-        httpOnly: true,
-      };
-
-      await res.cookie('cart', newUserCart._id, cookieOptions);
-
-      return res.ok({ message: 'CART_LIST_SUCCESS', data: newUserCart });
-    }
   } catch (e) {
-    console.log('e', JSON.stringify(e));
-    console.trace("trace it man!");
-    // return res.internalServerError(e);
+    return res.internalServerError(e);
   }
 };
 
 module.exports.add = async (req, res) => {
   try {
     const { cart } = req.cookies;
-    const { product, quantity } = req.allParams();
+    let { product, quantity } = req.allParams();
 
     if (!cart) return res.error('CART_NOT_EXIST');
 
-    const isCart = await Cart.findOne({ _id: cart });
+    let currentCart = await Cart.findOne({ _id: cart });
+    if (!currentCart) return res.error('CART_NOT_EXIST');
 
-    if (!isCart) return res.error('CART_NOT_EXIST');
+    currentCart = currentCart.toObject();
 
-    const book = await Book.findOne({ _id: product }).select('price inventory');
-
+    let book = await Book.findOne({ _id: product }).select('price inventory');
     if (!book) return res.error('BOOK_NOT_EXIST');
 
-    if (quantity > book.inventory) return res.error('INVALID_QUANTITY');
+    book = book.toObject();
 
-    const addedBook = {
-      product,
-      quantity,
-      price: book.price,
-      productTotal: book.price * quantity,
-      addedOn: new Date(),
-    };
+    // check if product is already in the cart then increase the quantity if available
+    const alreadyThere = currentCart.products.find(x => x.product.toString() === product.toString());
 
-    const updatedCart = await Cart.findOneAndUpdate({ _id: cart }, {
-      $addToSet: {
-        products: addedBook,
-      },
-    }, { new: true });
+    if (alreadyThere) {
+      quantity = alreadyThere.quantity + quantity; // add upcoming and already exist qty to check final quantity is available.
 
-    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: updatedCart });
+      if (quantity > book.inventory) return res.error('INVALID_QUANTITY');
 
+      const query = { _id: cart, "products.product": getId(product)};
+      const update = {$set: {"products.$.quantity": quantity}};
+      const options = {new : true};
+
+      const updatedCart = await Cart.findOneAndUpdate(query, update, options);
+
+      return res.ok({ message: 'CART_UPDATE_SUCCESS', data: updatedCart });
+    } else {
+      if (quantity > book.inventory) return res.error('INVALID_QUANTITY');
+
+      const addedBook = {
+        product,
+        quantity,
+        price: book.price,
+        productTotal: book.price * quantity,
+        addedOn: new Date(),
+      };
+
+      const updatedCart = await Cart.findOneAndUpdate({ _id: cart }, {
+        $addToSet: {
+          products: addedBook,
+        },
+      }, { new: true });
+
+      return res.ok({ message: 'CART_UPDATE_SUCCESS', data: updatedCart });
+    }
   } catch (e) {
     return res.internalServerError(e);
   }
