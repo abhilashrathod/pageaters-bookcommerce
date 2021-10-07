@@ -6,64 +6,50 @@ const { models } = require('../constants');
 const Cart = mongoose.model(models.CART);
 const Book = mongoose.model(models.STORE_BOOK);
 
-module.exports.create = async (req, res) => {
-  try {
-
-    return res.ok();
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
 module.exports.retrieve = async (req, res) => {
   try {
     const cart = get(req, 'cookies.cart', '');
     const userId = get(req, 'user.userId', '');
+    const populate = {
+      path: 'products.product',
+      select: 'bookId title poster author currentDiscount price',
+      populate: {
+        path: 'author',
+        select: 'name avatar'
+      }
+    };
 
     if (userId) {
-      const userCart = await Cart.findOne({ user: userId });
+      let userCart = await Cart.findOne({ user: userId }).populate(populate);
 
       if (userCart) {
+        userCart = userCart.toObject();
+        res.cookie('cart', userCart._id, { httpOnly: true });
+        userCart.subTotal = await calculateTotal(userCart.products);
         return res.ok({ message: 'CART_LIST_SUCCESS', data: userCart });
       } else {
-        const payload = {
-          user: userId,
-        };
-
-        const newUserCart = await Cart.create(payload);
-
-        const cookieOptions = {
-          httpOnly: true,
-        };
-        res.cookie('cart', newUserCart._id, cookieOptions);
-
+        const newUserCart = await Cart.create({ user: userId });
+        res.cookie('cart', newUserCart._id, { httpOnly: true });
         return res.ok({ message: 'CART_LIST_SUCCESS', data: newUserCart });
       }
     }
 
     if (cart) {
-      const retrievedCart = await Cart.findOne({ _id: cart });
+      let retrievedCart = await Cart.findOne({ _id: cart }).populate(populate);
 
       if (retrievedCart) {
+        retrievedCart = retrievedCart.toObject();
+        res.cookie('cart', retrievedCart._id, { httpOnly: true });
+        retrievedCart.subTotal = await calculateTotal(retrievedCart.products);
         return res.ok({ message: 'CART_LIST_SUCCESS', data: retrievedCart });
       } else {
-        const payload = {
-          user: null,
-        };
-
-        const newUserCart = await Cart.create(payload);
-
-        const cookieOptions = {
-          httpOnly: true,
-        };
-        res.cookie('cart', newUserCart._id, cookieOptions);
-
+        const newUserCart = await Cart.create({ user: null });
+        res.cookie('cart', newUserCart._id, { httpOnly: true });
         return res.ok({ message: 'CART_LIST_SUCCESS', data: newUserCart });
       }
     }
 
     return res.ok({ message: 'CART_NOT_EXIST', data: {} });
-
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -94,9 +80,9 @@ module.exports.add = async (req, res) => {
 
       if (quantity > book.inventory) return res.error('INVALID_QUANTITY');
 
-      const query = { _id: cart, "products.product": getId(product)};
-      const update = {$set: {"products.$.quantity": quantity}};
-      const options = {new : true};
+      const query = { _id: cart, 'products.product': getId(product) };
+      const update = { $set: { 'products.$.quantity': quantity } };
+      const options = { new: true };
 
       const updatedCart = await Cart.findOneAndUpdate(query, update, options);
 
@@ -107,8 +93,6 @@ module.exports.add = async (req, res) => {
       const addedBook = {
         product,
         quantity,
-        price: book.price,
-        productTotal: book.price * quantity,
         addedOn: new Date(),
       };
 
@@ -124,10 +108,60 @@ module.exports.add = async (req, res) => {
     return res.internalServerError(e);
   }
 };
+
 module.exports.update = async (req, res) => {
+  try {
+    const { cart } = req.cookies;
+    let { id, quantity } = req.allParams();
+
+    if (!cart) return res.error('CART_NOT_EXIST');
+
+    let currentCart = await Cart.findOne({ _id: cart });
+    if (!currentCart) return res.error('CART_NOT_EXIST');
+
+    let book = await Book.findOne({ _id: id }).select('price inventory');
+    if (!book) return res.error('BOOK_NOT_EXIST');
+
+    book = book.toObject();
+
+    if (quantity > book.inventory) return res.error('INVALID_QUANTITY');
+
+    const query = { _id: cart, 'products.product': getId(id) };
+    const update = { $set: { 'products.$.quantity': quantity } };
+    const options = { new: true };
+
+    const updatedCart = await Cart.findOneAndUpdate(query, update, options);
+    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: updatedCart });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
 };
+
 module.exports.remove = async (req, res) => {
+  try {
+    const { cart } = req.cookies;
+    let { id } = req.allParams(); // id is the productObjectId
+
+    if (!cart) return res.error('CART_NOT_EXIST');
+
+    let currentCart = await Cart.findOne({ _id: cart });
+    if (!currentCart) return res.error('CART_NOT_EXIST');
+
+    let book = await Book.findOne({ _id: id });
+    if (!book) return res.error('BOOK_NOT_EXIST');
+
+    const query = { _id: cart };
+    const update = { $pull: { 'products': { product: id } } };
+    const options = { new: true };
+
+    const updatedCart = await Cart.findOneAndUpdate(query, update, options);
+
+    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: updatedCart });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
 };
+
 module.exports.clear = async (req, res) => {
   try {
     // revoke cart
@@ -142,3 +176,49 @@ module.exports.clear = async (req, res) => {
     return res.internalServerError(e);
   }
 };
+
+module.exports.empty = async (req, res) => {
+  try {
+    const { cart } = req.cookies;
+    if (!cart) return res.error('CART_NOT_EXIST');
+
+    let currentCart = await Cart.findOne({ _id: cart });
+    if (!currentCart) return res.error('CART_NOT_EXIST');
+
+    const query = { _id: cart };
+    const update = { $set: { products: [] } };
+    const options = { new: true };
+
+
+    const updatedCart = await Cart.findOneAndUpdate(query, update, options);
+
+    res.ok({ message: 'CART_DELETE_SUCCESS', data: updatedCart });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+async function calculateTotal(books) {
+  try {
+
+    let total = 0;
+
+    if (books.length === 0) {
+      return total;
+    }
+
+    for (let book of books) {
+      const bookRes = await Book.findOne({
+        isDeleted: false,
+        _id: book.product,
+      }).select('currentDiscount price membersPrice');
+      book.productTotal = book.quantity * (bookRes.price - ((bookRes.currentDiscount * bookRes.price) / 100));
+      book.price = bookRes.price;
+      total = total + Math.floor(book.productTotal);
+    }
+
+    return total;
+  } catch (e) {
+    return 0;
+  }
+}

@@ -7,10 +7,8 @@ const schema = new Schema({
     user: { type: Schema.Types.ObjectId, ref: models.USER }, // can be blank for non-registered user and object for registered user
     products: [{
       quantity: { type: Number, default: 1 },
-      price: { type: Number, default: 1 },
       addedOn: { type: String, default: '' },
       product: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
-      productTotal: { type: Number, default: 1 },
     }],
     rentals: [{
       quantity: { type: Number, default: 1 },
