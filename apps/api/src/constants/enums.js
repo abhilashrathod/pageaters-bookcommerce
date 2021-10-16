@@ -38,8 +38,8 @@ module.exports = {
     MISCELLANEOUS: 'MISCELLANEOUS',
   },
   ADDRESS_TYPES: {
-    HOME: 'home',
-    OFFICE: 'office',
+    HOME: 'HOME',
+    OFFICE: 'OFFICE',
   },
   DISCOUNT_TYPES: {
      CUSTOMER: 'customer',
@@ -83,5 +83,8 @@ module.exports = {
     COMPLETED: 'completed',
     EXPIRED: 'expired',
   },
-
+  SUBSCRIPTION_PERIODS: {
+    MONTHLY: 'monthly',
+    YEARLY: 'yearly',
+  },
 };

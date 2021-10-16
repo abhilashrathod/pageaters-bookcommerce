@@ -11,14 +11,17 @@ const schema = new Schema({
 
     fullName: { type: 'String', default: '' },
     contactNo: { type: 'String', default: '' },
+    email: { type: String, default: '' },
     pinCode: { type: 'String', default: '' },
 
     addressLine1: { type: 'String', default: '' },
     addressLine2: { type: 'String', default: '' },
     landmark: { type: 'String', default: '' },
 
-    deliveryInstructions: { type: 'String', default: '' },
     type: { type: String, enum: Object.values(enums.ADDRESS_TYPES), default: enums.ADDRESS_TYPES.HOME },
+
+    isDeleted: {type: Boolean, default: false},
+    deletedAt: {type: String, default: ''},
   },
   {
     timestamps: true,

@@ -19,8 +19,8 @@ module.exports = {
   STORE_BOOK: 'storeBook',
   BUNDLE: 'bundle',
   AUTHOR: 'author',
-  PLAN: 'plan',
   DISCOUNT: 'discount',
   REFRESH_TOKEN: 'refresh_token',
   SUBSCRIBER: 'subscriber',
+  SUBSCRIPTION_PLANS: 'subscription_plan',
 };

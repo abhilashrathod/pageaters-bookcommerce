@@ -10,33 +10,24 @@ const controller = require('./../controllers/auth.controller');
 const validator = require('./../validators/auth.validator');
 
 router.post('/register', requestValidator(validator.registerPayload), controller.register);
-
 router.get('/verify-email', requestValidator(validator.verifyEmail), controller.verifyEmail);
-
 router.post('/login', requestValidator(validator.login), controller.login);
-
 router.post('/refresh-token', controller.refreshToken);
 router.get('/revoke-token', permissionValidator(), requestValidator(validator.revokeValidation), controller.revokeToken);
-
 router.get('/me', permissionValidator(USER_ROLES.USER), controller.me);
 router.put('/me', permissionValidator(), requestValidator(validator.updateProfile), controller.updateProfile);
-
 router.delete('/me', permissionValidator(), requestValidator(validator.deleteAccount), controller.deleteAccount);
-
 router.put('/password', permissionValidator(), requestValidator(validator.updatePassword), controller.updatePassword);
-
 router.post('/forgot-password', requestValidator(validator.forgotPassword), controller.forgotPassword);
-
 router.post('/reset-password', requestValidator(validator.resetPassword), controller.resetPassword);
-
 router.get('/logout', permissionValidator(), controller.logout);
-
 router.post('/resend-verify-email', requestValidator(validator.resendVerificationEmail), controller.resendVerificationEmail);
-
 router.get('/recoverAccount', permissionValidator(), controller.recoverAccount);
-
 router.put('/avatar', permissionValidator(), controller.updateAvatar);
-
 router.put('/fcmtoken', permissionValidator(), requestValidator(validator.updateFcmToken), controller.updateFcmToken);
+
+/* SUBSCRIPTION */
+
+
 
 module.exports = router;

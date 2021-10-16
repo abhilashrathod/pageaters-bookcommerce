@@ -29,5 +29,7 @@ router.use('/categories', require('./category.routes'));
 router.use('/collections', require('./collection.routes'));
 router.use('/subscribers', require('./subscriber.route'));
 router.use('/cart', require('./cart.routes'));
+router.use('/subscription-plan', require('./subscriptionPlan.routes'));
+router.use('/addresses', require('./address.routes'));
 
 module.exports = router;

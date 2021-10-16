@@ -9,6 +9,8 @@ module.exports = {
   ENCRYPTION_KEY: config.get('ENCRYPTION_KEY') || '',
   FCM_SERVER_KEY: config.get('FCM_SERVER_KEY') || '',
   AWS: config.get('AWS') || {},
+  TWILIO: config.get('TWILIO') || {},
+  DELHIVERY: config.get('DELHIVERY') || {},
   ENABLE_CRON: config.get('ENABLE_CRON'),
   SENDGRID_API_KEY: config.get('SENDGRID_API_KEY') || '',
   NO_REPLY_EMAIL: config.get('NO_REPLY_EMAIL') || '',

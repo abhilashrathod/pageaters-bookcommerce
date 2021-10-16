@@ -25,6 +25,7 @@ const schema = new Schema(
     verifyEmailToken: { type: String, default: '' },
     emailVerified: { type: Boolean, default: false },
     contactVerified: { type: Boolean, default: false },
+    contactOtp: { type: String, default: '' },
 
     forgotPasswordToken: { type: String, default: '' },
     lastPasswordSetAt: { type: String, default: '' },
@@ -33,13 +34,13 @@ const schema = new Schema(
 
     subscription: {
       isActive: { type: Boolean, default: false },
-      plan: {type: Schema.Types.ObjectId, ref: models.PLAN},
+      plan: {type: Schema.Types.ObjectId, ref: models.SUBSCRIPTION_PLANS},
     },
 
-    // rental: {
-    //   currentlyRented: {type: Schema.Types.ObjectId, ref: models.BOOK},
-    //   lastRentDate: { type: String, default: '' },
-    // },
+    rental: [{
+      currentlyRented: {type: Schema.Types.ObjectId, ref: models.STORE_BOOK},
+      lastRentDate: { type: String, default: '' },
+    }],
 
     cart: {type: Schema.Types.ObjectId, ref: models.CART},
 

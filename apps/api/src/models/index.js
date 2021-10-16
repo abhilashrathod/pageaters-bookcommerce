@@ -16,3 +16,4 @@ require('./categories.model');
 require('./collection.model');
 require('./subscribers.model');
 require('./cart.model');
+require('./subscriptionPlan.model');

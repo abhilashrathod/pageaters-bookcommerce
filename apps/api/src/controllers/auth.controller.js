@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const moment = require('moment');
 const path = require('path');
 
-const { HOST, PROJECT_ROOT } = require('./../appConfig');
+const { HOST, PROJECT_ROOT, TWILIO } = require('./../appConfig');
 const { models, enums } = require('../constants');
 
 const { encrypt, decrypt, generateJwtToken, generateRefreshToken } = require('../helpers/encryption.helper');
@@ -11,6 +11,7 @@ const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const User = mongoose.model(models.USER);
 const RefreshTokens = mongoose.model(models.REFRESH_TOKEN);
+const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
 
 module.exports.register = async (req, res) => {
   try {
@@ -173,7 +174,7 @@ module.exports.revokeToken = async (req, res) => {
     };
     res.cookie('refreshToken', '', cookieOptions);
 
-    return res.ok({ message: 'TOKEN_REVOKED', data: {}});
+    return res.ok({ message: 'TOKEN_REVOKED', data: {} });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -182,8 +183,6 @@ module.exports.revokeToken = async (req, res) => {
 module.exports.me = async (req, res) => {
   try {
     let { user } = req;
-
-    console.log("user", user);
 
     user = await User.getProfile(user.userId);
 
@@ -514,6 +513,26 @@ module.exports.updateFcmToken = async (req, res) => {
     await Device.create({ deviceId, fcmToken, source, userId: user._id });
 
     return res.ok('TOKEN_UPDATED');
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+/* TEMMO */
+
+module.exports.sms = async (req, res) => {
+  try {
+    let { phone } = req.allParams();
+
+    const payload = {
+      body: 'This is just a test to test you!',
+      from: TWILIO.PHONE,
+      to: phone,
+    };
+
+    const success = await twilioClient.messages.create(payload);
+
+    return res.ok({ message: 'ME_SUCCESS', data: success });
   } catch (e) {
     return res.internalServerError(e);
   }

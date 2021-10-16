@@ -101,6 +101,7 @@
 	"SUBSCRIBER_EXIST": "This email is already in the waitlist. Thank you!",
 	"EMAIL_VERIFICATION_PENDING": "EMAIL_VERIFICATION_PENDING",
 	"NO_AUTH_HEADER": "NO_AUTH_HEADER",
+
 	"CATEGORY_LIST_SUCCESS": "Category list success",
 	"CATEGORY_NOT_EXIST": "Category doesn't exist",
 	"CATEGORY_CREATE_SUCCESS": "New Category Created",
@@ -122,6 +123,21 @@
 	"CART_SEARCH_SUCCESS": "Cart Search Successful",
 	"CART_DELETE_SUCCESS": "Cart Clear Successfully",
 	"CART_ADD_SUCCESS": "Product Added Successfully",
+
+	"PLAN_LIST_SUCCESS": "Plan list success",
+	"PLAN_NOT_EXIST": "Plan doesn't exist",
+	"PLAN_CREATE_SUCCESS": "Plan Created",
+	"PLAN_UPDATE_SUCCESS": "Plan Information Updated",
+	"PLAN_DELETE_SUCCESS": "Plan Deleted Successfully",
+
+	"ADDRESS_LIST_SUCCESS": "Address list success",
+	"ADDRESS_NOT_EXIST": "Address doesn't exist",
+	"ADDRESS_CREATE_SUCCESS": "Address Created",
+	"ADDRESS_UPDATE_SUCCESS": "Address Information Updated",
+	"ADDRESS_DELETE_SUCCESS": "Address Deleted Successfully",
+	"PINCODE_SUCCESS": "Pincode information fetched",
+	"PINCODE_ERROR": "Pincode not serviceable",
+
 
 	"INVALID_QUANTITY": "Requested quantity higher than available stock."
 }
