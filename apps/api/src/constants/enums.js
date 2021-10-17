@@ -55,6 +55,7 @@ module.exports = {
   BOOK_VERSIONS: {
     HARDCOVER: 'hardcover',
     PAPERBACK: 'paperback',
+    MASS_MARKET: 'mass_market',
   },
   NOTIFICATION_STATUS: {
     WAITING_FOR_DELIVERY: 'WAITING_FOR_DELIVERY',
@@ -71,7 +72,14 @@ module.exports = {
   ORDER_STAGES: {
     CREATED: 'created',
     ATTEMPTED: 'attempted',
-    PAID: 'paid'
+    PAID: 'paid',
+    SHIPPED: 'shipped',
+  },
+  ORDER_TYPES: {
+    HYBRID: 'hybrid',
+    PURCHASE: 'purchase',
+    RENTAL: 'rental',
+    SUBSCRIPTION: 'subscription'
   },
   SUBSCRIPTION_STATUSES: {
     CREATED: 'created',

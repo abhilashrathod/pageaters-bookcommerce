@@ -1,0 +1,57 @@
+const { Schema, model } = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
+
+const { models, enums } = require('./../constants');
+
+const schema = new Schema({
+    user: { type: Schema.Types.ObjectId, ref: models.USER },
+    orderId: { type: String, default: '' },
+
+    razorOrderId: { type: String, default: '' },
+    razorPaymentId: { type: String, default: '' },
+
+    type: { type: String, enum: Object.values(enums.ORDER_TYPES), default: '' },
+
+    deliveryInstructions: { type: String, default: '' },
+    deliveryAddress: { type: Schema.Types.ObjectId, ref: models.ADDRESS },
+    shipmentTrackingId: { type: String, default: '' },
+
+    orderStatus: {type: String, enum: Object.values(enums.ORDER_STAGES), default: ''},
+    payment: {type: Schema.Types.Mixed, default: ''},
+    transaction: {type: Schema.Types.Mixed, default: ''},
+
+    products: [{
+      quantity: { type: Number, default: 1 },
+      price: { type: Number, default: 1 },
+      discount: { type: Number, default: 0 },
+      productTotal: { type: Number, default: 1 },
+      product: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
+    }],
+
+    rentals: [{
+      quantity: { type: Number, default: 1 },
+      product: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
+    }],
+
+    giftCard: { type: Schema.Types.ObjectId, ref: models.GIFT_CARD, default: null },
+    discount: { type: Schema.Types.ObjectId, ref: models.DISCOUNT, default: null },
+
+
+
+    subTotal: { type: Number, default: 0 },
+    shipping: { type: Number, default: 0 },
+    discountAmount: { type: Number, default: 0 },
+    total: { type: Number, default: 0 },
+
+  },
+  {
+    timestamps: true,
+    toJSON: {
+      getters: true,
+    },
+  },
+);
+
+schema.plugin(mongoosePaginate);
+
+module.exports = model(models.ORDER, schema);

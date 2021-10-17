@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { get } = require('lodash');
 const { getId } = require('../helpers/utils.helper');
+const { calculateTotal } = require('../helpers/cart.helper');
 const { models } = require('../constants');
 
 const Cart = mongoose.model(models.CART);
@@ -10,13 +11,17 @@ module.exports.retrieve = async (req, res) => {
   try {
     const cart = get(req, 'cookies.cart', '');
     const userId = get(req, 'user.userId', '');
+
+    console.log("cart", cart);
+    console.log("userId", userId);
+
     const populate = {
       path: 'products.product',
       select: 'bookId title poster author currentDiscount price',
       populate: {
         path: 'author',
-        select: 'name avatar'
-      }
+        select: 'name avatar',
+      },
     };
 
     if (userId) {
@@ -28,9 +33,7 @@ module.exports.retrieve = async (req, res) => {
         userCart.subTotal = await calculateTotal(userCart.products);
         return res.ok({ message: 'CART_LIST_SUCCESS', data: userCart });
       } else {
-        const newUserCart = await Cart.create({ user: userId });
-        res.cookie('cart', newUserCart._id, { httpOnly: true });
-        return res.ok({ message: 'CART_LIST_SUCCESS', data: newUserCart });
+        return res.ok({ message: 'CART_NOT_EXIST', data: {} });
       }
     }
 
@@ -43,13 +46,17 @@ module.exports.retrieve = async (req, res) => {
         retrievedCart.subTotal = await calculateTotal(retrievedCart.products);
         return res.ok({ message: 'CART_LIST_SUCCESS', data: retrievedCart });
       } else {
-        const newUserCart = await Cart.create({ user: null });
-        res.cookie('cart', newUserCart._id, { httpOnly: true });
-        return res.ok({ message: 'CART_LIST_SUCCESS', data: newUserCart });
+        return res.ok({ message: 'CART_NOT_EXIST', data: {} });
       }
     }
 
-    return res.ok({ message: 'CART_NOT_EXIST', data: {} });
+    const cartCreatePayload = {
+      user: userId ? userId : null,
+    };
+
+    const newUserCart = await Cart.create(cartCreatePayload);
+    res.cookie('cart', newUserCart._id, { httpOnly: true });
+    return res.ok({ message: 'CART_LIST_SUCCESS', data: newUserCart });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -197,28 +204,3 @@ module.exports.empty = async (req, res) => {
     return res.internalServerError(e);
   }
 };
-
-async function calculateTotal(books) {
-  try {
-
-    let total = 0;
-
-    if (books.length === 0) {
-      return total;
-    }
-
-    for (let book of books) {
-      const bookRes = await Book.findOne({
-        isDeleted: false,
-        _id: book.product,
-      }).select('currentDiscount price membersPrice');
-      book.productTotal = book.quantity * (bookRes.price - ((bookRes.currentDiscount * bookRes.price) / 100));
-      book.price = bookRes.price;
-      total = total + Math.floor(book.productTotal);
-    }
-
-    return total;
-  } catch (e) {
-    return 0;
-  }
-}

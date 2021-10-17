@@ -107,7 +107,18 @@ module.exports.login = async (req, res) => {
 module.exports.refreshToken = async (req, res) => {
   try {
     const token = req.cookies.refreshToken;
+    const authHeader = req.get('authorization');
     const ipAddress = req.ip;
+
+    // if (!authHeader) {
+    //   console.log("No Auth Header");
+    //   return res.ok();
+    // }
+
+    if (!token) {
+      console.log("No Token");
+     return res.ok();
+    }
 
     const refreshToken = await RefreshTokens.findOne({ token });
 

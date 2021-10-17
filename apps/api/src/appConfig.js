@@ -9,6 +9,7 @@ module.exports = {
   ENCRYPTION_KEY: config.get('ENCRYPTION_KEY') || '',
   FCM_SERVER_KEY: config.get('FCM_SERVER_KEY') || '',
   AWS: config.get('AWS') || {},
+  RAZOR_PAY: config.get('RAZOR_PAY') || {},
   TWILIO: config.get('TWILIO') || {},
   DELHIVERY: config.get('DELHIVERY') || {},
   ENABLE_CRON: config.get('ENABLE_CRON'),
@@ -19,8 +20,5 @@ module.exports = {
   AVAILABLE_LOCALES: config.get('AVAILABLE_LOCALES') || '',
   HOST: config.get('HOST') || '',
   API_URL: config.get('API_URL') || '',
-  RAZOR_PAY_BASE_URL: config.get('RAZOR_PAY_BASE_URL') || '',
-  RAZOR_PAY_USER_ID:  config.get('RAZOR_PAY_USER_ID') || '',
-  RAZOR_PAY_PASSWORD: config.get('RAZOR_PAY_PASSWORD') || '',
   DELETE_ACCOUNT_DATA_AFTER: config.get('DELETE_ACCOUNT_DATA_AFTER') || '',
 };

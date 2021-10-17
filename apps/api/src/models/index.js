@@ -17,3 +17,6 @@ require('./collection.model');
 require('./subscribers.model');
 require('./cart.model');
 require('./subscriptionPlan.model');
+require('./giftCard.model');
+require('./order.model');
+

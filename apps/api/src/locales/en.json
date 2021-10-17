@@ -138,6 +138,11 @@
 	"PINCODE_SUCCESS": "Pincode information fetched",
 	"PINCODE_ERROR": "Pincode not serviceable",
 
+	"ORDER_LIST_SUCCESS": "Order list success",
+	"ORDER_NOT_EXIST": "Order doesn't exist",
+	"ORDER_CREATE_SUCCESS": "Order Created",
+	"ORDER_UPDATE_SUCCESS": "Order Information Updated",
+	"ORDER_DELETE_SUCCESS": "Order Deleted Successfully",
 
 	"INVALID_QUANTITY": "Requested quantity higher than available stock."
 }

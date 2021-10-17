@@ -1,14 +1,12 @@
 const mongoose = require('mongoose');
 const axios = require('axios');
 const {merge} = require('lodash');
-const Razorpay = require('razorpay');
+
 const { generateRandomNumber, getId } = require('../helpers/utils.helper');
 
 const { models, enums } = require('../constants');
-const { RAZOR_PAY_PASSWORD, RAZOR_PAY_USER_ID } = require('../appConfig');
 const Plan = mongoose.model(models.SUBSCRIPTION_PLANS);
 
-const razorPayInstance = new Razorpay({ key_id: RAZOR_PAY_USER_ID, key_secret: RAZOR_PAY_PASSWORD });
 
 module.exports.getAll = async (req, res) => {
   try {

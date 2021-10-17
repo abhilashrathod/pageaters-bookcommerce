@@ -20,6 +20,7 @@ module.exports = {
   BUNDLE: 'bundle',
   AUTHOR: 'author',
   DISCOUNT: 'discount',
+  GIFT_CARD: 'gift_card',
   REFRESH_TOKEN: 'refresh_token',
   SUBSCRIBER: 'subscriber',
   SUBSCRIPTION_PLANS: 'subscription_plan',

@@ -31,5 +31,6 @@ router.use('/subscribers', require('./subscriber.route'));
 router.use('/cart', require('./cart.routes'));
 router.use('/subscription-plan', require('./subscriptionPlan.routes'));
 router.use('/addresses', require('./address.routes'));
+router.use('/orders', require('./order.routes'));
 
 module.exports = router;
