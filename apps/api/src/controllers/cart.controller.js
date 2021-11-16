@@ -32,8 +32,6 @@ module.exports.retrieve = async (req, res) => {
         res.cookie('cart', userCart._id, { httpOnly: true });
         userCart.subTotal = await calculateTotal(userCart.products);
         return res.ok({ message: 'CART_LIST_SUCCESS', data: userCart });
-      } else {
-        return res.ok({ message: 'CART_NOT_EXIST', data: {} });
       }
     }
 
@@ -45,8 +43,6 @@ module.exports.retrieve = async (req, res) => {
         res.cookie('cart', retrievedCart._id, { httpOnly: true });
         retrievedCart.subTotal = await calculateTotal(retrievedCart.products);
         return res.ok({ message: 'CART_LIST_SUCCESS', data: retrievedCart });
-      } else {
-        return res.ok({ message: 'CART_NOT_EXIST', data: {} });
       }
     }
 

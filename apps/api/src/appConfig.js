@@ -10,6 +10,7 @@ module.exports = {
   FCM_SERVER_KEY: config.get('FCM_SERVER_KEY') || '',
   AWS: config.get('AWS') || {},
   RAZOR_PAY: config.get('RAZOR_PAY') || {},
+  RAZOR_PAY_WEBHOOKS: config.get('RAZOR_PAY_WEBHOOKS') || {},
   TWILIO: config.get('TWILIO') || {},
   DELHIVERY: config.get('DELHIVERY') || {},
   ENABLE_CRON: config.get('ENABLE_CRON'),

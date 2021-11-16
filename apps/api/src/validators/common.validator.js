@@ -41,6 +41,10 @@ module.exports.lastName = Joi.string()
   .allow('')
   .error(new Error('INVALID_LAST_NAME'));
 
+module.exports.fullName = Joi.string()
+  .allow('')
+  .error(new Error('INVALID_NAME'));
+
 module.exports.name = Joi.string()
   .allow('')
   .error(new Error('INVALID_NAME'));

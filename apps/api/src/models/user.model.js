@@ -9,8 +9,7 @@ const { enums, models } = require('./../constants');
 
 const schema = new Schema(
   {
-    firstName: { type: String, default: '' },
-    lastName: { type: String, default: '' },
+    fullName: { type: String, default: '' },
 
     email: { type: String, default: '' },
     contactNo: { type: String, default: '' },
@@ -23,11 +22,14 @@ const schema = new Schema(
     isDeleted: { type: Boolean, default: false },
 
     verifyEmailToken: { type: String, default: '' },
+    lastVerifyEmailSentOn: { type: String, default: '' },
     emailVerified: { type: Boolean, default: false },
+
     contactVerified: { type: Boolean, default: false },
     contactOtp: { type: String, default: '' },
 
     forgotPasswordToken: { type: String, default: '' },
+    lastForgotPasswordSentOn: { type: String, default: '' },
     lastPasswordSetAt: { type: String, default: '' },
 
     lastLoginAt: { type: String, default: '' },
@@ -58,6 +60,7 @@ const schema = new Schema(
     },
 
     razorPayCustId: { type: 'String', default: '' }, // cust_1Aa00000000004
+    currentOrder: {type: Schema.Types.ObjectId, ref: models.ORDER},
 
     __v: { type: Number, select: false },
   },
@@ -78,7 +81,7 @@ class User {
 
   static async getProfile(userId) {
     const user = await this.findById(userId).select(
-      '-isDeleted -createdAt -updatedAt -salt -password -forgotPasswordToken -verifyEmailToken -forgotPasswordToken -lastPasswordSetAt -lastLoginAt -notifications -razorPayCustId',
+      '-isDeleted -createdAt -updatedAt -role -salt -password -status -forgotPasswordToken -verifyEmailToken -lastVerifyEmailSentOn -contactOtp -forgotPasswordToken -lastForgotPasswordSentOn -lastPasswordSetAt -lastLoginAt -notifications -razorPayCustId',
     );
 
     return user;
@@ -109,6 +112,7 @@ class User {
     }
 
     user.verifyEmailToken = '';
+    user.lastVerifyEmailSentOn = '';
     user.emailVerified = true;
     user.status = enums.USER_STATUS.ACTIVE;
 
@@ -139,25 +143,26 @@ class User {
     const token = encrypt(JSON.stringify(dataToEncrypt));
 
     this.verifyEmailToken = token;
-    this.lastverifyEmailSentOn = new Date().toISOString();
+    this.lastVerifyEmailSentOn = new Date().toISOString();
     await this.save();
 
     return token;
   }
 
-  async generateForgotPasswordToken() {
+  async generateForgotPasswordToken(user) {
     const dataToEncrypt = {
       userId: user._id,
       createdAt: Date.now(),
       motive: 'FORGOT_PASSWORD',
-      email: this.email,
+      email: user.email,
     };
 
     const token = encrypt(JSON.stringify(dataToEncrypt));
 
-    this.forgotPasswordToken = token;
-    this.lastForgotPasswordSentOn = new Date().toISOString();
-    await this.save();
+    user.forgotPasswordToken = token;
+    user.lastForgotPasswordSentOn = new Date().toISOString();
+
+    await user.save();
 
     return token;
   }

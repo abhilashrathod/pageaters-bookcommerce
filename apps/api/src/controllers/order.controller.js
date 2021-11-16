@@ -1,25 +1,34 @@
 const mongoose = require('mongoose');
-const axios = require('axios');
-const { get } = require('lodash');
+const { get, sumBy } = require('lodash');
 const Razorpay = require('razorpay');
+const colors = require('colors');
+const axios = require('axios');
 
-const { models } = require('../constants');
-const { RAZOR_PAY, DELHIVERY } = require('../appConfig');
+const { models, enums } = require('../constants');
+const { RAZOR_PAY, DELHIVERY, RAZOR_PAY_WEBHOOKS } = require('../appConfig');
 const { calculateTotal } = require('../helpers/cart.helper');
+const { prepareProductsForOrder, calculateShipping } = require('../helpers/order.helper');
 const { generateRandomNumber, getId } = require('../helpers/utils.helper');
 
 const Address = mongoose.model(models.ADDRESS);
 const User = mongoose.model(models.USER);
 const Order = mongoose.model(models.ORDER);
 const Cart = mongoose.model(models.CART);
+const Book = mongoose.model(models.STORE_BOOK);
 
 const razorPayInstance = new Razorpay({ key_id: RAZOR_PAY.USER_ID, key_secret: RAZOR_PAY.PASSWORD });
 
-module.exports.create = async (req, res) => {
+module.exports.attempt = async (req, res) => {
   try {
-    // let { amount, currency } = req.allParams();
+    const { address, instructions } = req.allParams();
     const cart = get(req, 'cookies.cart', '');
     const userId = get(req, 'user.userId', '');
+    const orderId = `OD-${generateRandomNumber()}`;
+
+    if (!cart || !userId) {
+      return res.error('ORDER_INFO_ATTEMPT_FAILED');
+    }
+
     const populateOptions = {
       path: 'products.product',
       select: 'bookId title poster author currentDiscount price',
@@ -29,41 +38,241 @@ module.exports.create = async (req, res) => {
       },
     };
 
-    const cartInfo = await Cart.findOne({ _id: cart }).populate(populateOptions);
+    const isCartValid = await Cart.findOne({ _id: cart }).populate(populateOptions);
 
-    if (!cartInfo) {
-      return res.error({ message: 'CART_NOT_EXIST', data: {} });
+    if (!isCartValid) {
+      return res.error('CART_NOT_EXIST');
     }
 
-    let subTotal = await calculateTotal(cartInfo.products);
+    const subTotal = await calculateTotal(isCartValid.products);
+    const isAddressValid = await Address.findOne({ _id: address, userId, isDeleted: false });
 
-    const payload = {
-      amount: (subTotal * 100),
-      currency: 'INR',
-      receipt: `OD-${generateRandomNumber()}-RCPTID-01`,
+    if (!isAddressValid) {
+      return res.error('ORDER_ADDRESS_ATTEMPT_FAILED');
+    }
 
-
-      'id': 'order_IA5z7wAXpNzq8Z',
-      'entity': 'order',
-      //   "amount": 136500,
-      'amount_paid': 0,
-      'amount_due': 136500,
-      // "currency": "INR",
-      // "receipt": "OD-1033875338-RCPTID-01",
-      'offer_id': null,
-      'status': 'created',
-      'attempts': 0,
-      'notes': [],
-      'created_at': 1634406439,
-
+    const orderPayload = {
+      userId,
+      orderId,
+      deliveryInstructions: instructions,
+      deliveryAddress: address,
+      orderStatus: enums.ORDER_STAGES.ATTEMPTED,
+      subTotal,
     };
 
-    console.log('payload', payload);
-    // const razorPayOrderResponse = await razorPayInstance.orders.create(payload);
+    const userRes = await User.findOne({ _id: userId });
+    let orderRes;
 
-    // return res.ok({ message: 'ORDER_CREATE_SUCCESS', data: razorPayOrderResponse });
+    if (userRes.currentOrder) {
+      orderRes = await Order.findOneAndUpdate({ _id: userRes.currentOrder }, { $set: orderPayload }, { new: true });
+    } else {
+      orderRes = await Order.create(orderPayload);
+    }
 
-    return res.ok({ message: 'ORDER_CREATE_SUCCESS', data: payload });
+    userRes.currentOrder = orderRes._id;
+    userRes.save();
+
+    return res.ok({ message: 'ORDER_ADDRESS_SUCCESS', data: orderRes });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.create = async (req, res) => {
+  try {
+    const cart = get(req, 'cookies.cart', '');
+    const userId = get(req, 'user.userId', '');
+    let total = 0;
+    let shipping = 0;
+    let weight = 0;
+    let discount = 0;
+    let giftCard = 0;
+
+    if (!cart || !userId) {
+      return res.error('ORDER_INFO_ATTEMPT_FAILED');
+    }
+
+    const userRes = await User.findOne({ _id: userId });
+
+    if (!userRes) return res.error('ORDER_INFO_ATTEMPT_FAILED');
+
+    let currentlyProcessingOrder = userRes.currentOrder;
+
+    const currentOrderRes = await Order.findOne({ _id: currentlyProcessingOrder });
+
+    const populateOptions = {
+      path: 'products.product',
+      select: 'bookId title poster author currentDiscount price',
+      populate: {
+        path: 'author',
+        select: 'name avatar',
+      },
+    };
+
+    const cartInfoRes = await Cart.findOne({ _id: cart, user: userId }).populate(populateOptions);
+
+    if (!cartInfoRes) {
+      return res.error('CART_NOT_EXIST');
+    }
+
+    /* CALCULATING ORDER AMOUNT */
+    let selectionString = 'currentDiscount price membersPrice inventory weight';
+    const books = cartInfoRes.products;
+
+    let finalProducts = [];
+
+    for (let book of books) {
+      const bookRes = await Book.findOne({ isDeleted: false, _id: book.product._id }).select(selectionString);
+
+      if (book.quantity <= bookRes.inventory) {
+        const item = {
+          quantity: book.quantity,
+          price: bookRes.price,
+          discount: bookRes.currentDiscount,
+          productTotal: book.quantity * (bookRes.price - ((bookRes.currentDiscount * bookRes.price) / 100)),
+          product: book.product,
+          weight: bookRes.weight * book.quantity,
+        };
+        finalProducts.push(item);
+        bookRes.inventory = bookRes.inventory - book.quantity;
+        bookRes.save();
+      } else {
+        // need to think about this...
+        console.error(colors.red(`QTY IS OUT FOR ${book.product.title}`));
+      }
+    }
+
+    let subTotal = sumBy(finalProducts, (obj) => obj.productTotal);
+    let totalWeight = sumBy(finalProducts, (obj) => obj.weight);
+
+    /* END CALCULATING ORDER AMOUNT */
+
+    /* CALCULATE SHIPPING AMOUNT */
+    const addressRes = await Address.findOne({ isDeleted: false, _id: currentOrderRes.deliveryAddress, userId });
+    const shippingRes = await calculateShipping(totalWeight, addressRes.pinCode);
+    shipping = shippingRes.deliveryAmount;
+    /* END CALCULATE SHIPPING AMOUNT */
+
+    /* TODO: DO SOME GIFT CART DEDUCTION IF ANY */
+
+    /* TODO: DO SOME DISCOUNT DEDUCTION IF ANY */
+
+    /* ADDING EVERYTHING UP! */
+    total = subTotal + shipping + discount + giftCard;
+
+    const payload = {
+      amount: total * 100,
+      currency: 'INR',
+      receipt: `${currentOrderRes.orderId}-RCPTID-01`,
+    };
+
+    const razorPayOrderResponse = await razorPayInstance.orders.create(payload);
+
+    currentOrderRes.razorOrderId = razorPayOrderResponse.id;
+    currentOrderRes.orderStatus = enums.ORDER_STAGES.CREATED;
+    currentOrderRes.products = finalProducts;
+    currentOrderRes.giftCard = null; // here goes the gift card id
+    currentOrderRes.discount = null; // here goes the discount id
+    await currentOrderRes.save();
+
+    userRes.currentOrder = null;
+    await userRes.save();
+
+    /* TODO: SEND EMAIL TO USER */
+
+    /* TODO: SEND TEXT-MESSAGE TO USER */
+
+    /* TODO: CLEAR CART ITEMS */
+
+    return res.ok({ message: 'ORDER_CREATE_SUCCESS', data: currentOrderRes });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.getByUniqueId = async (req, res) => {
+  try {
+    const { uniqueId } = req.allParams();
+    const userId = get(req, 'user.userId', '');
+    const orderRes = await Order.findOne({ orderId: uniqueId, userId });
+
+    if (orderRes) {
+      return res.ok({ message: 'ORDER_LIST_SUCCESS', data: orderRes });
+    }
+
+    return res.error('ORDER_NOT_EXIST');
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.getById = async (req, res) => {
+  try {
+    const { id } = req.allParams();
+    const userId = get(req, 'user.userId', '');
+    const orderRes = await Order.findOne({ _id: id, userId });
+
+    if (orderRes) {
+      return res.ok({ message: 'ORDER_LIST_SUCCESS', data: orderRes });
+    }
+
+    return res.error('ORDER_NOT_EXIST');
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.retrieve = async (req, res) => {
+  try {
+    const userId = get(req, 'user.userId', '');
+    const userRes = await User.findOne({ _id: userId, isDeleted: false });
+
+    let orderRes;
+
+    if (userRes.currentOrder) {
+      orderRes = await Order.findOne({ _id: userRes.currentOrder });
+      return res.ok({ message: 'ORDER_LIST_SUCCESS', data: orderRes });
+    }
+
+    return res.error('ORDER_INFO_ATTEMPT_FAILED');
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.verifyAndConfirm = async (req, res) => {
+  try {
+    const { payload } = req.allParams();
+    const signature = req.get('x-razorpay-signature');
+    const body = JSON.stringify(req.body);
+
+    if (!signature) {
+      return res.json({ status: 'ok' });
+    }
+
+    const paymentId = get(payload, 'payment.entity.id', '');
+    const orderId = get(payload, 'payment.entity.order_id', '');
+
+    console.log('orderId', orderId);
+    console.log('paymentId', paymentId);
+
+    const isValid = Razorpay.validateWebhookSignature(body, signature, RAZOR_PAY_WEBHOOKS.PAYMENT_CAPTURED);
+
+    if (isValid) {
+      console.log(colors.green('Signature is good process the payment'));
+      const orderRes = await Order.findOne({ orderStatus: enums.ORDER_STAGES.CREATED, razorOrderId: orderId });
+      if (orderRes) {
+        orderRes.orderStatus = enums.ORDER_STAGES.PAID;
+        orderRes.payment = get(payload, 'payment.entity', {});
+        orderRes.razorPaymentId = paymentId;
+        await orderRes.save();
+        return res.json({ status: 'ok' });
+      } else {
+        return res.json({ status: 'ok' }); // do nothing but send success to webhook
+      }
+    }
+
+    return res.json({ status: 'ok' });
   } catch (e) {
     return res.internalServerError(e);
   }

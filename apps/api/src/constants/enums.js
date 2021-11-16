@@ -70,8 +70,8 @@ module.exports = {
     FAILED: 'failed',
   },
   ORDER_STAGES: {
-    CREATED: 'created',
     ATTEMPTED: 'attempted',
+    CREATED: 'created',
     PAID: 'paid',
     SHIPPED: 'shipped',
   },

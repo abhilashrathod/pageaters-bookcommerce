@@ -3,6 +3,7 @@
 	"INVALID_EMAIL": "Email address is invalid",
 	"INVALID_ROLE": "Role provided is invalid",
 	"INVALID_FIRST_NAME": "First Name is invalid",
+	"INVALID_NAME": "Name is invalid",
 	"INVALID_TELEPHONE": "Telephone number is invalid",
 	"INVALID_LAST_NAME": "Last Name is invalid",
 	"INVALID_PASSWORD": "Invalid or Wrong Password",
@@ -66,24 +67,22 @@
 	"INVALID_NOTIFICATION_TYPE": "Invalid Notification type",
 	"MEETING_NOT_FOUND": "Meeting not found",
 	"USER_NOT_FOUND": "User not found",
-	"EMAIL_VERIFIED": "Email successfully verified. You can now log in.",
+	"EMAIL_VERIFIED": "Email successfully verified!",
 	"INVALID_TOKEN": "Invalid Token",
 	"TOKEN_EXPIRED": "Token Expired",
 	"TOKEN_REVOKED": "Logout successful!",
 	"TOKEN_UNMATCHED": "User doesn't own this token and rights to account",
 	"PASSWORDS_DO_NOT_MATCH": "Passwords do not match",
 	"FILE_UPLOADED": "FILE_UPLOADED",
-
 	"BOOK_LIST_SUCCESS": "All book info listed",
+	"VERIFY_EMAIL_LIMIT_EXCEEDED": "Verification email resending limit exceeded, please try again after",
 	"BOOK_NOT_EXIST": "Book doesn't exist",
 	"BOOK_CREATE_SUCCESS": "New Book Created",
 	"BOOK_UPDATE_SUCCESS": "Book Information Updated",
 	"BOOK_SEARCH_SUCCESS": "Book Search Successful",
 	"BOOK_DELETE_SUCCESS": "Book Deleted Successfully",
-
 	"USER_LIST_SUCCESS": "User list success",
 	"USER_UPDATE_SUCCESS": "User Information Updated",
-
 	"AUTHOR_LIST_SUCCESS": "Author list success",
 	"AUTHOR_NOT_EXIST": "Author doesn't exist",
 	"AUTHOR_CREATE_SUCCESS": "New Author Created",
@@ -101,21 +100,18 @@
 	"SUBSCRIBER_EXIST": "This email is already in the waitlist. Thank you!",
 	"EMAIL_VERIFICATION_PENDING": "EMAIL_VERIFICATION_PENDING",
 	"NO_AUTH_HEADER": "NO_AUTH_HEADER",
-
 	"CATEGORY_LIST_SUCCESS": "Category list success",
 	"CATEGORY_NOT_EXIST": "Category doesn't exist",
 	"CATEGORY_CREATE_SUCCESS": "New Category Created",
 	"CATEGORY_UPDATE_SUCCESS": "Category Information Updated",
 	"CATEGORY_SEARCH_SUCCESS": "Category Search Successful",
 	"CATEGORY_DELETE_SUCCESS": "Category Deleted Successfully",
-
 	"BUNDLE_LIST_SUCCESS": "Bundle list success",
 	"BUNDLE_NOT_EXIST": "Bundle doesn't exist",
 	"BUNDLE_CREATE_SUCCESS": "New Bundle Created",
 	"BUNDLE_UPDATE_SUCCESS": "Bundle Information Updated",
 	"BUNDLE_SEARCH_SUCCESS": "Bundle Search Successful",
 	"BUNDLE_DELETE_SUCCESS": "Bundle Deleted Successfully",
-
 	"CART_LIST_SUCCESS": "Cart info fetched",
 	"CART_NOT_EXIST": "Cart doesn't exist",
 	"CART_CREATE_SUCCESS": "Cart Created",
@@ -123,13 +119,11 @@
 	"CART_SEARCH_SUCCESS": "Cart Search Successful",
 	"CART_DELETE_SUCCESS": "Cart Clear Successfully",
 	"CART_ADD_SUCCESS": "Product Added Successfully",
-
 	"PLAN_LIST_SUCCESS": "Plan list success",
 	"PLAN_NOT_EXIST": "Plan doesn't exist",
 	"PLAN_CREATE_SUCCESS": "Plan Created",
 	"PLAN_UPDATE_SUCCESS": "Plan Information Updated",
 	"PLAN_DELETE_SUCCESS": "Plan Deleted Successfully",
-
 	"ADDRESS_LIST_SUCCESS": "Address list success",
 	"ADDRESS_NOT_EXIST": "Address doesn't exist",
 	"ADDRESS_CREATE_SUCCESS": "Address Created",
@@ -143,6 +137,10 @@
 	"ORDER_CREATE_SUCCESS": "Order Created",
 	"ORDER_UPDATE_SUCCESS": "Order Information Updated",
 	"ORDER_DELETE_SUCCESS": "Order Deleted Successfully",
+
+	"ORDER_ADDRESS_ATTEMPT_FAILED": "Address Selection Invalid",
+	"ORDER_INFO_ATTEMPT_FAILED": "Invalid Order Request",
+	"ORDER_ADDRESS_SUCCESS": "Address Selection Success",
 
 	"INVALID_QUANTITY": "Requested quantity higher than available stock."
 }

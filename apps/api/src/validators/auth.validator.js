@@ -1,10 +1,11 @@
 const Joi = require('joi');
 
-const { email, password, firstName, lastName } = require('./common.validator');
+const { email, password, fullName, } = require('./common.validator');
 
 module.exports.registerPayload = Joi.object({
   email,
   password,
+  fullName,
 });
 
 module.exports.verifyEmail = Joi.object({
@@ -52,8 +53,7 @@ module.exports.verifyForgotPasswordToken = Joi.object({
 });
 
 module.exports.updateProfile = Joi.object({
-  firstName,
-  lastName,
+  fullName
 });
 
 module.exports.resendVerificationEmail = Joi.object({

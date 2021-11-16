@@ -2,6 +2,7 @@ const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
 const Queue = require('better-queue');
+const colors = require('colors');
 
 const { PROJECT_ROOT, DEFAULT_LANGUAGE, ENVIRONMENT } = require('./../appConfig');
 const { sendMail } = require('./sendMail.helper');
@@ -9,18 +10,18 @@ const { sendMail } = require('./sendMail.helper');
 class SendMailQueue {
   constructor() {
     if (!this.queue) {
-      this.queue = new Queue(this.processElement, {
-        store: {
-          type: 'sql',
-          dialect: 'sqlite',
-          path: './queueData/sendMailQueue.sqlite',
-        },
-      });
+      this.queue = new Queue(this.processElement);
     }
   }
 
   add(mail) {
-    this.queue.push(mail);
+    this.queue.push(mail)
+      .on('finish', function () {
+        console.log(colors.green('Task succeeded'));
+      })
+      .on('failed', function () {
+        console.log(colors.red(' Task failed!'));
+      });
   }
 
   async processElement(input, cb) {

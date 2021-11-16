@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
 const moment = require('moment');
 const path = require('path');
+const Razorpay = require('razorpay');
+const colors = require('colors');
 
-const { HOST, PROJECT_ROOT, TWILIO } = require('./../appConfig');
+const { HOST, PROJECT_ROOT, TWILIO, RAZOR_PAY } = require('./../appConfig');
 const { models, enums } = require('../constants');
 
 const { encrypt, decrypt, generateJwtToken, generateRefreshToken } = require('../helpers/encryption.helper');
@@ -11,11 +13,14 @@ const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const User = mongoose.model(models.USER);
 const RefreshTokens = mongoose.model(models.REFRESH_TOKEN);
+const Cart = mongoose.model(models.CART);
+
 const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
+const razorPayInstance = new Razorpay({ key_id: RAZOR_PAY.USER_ID, key_secret: RAZOR_PAY.PASSWORD });
 
 module.exports.register = async (req, res) => {
   try {
-    let { email, password } = req.allParams();
+    let { email, password, fullName } = req.allParams();
     const ipAddress = req.ip;
     const cart = req.cookies.cart;
 
@@ -25,11 +30,19 @@ module.exports.register = async (req, res) => {
       return res.error('USER_ALREADY_REGISTERED');
     }
 
-    const user = await User.create({ email, role: enums.USER_ROLES.USER });
+    const user = await User.create({ fullName, email, role: enums.USER_ROLES.USER });
+    const razorPayCustomer = await razorPayInstance.customers.create({ name: fullName, email, contact: '', notes: {} });
 
     await user.setPassword(password);
+    const token = await user.generateVerifyEmailToken();
+
+    user.razorPayCustId = razorPayCustomer.id;
+    user.verifyEmailToken = token;
+    user.lastVerifyEmailSentOn = new Date().toISOString();
 
     user.save();
+
+    const newUserCart = await Cart.create({ user: user._id });
 
     const jwtToken = generateJwtToken(user);
     const refreshToken = generateRefreshToken(user, ipAddress);
@@ -37,15 +50,16 @@ module.exports.register = async (req, res) => {
     await RefreshTokens.create(refreshToken);
     const profile = await User.getProfile(user._id); // TODO: Improvement could be made
 
+    console.log("VERIFICATION:", colors.blue(token));
 
     // TODO: Uncomment later when Sendgrid replies
-    // sendMailQueue.add({
-    //   emailModule: 'REGISTRATION',
-    //   to: user.email,
-    //   data: {
-    //    NAME: `${firstName} ${lastName}`
-    //   },
-    // });
+    sendMailQueue.add({
+      emailModule: 'REGISTRATION',
+      to: user.email,
+      data: {
+       NAME: `${fullName}`
+      },
+    });
 
     // create a refresh token cookie that will also expires in 7 days
     const cookieOptions = {
@@ -53,6 +67,7 @@ module.exports.register = async (req, res) => {
       expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
     };
     res.cookie('refreshToken', refreshToken.token, cookieOptions);
+    res.cookie('cart', newUserCart._id, { httpOnly: true });
 
     return res.ok({ message: 'REGISTRATION_SUCCESS', data: { profile, token: jwtToken } });
   } catch (e) {
@@ -86,6 +101,7 @@ module.exports.login = async (req, res) => {
 
     // get user profile
     user = await User.getProfile(user._id);
+    const cart = await Cart.findOne({ user: user._id });
 
     // create a refresh token cookie that will also expires in 7 days
     const cookieOptions = {
@@ -93,6 +109,7 @@ module.exports.login = async (req, res) => {
       expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
     };
     res.cookie('refreshToken', refreshToken.token, cookieOptions);
+    if (cart) res.cookie('cart', cart._id, { httpOnly: true });
 
     if (!user.emailVerified) {
       return res.ok({ message: 'EMAIL_VERIFICATION_PENDING', data: { user, token: jwtToken } });
@@ -107,17 +124,10 @@ module.exports.login = async (req, res) => {
 module.exports.refreshToken = async (req, res) => {
   try {
     const token = req.cookies.refreshToken;
-    const authHeader = req.get('authorization');
     const ipAddress = req.ip;
 
-    // if (!authHeader) {
-    //   console.log("No Auth Header");
-    //   return res.ok();
-    // }
-
     if (!token) {
-      console.log("No Token");
-     return res.ok();
+      return res.ok();
     }
 
     const refreshToken = await RefreshTokens.findOne({ token });
@@ -178,12 +188,13 @@ module.exports.revokeToken = async (req, res) => {
     refreshToken.revokedByIp = ipAddress;
     await refreshToken.save();
 
-    // revoke refresh token cookie
+    // revoke refresh token & cart cookie
     const cookieOptions = {
       httpOnly: true,
       expires: 0,
     };
     res.cookie('refreshToken', '', cookieOptions);
+    res.cookie('cart', '', cookieOptions);
 
     return res.ok({ message: 'TOKEN_REVOKED', data: {} });
   } catch (e) {
@@ -213,7 +224,7 @@ module.exports.logout = async (req, res) => {
 
 module.exports.adminRegister = async (req, res) => {
   try {
-    let { email, password, firstName, lastName, role } = req.allParams();
+    let { email, password, fullName, role } = req.allParams();
 
     const isEmailAvailable = await User.isEmailAvailable(email);
 
@@ -221,7 +232,7 @@ module.exports.adminRegister = async (req, res) => {
       return res.error('EMAIL_UNAVAILABLE');
     }
 
-    const user = await User.create({ email, firstName, lastName, role });
+    const user = await User.create({ email, fullName, role });
 
     await user.setPassword(password);
 
@@ -239,17 +250,13 @@ module.exports.adminRegister = async (req, res) => {
 
 module.exports.updateProfile = async (req, res) => {
   try {
-    const { firstName, lastName, telephone } = req.allParams();
+    const { fullName, telephone } = req.allParams();
     let { user } = req;
 
     const fieldsToUpdate = {};
 
-    if (firstName) {
-      fieldsToUpdate.firstName = firstName;
-    }
-
-    if (lastName) {
-      fieldsToUpdate.lastName = lastName;
+    if (fullName) {
+      fieldsToUpdate.fullName = fullName;
     }
 
     if (telephone) {
@@ -312,7 +319,7 @@ module.exports.forgotPassword = async (req, res) => {
       return res.error('FORGOT_PASSWORD_LIMIT_EXCEEDED');
     }
 
-    const token = await user.generateForgotPasswordToken();
+    const token = await user.generateForgotPasswordToken(user);
 
     sendMailQueue.add({
       emailModule: 'FORGOT_PASSWORD',
@@ -335,7 +342,7 @@ module.exports.verifyEmail = async (req, res) => {
     const result = await User.verifyEmail(email, token);
 
     if (!result.success) {
-      return res.error(success.message, success.helper);
+      return res.error(result.message, result.success);
     }
 
     return res.ok('EMAIL_VERIFIED');
@@ -533,17 +540,35 @@ module.exports.updateFcmToken = async (req, res) => {
 
 module.exports.sms = async (req, res) => {
   try {
-    let { phone } = req.allParams();
+    let { fullName, email, contact, notes = {}  } = req.allParams();
 
-    const payload = {
-      body: 'This is just a test to test you!',
-      from: TWILIO.PHONE,
-      to: phone,
-    };
+    // const payload = { name: fullName, email, contact, notes };
 
-    const success = await twilioClient.messages.create(payload);
+    // const razorPayCustomer = await razorPayInstance.customers.create(payload);
 
-    return res.ok({ message: 'ME_SUCCESS', data: success });
+    // const success = await twilioClient.messages.create(payload);
+
+    // {
+    //   "id": "cust_IIHBr2RHTMWmuc",
+    //   "entity": "customer",
+    //   "name": "Abhilash Rathod",
+    //   "email": "owner@example.com",
+    //   "contact": "+91-9876543210",
+    //   "gstin": null,
+    //   "notes": [],
+    //   "created_at": 1636192620
+    // }
+
+    sendMailQueue.add({
+      emailModule: 'REGISTRATION',
+      to: "support@demo.pageaters.com",
+      data: {
+        NAME: `Abhilash Rathore`
+      },
+    });
+
+
+    return res.ok({ message: 'ME_SUCCESS', data: {foo: 'bar'} });
   } catch (e) {
     return res.internalServerError(e);
   }

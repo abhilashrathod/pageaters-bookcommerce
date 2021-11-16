@@ -1,14 +1,11 @@
 const mongoose = require('mongoose');
 
 const { models } = require('../constants');
-// const { } = require('./../appConfig');
 
 const Book = mongoose.model(models.STORE_BOOK);
 
 module.exports.calculateTotal = async function(books) {
-
   try {
-
     let total = 0;
 
     if (books.length === 0) {

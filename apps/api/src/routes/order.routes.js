@@ -8,10 +8,13 @@ const controller = require('./../controllers/order.controller');
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
 const requestValidator = require('../middlewares/requestValidator.middleware');
 
-// router.get('/', permissionValidator(USER_ROLES.USER), controller.getAllByUser);
-// router.get('/:uniqueId', permissionValidator(USER_ROLES.USER), controller.getById);
+router.get('/getById/:id', permissionValidator(USER_ROLES.USER), controller.getById);
+router.get('/getByUniqueId/:uniqueId', permissionValidator(USER_ROLES.USER), controller.getByUniqueId);
 
-router.post('/', permissionValidator(USER_ROLES.USER), controller.create);
+router.post('/create', permissionValidator(USER_ROLES.USER), controller.create);
+router.post('/attempt', permissionValidator(USER_ROLES.USER), controller.attempt);
+router.get('/retrieve', permissionValidator(USER_ROLES.USER), controller.retrieve);
+router.post('/confirm', controller.verifyAndConfirm);
 
 // router.patch('/:id', permissionValidator(USER_ROLES.USER), controller.update);
 // router.delete('/:id', permissionValidator(USER_ROLES.USER), controller.destroy);

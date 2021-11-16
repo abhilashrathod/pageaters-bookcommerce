@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 const { get } = require('lodash');
 const { models } = require('../constants');
 const axios = require('axios');
+const colors = require('colors');
 const Address = mongoose.model(models.ADDRESS);
 
 const { generateRandomNumber, getId } = require('../helpers/utils.helper');
+const { checkServiceabilityInternal } = require('../helpers/order.helper');
 const { DELHIVERY } = require('../appConfig');
 
 module.exports.getAllByUser = async (req, res) => {
@@ -26,23 +28,31 @@ module.exports.create = async (req, res) => {
     let { fullName, email, contactNo, city, state, pinCode, addressLine1, addressLine2, landmark, type } = req.allParams();
     let { user } = req;
 
-    const payload = {
-      userId: user.userId,
-      fullName,
-      contactNo,
-      email: email ? email : user.email,
-      city,
-      state,
-      pinCode,
-      addressLine1,
-      addressLine2,
-      landmark,
-      type,
-    };
+    const isServiceable = await checkServiceabilityInternal(pinCode);
 
-    const addressRes = await Address.create(payload);
+    if (isServiceable) {
+      console.log(colors.green("Serviceable!"));
 
-    return res.ok({ message: 'ADDRESS_CREATE_SUCCESS', data: addressRes });
+      const payload = {
+        userId: user.userId,
+        fullName,
+        contactNo,
+        email: email ? email : user.email,
+        city,
+        state,
+        pinCode,
+        addressLine1,
+        addressLine2,
+        landmark,
+        type,
+      };
+
+      const addressRes = await Address.create(payload);
+
+      return res.ok({ message: 'ADDRESS_CREATE_SUCCESS', data: addressRes });
+    } else {
+      return res.error({ message: 'PINCODE_ERROR', data: {} });
+    }
   } catch (e) {
     return res.internalServerError(e);
   }
