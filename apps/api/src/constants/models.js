@@ -24,4 +24,5 @@ module.exports = {
   REFRESH_TOKEN: 'refresh_token',
   SUBSCRIBER: 'subscriber',
   SUBSCRIPTION_PLANS: 'subscription_plan',
+  SUBSCRIPTION_HISTORY: 'subscription_history',
 };

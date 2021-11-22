@@ -50,14 +50,14 @@ module.exports.register = async (req, res) => {
     await RefreshTokens.create(refreshToken);
     const profile = await User.getProfile(user._id); // TODO: Improvement could be made
 
-    console.log("VERIFICATION:", colors.blue(token));
+    console.log('VERIFICATION:', colors.blue(token));
 
     // TODO: Uncomment later when Sendgrid replies
     sendMailQueue.add({
       emailModule: 'REGISTRATION',
       to: user.email,
       data: {
-       NAME: `${fullName}`
+        NAME: `${fullName}`,
       },
     });
 
@@ -540,7 +540,7 @@ module.exports.updateFcmToken = async (req, res) => {
 
 module.exports.sms = async (req, res) => {
   try {
-    let { fullName, email, contact, notes = {}  } = req.allParams();
+    let { fullName, email, contact, notes = {} } = req.allParams();
 
     // const payload = { name: fullName, email, contact, notes };
 
@@ -558,17 +558,33 @@ module.exports.sms = async (req, res) => {
     //   "notes": [],
     //   "created_at": 1636192620
     // }
+    //
+    // sendMailQueue.add({
+    //   emailModule: 'REGISTRATION',
+    //   to: "support@demo.pageaters.com",
+    //   data: {
+    //     NAME: `Abhilash Rathore`
+    //   },
+    // });
 
-    sendMailQueue.add({
-      emailModule: 'REGISTRATION',
-      to: "support@demo.pageaters.com",
-      data: {
-        NAME: `Abhilash Rathore`
-      },
-    });
+    const query = {
+      _id: '61993d8f6cd124042837359d',
+      'subscription.razorPayPlanId': '',
+      'subscription.plan': null,
+      'subscription.isActive': false,
+      $or: [
+        {'subscription.currentStatus': enums.SUBSCRIPTION_STATUSES.AUTHENTICATED},
+        {'subscription.currentStatus': enums.SUBSCRIPTION_STATUSES.NEW},
+        {'subscription.currentStatus': enums.SUBSCRIPTION_STATUSES.ACTIVE},
+      ],
+    };
 
 
-    return res.ok({ message: 'ME_SUCCESS', data: {foo: 'bar'} });
+
+    const userRes = await User.findOne(query);
+
+
+    return res.ok({ message: 'ME_SUCCESS', data: userRes });
   } catch (e) {
     return res.internalServerError(e);
   }

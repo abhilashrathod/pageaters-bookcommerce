@@ -3,6 +3,7 @@ const mkdirp = require('mkdirp');
 const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
+const moment = require('moment');
 
 const appConfig = require('./../appConfig');
 
@@ -63,7 +64,6 @@ module.exports.getId = (id) => {
   return mongoose.Types.ObjectId(id);
 };
 
-
 module.exports.arrayDifference = (a1, a2) => {
   let a = [], diff = [];
   for (let i = 0; i < a1.length; i++) {
@@ -80,4 +80,8 @@ module.exports.arrayDifference = (a1, a2) => {
     diff.push(k);
   }
   return diff;
+};
+
+module.exports.returnUnixTimestamp = (dateObj) => {
+  return Math.round(dateObj.getTime() / 1000);
 };

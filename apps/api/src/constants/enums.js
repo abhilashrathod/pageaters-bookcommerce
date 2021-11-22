@@ -82,6 +82,7 @@ module.exports = {
     SUBSCRIPTION: 'subscription'
   },
   SUBSCRIPTION_STATUSES: {
+    NEW: '',
     CREATED: 'created',
     AUTHENTICATED: 'authenticated',
     ACTIVE: 'active',

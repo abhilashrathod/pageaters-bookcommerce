@@ -34,7 +34,7 @@ module.exports = (...permissionsRequired) => {
     async (req, res, next) => {
       const { userId } = req.user;
 
-      const user = await User.findOne({ _id: userId, status: enums.USER_STATUS.ACTIVE }).select(SELECTION_STRING);
+      const user = await User.findOne({ _id: userId, status: enums.USER_STATUS.ACTIVE, isDeleted: false }).select(SELECTION_STRING);
 
       // if no user then send back
       if (!user) {

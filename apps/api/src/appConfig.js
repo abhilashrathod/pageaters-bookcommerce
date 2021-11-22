@@ -13,6 +13,7 @@ module.exports = {
   RAZOR_PAY_WEBHOOKS: config.get('RAZOR_PAY_WEBHOOKS') || {},
   TWILIO: config.get('TWILIO') || {},
   DELHIVERY: config.get('DELHIVERY') || {},
+  AMPLITUDE: config.get('AMPLITUDE') || {},
   ENABLE_CRON: config.get('ENABLE_CRON'),
   SENDGRID_API_KEY: config.get('SENDGRID_API_KEY') || '',
   NO_REPLY_EMAIL: config.get('NO_REPLY_EMAIL') || '',

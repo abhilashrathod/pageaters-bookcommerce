@@ -2,13 +2,12 @@ const mongoose = require('mongoose');
 const { get, sumBy } = require('lodash');
 const Razorpay = require('razorpay');
 const colors = require('colors');
-const axios = require('axios');
 
 const { models, enums } = require('../constants');
-const { RAZOR_PAY, DELHIVERY, RAZOR_PAY_WEBHOOKS } = require('../appConfig');
+const { RAZOR_PAY, RAZOR_PAY_WEBHOOKS } = require('../appConfig');
 const { calculateTotal } = require('../helpers/cart.helper');
-const { prepareProductsForOrder, calculateShipping } = require('../helpers/order.helper');
-const { generateRandomNumber, getId } = require('../helpers/utils.helper');
+const { calculateShipping } = require('../helpers/order.helper');
+const { generateRandomNumber } = require('../helpers/utils.helper');
 
 const Address = mongoose.model(models.ADDRESS);
 const User = mongoose.model(models.USER);
@@ -100,6 +99,10 @@ module.exports.create = async (req, res) => {
 
     const currentOrderRes = await Order.findOne({ _id: currentlyProcessingOrder });
 
+    if (currentOrderRes.orderStatus === enums.ORDER_STAGES.CREATED) {
+      return res.ok({ message: 'ORDER_CREATE_SUCCESS', data: currentOrderRes });
+    }
+
     const populateOptions = {
       path: 'products.product',
       select: 'bookId title poster author currentDiscount price',
@@ -174,9 +177,6 @@ module.exports.create = async (req, res) => {
     currentOrderRes.giftCard = null; // here goes the gift card id
     currentOrderRes.discount = null; // here goes the discount id
     await currentOrderRes.save();
-
-    userRes.currentOrder = null;
-    await userRes.save();
 
     /* TODO: SEND EMAIL TO USER */
 
@@ -253,19 +253,20 @@ module.exports.verifyAndConfirm = async (req, res) => {
     const paymentId = get(payload, 'payment.entity.id', '');
     const orderId = get(payload, 'payment.entity.order_id', '');
 
-    console.log('orderId', orderId);
-    console.log('paymentId', paymentId);
-
     const isValid = Razorpay.validateWebhookSignature(body, signature, RAZOR_PAY_WEBHOOKS.PAYMENT_CAPTURED);
 
     if (isValid) {
-      console.log(colors.green('Signature is good process the payment'));
       const orderRes = await Order.findOne({ orderStatus: enums.ORDER_STAGES.CREATED, razorOrderId: orderId });
       if (orderRes) {
         orderRes.orderStatus = enums.ORDER_STAGES.PAID;
         orderRes.payment = get(payload, 'payment.entity', {});
         orderRes.razorPaymentId = paymentId;
         await orderRes.save();
+
+        const userRes = await User.findOne({_id: orderRes.userId});
+        userRes.currentOrder = null;
+        await userRes.save();
+
         return res.json({ status: 'ok' });
       } else {
         return res.json({ status: 'ok' }); // do nothing but send success to webhook

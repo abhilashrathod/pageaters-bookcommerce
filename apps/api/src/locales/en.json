@@ -119,11 +119,14 @@
 	"CART_SEARCH_SUCCESS": "Cart Search Successful",
 	"CART_DELETE_SUCCESS": "Cart Clear Successfully",
 	"CART_ADD_SUCCESS": "Product Added Successfully",
+
 	"PLAN_LIST_SUCCESS": "Plan list success",
 	"PLAN_NOT_EXIST": "Plan doesn't exist",
+	"PLAN_NOT_ACTIVE": "Plan isn't active anymore, please select a different one",
 	"PLAN_CREATE_SUCCESS": "Plan Created",
 	"PLAN_UPDATE_SUCCESS": "Plan Information Updated",
 	"PLAN_DELETE_SUCCESS": "Plan Deleted Successfully",
+
 	"ADDRESS_LIST_SUCCESS": "Address list success",
 	"ADDRESS_NOT_EXIST": "Address doesn't exist",
 	"ADDRESS_CREATE_SUCCESS": "Address Created",
@@ -141,6 +144,15 @@
 	"ORDER_ADDRESS_ATTEMPT_FAILED": "Address Selection Invalid",
 	"ORDER_INFO_ATTEMPT_FAILED": "Invalid Order Request",
 	"ORDER_ADDRESS_SUCCESS": "Address Selection Success",
+
+	"SUBSCRIPTION_PLAN_ERROR": "Please select a plan",
+	"SUBSCRIPTION_LIST_SUCCESS": "Subscription list success",
+	"SUBSCRIPTION_NOT_EXIST": "Subscription doesn't exist",
+	"SUBSCRIPTION_CREATE_SUCCESS": "Subscription Created",
+	"SUBSCRIPTION_UPDATE_SUCCESS": "Subscription Information Updated",
+	"SUBSCRIPTION_DELETE_SUCCESS": "Subscription Deleted Successfully",
+
+	"SUBSCRIPTION_EXISTS": "Subscription already activated",
 
 	"INVALID_QUANTITY": "Requested quantity higher than available stock."
 }

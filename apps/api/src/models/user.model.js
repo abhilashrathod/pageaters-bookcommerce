@@ -36,22 +36,25 @@ const schema = new Schema(
 
     subscription: {
       isActive: { type: Boolean, default: false },
-      plan: {type: Schema.Types.ObjectId, ref: models.SUBSCRIPTION_PLANS},
+      plan: { type: Schema.Types.ObjectId, ref: models.SUBSCRIPTION_PLANS },
+      razorPaySubId: { type: String, default: '' },
+      razorPayPlanId: { type: String, default: '' },
+      currentStatus: { type: String, enum: Object.values(enums.SUBSCRIPTION_STATUSES), default: enums.SUBSCRIPTION_STATUSES.NEW },
     },
 
     rental: [{
-      currentlyRented: {type: Schema.Types.ObjectId, ref: models.STORE_BOOK},
+      currentlyRented: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
       lastRentDate: { type: String, default: '' },
     }],
 
-    cart: {type: Schema.Types.ObjectId, ref: models.CART},
+    cart: { type: Schema.Types.ObjectId, ref: models.CART },
 
     wishlist: [
-      {type: Schema.Types.ObjectId, ref: models.STORE_BOOK}
+      { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
     ],
 
     rewardPoints: {
-      type: Number, default: 0
+      type: Number, default: 0,
     },
 
     notifications: {
@@ -59,8 +62,8 @@ const schema = new Schema(
       activities: { type: Boolean, default: true },
     },
 
-    razorPayCustId: { type: 'String', default: '' }, // cust_1Aa00000000004
-    currentOrder: {type: Schema.Types.ObjectId, ref: models.ORDER},
+    razorPayCustId: { type: 'String', default: '' },
+    currentOrder: { type: Schema.Types.ObjectId, ref: models.ORDER },
 
     __v: { type: Number, select: false },
   },
