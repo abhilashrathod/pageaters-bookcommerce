@@ -18,7 +18,7 @@ module.exports.getAll = async (req, res) => {
     const options = {
       page,
       limit,
-      select: `title ISBN author poster price membersPrice`,
+      select: `title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller`,
       populate: {
         path: 'author',
         select: 'name intro avatar',
@@ -56,15 +56,15 @@ module.exports.create = async (req, res) => {
     // add book into category count
     for (let category of categories) {
       const categoryRes = await Category.findOne({ _id: category, isDeleted: false });
-      categoryRes.numberOfBooks = Number(category.numberOfBooks) + 1;
-      categoryRes.save();
+      categoryRes.numberOfBooks = Number(categoryRes.numberOfBooks) + 1;
+      await categoryRes.save();
     }
 
     // add book into author's book catalog
     if (author) {
       const authorRes = await Author.findOne({ _id: author, isDeleted: false });
       authorRes.books.push(book._id);
-      authorRes.save();
+      await authorRes.save();
     }
 
     return res.ok({ message: 'BOOK_CREATE_SUCCESS', data: book });
@@ -130,7 +130,8 @@ module.exports.search = async (req, res) => {
     const query = { _id: { $in: lunrIdArray }, isDeleted: false };
 
     const books = await Book.find(query)
-      .select('title ISBN author poster price membersPrice')
+      .select('title ISBN author poster price popularity editorsPick currentDiscount bestSeller')
+      .limit(10)
       .populate(populateOptions);
 
     return res.ok({ message: 'BOOK_SEARCH_SUCCESS', data: books });

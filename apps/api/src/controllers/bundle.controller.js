@@ -87,7 +87,7 @@ module.exports.getById = async (req, res) => {
 
     const populateOptions = {
       path: 'bundledBooks',
-      select: `title ISBN author poster price membersPrice`
+      select: `title ISBN author poster price popularity editorsPick currentDiscount bestSeller`
     };
 
     const bundles = await Bundles.findOne({ _id: id, isDeleted: false }).populate(populateOptions);
@@ -108,7 +108,7 @@ module.exports.getByUniqueId = async (req, res) => {
 
     const populateOptions = {
       path: 'bundledBooks',
-      select: '_id title ISBN author poster price membersPrice'
+      select: 'title ISBN author poster price popularity editorsPick currentDiscount bestSeller'
     };
 
     const bundle = await Bundles.findOne({ bundleId: id, isDeleted: false });

@@ -5,6 +5,7 @@ const controller = require('./../controllers/category.controller');
 
 router.get('/', controller.getAll);
 router.get('/:id', controller.getById);
+router.get('/:id/products', controller.getAllProducts);
 router.get('/unique/:id', controller.getByUniqueId);
 router.get('/search/:q', controller.search);
 

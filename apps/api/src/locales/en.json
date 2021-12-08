@@ -74,6 +74,7 @@
 	"TOKEN_UNMATCHED": "User doesn't own this token and rights to account",
 	"PASSWORDS_DO_NOT_MATCH": "Passwords do not match",
 	"FILE_UPLOADED": "FILE_UPLOADED",
+	"SORTING_NOT_ALLOWED": "Sorting on this field is not allowed",
 	"BOOK_LIST_SUCCESS": "All book info listed",
 	"VERIFY_EMAIL_LIMIT_EXCEEDED": "Verification email resending limit exceeded, please try again after",
 	"BOOK_NOT_EXIST": "Book doesn't exist",

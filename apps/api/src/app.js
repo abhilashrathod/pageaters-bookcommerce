@@ -58,8 +58,8 @@ this.app.use(i18n.init);
 this.app.use(require('./middlewares/extendReq.middleware'));
 
 // for indexing
-// const { runIndexing } = require('./libs/indexing');
-// runIndexing(this.app);
+const { runIndexing } = require('./libs/indexing');
+runIndexing(this.app);
 
 // Disable x-powered-by header
 this.app.disable('x-powered-by');
@@ -67,7 +67,11 @@ this.app.set('env', ENVIRONMENT);
 
 // Handle `OPTIONS` request.
 this.app.all('*', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:2305');
+  const allowedOrigins = ['http://localhost:2305', 'http://localhost:4200', 'http://192.168.0.107:2305'];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
   res.header(
     'Access-Control-Allow-Headers',

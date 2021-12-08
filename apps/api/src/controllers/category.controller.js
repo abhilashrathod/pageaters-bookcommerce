@@ -3,7 +3,7 @@ const { generateRandomNumber, getId } = require('../helpers/utils.helper');
 const { models } = require('../constants');
 
 const Category = mongoose.model(models.CATEGORY);
-
+const Book = mongoose.model(models.STORE_BOOK);
 
 module.exports.getAll = async (req, res) => {
   try {
@@ -17,9 +17,9 @@ module.exports.getAll = async (req, res) => {
       sort: {title: 1}
     };
 
-    const author = await Category.paginate(query, options);
+    const categoryRes = await Category.paginate(query, options);
 
-    return res.ok({ message: 'CATEGORY_LIST_SUCCESS', data: author });
+    return res.ok({ message: 'CATEGORY_LIST_SUCCESS', data: categoryRes });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -74,7 +74,9 @@ module.exports.search = async (req, res) => {
 
     const query = { _id: { $in: lunrIdArray }, isDeleted: false };
 
-    const categories = await Category.find(query);
+    const categories = await Category.find(query)
+      .select('categoryId title numberOfBooks _id')
+      .limit(10);
 
     return res.ok({ message: 'CATEGORY_SEARCH_SUCCESS', data: categories });
   } catch (e) {
@@ -109,6 +111,38 @@ module.exports.getByUniqueId = async (req, res) => {
     } else {
       return res.error('CATEGORY_NOT_EXIST');
     }
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.getAllProducts = async (req, res) => {
+  try {
+    let { id, page, limit, sortBy, sortOrder } = req.allParams();
+
+    const query = { isDeleted: false, categories: id };
+    const allowedSortingFields = ['title', 'createdAt', 'popularity', 'currentDiscount', 'price'];
+
+    if (!allowedSortingFields.includes(sortBy)) {
+      return res.error('SORTING_NOT_ALLOWED')
+    }
+
+    const options = {
+      page,
+      limit,
+      sort: {
+        [sortBy]: [sortOrder]
+      },
+      select: `title ISBN author poster price popularity editorsPick currentDiscount bestSeller`,
+      populate: {
+        path: 'author',
+        select: 'name intro avatar',
+      },
+    };
+
+    const booksRes = await Book.paginate(query, options);
+
+    return res.ok({ message: 'BOOK_LIST_SUCCESS', data: booksRes });
   } catch (e) {
     return res.internalServerError(e);
   }
