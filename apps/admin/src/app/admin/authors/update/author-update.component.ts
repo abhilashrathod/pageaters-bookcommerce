@@ -129,7 +129,7 @@ export class AuthorUpdateComponent implements OnInit {
     const payload = {
       ...this.author,
       ...rest,
-      books: books.map(x => x.id),
+      books: books.map(x => x._id),
       avatar: this.author.avatar,
     };
     const author$ = this.authorService.update(this.author._id, payload);

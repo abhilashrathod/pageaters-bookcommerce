@@ -11,6 +11,12 @@
             <div class="row">
               <div class="col-5">
                 <div class="mb-4">
+                  <p>
+                    <input type="url" placeholder="Place URL if any..." class="form-control" [(ngModel)]="poster" [ngModelOptions]="{standalone: true}"/>
+                  </p>
+                  <p class="text-center">
+                    -- OR --
+                  </p>
                   <div *ngIf="!poster" class="image-upload-thumbnail" (click)="profileImage.click()">Book Cover
                   </div>
                   <img *ngIf="poster" class="pointer img-fluid img-thumbnail" [src]="poster"
@@ -22,6 +28,7 @@
                     Upload
                   </button>
                 </p>
+
               </div>
               <div class="col-7">
                 <div class="row">

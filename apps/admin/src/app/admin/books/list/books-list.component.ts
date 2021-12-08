@@ -34,6 +34,11 @@ export class BooksListComponent implements OnInit {
       cell: (element) => `${get(element, 'author.name', 'No Author Assigned')}`,
     },
     {
+      header: 'Qty',
+      columnDef: 'inventory',
+      cell: (element) => `${element.inventory}`,
+    },
+    {
       header: 'Action',
       columnDef: 'action',
       cell: (element) => [...this.editResourceUrl, element._id],

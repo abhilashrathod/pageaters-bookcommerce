@@ -10,6 +10,7 @@ import {BooksService} from '../../../core/services/books.service';
 import {BOOK_VERSIONS, FILE_UPLOAD_MODULES, PRICING_PERCENTAGES, returnPercentageValue} from '../../../core/helpers/constants';
 import {MatChipInputEvent} from '@angular/material/chips';
 import {BundleService} from '../../../core/services/bundle.service';
+import {debounceTime} from 'rxjs/operators';
 
 @Component({
   selector: 'app-book-create',
@@ -128,12 +129,10 @@ export class BookCreateComponent implements OnInit {
       bestSeller: [false],
       editorsPick: [false],
     });
-
     this.shippingFormGroup = this.formBuilder.group({
       dimensions: [''],
       weight: [''],
     });
-
     this.pricingFormGroup = this.formBuilder.group({
       price: [0],
       rentPrice: [0],
@@ -145,14 +144,54 @@ export class BookCreateComponent implements OnInit {
 
       currentDiscount: [0],
     });
-
-
     this.relatedInfoFormGroup = this.formBuilder.group({
       relatedBooks: [[]],
       relatedCollections: [[]],
       relatedBundles: [[]],
       categories: [[]],
     });
+
+    this.searchBooksCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchBooks(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getBooks();
+        }
+      });
+
+    this.searchCategoriesCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchCategories(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getCategories();
+        }
+      });
+
+    this.searchCollectionsCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchCollections(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getCollections();
+        }
+      });
   }
 
   getSupportData(): void {
@@ -169,14 +208,29 @@ export class BookCreateComponent implements OnInit {
       .subscribe(res => this.books = res.docs);
   }
 
+  searchBooks(q): void {
+    this.booksService.searchBooks(q)
+      .subscribe(res => this.books = res);
+  }
+
   getCategories(): void {
     this.categoryService.getAllCategories(this.filters)
       .subscribe(res => this.categories = res.docs);
   }
 
+  searchCategories(q): void {
+    this.categoryService.searchCategories(q)
+      .subscribe(res => this.categories = res);
+  }
+
   getCollections(): void {
     this.collectionService.getAllCollections(this.filters)
       .subscribe(res => this.collections = res.docs);
+  }
+
+  searchCollections(q): void {
+    this.collectionService.searchCollections(q)
+      .subscribe(res => this.collectionService = res);
   }
 
   getAuthors(): void {
@@ -210,7 +264,7 @@ export class BookCreateComponent implements OnInit {
     this.pricingFormGroup.get('membersRentPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.MEMBER_RENT, price));
   }
 
-  add(event: MatChipInputEvent) {
+  add(event: MatChipInputEvent): void {
     const value = (event.value || '').trim();
     if (value) {
       this.tags.value.push(value);
@@ -218,7 +272,7 @@ export class BookCreateComponent implements OnInit {
     event.chipInput!.clear();
   }
 
-  remove(index) {
+  remove(index): void {
     this.tags.value.splice(index, 1);
     this.tags.updateValueAndValidity();
   }

@@ -114,7 +114,7 @@ export class AuthorCreateComponent implements OnInit {
     const {books, ...rest} = this.authorFormGroup.value;
     const payload = {
       ...rest,
-      books: books.map(x => x.id),
+      books: books.map(x => x._id),
       avatar: this.avatar,
     };
     const author$ = this.authorService.create(payload);
