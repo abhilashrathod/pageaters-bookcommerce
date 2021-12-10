@@ -33,6 +33,12 @@ export class CategoryCreateComponent implements OnInit {
     this.categoryFormGroup = this.formBuilder.group({
       title: [''],
       description: [''],
+      meta: this.formBuilder.group({
+        title: [''],
+        description: [''],
+        url: [''],
+        imageUrl: [''],
+      })
     });
   }
 

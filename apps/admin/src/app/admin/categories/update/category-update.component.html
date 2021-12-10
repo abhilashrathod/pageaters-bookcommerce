@@ -20,23 +20,60 @@
         </p>
       </div>
       <div class="col-7">
-        <div class="mb-3">
-          <mat-form-field class="w-100">
-            <mat-label>Name</mat-label>
-            <input matInput formControlName="title">
-          </mat-form-field>
-        </div>
-        <div class="mb-3">
-          <mat-form-field class="w-100">
-            <mat-label>Description</mat-label>
-            <textarea matInput
-                      cdkTextareaAutosize
-                      #autosize="cdkTextareaAutosize"
-                      cdkAutosizeMinRows="10"
-                      cdkAutosizeMaxRows="25"
-                      formControlName="description"></textarea>
-          </mat-form-field>
-        </div>
+        <mat-stepper #stepper>
+          <mat-step>
+            <ng-template matStepLabel>Basic Info</ng-template>
+            <div class="mb-3">
+              <mat-form-field class="w-100">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="title">
+              </mat-form-field>
+            </div>
+            <div class="mb-3">
+              <mat-form-field class="w-100">
+                <mat-label>Description</mat-label>
+                <textarea matInput
+                          cdkTextareaAutosize
+                          #autosize="cdkTextareaAutosize"
+                          cdkAutosizeMinRows="10"
+                          cdkAutosizeMaxRows="15"
+                          formControlName="description"></textarea>
+              </mat-form-field>
+            </div>
+          </mat-step>
+          <mat-step formGroupName="meta">
+            <ng-template matStepLabel>Meta Tag Info</ng-template>
+            <div class="mb-3">
+              <mat-form-field class="w-100">
+                <mat-label>Meta Title</mat-label>
+                <input matInput formControlName="title">
+              </mat-form-field>
+            </div>
+            <div class="mb-3">
+              <mat-form-field class="w-100">
+                <mat-label>Meta URL</mat-label>
+                <input matInput formControlName="url">
+              </mat-form-field>
+            </div>
+            <div class="mb-3">
+              <mat-form-field class="w-100">
+                <mat-label>Meta Image URL</mat-label>
+                <input matInput formControlName="imageUrl">
+              </mat-form-field>
+            </div>
+            <div class="mb-3">
+              <mat-form-field class="w-100">
+                <mat-label>Meta Description</mat-label>
+                <textarea matInput
+                          cdkTextareaAutosize
+                          #autosize="cdkTextareaAutosize"
+                          cdkAutosizeMinRows="10"
+                          cdkAutosizeMaxRows="15"
+                          formControlName="description"></textarea>
+              </mat-form-field>
+            </div>
+          </mat-step>
+        </mat-stepper>
       </div>
     </div>
   </div>

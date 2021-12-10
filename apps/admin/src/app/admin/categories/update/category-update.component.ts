@@ -49,6 +49,12 @@ export class CategoryUpdateComponent implements OnInit {
     this.categoryFormGroup = this.formBuilder.group({
       title: [get(category, 'title', '')],
       description: [get(category, 'description', '')],
+      meta: this.formBuilder.group({
+        title: [get(category, 'meta.title', '')],
+        description: [get(category, 'meta.description', '')],
+        url: [get(category, 'meta.url', '')],
+        imageUrl: [get(category, 'meta.imageUrl', '')],
+      })
     });
   }
 
