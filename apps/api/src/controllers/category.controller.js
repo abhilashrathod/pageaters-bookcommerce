@@ -27,15 +27,15 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    let { title, description, thumbnail } = req.allParams();
+    let { title, description, thumbnail, meta } = req.allParams();
 
     let categoryId = `CA-${generateRandomNumber()}`;
 
-    const payload = { categoryId, title, description, thumbnail };
+    const payload = { categoryId, title, description, thumbnail, meta };
 
     const category = await Category.create(payload);
 
-    return res.ok({ message: 'CATEGORY_CREATE_SUCCESS', data: category });
+    return res.created({ message: 'CATEGORY_CREATE_SUCCESS', data: category });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -43,7 +43,7 @@ module.exports.create = async (req, res) => {
 
 module.exports.update = async (req, res) => {
   try {
-    let { id, title, description, thumbnail } = req.allParams();
+    let { id, title, description, thumbnail, meta } = req.allParams();
 
     const category = await Category.findOne({_id: id, isDeleted: false });
 
@@ -51,7 +51,7 @@ module.exports.update = async (req, res) => {
       return res.error('CATEGORY_NOT_EXIST');
     }
 
-    const payload = { title, description, thumbnail };
+    const payload = { title, description, thumbnail, meta };
 
     const categoryRes = await Category.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
 

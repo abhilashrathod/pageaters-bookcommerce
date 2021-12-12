@@ -18,6 +18,13 @@ const schema = new Schema({
 
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: String, default: '' },
+
+    meta: {
+      title: { type: String, default: '' },
+      description: { type: String, default: '' },
+      imageUrl: { type: String, default: '' },
+      url: { type: String, default: '' },
+    }
   },
   {
     timestamps: true,
