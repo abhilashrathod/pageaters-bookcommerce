@@ -1,15 +1,18 @@
 import {Component, OnInit} from '@angular/core';
+import {Router} from '@angular/router';
 import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import {MatChipInputEvent} from '@angular/material/chips';
+import {debounceTime} from 'rxjs/operators';
+import {range} from 'lodash';
+
 import {BooksService} from '../../../core/services/books.service';
 import {AuthorService} from '../../../core/services/author.service';
-import {Router} from '@angular/router';
 import {FilesService} from '../../../core/services/files.service';
 import {CategoryService} from '../../../core/services/category.service';
 import {CollectionService} from '../../../core/services/collection.service';
+
 import {FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
-import {MatChipInputEvent} from '@angular/material/chips';
-import {debounceTime} from 'rxjs/operators';
 
 @Component({
   selector: 'app-collection-create',
@@ -30,6 +33,7 @@ export class CollectionCreateComponent implements OnInit {
   collections = [];
   categories = [];
   authors = [];
+  priority = range(1, 26, 1);
 
   searchBooksCtrl = new FormControl();
   searchCollectionsCtrl = new FormControl();
@@ -204,10 +208,12 @@ export class CollectionCreateComponent implements OnInit {
       relatedCollections: [[]],
       relatedCategories: [[]],
       featuredAuthors: [[]],
+      priority: [''],
+      popularity: [''],
     });
   }
 
-  add(event: MatChipInputEvent) {
+  add(event: MatChipInputEvent): void {
     const value = (event.value || '').trim();
     if (value) {
       this.tags.value.push(value);
@@ -219,7 +225,6 @@ export class CollectionCreateComponent implements OnInit {
     this.tags.value.splice(index, 1);
     this.tags.updateValueAndValidity();
   }
-
 
   previewImage(event): void {
     if (event.target.files && event.target.files[0]) {

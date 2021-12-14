@@ -1,12 +1,15 @@
+import {IAuthor} from './author';
+
 export interface IBook {
-  ISBN: string;
-  title: string;
-  author: string;
-  publicationYear: string;
-  publisher: string;
-  imageSmall: string;
-  imageMedium: string;
-  imageLarge: string;
   _id: string;
-  id: string;
+  title: string;
+  ISBN: string;
+  poster: string;
+  price: number;
+  membersPrice: number;
+  currentDiscount: number;
+  author: IAuthor;
+  popularity: number;
+  editorsPick: boolean;
+  bestSeller: boolean;
 }

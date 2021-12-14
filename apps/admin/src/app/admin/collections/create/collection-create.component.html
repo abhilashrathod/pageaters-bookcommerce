@@ -150,6 +150,25 @@
                       formControlName="description"></textarea>
           </mat-form-field>
         </div>
+
+        <div class="row">
+          <div class="col-6">
+            <mat-form-field class="w-100">
+              <mat-label>Popularity</mat-label>
+              <input matInput formControlName="popularity">
+            </mat-form-field>
+          </div>
+          <div class="col-6">
+            <mat-form-field class="w-100">
+              <mat-label>Priority</mat-label>
+              <mat-select formControlName="priority">
+                <mat-option *ngFor="let i of priority" [value]="i">
+                  {{i}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
       </div>
 
     </div>

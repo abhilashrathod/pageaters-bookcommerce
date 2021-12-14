@@ -1,16 +1,18 @@
 import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import {MatChipInputEvent} from '@angular/material/chips';
 import {ActivatedRoute, Router} from '@angular/router';
 import {debounceTime} from 'rxjs/operators';
 import {get} from 'lodash';
+import {range} from 'lodash';
 
 import {CategoryService} from '../../../core/services/category.service';
 import {CollectionService} from '../../../core/services/collection.service';
 import {BooksService} from '../../../core/services/books.service';
 import {AuthorService} from '../../../core/services/author.service';
 import {FilesService} from '../../../core/services/files.service';
-import {MatChipInputEvent} from '@angular/material/chips';
+
 import {FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
 
 
@@ -39,6 +41,7 @@ export class CollectionUpdateComponent implements OnInit {
   searchCollectionsCtrl = new FormControl();
   searchAuthorsCtrl = new FormControl();
   searchCategoriesCtrl = new FormControl();
+  priority = range(1, 26, 1);
 
   DROPDOWN_OPTIONS = {
     enableSearchFilter: true,
@@ -115,6 +118,8 @@ export class CollectionUpdateComponent implements OnInit {
       relatedCollections: [get(collection, 'relatedCollections', [])],
       relatedCategories: [get(collection, 'relatedCategories', [])],
       featuredAuthors: [get(collection, 'featuredAuthors', [])],
+      priority: [get(collection, 'priority', [])],
+      popularity: [get(collection, 'popularity', [])],
     });
 
     this.isReady = true;
