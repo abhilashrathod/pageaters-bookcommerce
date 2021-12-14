@@ -11,13 +11,21 @@ const Bundle = mongoose.model(models.BUNDLE);
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit } = req.allParams();
+    let { page, limit, sortBy, sortOrder } = req.allParams();
 
     const query = { isDeleted: false };
+    const allowedSortingFields = ['title', 'createdAt', 'popularity', 'priority', 'currentDiscount'];
+
+    if (sortBy && !allowedSortingFields.includes(sortBy)) {
+      return res.error('SORTING_NOT_ALLOWED');
+    }
 
     const options = {
       page,
       limit,
+      sort: {
+        [sortBy]: Number(sortOrder),
+      },
       select: `title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller`,
       populate: {
         path: 'author',

@@ -7,14 +7,20 @@ const Book = mongoose.model(models.STORE_BOOK);
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit } = req.allParams();
+    let { page, limit, sortBy, sortOrder } = req.allParams();
 
     const query = {isDeleted: false};
+    const allowedSortingFields = ['title', 'createdAt', 'popularity', 'currentDiscount', 'price'];
+
+    if (sortBy && !allowedSortingFields.includes(sortBy)) {
+      return res.error('SORTING_NOT_ALLOWED')
+    }
 
     const options = {
       page,
       limit,
-      sort: {title: 1}
+      select: `categoryId _id title numberOfBooks thumbnail`,
+      [sortBy]: [sortOrder]
     };
 
     const categoryRes = await Category.paginate(query, options);
