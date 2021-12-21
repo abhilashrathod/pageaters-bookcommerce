@@ -139,7 +139,7 @@ module.exports.getAllProducts = async (req, res) => {
       sort: {
         [sortBy]: [sortOrder]
       },
-      select: `title ISBN author poster price popularity editorsPick currentDiscount bestSeller`,
+      select: `title bookId ISBN author poster price popularity editorsPick currentDiscount bestSeller`,
       populate: {
         path: 'author',
         select: 'name intro avatar',

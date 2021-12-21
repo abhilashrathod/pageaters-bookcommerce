@@ -86,7 +86,7 @@ module.exports.uploadBucket = async (req, res) => {
     return res.ok({
       message: 'FILE_UPLOADED',
       data: {
-        fileUrl: bucketRes.Location
+        fileUrl: fileName
       },
     });
   } catch (e) {

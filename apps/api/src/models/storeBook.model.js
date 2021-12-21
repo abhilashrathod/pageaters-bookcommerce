@@ -13,6 +13,7 @@ const schema = new Schema({
 
     language: { type: String, default: '' },
     pages: { type: Number, default: 0 },
+    readingLevel: { type: String, enum: Object.values(enums.READING_LEVEL), default: enums.READING_LEVEL.BEGINNER },
     version: { type: String, enum: Object.values(enums.BOOK_VERSIONS) },
 
     dimensions: { type: String, default: 0 },
@@ -38,8 +39,8 @@ const schema = new Schema({
     popularity: { type: Number, default: 0 },
 
     categories: [{ type: Schema.Types.ObjectId, ref: models.CATEGORY }],
-    relatedBooks: [{ type: Schema.Types.ObjectId, default: models.STORE_BOOK }],
-    relatedBundles: [{ type: Schema.Types.ObjectId, default: models.BUNDLE }],
+    relatedBooks: [{ type: Schema.Types.ObjectId, ref: models.STORE_BOOK }],
+    relatedBundles: [{ type: Schema.Types.ObjectId, ref: models.BUNDLE }],
     relatedCollections: [{ type: Schema.Types.ObjectId, ref: models.COLLECTION }],
 
     price: { type: Number, default: 0 },

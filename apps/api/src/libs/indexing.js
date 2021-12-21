@@ -14,14 +14,12 @@ const Bundles = mongoose.model(models.BUNDLE);
 const indexBooks = (app) => {
   // index all books in lunr on startup
   return new Promise(async (resolve, reject) => {
-    const allBooks = await Books.find({isDeleted: false});
+    const allBooks = await Books.find({ isDeleted: false });
 
     // setup lunr indexing
     const booksIndex = lunr(function() {
-      this.field('title', { boost: 10 });
-      this.field('authorName', { boost: 9 });
-      this.field('tags', { boost: 5 });
-      this.field('description');
+      this.ref('id');
+      this.field('title');
 
       const lunrIndex = this;
 
@@ -29,9 +27,6 @@ const indexBooks = (app) => {
       allBooks.forEach((product) => {
         const doc = {
           title: product.title,
-          authorName: product.authorName,
-          tags: product.tags.join(', '),
-          description: product.description,
           id: product._id,
         };
         lunrIndex.add(doc);
@@ -48,7 +43,7 @@ const indexBooks = (app) => {
 const indexAuthors = (app) => {
   // index all authors in lunr on startup
   return new Promise(async (resolve, reject) => {
-    const allAuthors = await Authors.find({isDeleted: false});
+    const allAuthors = await Authors.find({ isDeleted: false });
 
     // setup lunr indexing
     const authorIndex = lunr(function() {
@@ -77,7 +72,7 @@ const indexAuthors = (app) => {
 
 const indexCollections = (app) => {
   return new Promise(async (resolve, reject) => {
-    const allCollections = await Collections.find({isDeleted: false});
+    const allCollections = await Collections.find({ isDeleted: false });
 
     // setup lunr indexing
     const collectionIndex = lunr(function() {
@@ -108,7 +103,7 @@ const indexCollections = (app) => {
 
 const indexCategories = (app) => {
   return new Promise(async (resolve, reject) => {
-    const allCategories = await Categories.find({isDeleted: false});
+    const allCategories = await Categories.find({ isDeleted: false });
 
     // setup lunr indexing
     const categoryIndex = lunr(function() {
@@ -137,7 +132,7 @@ const indexCategories = (app) => {
 
 const indexBundles = (app) => {
   return new Promise(async (resolve, reject) => {
-    const allBundles = await Bundles.find({isDeleted: false});
+    const allBundles = await Bundles.find({ isDeleted: false });
     // setup lunr indexing
     const bundlesIndex = lunr(function() {
       this.field('title', { boost: 10 });

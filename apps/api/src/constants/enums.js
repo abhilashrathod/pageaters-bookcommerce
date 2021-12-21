@@ -55,7 +55,12 @@ module.exports = {
   BOOK_VERSIONS: {
     HARDCOVER: 'hardcover',
     PAPERBACK: 'paperback',
-    MASS_MARKET: 'mass_market',
+    MASS_MARKET: 'mass market paperback',
+  },
+  READING_LEVEL: {
+    BEGINNER: 'Beginner',
+    INTERMEDIATE: 'Intermediate',
+    ADVANCE: 'Advance',
   },
   NOTIFICATION_STATUS: {
     WAITING_FOR_DELIVERY: 'WAITING_FOR_DELIVERY',
