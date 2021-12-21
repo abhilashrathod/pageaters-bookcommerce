@@ -9,8 +9,9 @@ import {AuthorService} from '../../../core/services/author.service';
 import {CollectionService} from '../../../core/services/collection.service';
 import {BooksService} from '../../../core/services/books.service';
 import {FilesService} from '../../../core/services/files.service';
-import {BOOK_VERSIONS, FILE_UPLOAD_MODULES, PRICING_PERCENTAGES} from '../../../core/helpers/constants';
+import {BOOK_VERSIONS, BUCKETS, FILE_UPLOAD_MODULES, PRICING_PERCENTAGES, READING_LEVELS} from '../../../core/helpers/constants';
 import {BundleService} from '../../../core/services/bundle.service';
+import {debounceTime} from 'rxjs/operators';
 
 @Component({
   selector: 'app-book-update',
@@ -34,7 +35,8 @@ export class BookUpdateComponent implements OnInit {
   collections = [];
   categories = [];
   authors = [];
-  bookEditions = BOOK_VERSIONS;
+  bookEditionOptions = BOOK_VERSIONS;
+  readingLevelOptions = READING_LEVELS;
 
   DROPDOWN_OPTIONS = {
     enableSearchFilter: true,
@@ -117,6 +119,7 @@ export class BookUpdateComponent implements OnInit {
     const book$ = this.booksService.getById(id);
     book$.subscribe(res => {
       this.book = res;
+      this.book.poster = `${BUCKETS.BOOKS}/${this.book.poster}`;
       this.buildForms(res);
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
@@ -133,6 +136,7 @@ export class BookUpdateComponent implements OnInit {
 
       language: [get(data, 'language', '')],
       pages: [get(data, 'pages', '')],
+      readingLevel: [get(data, 'readingLevel', '')],
       version: [get(data, 'version', '')],
 
       ISBN: [get(data, 'ISBN', '')],
@@ -164,6 +168,63 @@ export class BookUpdateComponent implements OnInit {
       relatedBundles: [get(data, 'relatedBundles', [])],
       categories: [get(data, 'categories', [])],
     });
+
+
+    this.searchBooksCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchBooks(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getBooks();
+        }
+      });
+
+    this.searchCategoriesCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchCategories(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getCategories();
+        }
+      });
+
+    this.searchCollectionsCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchCollections(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getCollections();
+        }
+      });
+
+    this.searchAuthorsCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchAuthors(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getAuthors();
+        }
+      });
 
     this.isReady = true;
   }
@@ -202,6 +263,26 @@ export class BookUpdateComponent implements OnInit {
       .subscribe(res => this.bundles = res.docs);
   }
 
+  searchBooks(q): void {
+    this.booksService.searchBooks(q)
+      .subscribe(res => this.books = res);
+  }
+
+  searchCategories(q): void {
+    this.categoryService.searchCategories(q)
+      .subscribe(res => this.categories = res);
+  }
+
+  searchCollections(q): void {
+    this.collectionService.searchCollections(q)
+      .subscribe(res => this.collections = res);
+  }
+
+  searchAuthors(q): void {
+    this.authorService.searchAuthors(q)
+      .subscribe(res => this.authors = res);
+  }
+
   previewImage(event): void {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
@@ -215,7 +296,7 @@ export class BookUpdateComponent implements OnInit {
     }
   }
 
-  add(event: MatChipInputEvent) {
+  add(event: MatChipInputEvent): void {
     const value = (event.value || '').trim();
     if (value) {
       this.tags.value.push(value);
@@ -223,7 +304,7 @@ export class BookUpdateComponent implements OnInit {
     event.chipInput!.clear();
   }
 
-  remove(index) {
+  remove(index): void {
     this.tags.value.splice(index, 1);
     this.tags.updateValueAndValidity();
   }
@@ -252,10 +333,10 @@ export class BookUpdateComponent implements OnInit {
     const formData: FormData = new FormData();
     formData.append('file', this.selectedFile, this.selectedFile.name);
     formData.append('title', this.primaryFormGroup.get('title').value);
-    formData.append('fileModule', FILE_UPLOAD_MODULES.CATEGORY);
+    formData.append('fileModule', FILE_UPLOAD_MODULES.STORE_BOOK);
     const file$ = this.filesService.upload(formData);
     file$.subscribe(res => {
-      this.book.poster = res.fileUrl;
+      this.book.poster = `${BUCKETS.BOOKS}/${res.fileUrl}`;
       this.snackBar.open('Book Thumbnail Uploaded!', 'OKAY', {duration: 5000});
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
@@ -277,7 +358,7 @@ export class BookUpdateComponent implements OnInit {
       relatedCollections: relatedCollections.map(x => x._id),
       relatedBundles: relatedBundles.map(x => x._id),
       categories: categories.map(x => x._id),
-      poster: this.book.poster,
+      poster: this.book.poster.split('/').pop(),
     };
 
     const book$ = this.booksService.update(this.book._id, payload);

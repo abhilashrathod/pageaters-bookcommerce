@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
 
 import {FilesService} from '../../../core/services/files.service';
-import {FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
+import {BUCKETS, FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {BooksService} from '../../../core/services/books.service';
 import {debounceTime} from 'rxjs/operators';
@@ -103,7 +103,7 @@ export class AuthorCreateComponent implements OnInit {
     formData.append('fileModule', FILE_UPLOAD_MODULES.AUTHOR);
     const file$ = this.filesService.upload(formData);
     file$.subscribe(res => {
-      this.avatar = res.fileUrl;
+      this.avatar = `${BUCKETS.AUTHORS}/${res.fileUrl}`;
       this.snackBar.open('Author Image Uploaded!', 'OKAY', {duration: 5000});
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
@@ -115,7 +115,7 @@ export class AuthorCreateComponent implements OnInit {
     const payload = {
       ...rest,
       books: books.map(x => x._id),
-      avatar: this.avatar,
+      avatar: this.avatar.split('/').pop(),
     };
     const author$ = this.authorService.create(payload);
     author$.subscribe(res => {

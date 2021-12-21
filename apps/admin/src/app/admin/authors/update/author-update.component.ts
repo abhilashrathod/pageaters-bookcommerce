@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
 import {get} from 'lodash';
 import {debounceTime} from 'rxjs/operators';
-import {FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
+import {BUCKETS, FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {BooksService} from '../../../core/services/books.service';
 import {AuthorService} from '../../../core/services/author.service';
@@ -55,6 +55,7 @@ export class AuthorUpdateComponent implements OnInit {
     const author$ = this.authorService.getById(id);
     author$.subscribe(res => {
       this.author = res;
+      this.author.avatar = `${BUCKETS.AUTHORS}/${this.author.avatar}`;
       this.getBooks();
       this.searchBooks();
       this.buildForm(res);
@@ -117,7 +118,7 @@ export class AuthorUpdateComponent implements OnInit {
     formData.append('fileModule', FILE_UPLOAD_MODULES.AUTHOR);
     const file$ = this.filesService.upload(formData);
     file$.subscribe(res => {
-      this.author.avatar = res.fileUrl;
+      this.author.avatar = `${BUCKETS.AUTHORS}/${res.fileUrl}`;
       this.snackBar.open('Author Image Uploaded!', 'OKAY', {duration: 5000});
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
@@ -130,7 +131,7 @@ export class AuthorUpdateComponent implements OnInit {
       ...this.author,
       ...rest,
       books: books.map(x => x._id),
-      avatar: this.author.avatar,
+      avatar: this.author.avatar.split('/').pop(),
     };
     const author$ = this.authorService.update(this.author._id, payload);
     author$.subscribe(res => {

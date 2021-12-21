@@ -1,6 +1,6 @@
 <div *ngIf="isReady" class="row">
   <div class="col-12">
-    <h1>Add Store Book</h1>
+    <h1>Update: {{book?.title}}</h1>
   </div>
   <div class="col-12">
     <mat-stepper #stepper>
@@ -88,7 +88,7 @@
                     <mat-form-field class="w-100">
                       <mat-label>Book Version / Edition</mat-label>
                       <mat-select formControlName="version">
-                        <mat-option *ngFor="let version of bookEditions"
+                        <mat-option *ngFor="let version of bookEditionOptions"
                                     [value]="version">{{version | titlecase}}</mat-option>
                       </mat-select>
                     </mat-form-field>
@@ -96,13 +96,22 @@
                 </div>
 
                 <div class="row">
-                  <div class="col-6">
+                  <div class="col-4">
+                    <mat-form-field class="w-100">
+                      <mat-label>Reading Level</mat-label>
+                      <mat-select formControlName="readingLevel">
+                        <mat-option *ngFor="let option of readingLevelOptions"
+                                    [value]="option">{{option | titlecase}}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div class="col-4">
                     <mat-form-field class="w-100">
                       <mat-label>Publisher</mat-label>
                       <input matInput formControlName="publisher">
                     </mat-form-field>
                   </div>
-                  <div class="col-6">
+                  <div class="col-4">
                     <mat-form-field class="w-100">
                       <mat-label>Publication Year</mat-label>
                       <input matInput formControlName="publicationYear">

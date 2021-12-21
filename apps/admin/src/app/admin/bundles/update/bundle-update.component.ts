@@ -8,7 +8,7 @@ import {BooksService} from '../../../core/services/books.service';
 import {FilesService} from '../../../core/services/files.service';
 import {debounceTime} from 'rxjs/operators';
 import {MatChipInputEvent} from '@angular/material/chips';
-import {FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
+import {BUCKETS, FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
 
 @Component({
   selector: 'app-bundle-update',
@@ -75,6 +75,7 @@ export class BundleUpdateComponent implements OnInit {
     const bundle$ = this.bundleService.getById(id);
     bundle$.subscribe(res => {
       this.bundle = res;
+      this.bundle.poster = `${BUCKETS.BUNDLES}/${this.bundle.poster}`;
       this.buildForm(res);
     });
   }
@@ -166,7 +167,7 @@ export class BundleUpdateComponent implements OnInit {
     formData.append('fileModule', FILE_UPLOAD_MODULES.BUNDLE);
     const file$ = this.filesService.upload(formData);
     file$.subscribe(res => {
-      this.bundle.poster = res.fileUrl;
+      this.bundle.poster = `${BUCKETS.BUNDLES}/${res.fileUrl}`;
       this.snackBar.open('Image Uploaded!', 'OKAY', {duration: 5000});
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
@@ -179,7 +180,7 @@ export class BundleUpdateComponent implements OnInit {
       ...this.bundle,
       ...rest,
       bundledBooks: books.map(x => x._id),
-      poster: this.bundle.poster,
+      poster: this.bundle.poster.split('/').pop(),
     };
 
     const bundle$ = this.bundleService.update(this.bundle._id, payload);

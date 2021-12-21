@@ -51,8 +51,8 @@
         <div class="mb-3">
           <angular2-multiselect formControlName="books"
                                 [data]="books"
-                                (onSelect)="onItemSelect()"
-                                (onDeSelect)="OnItemDeSelect()"
+                                (onSelect)="calculatePrices()"
+                                (onDeSelect)="calculatePrices()"
                                 [settings]="booksDropdownSettings">
             <c-badge>
               <ng-template let-item="item">

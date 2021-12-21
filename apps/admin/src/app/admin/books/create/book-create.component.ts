@@ -7,7 +7,13 @@ import {FilesService} from '../../../core/services/files.service';
 import {CollectionService} from '../../../core/services/collection.service';
 import {AuthorService} from '../../../core/services/author.service';
 import {BooksService} from '../../../core/services/books.service';
-import {BOOK_VERSIONS, FILE_UPLOAD_MODULES, PRICING_PERCENTAGES, returnPercentageValue} from '../../../core/helpers/constants';
+import {
+  BOOK_VERSIONS, BUCKETS,
+  FILE_UPLOAD_MODULES,
+  PRICING_PERCENTAGES,
+  READING_LEVELS,
+  returnPercentageValue
+} from '../../../core/helpers/constants';
 import {MatChipInputEvent} from '@angular/material/chips';
 import {BundleService} from '../../../core/services/bundle.service';
 import {debounceTime} from 'rxjs/operators';
@@ -33,7 +39,8 @@ export class BookCreateComponent implements OnInit {
   categories = [];
   authors = [];
 
-  bookEditions = BOOK_VERSIONS;
+  bookEditionOptions = BOOK_VERSIONS;
+  readingLevelOptions = READING_LEVELS;
 
   DROPDOWN_OPTIONS = {
     enableSearchFilter: true,
@@ -121,6 +128,7 @@ export class BookCreateComponent implements OnInit {
       language: [''],
       pages: [''],
       version: [''],
+      readingLevel: [this.readingLevelOptions[0]],
 
       ISBN: [''],
       publicationYear: [''],
@@ -192,6 +200,20 @@ export class BookCreateComponent implements OnInit {
           this.getCollections();
         }
       });
+
+    this.searchAuthorsCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchAuthors(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getAuthors();
+        }
+      });
   }
 
   getSupportData(): void {
@@ -230,12 +252,17 @@ export class BookCreateComponent implements OnInit {
 
   searchCollections(q): void {
     this.collectionService.searchCollections(q)
-      .subscribe(res => this.collectionService = res);
+      .subscribe(res => this.collections = res);
   }
 
   getAuthors(): void {
     this.authorService.getAllAuthors(this.filters)
       .subscribe(res => this.authors = res.docs);
+  }
+
+  searchAuthors(q): void {
+    this.authorService.searchAuthors(q)
+      .subscribe(res => this.authors = res);
   }
 
   getBundles(): void {
@@ -292,7 +319,7 @@ export class BookCreateComponent implements OnInit {
     formData.append('fileModule', FILE_UPLOAD_MODULES.STORE_BOOK);
     const file$ = this.filesService.upload(formData);
     file$.subscribe(res => {
-      this.poster = res.fileUrl;
+      this.poster = `${BUCKETS.BOOKS}/${res.fileUrl}`;
       this.snackBar.open('Book Thumbnail Uploaded!', 'OKAY', {duration: 5000});
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
@@ -313,7 +340,7 @@ export class BookCreateComponent implements OnInit {
       relatedCollections: relatedCollections.map(x => x._id),
       relatedBundles: relatedBundles.map(x => x._id),
       categories: categories.map(x => x._id),
-      poster: this.poster,
+      poster: this.poster.split('/').pop()
     };
     const book$ = this.booksService.create(payload);
     book$.subscribe(res => {

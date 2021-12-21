@@ -7,7 +7,7 @@ import {debounceTime} from 'rxjs/operators';
 import {sumBy} from 'lodash';
 import {BooksService} from '../../../core/services/books.service';
 import {FilesService} from '../../../core/services/files.service';
-import {FILE_UPLOAD_MODULES, returnPercentageValue} from '../../../core/helpers/constants';
+import {BUCKETS, FILE_UPLOAD_MODULES, returnPercentageValue} from '../../../core/helpers/constants';
 import {BundleService} from '../../../core/services/bundle.service';
 
 @Component({
@@ -120,37 +120,30 @@ export class BundleCreateComponent implements OnInit {
 
   calculateDiscountedPrices(): void {
     const {books, currentDiscount} = this.bundleFormGroup.value;
-    const price = sumBy(books, (x: any) => x.price);
-    const membersPrice = sumBy(books, (x: any) => x.membersPrice);
 
+    for (const book of books) {
+      book.discountedPrice = book.currentDiscount > 0 ? returnPercentageValue(100 - book.currentDiscount, book.price) : book.price;
+    }
+
+    const price = sumBy(books, (x: any) => x.discountedPrice);
     const discountedPrice = returnPercentageValue(100 - currentDiscount, price);
-    const discountedMembersPrice = returnPercentageValue(100 - currentDiscount, membersPrice);
 
     this.bundleFormGroup.patchValue({
       price: discountedPrice,
-      membersPrice: discountedMembersPrice,
     });
   }
 
-  onItemSelect(): void {
+  calculatePrices(): void {
     const {books} = this.bundleFormGroup.value;
-    const price = sumBy(books, (x: any) => x.price);
-    const membersPrice = sumBy(books, (x: any) => x.membersPrice);
+
+    for (const book of books) {
+      book.discountedPrice = book.currentDiscount > 0 ? returnPercentageValue(100 - book.currentDiscount, book.price) : book.price;
+    }
+    const price = sumBy(books, (x: any) => x.discountedPrice);
 
     this.bundleFormGroup.patchValue({
       price,
-      membersPrice,
-    });
-  }
-
-  OnItemDeSelect(): void {
-    const {books} = this.bundleFormGroup.value;
-    const price = sumBy(books, (x: any) => x.price);
-    const membersPrice = sumBy(books, (x: any) => x.membersPrice);
-
-    this.bundleFormGroup.patchValue({
-      price,
-      membersPrice,
+      // membersPrice,
     });
   }
 
@@ -183,7 +176,7 @@ export class BundleCreateComponent implements OnInit {
     formData.append('fileModule', FILE_UPLOAD_MODULES.BUNDLE);
     const file$ = this.filesService.upload(formData);
     file$.subscribe(res => {
-      this.poster = res.fileUrl;
+      this.poster = `${BUCKETS.BUNDLES}/${res.fileUrl}`;
       this.snackBar.open('Image Uploaded!', 'OKAY', {duration: 5000});
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
@@ -195,7 +188,7 @@ export class BundleCreateComponent implements OnInit {
     const payload = {
       ...rest,
       bundledBooks: books.map(x => x._id),
-      poster: this.poster,
+      poster: this.poster.split('/').pop(),
     };
 
     const bundle$ = this.bundleService.create(payload);
