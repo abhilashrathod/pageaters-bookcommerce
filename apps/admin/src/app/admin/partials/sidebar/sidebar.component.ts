@@ -50,9 +50,14 @@ export class SidebarComponent implements OnInit {
       title: 'Customers'
     },
     {
-      icon: 'shopping_cart',
+      icon: 'shopping_bag',
       path: [],
       title: 'Orders'
+    },
+    {
+      icon: 'shopping_cart',
+      path: ['/', 'admin', 'carts'],
+      title: 'Carts'
     },
     {
       icon: 'assignment_return',
