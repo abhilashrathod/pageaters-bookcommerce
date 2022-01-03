@@ -25,13 +25,17 @@ module.exports.getAllByUser = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    let { fullName, email, contactNo, city, state, pinCode, addressLine1, addressLine2, landmark, type } = req.allParams();
+    let { fullName, email, contactNo, city, state, pinCode, addressLine1, addressLine2, landmark, type, isDefault } = req.allParams();
     let { user } = req;
 
     const isServiceable = await checkServiceabilityInternal(pinCode);
 
     if (isServiceable) {
-      console.log(colors.green("Serviceable!"));
+      console.log(colors.green('Serviceable!'));
+
+      if (isDefault) {
+        await Address.updateMany({ isDeleted: false, userId: user.userId }, { $set: { isDefault: false } });
+      }
 
       const payload = {
         userId: user.userId,
@@ -43,6 +47,7 @@ module.exports.create = async (req, res) => {
         pinCode,
         addressLine1,
         addressLine2,
+        isDefault,
         landmark,
         type,
       };
@@ -60,7 +65,7 @@ module.exports.create = async (req, res) => {
 
 module.exports.update = async (req, res) => {
   try {
-    let { id, fullName, email, contactNo, city, state, pinCode, addressLine1, addressLine2, landmark, type } = req.allParams();
+    let { id, fullName, email, contactNo, city, state, pinCode, addressLine1, addressLine2, landmark, type, isDefault } = req.allParams();
     let { user } = req;
     const query = { _id: id, isDeleted: false, userId: user.userId };
 
@@ -68,6 +73,10 @@ module.exports.update = async (req, res) => {
 
     if (!addressRes) {
       return res.error('ADDRESS_NOT_EXIST');
+    }
+
+    if (isDefault) {
+      await Address.updateMany({ isDeleted: false, userId: user.userId }, { $set: { isDefault: false } });
     }
 
     const payload = {
@@ -80,10 +89,33 @@ module.exports.update = async (req, res) => {
       addressLine1,
       addressLine2,
       landmark,
+      isDefault,
       type,
     };
 
     const updatedAddress = await Address.findOneAndUpdate(query, { $set: { ...payload } }, { new: true });
+
+    return res.ok({ message: 'ADDRESS_UPDATE_SUCCESS', data: updatedAddress });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.makeDefault = async (req, res) => {
+  try {
+    let { id } = req.allParams();
+    let { user } = req;
+    const query = { _id: id, isDeleted: false, userId: user.userId };
+
+    const addressRes = await Address.findOne(query);
+
+    if (!addressRes) {
+      return res.error('ADDRESS_NOT_EXIST');
+    }
+
+    await Address.updateMany({ isDeleted: false, userId: user.userId }, { $set: { isDefault: false } });
+
+    const updatedAddress = await Address.findOneAndUpdate(query, { $set: { isDefault: true } }, { new: true });
 
     return res.ok({ message: 'ADDRESS_UPDATE_SUCCESS', data: updatedAddress });
   } catch (e) {

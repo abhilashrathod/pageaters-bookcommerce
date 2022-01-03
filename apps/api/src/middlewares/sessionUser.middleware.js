@@ -6,6 +6,10 @@ module.exports = (req, res, next) => {
   let authHeader = req.get('authorization');
   let token = '';
 
+  if (!authHeader) {
+    next();
+  }
+
   if (authHeader) {
     let parts = authHeader.split(' ');
     if (parts.length === 2) {

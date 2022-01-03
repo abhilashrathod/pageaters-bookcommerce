@@ -72,14 +72,13 @@ module.exports.prepareProductsForOrder = async function(books) {
 };
 
 
-module.exports.calculateShipping = async function(totalWeight, deliveryCode) {
+module.exports.calculateShipping = async function(isFree, totalWeight, deliveryCode) {
   return new Promise(async (resolve, reject) => {
     try {
 
-      // TODO: Remove this comment later
-      // if (isFree) {
-      //   resolve(0);
-      // }
+      if (isFree) {
+        resolve(0);
+      }
 
       const config = {
         method: 'get',

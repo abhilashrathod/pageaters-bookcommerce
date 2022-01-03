@@ -50,8 +50,6 @@ module.exports.register = async (req, res) => {
     await RefreshTokens.create(refreshToken);
     const profile = await User.getProfile(user._id); // TODO: Improvement could be made
 
-    console.log('VERIFICATION:', colors.blue(token));
-
     // TODO: Uncomment later when Sendgrid replies
     sendMailQueue.add({
       emailModule: 'REGISTRATION',
@@ -79,6 +77,7 @@ module.exports.login = async (req, res) => {
   try {
     const { email, password } = req.allParams();
     const ipAddress = req.ip;
+    const cartCookie = req.cookies.cart;
 
     let user = await User.findOne({ email, status: enums.USER_STATUS.ACTIVE });
 
@@ -101,7 +100,12 @@ module.exports.login = async (req, res) => {
 
     // get user profile
     user = await User.getProfile(user._id);
-    const cart = await Cart.findOne({ user: user._id });
+    const cartRes = await Cart.findOne({ user: user._id });
+
+    if (cartCookie) {
+      const previousCartRes = await Cart.findOne({ user: user._id });
+    }
+
 
     // create a refresh token cookie that will also expires in 7 days
     const cookieOptions = {
@@ -109,7 +113,7 @@ module.exports.login = async (req, res) => {
       expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
     };
     res.cookie('refreshToken', refreshToken.token, cookieOptions);
-    if (cart) res.cookie('cart', cart._id, { httpOnly: true });
+    if (cartRes) res.cookie('cart', cartRes._id, { httpOnly: true });
 
     if (!user.emailVerified) {
       return res.ok({ message: 'EMAIL_VERIFICATION_PENDING', data: { user, token: jwtToken } });
@@ -132,7 +136,10 @@ module.exports.refreshToken = async (req, res) => {
 
     const refreshToken = await RefreshTokens.findOne({ token });
 
+    console.log("refreshToken", refreshToken);
+
     if (!refreshToken || !refreshToken.isActive) {
+      res.cookie('refreshToken', '', {httpOnly: true, expires: 0});
       return res.unauthorized('INVALID_TOKEN');
     }
     const { account } = refreshToken;
@@ -573,12 +580,11 @@ module.exports.sms = async (req, res) => {
       'subscription.plan': null,
       'subscription.isActive': false,
       $or: [
-        {'subscription.currentStatus': enums.SUBSCRIPTION_STATUSES.AUTHENTICATED},
-        {'subscription.currentStatus': enums.SUBSCRIPTION_STATUSES.NEW},
-        {'subscription.currentStatus': enums.SUBSCRIPTION_STATUSES.ACTIVE},
+        { 'subscription.currentStatus': enums.SUBSCRIPTION_STATUSES.AUTHENTICATED },
+        { 'subscription.currentStatus': enums.SUBSCRIPTION_STATUSES.NEW },
+        { 'subscription.currentStatus': enums.SUBSCRIPTION_STATUSES.ACTIVE },
       ],
     };
-
 
 
     const userRes = await User.findOne(query);

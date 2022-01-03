@@ -84,7 +84,7 @@ class User {
 
   static async getProfile(userId) {
     const user = await this.findById(userId).select(
-      '-isDeleted -createdAt -updatedAt -role -salt -password -status -forgotPasswordToken -verifyEmailToken -lastVerifyEmailSentOn -contactOtp -forgotPasswordToken -lastForgotPasswordSentOn -lastPasswordSetAt -lastLoginAt -notifications -razorPayCustId',
+      '-isDeleted -createdAt -updatedAt -role -salt -password -status -rental -forgotPasswordToken -verifyEmailToken -lastVerifyEmailSentOn -contactOtp -forgotPasswordToken -lastForgotPasswordSentOn -lastPasswordSetAt -lastLoginAt -notifications -razorPayCustId',
     );
 
     return user;

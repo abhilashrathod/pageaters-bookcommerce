@@ -9,11 +9,7 @@ const Book = mongoose.model(models.STORE_BOOK);
 
 module.exports.retrieve = async (req, res) => {
   try {
-    const cart = get(req, 'cookies.cart', '');
     const userId = get(req, 'user.userId', '');
-
-    console.log("cart", cart);
-    console.log("userId", userId);
 
     const populate = {
       path: 'products.product',
@@ -35,24 +31,7 @@ module.exports.retrieve = async (req, res) => {
       }
     }
 
-    if (cart) {
-      let retrievedCart = await Cart.findOne({ _id: cart }).populate(populate);
-
-      if (retrievedCart) {
-        retrievedCart = retrievedCart.toObject();
-        res.cookie('cart', retrievedCart._id, { httpOnly: true });
-        retrievedCart.subTotal = await calculateTotal(retrievedCart.products);
-        return res.ok({ message: 'CART_LIST_SUCCESS', data: retrievedCart });
-      }
-    }
-
-    const cartCreatePayload = {
-      user: userId ? userId : null,
-    };
-
-    const newUserCart = await Cart.create(cartCreatePayload);
-    res.cookie('cart', newUserCart._id, { httpOnly: true });
-    return res.ok({ message: 'CART_LIST_SUCCESS', data: newUserCart });
+    return res.ok({ message: 'CART_NOT_EXIST', data: null});
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -196,6 +175,31 @@ module.exports.empty = async (req, res) => {
     const updatedCart = await Cart.findOneAndUpdate(query, update, options);
 
     res.ok({ message: 'CART_DELETE_SUCCESS', data: updatedCart });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+/* ADMIN */
+
+module.exports.getAll = async (req, res) => {
+  try {
+    let { page, limit } = req.allParams();
+
+    const query = {};
+
+    const options = {
+      page,
+      limit,
+      populate: {
+        path: 'user',
+        select: 'fullName email'
+      }
+    };
+
+    const cartRes = await Cart.paginate(query, options);
+
+    return res.ok({ message: 'CART_LIST_SUCCESS', data: cartRes });
   } catch (e) {
     return res.internalServerError(e);
   }

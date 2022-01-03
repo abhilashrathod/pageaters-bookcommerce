@@ -130,15 +130,11 @@ module.exports.search = async (req, res) => {
       select: 'name',
     };
 
-    console.log("q", q);
-
     const lunrIdArray = [];
     booksIndex.search(q).forEach((id) => {
       console.log("id", JSON.stringify(id));
       lunrIdArray.push(getId(id.ref));
     });
-
-    console.log("lunrIdArray", lunrIdArray);
 
     const query = { _id: { $in: lunrIdArray }, isDeleted: false };
 

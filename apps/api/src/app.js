@@ -54,7 +54,7 @@ i18n.configure({
 
 this.app.use(i18n.init);
 
-// extend req and res
+// extend req and response
 this.app.use(require('./middlewares/extendReq.middleware'));
 
 // for indexing

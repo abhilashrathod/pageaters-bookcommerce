@@ -152,7 +152,7 @@ module.exports.create = async (req, res) => {
 
     /* CALCULATE SHIPPING AMOUNT */
     const addressRes = await Address.findOne({ isDeleted: false, _id: currentOrderRes.deliveryAddress, userId });
-    const shippingRes = await calculateShipping(totalWeight, addressRes.pinCode);
+    const shippingRes = await calculateShipping( subTotal >= 300, totalWeight, addressRes.pinCode);
     shipping = shippingRes.deliveryAmount;
     /* END CALCULATE SHIPPING AMOUNT */
 

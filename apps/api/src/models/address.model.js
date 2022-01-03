@@ -19,9 +19,10 @@ const schema = new Schema({
     landmark: { type: 'String', default: '' },
 
     type: { type: String, enum: Object.values(enums.ADDRESS_TYPES), default: enums.ADDRESS_TYPES.HOME },
+    isDefault: { type: Boolean, default: false },
 
-    isDeleted: {type: Boolean, default: false},
-    deletedAt: {type: String, default: ''},
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: String, default: '' },
   },
   {
     timestamps: true,

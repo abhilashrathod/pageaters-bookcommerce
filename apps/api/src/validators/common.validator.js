@@ -12,6 +12,14 @@ module.exports.page = Joi.number()
   .description('Page')
   .error(new Error('INVALID_PAGE'));
 
+module.exports.phone = Joi.string()
+  .length(10)
+  .required()
+  .regex(/^\d+$/)
+  .trim()
+  .description('Contact No')
+  .error(new Error('INVALID_PHONE'));
+
 module.exports.limit = Joi.number()
   .integer()
   .min(0)
