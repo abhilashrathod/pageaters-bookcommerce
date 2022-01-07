@@ -60,6 +60,8 @@ module.exports.add = async (req, res) => {
     if (alreadyThere) {
       quantity = alreadyThere.quantity + quantity; // add upcoming and already exist qty to check final quantity is available.
 
+      if (quantity > 2) return res.error('QUANTITY_LIMIT');
+
       if (quantity > book.inventory) return res.error('INVALID_QUANTITY');
 
       const query = { _id: cart, 'products.product': getId(product) };
@@ -70,6 +72,8 @@ module.exports.add = async (req, res) => {
 
       return res.ok({ message: 'CART_UPDATE_SUCCESS', data: updatedCart });
     } else {
+      if (quantity > 2) return res.error('QUANTITY_LIMIT');
+
       if (quantity > book.inventory) return res.error('INVALID_QUANTITY');
 
       const addedBook = {
@@ -105,6 +109,8 @@ module.exports.update = async (req, res) => {
     if (!book) return res.error('BOOK_NOT_EXIST');
 
     book = book.toObject();
+
+    if (quantity > 2) return res.error('QUANTITY_LIMIT');
 
     if (quantity > book.inventory) return res.error('INVALID_QUANTITY');
 

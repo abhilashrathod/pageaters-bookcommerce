@@ -30,6 +30,7 @@ router.use('/collections', require('./collection.routes'));
 router.use('/subscribers', require('./subscriber.route'));
 router.use('/cart', require('./cart.routes'));
 router.use('/wishlist', require('./wishlist.routes'));
+router.use('/stock-alerts', require('./stockAlert.routes'));
 router.use('/subscription-plan', require('./subscriptionPlan.routes'));
 router.use('/subscription', require('./subscription.routes'));
 router.use('/addresses', require('./address.routes'));

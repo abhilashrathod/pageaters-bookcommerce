@@ -14,6 +14,7 @@ require('./store.model');
 require('./author.model');
 require('./categories.model');
 require('./collection.model');
+require('./stockAlerts.modal');
 require('./subscribers.model');
 require('./cart.model');
 require('./subscriptionPlan.model');

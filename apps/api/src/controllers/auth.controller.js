@@ -50,12 +50,13 @@ module.exports.register = async (req, res) => {
     await RefreshTokens.create(refreshToken);
     const profile = await User.getProfile(user._id); // TODO: Improvement could be made
 
-    // TODO: Uncomment later when Sendgrid replies
     sendMailQueue.add({
       emailModule: 'REGISTRATION',
       to: user.email,
+      subject: 'Welcome to Pageaters!',
       data: {
-        NAME: `${fullName}`,
+        FULL_NAME: fullName,
+        VERIFICATION_TOKEN: token
       },
     });
 
@@ -135,8 +136,6 @@ module.exports.refreshToken = async (req, res) => {
     }
 
     const refreshToken = await RefreshTokens.findOne({ token });
-
-    console.log("refreshToken", refreshToken);
 
     if (!refreshToken || !refreshToken.isActive) {
       res.cookie('refreshToken', '', {httpOnly: true, expires: 0});

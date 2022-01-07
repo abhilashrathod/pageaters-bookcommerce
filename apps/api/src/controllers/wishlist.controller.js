@@ -19,7 +19,7 @@ module.exports.getAll = async (req, res) => {
 
     const populateOptions = {
       path: 'wishlist',
-      select: 'bookId _id title',
+      select: `title bookId ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller`,
     };
 
     const userRes = await Users.findOne(query).select('wishlist').populate(populateOptions);

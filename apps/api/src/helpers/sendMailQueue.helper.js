@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const Queue = require('better-queue');
 const colors = require('colors');
+const ejs = require('ejs');
 
 const { PROJECT_ROOT, DEFAULT_LANGUAGE, ENVIRONMENT } = require('./../appConfig');
 const { sendMail } = require('./sendMail.helper');
@@ -16,10 +17,10 @@ class SendMailQueue {
 
   add(mail) {
     this.queue.push(mail)
-      .on('finish', function () {
+      .on('finish', function() {
         console.log(colors.green('Task succeeded'));
       })
-      .on('failed', function () {
+      .on('failed', function() {
         console.log(colors.red(' Task failed!'));
       });
   }
@@ -28,31 +29,25 @@ class SendMailQueue {
     const { emailModule, language = DEFAULT_LANGUAGE, data, to, subject, body } = input;
 
     if (emailModule) {
-      fs.readFile(path.join(PROJECT_ROOT, 'src', 'templates', 'email', emailModule, `${language}.html`), 'utf-8', async (e, template) => {
-        if (e) {
-          console.log(e);
-          cb(e);
-        } else {
-          template = template.split('##_SEPARATOR_##');
-          const subject = template[0];
-          const body = template[1];
-
-          const mail = {
+      let emailTemplate;
+      ejs
+        .renderFile(path.join(PROJECT_ROOT, 'src', 'templates', 'email', emailModule, `${language}.ejs`), { ...data })
+        .then(async (result) => {
+          emailTemplate = result;
+          const message = {
             to,
             subject,
-            body: parseTemplate(body, data),
             emailModule,
+            body: emailTemplate,
           };
 
-          if (ENVIRONMENT === 'development') {
-            console.log(mail);
-          }
-
-          await sendMail(mail);
+          await sendMail(message);
 
           cb();
-        }
-      });
+        })
+        .catch(err => {
+          cb(err);
+        });
     } else {
       const mail = { to, subject, body };
 
@@ -65,14 +60,6 @@ class SendMailQueue {
       cb();
     }
   }
-}
-
-function parseTemplate(template, dataObj) {
-  return template.replace(/##_.+?_##/gi, match => {
-    const path = match.substring(3, match.length - 3);
-
-    return _.get(dataObj, path, '');
-  });
 }
 
 module.exports = new SendMailQueue();

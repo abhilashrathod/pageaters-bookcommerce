@@ -58,8 +58,8 @@ this.app.use(i18n.init);
 this.app.use(require('./middlewares/extendReq.middleware'));
 
 // for indexing
-const { runIndexing } = require('./libs/indexing');
-runIndexing(this.app);
+// const { runIndexing } = require('./libs/indexing');
+// runIndexing(this.app);
 
 // Disable x-powered-by header
 this.app.disable('x-powered-by');

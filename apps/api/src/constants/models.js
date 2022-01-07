@@ -5,6 +5,7 @@ module.exports = {
   DEVICE: 'device',
   LOG_EMAIL: 'log_email',
   LOG_PUSH_NOTIFICAION: 'log_pushNotification',
+  STOCK_ALERT: 'stock_alert',
   FILE: 'file',
   PERF_API: 'perf_api',
   ADDRESS: 'address',

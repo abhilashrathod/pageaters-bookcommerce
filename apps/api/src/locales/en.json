@@ -161,7 +161,13 @@
 	"SUBSCRIPTION_CREATE_SUCCESS": "Subscription Created",
 	"SUBSCRIPTION_UPDATE_SUCCESS": "Subscription Information Updated",
 	"SUBSCRIPTION_DELETE_SUCCESS": "Subscription Deleted Successfully",
+	"STOCK_ALERT_LIST_SUCCESS": "All Subscriptions listed",
+	"STOCK_ALERT_CREATE_SUCCESS": "Subscribed to Stock Alert",
+	"STOCK_ALERT_CHECK_SUCCESS": "Subscribe to Notify when Back in Stock",
+	"STOCK_ALERT_DELETE_SUCCESS": "Unsubscribed to Stock Alert",
+	"STOCK_ALERT_EXISTS": "You've Already Subscribed to this Product's Stock Alerts",
 	"SUBSCRIPTION_EXISTS": "Subscription already activated",
 	"INVALID_QUANTITY": "Requested quantity higher than available stock.",
+	"QUANTITY_LIMIT": "A Reader can only checkout maximum 2 quantity per title.",
 	"INVALID_ID": "INVALID_ID"
 }

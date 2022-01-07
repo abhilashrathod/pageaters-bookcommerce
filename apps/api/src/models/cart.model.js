@@ -4,7 +4,7 @@ const mongoosePaginate = require('mongoose-paginate-v2');
 const { models } = require('./../constants');
 
 const schema = new Schema({
-    user: { type: Schema.Types.ObjectId, ref: models.USER }, // can be blank for non-registered user and object for registered user
+    user: { type: Schema.Types.ObjectId, ref: models.USER },
     products: [{
       quantity: { type: Number, default: 1 },
       addedOn: { type: String, default: '' },
@@ -13,6 +13,10 @@ const schema = new Schema({
     rentals: [{
       quantity: { type: Number, default: 1 },
       product: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
+    }],
+    bundles: [{
+      quantity: { type: Number, default: 1 },
+      product: { type: Schema.Types.ObjectId, ref: models.BUNDLE },
     }],
     subTotal: { type: Number, default: 0 },
   },
