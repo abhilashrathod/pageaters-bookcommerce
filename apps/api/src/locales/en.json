@@ -116,6 +116,8 @@
 	"BUNDLE_UPDATE_SUCCESS": "Bundle Information Updated",
 	"BUNDLE_SEARCH_SUCCESS": "Bundle Search Successful",
 	"BUNDLE_DELETE_SUCCESS": "Bundle Deleted Successfully",
+	"BUNDLE_DEACTIVATION_SUCCESS": "Bundle Deactivated Successfully",
+	"BUNDLE_ADD_SUCCESS": "Bundle Added Successfully to Cart",
 	"CART_LIST_SUCCESS": "Cart info fetched",
 	"CART_NOT_EXIST": "Cart doesn't exist",
 	"CART_CREATE_SUCCESS": "Cart Created",
@@ -164,10 +166,15 @@
 	"STOCK_ALERT_LIST_SUCCESS": "All Subscriptions listed",
 	"STOCK_ALERT_CREATE_SUCCESS": "Subscribed to Stock Alert",
 	"STOCK_ALERT_CHECK_SUCCESS": "Subscribe to Notify when Back in Stock",
+	"STOCK_ALERT_CHECK_NOT_EXIST": "Subscription to Stock Alert Doesn't Exist",
 	"STOCK_ALERT_DELETE_SUCCESS": "Unsubscribed to Stock Alert",
 	"STOCK_ALERT_EXISTS": "You've Already Subscribed to this Product's Stock Alerts",
 	"SUBSCRIPTION_EXISTS": "Subscription already activated",
-	"INVALID_QUANTITY": "Requested quantity higher than available stock.",
-	"QUANTITY_LIMIT": "A Reader can only checkout maximum 2 quantity per title.",
-	"INVALID_ID": "INVALID_ID"
+	"INVALID_QUANTITY": "QUANTITY ERROR: Requested quantity higher than available stock.",
+	"REQUIRED_QUANTITY": "Please fill quantity for the product. Minimum 1 required.",
+	"QUANTITY_OUT_OF_STOCK": "Requested quantity higher than available stock for one of the books from bundle.",
+	"QUANTITY_LIMIT": "QUANTITY ERROR: A Reader can only checkout maximum 2 quantity per title.",
+	"QUANTITY_LIMIT_BUNDLE": "A Reader can only checkout maximum 1 quantity per bundle",
+	"BUNDLE_BOOKS_ALREADY_PRESENT": "QUANTITY LIMIT: One of the bundled books is already present in the cart.",
+	"INVALID_ID": "ID is not valid"
 }

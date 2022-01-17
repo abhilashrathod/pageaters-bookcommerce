@@ -1,25 +1,16 @@
-const mongoose = require('mongoose');
-
-const { models } = require('../constants');
-
-const Book = mongoose.model(models.STORE_BOOK);
-
-module.exports.calculateTotal = async function(books) {
+module.exports.calculateTotal = async function(books, bundles) {
   try {
     let total = 0;
 
-    if (books.length === 0) {
-      return total;
+    for (let book of books) {
+      book.productTotal = book.quantity * Math.floor((book.product.price - ((book.product.currentDiscount * book.product.price) / 100)));
+      book.price = book.product.price;
+      total = total + Math.floor(book.productTotal);
     }
 
-    for (let book of books) {
-      const bookRes = await Book.findOne({
-        isDeleted: false,
-        _id: book.product,
-      }).select('currentDiscount price membersPrice');
-      book.productTotal = book.quantity * Math.floor((bookRes.price - ((bookRes.currentDiscount * bookRes.price) / 100)));
-      book.price = bookRes.price;
-      total = total + Math.floor(book.productTotal);
+    for (let bundle of bundles) {
+      bundle.total = bundle.quantity * Math.floor((bundle.bundle.price - ((bundle.bundle.currentDiscount * bundle.bundle.price) / 100)));
+      total = total + Math.floor(bundle.total);
     }
 
     return total;

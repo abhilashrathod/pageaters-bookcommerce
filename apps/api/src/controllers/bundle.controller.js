@@ -7,18 +7,27 @@ const Bundles = mongoose.model(models.BUNDLE);
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit } = req.allParams();
+    let { page, limit, sortBy, sortOrder } = req.allParams();
 
     const query = {isDeleted: false};
+    const allowedSortingFields = ['title', 'createdAt', 'popularity', 'priority', 'currentDiscount', 'price'];
+
+    if (sortBy && !allowedSortingFields.includes(sortBy)) {
+      return res.error('SORTING_NOT_ALLOWED')
+    }
 
     const options = {
       page,
-      limit
+      limit,
+      select: `bundleId _id title bundledBooks poster currentDiscount price membersPrice`,
+      sort: {
+        [sortBy]: Number(sortOrder),
+      },
     };
 
-    const bundle = await Bundles.paginate(query, options);
+    const bundleRes = await Bundles.paginate(query, options);
 
-    return res.ok({ message: 'BUNDLE_LIST_SUCCESS', data: bundle });
+    return res.ok({ message: 'BUNDLE_LIST_SUCCESS', data: bundleRes });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -87,7 +96,7 @@ module.exports.getById = async (req, res) => {
 
     const populateOptions = {
       path: 'bundledBooks',
-      select: `title ISBN author poster price popularity editorsPick currentDiscount bestSeller`
+      select: `title ISBN author poster price popularity editorsPick inventory currentDiscount bestSeller`
     };
 
     const bundles = await Bundles.findOne({ _id: id, isDeleted: false }).populate(populateOptions);
@@ -108,10 +117,10 @@ module.exports.getByUniqueId = async (req, res) => {
 
     const populateOptions = {
       path: 'bundledBooks',
-      select: 'title ISBN author poster price popularity editorsPick currentDiscount bestSeller'
+      select: 'title ISBN author poster price popularity editorsPick inventory currentDiscount bestSeller'
     };
 
-    const bundle = await Bundles.findOne({ bundleId: id, isDeleted: false });
+    const bundle = await Bundles.findOne({ bundleId: id, isDeleted: false }).populate(populateOptions);
 
     if (bundle) {
       return res.ok({ message: 'BUNDLE_LIST_SUCCESS', data: bundle })

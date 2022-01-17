@@ -6,19 +6,23 @@ const { models } = require('../constants');
 
 const Cart = mongoose.model(models.CART);
 const Book = mongoose.model(models.STORE_BOOK);
+const Bundle = mongoose.model(models.BUNDLE);
 
 module.exports.retrieve = async (req, res) => {
   try {
     const userId = get(req, 'user.userId', '');
 
-    const populate = {
+    const populate = [{
       path: 'products.product',
       select: 'bookId title poster author currentDiscount price',
       populate: {
         path: 'author',
         select: 'name avatar',
       },
-    };
+    }, {
+      path: 'bundles.bundle',
+      select: 'bundleId title poster bundledBooks currentDiscount price',
+    }];
 
     if (userId) {
       let userCart = await Cart.findOne({ user: userId }).populate(populate);
@@ -26,12 +30,12 @@ module.exports.retrieve = async (req, res) => {
       if (userCart) {
         userCart = userCart.toObject();
         res.cookie('cart', userCart._id, { httpOnly: true });
-        userCart.subTotal = await calculateTotal(userCart.products);
+        userCart.subTotal = await calculateTotal(userCart.products, userCart.bundles);
         return res.ok({ message: 'CART_LIST_SUCCESS', data: userCart });
       }
     }
 
-    return res.ok({ message: 'CART_NOT_EXIST', data: null});
+    return res.ok({ message: 'CART_NOT_EXIST', data: null });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -41,18 +45,32 @@ module.exports.add = async (req, res) => {
   try {
     const { cart } = req.cookies;
     let { product, quantity } = req.allParams();
+    const userId = get(req, 'user.userId', '');
 
-    if (!cart) return res.error('CART_NOT_EXIST');
+    const populateOptions = {
+      path: 'bundles.bundle',
+      select: 'bundledBooks',
+    };
 
-    let currentCart = await Cart.findOne({ _id: cart });
+    let currentCart = await Cart.findOne({ _id: cart, user: userId }).populate(populateOptions);
     if (!currentCart) return res.error('CART_NOT_EXIST');
 
     currentCart = currentCart.toObject();
 
-    let book = await Book.findOne({ _id: product }).select('price inventory');
+    let book = await Book.findOne({ _id: product, isDeleted: false }).select('price inventory');
     if (!book) return res.error('BOOK_NOT_EXIST');
 
     book = book.toObject();
+
+    // check if this book is already a part of a bundle
+    if (currentCart.bundles.length > 0) {
+      for (let bundleItem of currentCart.bundles) {
+        let isFound = bundleItem.bundle.bundledBooks.find(book => book.toString() === product.toString());
+        if (isFound) {
+          return res.error('BUNDLE_BOOKS_ALREADY_PRESENT');
+        }
+      }
+    }
 
     // check if product is already in the cart then increase the quantity if available
     const alreadyThere = currentCart.products.find(x => x.product.toString() === product.toString());
@@ -99,13 +117,14 @@ module.exports.update = async (req, res) => {
   try {
     const { cart } = req.cookies;
     let { id, quantity } = req.allParams();
+    const userId = get(req, 'user.userId', '');
 
     if (!cart) return res.error('CART_NOT_EXIST');
 
-    let currentCart = await Cart.findOne({ _id: cart });
+    let currentCart = await Cart.findOne({ _id: cart, user: userId });
     if (!currentCart) return res.error('CART_NOT_EXIST');
 
-    let book = await Book.findOne({ _id: id }).select('price inventory');
+    let book = await Book.findOne({ _id: id, isDeleted: false }).select('price inventory');
     if (!book) return res.error('BOOK_NOT_EXIST');
 
     book = book.toObject();
@@ -118,8 +137,9 @@ module.exports.update = async (req, res) => {
     const update = { $set: { 'products.$.quantity': quantity } };
     const options = { new: true };
 
-    const updatedCart = await Cart.findOneAndUpdate(query, update, options);
-    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: updatedCart });
+    await Cart.findOneAndUpdate(query, update, options);
+
+    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: true });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -199,13 +219,107 @@ module.exports.getAll = async (req, res) => {
       limit,
       populate: {
         path: 'user',
-        select: 'fullName email'
-      }
+        select: 'fullName email',
+      },
     };
 
     const cartRes = await Cart.paginate(query, options);
 
     return res.ok({ message: 'CART_LIST_SUCCESS', data: cartRes });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+/* BUNDLES */
+
+module.exports.addBundle = async (req, res) => {
+  try {
+    const { cart } = req.cookies;
+    let { bundle, quantity = 1 } = req.allParams();
+
+    if (!cart) return res.error('CART_NOT_EXIST');
+
+    let currentCart = await Cart.findOne({ _id: cart });
+    if (!currentCart) return res.error('CART_NOT_EXIST');
+
+    currentCart = currentCart.toObject();
+
+    let bundleRes = await Bundle.findOne({
+      _id: bundle,
+      isDeleted: false,
+    }).select('bundledBooks currentDiscount price membersPrice');
+    if (!bundleRes) return res.error('BUNDLE_NOT_EXIST');
+
+    bundleRes = bundleRes.toObject();
+
+    if (quantity > 1) return res.error('QUANTITY_LIMIT_BUNDLE');
+
+    const bundlePresent = currentCart.bundles.find((item) => item.bundle.toString() === bundle.toString());
+
+    if (bundlePresent) {
+      return res.error('QUANTITY_LIMIT_BUNDLE');
+    }
+
+    for (let book of bundleRes.bundledBooks) {
+      let bookRes = await Book.findOne({
+        _id: book,
+        isDeleted: false,
+      }).select('currentDiscount price membersPrice inventory');
+
+      // checking stock of all books from bundle
+      if (bookRes.inventory <= 0) {
+        return res.error('QUANTITY_OUT_OF_STOCK');
+      }
+
+      // making sure other books aren't added in the cart before.
+      // check if product is already in the cart
+      const alreadyThere = currentCart.products.find(x => x.product.toString() === book.toString());
+
+      if (alreadyThere) {
+        return res.error('BUNDLE_BOOKS_ALREADY_PRESENT');
+      }
+    }
+
+    const addedBundle = {
+      bundle,
+      quantity,
+      addedOn: new Date(),
+    };
+
+    const updatedCart = await Cart.findOneAndUpdate({ _id: cart }, {
+      $addToSet: {
+        bundles: addedBundle,
+      },
+    }, { new: true });
+
+    return res.ok({ message: 'BUNDLE_ADD_SUCCESS', data: updatedCart });
+
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.removeBundle = async (req, res) => {
+  try {
+    const { cart } = req.cookies;
+    let { bundleId } = req.allParams(); // id is the productObjectId
+
+    if (!cart) return res.error('CART_NOT_EXIST');
+
+    let currentCart = await Cart.findOne({ _id: cart });
+    if (!currentCart) return res.error('CART_NOT_EXIST');
+
+    let bundleRes = await Bundle.findOne({ _id: bundleId, isDeleted: false });
+    if (!bundleRes) return res.error('BUNDLE_NOT_EXIST');
+
+    const query = { _id: cart };
+    const update = { $pull: { 'bundles': { bundle: bundleId } } };
+    const options = { new: true };
+
+    const updatedCartRes = await Cart.findOneAndUpdate(query, update, options);
+
+    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: updatedCartRes });
   } catch (e) {
     return res.internalServerError(e);
   }

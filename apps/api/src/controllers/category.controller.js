@@ -20,7 +20,9 @@ module.exports.getAll = async (req, res) => {
       page,
       limit,
       select: `categoryId _id title numberOfBooks thumbnail`,
-      [sortBy]: [sortOrder]
+      sort: {
+        [sortBy]: Number(sortOrder),
+      },
     };
 
     const categoryRes = await Category.paginate(query, options);

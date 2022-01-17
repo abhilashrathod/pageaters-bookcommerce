@@ -12,13 +12,18 @@ const schema = new Schema({
     }],
     rentals: [{
       quantity: { type: Number, default: 1 },
+      addedOn: { type: String, default: '' },
       product: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
     }],
     bundles: [{
       quantity: { type: Number, default: 1 },
-      product: { type: Schema.Types.ObjectId, ref: models.BUNDLE },
+      addedOn: { type: String, default: '' },
+      bundle: { type: Schema.Types.ObjectId, ref: models.BUNDLE },
     }],
     subTotal: { type: Number, default: 0 },
+
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: String, default: '' },
   },
   {
     timestamps: true,

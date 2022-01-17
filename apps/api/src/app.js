@@ -58,8 +58,8 @@ this.app.use(i18n.init);
 this.app.use(require('./middlewares/extendReq.middleware'));
 
 // for indexing
-// const { runIndexing } = require('./libs/indexing');
-// runIndexing(this.app);
+const { runIndexing } = require('./libs/indexing');
+runIndexing(this.app);
 
 // Disable x-powered-by header
 this.app.disable('x-powered-by');
@@ -120,7 +120,7 @@ this.app.use(multer().any());
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute will have "max" 75 API request
   max: 75,
-  message: 'Too many accounts created from this IP, please try again after an hour. Contact support in such case if you were not responsible',
+  message: 'LIMIT REACHED: Too many requests were created from this IP. Please try again after an hour. Please contact support in such case if you were not responsible',
 });
 
 // load routes

@@ -131,8 +131,7 @@ module.exports.search = async (req, res) => {
     };
 
     const lunrIdArray = [];
-    booksIndex.search(q).forEach((id) => {
-      console.log("id", JSON.stringify(id));
+    booksIndex.search(`${q}*`).forEach((id) => {
       lunrIdArray.push(getId(id.ref));
     });
 

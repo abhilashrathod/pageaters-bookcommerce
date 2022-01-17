@@ -125,7 +125,7 @@ module.exports.checkSubscription = async (req, res) => {
     if (isPresent) {
       return res.ok({ message: 'STOCK_ALERT_EXISTS', data: true });
     } else {
-      return res.ok({ message: 'STOCK_ALERT_CHECK_SUCCESS', data: false });
+      return res.ok({ message: 'STOCK_ALERT_CHECK_NOT_EXIST', data: false });
     }
 
   } catch (e) {

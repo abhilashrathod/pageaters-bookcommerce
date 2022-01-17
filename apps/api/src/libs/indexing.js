@@ -52,7 +52,7 @@ const indexAuthors = (app) => {
 
       const lunrIndex = this;
 
-      // add to lunr index
+      // add to author lunr index
       allAuthors.forEach((author) => {
         const doc = {
           name: author.name,
