@@ -21,6 +21,7 @@ import {MatTooltipModule} from '@angular/material/tooltip';
 import {MatIconModule} from '@angular/material/icon';
 import {MatStepperModule} from '@angular/material/stepper';
 import {MatSelectModule} from '@angular/material/select';
+import {MatCardModule} from '@angular/material/card';
 
 @NgModule({
   imports: [CommonModule],
@@ -45,6 +46,7 @@ import {MatSelectModule} from '@angular/material/select';
     MatTabsModule,
     MatSnackBarModule,
     MatTooltipModule,
+    MatCardModule,
   ],
   declarations: [],
   providers: [],

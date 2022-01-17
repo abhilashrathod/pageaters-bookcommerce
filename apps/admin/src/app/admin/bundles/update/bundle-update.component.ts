@@ -118,9 +118,11 @@ export class BundleUpdateComponent implements OnInit {
       description: [get(data, 'description', '')],
       tags: [get(data, 'tags', [])],
       books: [get(data, 'bundledBooks', [])],
-      price: [get(data, 'price', '')],
-      membersPrice: [get(data, 'membersPrice', '')],
-      currentDiscount: [get(data, 'currentDiscount', '')],
+      price: [get(data, 'price', 0)],
+      membersPrice: [get(data, 'membersPrice', 0)],
+      currentDiscount: [get(data, 'currentDiscount', 0)],
+      popularity: [get(data, 'popularity', 0)],
+      priority: [get(data, 'priority', 0)],
     });
 
     this.isReady = true;

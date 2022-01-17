@@ -161,11 +161,7 @@
           <div class="col-6">
             <mat-form-field class="w-100">
               <mat-label>Priority</mat-label>
-              <mat-select formControlName="priority">
-                <mat-option *ngFor="let i of priority" [value]="i">
-                  {{i}}
-                </mat-option>
-              </mat-select>
+              <input matInput formControlName="priority">
             </mat-form-field>
           </div>
         </div>

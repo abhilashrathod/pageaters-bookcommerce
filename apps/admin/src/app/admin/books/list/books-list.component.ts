@@ -15,6 +15,13 @@ export class BooksListComponent implements OnInit {
     'update',
   ];
 
+  public viewResourceUrl: string[] = [
+    '/',
+    'admin',
+    'books',
+    'view',
+  ];
+
   public createResourceUrl: string[] = [
     '/',
     'admin',
@@ -37,6 +44,11 @@ export class BooksListComponent implements OnInit {
       header: 'Qty',
       columnDef: 'inventory',
       cell: (element) => `${element.inventory}`,
+    },
+    {
+      header: 'Details',
+      columnDef: 'view',
+      cell: (element) => [...this.viewResourceUrl, element._id],
     },
     {
       header: 'Action',

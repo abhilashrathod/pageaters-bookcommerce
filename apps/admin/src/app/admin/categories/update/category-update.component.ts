@@ -5,7 +5,7 @@ import {MatSnackBar} from '@angular/material/snack-bar';
 import {get} from 'lodash';
 import {CategoryService} from '../../../core/services/category.service';
 import {FilesService} from '../../../core/services/files.service';
-import {FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
+import {BUCKETS, FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
 
 @Component({
   selector: 'app-category-update',
@@ -40,6 +40,7 @@ export class CategoryUpdateComponent implements OnInit {
     const category$ = this.categoryService.getById(id);
     category$.subscribe(res => {
       this.category = res;
+      this.category.thumbnail = `${BUCKETS.CATEGORIES}/${this.category.thumbnail}`;
       this.buildForm(res);
       this.isReady = true;
     });
@@ -49,12 +50,8 @@ export class CategoryUpdateComponent implements OnInit {
     this.categoryFormGroup = this.formBuilder.group({
       title: [get(category, 'title', '')],
       description: [get(category, 'description', '')],
-      meta: this.formBuilder.group({
-        title: [get(category, 'meta.title', '')],
-        description: [get(category, 'meta.description', '')],
-        url: [get(category, 'meta.url', '')],
-        imageUrl: [get(category, 'meta.imageUrl', '')],
-      })
+      popularity: [get(category, 'popularity', 0)],
+      priority: [get(category, 'priority', 0)],
     });
   }
 
@@ -86,7 +83,7 @@ export class CategoryUpdateComponent implements OnInit {
     formData.append('fileModule', FILE_UPLOAD_MODULES.CATEGORY);
     const file$ = this.filesService.upload(formData);
     file$.subscribe(res => {
-      this.category.thumbnail = res.fileUrl;
+      this.category.thumbnail = `${BUCKETS.CATEGORIES}/${res.fileUrl}`;
       this.snackBar.open('Category Thumbnail Uploaded!', 'OKAY', {duration: 5000});
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
@@ -97,6 +94,7 @@ export class CategoryUpdateComponent implements OnInit {
     const payload = {
       ...this.category,
       ...this.categoryFormGroup.value,
+      thumbnail: this.category.thumbnail.split('/').pop()
     };
     const category$ = this.categoryService.update(this.category._id, payload);
     category$.subscribe(res => {

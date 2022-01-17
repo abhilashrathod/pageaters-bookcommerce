@@ -100,8 +100,10 @@ export class BundleCreateComponent implements OnInit {
       tags: [[]],
       books: [[]],
       currentDiscount: [0],
-      price: [],
-      membersPrice: [],
+      price: [0],
+      popularity: [0],
+      priority: [0],
+      membersPrice: [0],
     });
   }
 
@@ -143,7 +145,7 @@ export class BundleCreateComponent implements OnInit {
 
     this.bundleFormGroup.patchValue({
       price,
-      // membersPrice,
+      membersPrice: price,
     });
   }
 

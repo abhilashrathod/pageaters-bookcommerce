@@ -125,7 +125,7 @@ export class BookCreateComponent implements OnInit {
       description: [''],
       tags: [[]],
 
-      language: [''],
+      language: ['EN'],
       pages: [''],
       version: [''],
       readingLevel: [this.readingLevelOptions[0]],

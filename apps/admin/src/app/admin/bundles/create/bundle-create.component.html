@@ -31,7 +31,7 @@
           <div class="col">
             <mat-form-field class="w-100">
               <mat-label>Discount (in %)</mat-label>
-              <input matInput formControlName="currentDiscount" (blur)="calculateDiscountedPrices()">
+              <input matInput formControlName="currentDiscount">
             </mat-form-field>
           </div>
           <div class="col">
@@ -90,6 +90,21 @@
                      (matChipInputTokenEnd)="add($event)">
             </mat-chip-list>
           </mat-form-field>
+        </div>
+
+        <div class="row">
+          <div class="col-6">
+            <mat-form-field class="w-100">
+              <mat-label>Popularity</mat-label>
+              <input matInput formControlName="popularity">
+            </mat-form-field>
+          </div>
+          <div class="col-6">
+            <mat-form-field class="w-100">
+              <mat-label>Priority</mat-label>
+              <input matInput formControlName="priority">
+            </mat-form-field>
+          </div>
         </div>
 
         <div class="mb-3">

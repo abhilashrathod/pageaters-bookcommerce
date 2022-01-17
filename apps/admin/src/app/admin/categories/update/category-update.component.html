@@ -9,8 +9,11 @@
     <div class="row">
       <div class="col-5">
         <div class="mb-4">
-          <div *ngIf="!category.thumbnail" class="image-upload-thumbnail" (click)="profileImage.click()">Category Thumbnail</div>
-          <img *ngIf="category.thumbnail" class="pointer img-fluid img-thumbnail" [src]="category.thumbnail" (click)="profileImage.click()"/>
+          <div *ngIf="!category.thumbnail" class="image-upload-thumbnail" (click)="profileImage.click()">Category
+            Thumbnail
+          </div>
+          <img *ngIf="category.thumbnail" class="pointer img-fluid img-thumbnail" [src]="category.thumbnail"
+               (click)="profileImage.click()"/>
           <input #profileImage class="d-none" type="file" (change)="previewImage($event)">
         </div>
         <p class="text-center">
@@ -20,60 +23,37 @@
         </p>
       </div>
       <div class="col-7">
-        <mat-stepper #stepper>
-          <mat-step>
-            <ng-template matStepLabel>Basic Info</ng-template>
-            <div class="mb-3">
-              <mat-form-field class="w-100">
-                <mat-label>Name</mat-label>
-                <input matInput formControlName="title">
-              </mat-form-field>
-            </div>
-            <div class="mb-3">
-              <mat-form-field class="w-100">
-                <mat-label>Description</mat-label>
-                <textarea matInput
-                          cdkTextareaAutosize
-                          #autosize="cdkTextareaAutosize"
-                          cdkAutosizeMinRows="10"
-                          cdkAutosizeMaxRows="15"
-                          formControlName="description"></textarea>
-              </mat-form-field>
-            </div>
-          </mat-step>
-          <mat-step formGroupName="meta">
-            <ng-template matStepLabel>Meta Tag Info</ng-template>
-            <div class="mb-3">
-              <mat-form-field class="w-100">
-                <mat-label>Meta Title</mat-label>
-                <input matInput formControlName="title">
-              </mat-form-field>
-            </div>
-            <div class="mb-3">
-              <mat-form-field class="w-100">
-                <mat-label>Meta URL</mat-label>
-                <input matInput formControlName="url">
-              </mat-form-field>
-            </div>
-            <div class="mb-3">
-              <mat-form-field class="w-100">
-                <mat-label>Meta Image URL</mat-label>
-                <input matInput formControlName="imageUrl">
-              </mat-form-field>
-            </div>
-            <div class="mb-3">
-              <mat-form-field class="w-100">
-                <mat-label>Meta Description</mat-label>
-                <textarea matInput
-                          cdkTextareaAutosize
-                          #autosize="cdkTextareaAutosize"
-                          cdkAutosizeMinRows="10"
-                          cdkAutosizeMaxRows="15"
-                          formControlName="description"></textarea>
-              </mat-form-field>
-            </div>
-          </mat-step>
-        </mat-stepper>
+        <div class="mb-3">
+          <mat-form-field class="w-100">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="title">
+          </mat-form-field>
+        </div>
+        <div class="mb-3">
+          <mat-form-field class="w-100">
+            <mat-label>Description</mat-label>
+            <textarea matInput
+                      cdkTextareaAutosize
+                      #autosize="cdkTextareaAutosize"
+                      cdkAutosizeMinRows="10"
+                      cdkAutosizeMaxRows="15"
+                      formControlName="description"></textarea>
+          </mat-form-field>
+        </div>
+        <div class="row">
+          <div class="col-6">
+            <mat-form-field class="w-100">
+              <mat-label>Popularity</mat-label>
+              <input matInput formControlName="popularity">
+            </mat-form-field>
+          </div>
+          <div class="col-6">
+            <mat-form-field class="w-100">
+              <mat-label>Priority</mat-label>
+              <input matInput formControlName="priority">
+            </mat-form-field>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -83,7 +63,7 @@
     <mat-icon>arrow_back</mat-icon>
   </button>
 
-  <button mat-fab color="primary" (click)="onSubmit()" >
+  <button mat-fab color="primary" (click)="onSubmit()">
     <mat-icon>check</mat-icon>
   </button>
 </div>

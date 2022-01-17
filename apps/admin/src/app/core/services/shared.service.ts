@@ -19,6 +19,8 @@ export class SharedService {
     let params = new HttpParams();
     params = params.set('limit', filters.limit);
     params = params.set('page', filters.page);
+    params = params.set('sortBy', filters.sortBy);
+    params = params.set('sortOrder', filters.sortOrder);
     return this.httpClient.get(url, {params})
       .pipe(
         map((res: IResponse) => res.data),

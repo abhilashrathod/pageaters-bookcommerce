@@ -21,6 +21,7 @@ export const BUCKETS = {
   AUTHORS: 'https://pageaters-authors.s3.ap-south-1.amazonaws.com',
   BUNDLES: 'https://pageaters-bundles.s3.ap-south-1.amazonaws.com',
   COLLECTIONS: 'https://pageaters-collections.s3.ap-south-1.amazonaws.com',
+  CATEGORIES: 'https://pageaters-categories.s3.ap-south-1.amazonaws.com',
 };
 
-export const returnPercentageValue = (percent, total) => Math.ceil((percent / 100) * total);
+export const returnPercentageValue = (percent, total) => Math.floor((percent / 100) * total);

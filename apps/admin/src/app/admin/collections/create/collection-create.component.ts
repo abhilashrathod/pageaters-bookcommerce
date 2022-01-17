@@ -12,7 +12,7 @@ import {FilesService} from '../../../core/services/files.service';
 import {CategoryService} from '../../../core/services/category.service';
 import {CollectionService} from '../../../core/services/collection.service';
 
-import {FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
+import {BUCKETS, FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
 
 @Component({
   selector: 'app-collection-create',
@@ -33,7 +33,6 @@ export class CollectionCreateComponent implements OnInit {
   collections = [];
   categories = [];
   authors = [];
-  priority = range(1, 26, 1);
 
   searchBooksCtrl = new FormControl();
   searchCollectionsCtrl = new FormControl();
@@ -208,8 +207,8 @@ export class CollectionCreateComponent implements OnInit {
       relatedCollections: [[]],
       relatedCategories: [[]],
       featuredAuthors: [[]],
-      priority: [''],
-      popularity: [''],
+      priority: [0],
+      popularity: [0],
     });
   }
 
@@ -250,7 +249,7 @@ export class CollectionCreateComponent implements OnInit {
     formData.append('fileModule', FILE_UPLOAD_MODULES.COLLECTION);
     const file$ = this.filesService.upload(formData);
     file$.subscribe(res => {
-      this.poster = res.fileUrl;
+      this.poster = `${BUCKETS.COLLECTIONS}/${res.fileUrl}`;
       this.snackBar.open('Image Uploaded!', 'OKAY', {duration: 5000});
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
@@ -265,7 +264,7 @@ export class CollectionCreateComponent implements OnInit {
       relatedCollections: relatedCollections.map(x => x._id),
       relatedCategories: relatedCategories.map(x => x._id),
       featuredAuthors: featuredAuthors.map(x => x._id),
-      poster: this.poster,
+      poster: this.poster.split('/').pop(),
     };
 
     const collection$ = this.collectionService.create(payload);

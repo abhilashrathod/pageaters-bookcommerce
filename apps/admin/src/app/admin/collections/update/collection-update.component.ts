@@ -13,7 +13,7 @@ import {BooksService} from '../../../core/services/books.service';
 import {AuthorService} from '../../../core/services/author.service';
 import {FilesService} from '../../../core/services/files.service';
 
-import {FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
+import {BUCKETS, FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
 
 
 @Component({
@@ -105,6 +105,7 @@ export class CollectionUpdateComponent implements OnInit {
     this.collectionService.getById(id)
       .subscribe(res => {
         this.collection = res;
+        this.collection.poster = `${BUCKETS.COLLECTIONS}/${this.collection.poster}`;
         this.buildForm(res);
       });
   }
@@ -118,8 +119,8 @@ export class CollectionUpdateComponent implements OnInit {
       relatedCollections: [get(collection, 'relatedCollections', [])],
       relatedCategories: [get(collection, 'relatedCategories', [])],
       featuredAuthors: [get(collection, 'featuredAuthors', [])],
-      priority: [get(collection, 'priority', [])],
-      popularity: [get(collection, 'popularity', [])],
+      priority: [get(collection, 'priority', 0)],
+      popularity: [get(collection, 'popularity', 0)],
     });
 
     this.isReady = true;
@@ -269,7 +270,7 @@ export class CollectionUpdateComponent implements OnInit {
     formData.append('fileModule', FILE_UPLOAD_MODULES.COLLECTION);
     const file$ = this.filesService.upload(formData);
     file$.subscribe(res => {
-      this.collection.poster = res.fileUrl;
+      this.collection.poster = `${BUCKETS.COLLECTIONS}/${res.fileUrl}`;
       this.snackBar.open('Image Uploaded!', 'OKAY', {duration: 5000});
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
@@ -285,6 +286,7 @@ export class CollectionUpdateComponent implements OnInit {
       relatedCollections: relatedCollections.map(x => x._id),
       relatedCategories: relatedCategories.map(x => x._id),
       featuredAuthors: featuredAuthors.map(x => x._id),
+      poster: this.collection.poster.split('/').pop(),
     };
 
     const collection$ = this.collectionService.update(this.collection._id, payload);

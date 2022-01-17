@@ -4,7 +4,7 @@ import {MatSnackBar} from '@angular/material/snack-bar';
 import {Router} from '@angular/router';
 import {FilesService} from '../../../core/services/files.service';
 import {CategoryService} from '../../../core/services/category.service';
-import {FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
+import {BUCKETS, FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
 
 @Component({
   selector: 'app-category-create',
@@ -33,12 +33,8 @@ export class CategoryCreateComponent implements OnInit {
     this.categoryFormGroup = this.formBuilder.group({
       title: [''],
       description: [''],
-      meta: this.formBuilder.group({
-        title: [''],
-        description: [''],
-        url: [''],
-        imageUrl: [''],
-      })
+      popularity: [0],
+      priority: [0],
     });
   }
 
@@ -70,7 +66,7 @@ export class CategoryCreateComponent implements OnInit {
     formData.append('fileModule', FILE_UPLOAD_MODULES.CATEGORY);
     const file$ = this.filesService.upload(formData);
     file$.subscribe(res => {
-      this.avatar = res.fileUrl;
+      this.avatar = `${BUCKETS.CATEGORIES}/${res.fileUrl}`;
       this.snackBar.open('Category Thumbnail Uploaded!', 'OKAY', {duration: 5000});
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
@@ -80,7 +76,7 @@ export class CategoryCreateComponent implements OnInit {
   onSubmit(): void {
     const payload = {
       ...this.categoryFormGroup.value,
-      thumbnail: this.avatar,
+      thumbnail: this.avatar.split('/').pop(),
     };
     const category$ = this.categoryService.create(payload);
     category$.subscribe(res => {

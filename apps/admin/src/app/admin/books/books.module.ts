@@ -1,6 +1,7 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {AngularMultiSelectModule} from 'angular2-multiselect-dropdown';
 
 import {SharedModule} from '../../core/shared/shared.module';
 import {EntityTableModule} from '../../core/components/entity-table/entity-table.module';
@@ -10,12 +11,17 @@ import {BooksRoutingModule} from './books-routing.module';
 import {BooksListComponent} from './list/books-list.component';
 import {BookUpdateComponent} from './update/book-update.component';
 import {BookCreateComponent} from './create/book-create.component';
-import {AngularMultiSelectModule} from 'angular2-multiselect-dropdown';
-
+import {BookViewComponent} from './view/book-view.component';
 
 
 
 @NgModule({
+  declarations: [
+    BooksListComponent,
+    BookCreateComponent,
+    BookUpdateComponent,
+    BookViewComponent,
+  ],
   imports: [
     CommonModule,
     SharedModule,
@@ -26,11 +32,6 @@ import {AngularMultiSelectModule} from 'angular2-multiselect-dropdown';
     BooksRoutingModule,
   ],
   exports: [],
-  declarations: [
-    BooksListComponent,
-    BookCreateComponent,
-    BookUpdateComponent,
-  ],
   providers: [],
 })
 export class BooksModule {

@@ -21,8 +21,8 @@
       </span>
 
       <span *ngIf="col.columnDef == 'view'">
-        <button class="btn-action" [routerLink]="col.cell(row)">
-            View Orders
+         <button mat-icon-button color="secondary" [routerLink]="col.cell(row)" matTooltip="View" class="me-1">
+            <mat-icon>visibility</mat-icon>
           </button>
       </span>
 

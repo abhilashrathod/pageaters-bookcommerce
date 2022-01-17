@@ -24,15 +24,16 @@ export class EntityTableComponent implements OnInit, AfterViewInit {
   search = new FormControl();
 
   // inputs
-  @Input('columns') public columns;
-  @Input('getResource') public getResource;
-  @Input('editResource') public editResource;
-  @Input('searchResource') public searchResource;
-  @Input('deleteResource') public deleteResource;
-  @Input('statusResource') public statusResource;
-  @Input('checkResource') public checkResource;
-  @Input('featuredResource') public featuredResource;
-  @Input('sort') public sort;
+  @Input() public columns;
+  @Input() public getResource;
+  @Input() public editResource;
+  @Input() public viewResource;
+  @Input() public searchResource;
+  @Input() public deleteResource;
+  @Input() public statusResource;
+  @Input() public checkResource;
+  @Input() public featuredResource;
+  @Input() public sort;
 
   @ViewChild(MatPaginator, {static: false}) paginator: MatPaginator;
 
@@ -42,8 +43,10 @@ export class EntityTableComponent implements OnInit, AfterViewInit {
 
   dataSource = new MatTableDataSource();
   public filterObject = {
-    limit: 25,
+    limit: 10,
     page: 1,
+    sortBy: 'createdAt',
+    sortOrder: -1,
   };
   total: number;
   page: any;
