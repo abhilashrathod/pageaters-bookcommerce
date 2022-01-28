@@ -49,7 +49,7 @@
         </div>
 
         <div class="mb-3">
-          <angular2-multiselect formControlName="books"
+          <angular2-multiselect formControlName="bundledBooks"
                                 [data]="books"
                                 (onSelect)="calculatePrices()"
                                 (onDeSelect)="calculatePrices()"
@@ -63,6 +63,55 @@
               <ng-template>
                 <input type="text" [formControl]="searchBooksCtrl"
                        placeholder="Search books"
+                       style="border: none;width: 100%; height: 100%;outline: none;"/>
+              </ng-template>
+            </c-search>
+            <c-item>
+              <ng-template let-item="item">
+                    <span class="m-0">
+                      {{item.title | titlecase}}
+                    </span>
+              </ng-template>
+            </c-item>
+          </angular2-multiselect>
+        </div>
+
+        <div class="mb-3">
+          <angular2-multiselect [data]="collections" formControlName="relatedCollections" [settings]="collectionsDropdownSettings">
+            <c-badge>
+              <ng-template let-item="item">
+                <span class="m-0">{{item.title | titlecase}}</span>
+              </ng-template>
+            </c-badge>
+            <c-search>
+              <ng-template>
+                <input type="text" [formControl]="searchCollectionsCtrl"
+                       placeholder="Search collections..."
+                       style="border: none;width: 100%; height: 100%;outline: none;"/>
+              </ng-template>
+            </c-search>
+            <c-item>
+              <ng-template let-item="item">
+                    <span class="m-0">
+                      {{item.title | titlecase}}
+                    </span>
+              </ng-template>
+            </c-item>
+          </angular2-multiselect>
+        </div>
+
+        <div class="mb-3">
+          <angular2-multiselect [data]="bundles" formControlName="relatedBundles"
+                                [settings]="bundleDropdownSettings">
+            <c-badge>
+              <ng-template let-item="item">
+                <span class="m-0">{{item.title | titlecase}}</span>
+              </ng-template>
+            </c-badge>
+            <c-search>
+              <ng-template>
+                <input type="text" [formControl]="searchBundlesCtrl"
+                       placeholder="Search bundles..."
                        style="border: none;width: 100%; height: 100%;outline: none;"/>
               </ng-template>
             </c-search>

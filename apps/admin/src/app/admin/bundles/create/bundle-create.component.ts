@@ -5,10 +5,13 @@ import {Router} from '@angular/router';
 import {MatChipInputEvent} from '@angular/material/chips';
 import {debounceTime} from 'rxjs/operators';
 import {sumBy} from 'lodash';
+
 import {BooksService} from '../../../core/services/books.service';
 import {FilesService} from '../../../core/services/files.service';
-import {BUCKETS, FILE_UPLOAD_MODULES, returnPercentageValue} from '../../../core/helpers/constants';
 import {BundleService} from '../../../core/services/bundle.service';
+import {CollectionService} from '../../../core/services/collection.service';
+
+import {BUCKETS, FILE_UPLOAD_MODULES, returnPercentageValue} from '../../../core/helpers/constants';
 
 @Component({
   selector: 'app-bundle-create',
@@ -25,8 +28,12 @@ export class BundleCreateComponent implements OnInit {
   };
 
   books = [];
-  totalPrice = 0;
+  bundles = [];
+  collections = [];
+
   searchBooksCtrl = new FormControl();
+  searchCollectionsCtrl = new FormControl();
+  searchBundlesCtrl = new FormControl();
 
   DROPDOWN_OPTIONS = {
     enableSearchFilter: true,
@@ -42,11 +49,24 @@ export class BundleCreateComponent implements OnInit {
     ...this.DROPDOWN_OPTIONS,
   };
 
+  bundleDropdownSettings = {
+    text: 'Suggested Bundles',
+    searchPlaceholderText: 'Search Bundles...',
+    ...this.DROPDOWN_OPTIONS,
+  };
+
+  collectionsDropdownSettings = {
+    text: 'Suggested Collections',
+    searchPlaceholderText: 'Search Collections...',
+    ...this.DROPDOWN_OPTIONS,
+  };
+
 
   constructor(private formBuilder: FormBuilder,
               private snackBar: MatSnackBar,
               private router: Router,
               private bundleService: BundleService,
+              private collectionService: CollectionService,
               private booksService: BooksService,
               private filesService: FilesService) {
   }
@@ -63,11 +83,38 @@ export class BundleCreateComponent implements OnInit {
 
   getSupportData(): void {
     this.getBooks();
+    this.getBundles();
+    this.getCollections();
   }
 
   getBooks(): void {
     this.booksService.getAllBooks(this.filters)
       .subscribe(res => this.books = res.docs);
+  }
+
+  searchBooks(q): void {
+    this.booksService.searchBooks(q)
+      .subscribe(res => this.books = res);
+  }
+
+  getBundles(): void {
+    this.bundleService.getAllBundles(this.filters)
+      .subscribe(res => this.bundles = res.docs);
+  }
+
+  searchBundles(q): void {
+    this.bundleService.searchBundles(q)
+      .subscribe(res => this.bundles = res);
+  }
+
+  getCollections(): void {
+    this.collectionService.getAllCollections(this.filters)
+      .subscribe(res => this.collections = res.docs);
+  }
+
+  searchCollections(q): void {
+    this.collectionService.searchCollections(q)
+      .subscribe(res => this.collections = res);
   }
 
   search(): void {
@@ -84,12 +131,34 @@ export class BundleCreateComponent implements OnInit {
           this.getBooks();
         }
       });
-  }
 
+    this.searchCollectionsCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchCollections(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getCollections();
+        }
+      });
 
-  searchBooks(q): void {
-    this.booksService.searchBooks(q)
-      .subscribe(res => this.books = res);
+    this.searchBundlesCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchBundles(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getBundles();
+        }
+      });
   }
 
 
@@ -98,8 +167,11 @@ export class BundleCreateComponent implements OnInit {
       title: [''],
       description: [''],
       tags: [[]],
-      books: [[]],
+      bundledBooks: [[]],
+      relatedCollections: [[]],
+      relatedBundles: [[]],
       currentDiscount: [0],
+      weight: [0],
       price: [0],
       popularity: [0],
       priority: [0],
@@ -121,13 +193,13 @@ export class BundleCreateComponent implements OnInit {
   }
 
   calculateDiscountedPrices(): void {
-    const {books, currentDiscount} = this.bundleFormGroup.value;
+    const {bundledBooks, currentDiscount} = this.bundleFormGroup.value;
 
-    for (const book of books) {
+    for (const book of bundledBooks) {
       book.discountedPrice = book.currentDiscount > 0 ? returnPercentageValue(100 - book.currentDiscount, book.price) : book.price;
     }
 
-    const price = sumBy(books, (x: any) => x.discountedPrice);
+    const price = sumBy(bundledBooks, (x: any) => x.discountedPrice);
     const discountedPrice = returnPercentageValue(100 - currentDiscount, price);
 
     this.bundleFormGroup.patchValue({
@@ -136,15 +208,17 @@ export class BundleCreateComponent implements OnInit {
   }
 
   calculatePrices(): void {
-    const {books} = this.bundleFormGroup.value;
+    const {bundledBooks} = this.bundleFormGroup.value;
 
-    for (const book of books) {
+    for (const book of bundledBooks) {
       book.discountedPrice = book.currentDiscount > 0 ? returnPercentageValue(100 - book.currentDiscount, book.price) : book.price;
     }
-    const price = sumBy(books, (x: any) => x.discountedPrice);
+    const price = sumBy(bundledBooks, (x: any) => x.discountedPrice);
+    const weight = sumBy(bundledBooks, (x: any) => x.weight);
 
     this.bundleFormGroup.patchValue({
       price,
+      weight,
       membersPrice: price,
     });
   }
@@ -186,10 +260,12 @@ export class BundleCreateComponent implements OnInit {
   }
 
   onSubmit(): void {
-    const {books, ...rest} = this.bundleFormGroup.value;
+    const {bundledBooks, relatedCollections, relatedBundles, ...rest} = this.bundleFormGroup.value;
     const payload = {
       ...rest,
-      bundledBooks: books.map(x => x._id),
+      bundledBooks: bundledBooks.map(x => x._id),
+      relatedCollections: relatedCollections.map(x => x._id),
+      relatedBundles: relatedBundles.map(x => x._id),
       poster: this.poster.split('/').pop(),
     };
 

@@ -8,7 +8,8 @@ import {CollectionService} from '../../../core/services/collection.service';
 import {AuthorService} from '../../../core/services/author.service';
 import {BooksService} from '../../../core/services/books.service';
 import {
-  BOOK_VERSIONS, BUCKETS,
+  BOOK_VERSIONS,
+  BUCKETS,
   FILE_UPLOAD_MODULES,
   PRICING_PERCENTAGES,
   READING_LEVELS,
@@ -201,6 +202,21 @@ export class BookCreateComponent implements OnInit {
         }
       });
 
+
+    this.searchBundlesCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchBundles(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getBundles();
+        }
+      });
+
     this.searchAuthorsCtrl.valueChanges
       .pipe(
         debounceTime(500),
@@ -268,6 +284,11 @@ export class BookCreateComponent implements OnInit {
   getBundles(): void {
     this.bundleService.getAllBundles(this.filters)
       .subscribe(res => this.bundles = res.docs);
+  }
+
+  searchBundles(q): void {
+    this.bundleService.searchBundles(q)
+      .subscribe(res => this.bundles = res);
   }
 
   previewImage(event): void {

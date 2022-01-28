@@ -2,13 +2,16 @@ import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {ActivatedRoute, Router} from '@angular/router';
-import {get} from 'lodash';
+import {debounceTime} from 'rxjs/operators';
+import {get, sumBy} from 'lodash';
+import {MatChipInputEvent} from '@angular/material/chips';
+
 import {BundleService} from '../../../core/services/bundle.service';
 import {BooksService} from '../../../core/services/books.service';
 import {FilesService} from '../../../core/services/files.service';
-import {debounceTime} from 'rxjs/operators';
-import {MatChipInputEvent} from '@angular/material/chips';
-import {BUCKETS, FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
+import {CollectionService} from '../../../core/services/collection.service';
+
+import {BUCKETS, FILE_UPLOAD_MODULES, returnPercentageValue} from '../../../core/helpers/constants';
 
 @Component({
   selector: 'app-bundle-update',
@@ -26,10 +29,6 @@ export class BundleUpdateComponent implements OnInit {
     page: 1,
   };
 
-  books = [];
-  totalPrice = 0;
-  searchBooksCtrl = new FormControl();
-
   DROPDOWN_OPTIONS = {
     enableSearchFilter: true,
     badgeShowLimit: '10',
@@ -38,11 +37,30 @@ export class BundleUpdateComponent implements OnInit {
     singleSelection: false
   };
 
+  books = [];
+  bundles = [];
+  collections = [];
+
+  searchBooksCtrl = new FormControl();
+  searchCollectionsCtrl = new FormControl();
+  searchBundlesCtrl = new FormControl();
+
   booksDropdownSettings = {
-    ...this.DROPDOWN_OPTIONS,
     text: 'Books in Bundle',
     searchPlaceholderText: 'Search Books...',
-    disabled: true,
+    ...this.DROPDOWN_OPTIONS,
+  };
+
+  bundleDropdownSettings = {
+    text: 'Suggested Bundles',
+    searchPlaceholderText: 'Search Bundles...',
+    ...this.DROPDOWN_OPTIONS,
+  };
+
+  collectionsDropdownSettings = {
+    text: 'Suggested Collections',
+    searchPlaceholderText: 'Search Collections...',
+    ...this.DROPDOWN_OPTIONS,
   };
 
 
@@ -51,6 +69,7 @@ export class BundleUpdateComponent implements OnInit {
               private router: Router,
               private route: ActivatedRoute,
               private bundleService: BundleService,
+              private collectionService: CollectionService,
               private booksService: BooksService,
               private filesService: FilesService) {
   }
@@ -82,11 +101,38 @@ export class BundleUpdateComponent implements OnInit {
 
   getSupportData(): void {
     this.getBooks();
+    this.getBundles();
+    this.getCollections();
   }
 
   getBooks(): void {
     this.booksService.getAllBooks(this.filters)
       .subscribe(res => this.books = res.docs);
+  }
+
+  searchBooks(q): void {
+    this.booksService.searchBooks(q)
+      .subscribe(res => this.books = res);
+  }
+
+  getBundles(): void {
+    this.bundleService.getAllBundles(this.filters)
+      .subscribe(res => this.bundles = res.docs);
+  }
+
+  searchBundles(q): void {
+    this.bundleService.searchBundles(q)
+      .subscribe(res => this.bundles = res);
+  }
+
+  getCollections(): void {
+    this.collectionService.getAllCollections(this.filters)
+      .subscribe(res => this.collections = res.docs);
+  }
+
+  searchCollections(q): void {
+    this.collectionService.searchCollections(q)
+      .subscribe(res => this.collections = res);
   }
 
   search(): void {
@@ -103,12 +149,34 @@ export class BundleUpdateComponent implements OnInit {
           this.getBooks();
         }
       });
-  }
 
+    this.searchCollectionsCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchCollections(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getCollections();
+        }
+      });
 
-  searchBooks(q): void {
-    this.booksService.searchBooks(q)
-      .subscribe(res => this.books = res);
+    this.searchBundlesCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchBundles(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getBundles();
+        }
+      });
   }
 
 
@@ -117,8 +185,11 @@ export class BundleUpdateComponent implements OnInit {
       title: [get(data, 'title', '')],
       description: [get(data, 'description', '')],
       tags: [get(data, 'tags', [])],
-      books: [get(data, 'bundledBooks', [])],
+      bundledBooks: [get(data, 'bundledBooks', [])],
+      relatedBundles: [get(data, 'relatedBundles', [])],
+      relatedCollections: [get(data, 'relatedCollections', [])],
       price: [get(data, 'price', 0)],
+      weight: [get(data, 'weight', 0)],
       membersPrice: [get(data, 'membersPrice', 0)],
       currentDiscount: [get(data, 'currentDiscount', 0)],
       popularity: [get(data, 'popularity', 0)],
@@ -134,6 +205,22 @@ export class BundleUpdateComponent implements OnInit {
       this.tags.value.push(value);
     }
     event.chipInput!.clear();
+  }
+
+  calculatePrices(): void {
+    const {bundledBooks} = this.bundleFormGroup.value;
+
+    for (const book of bundledBooks) {
+      book.discountedPrice = book.currentDiscount > 0 ? returnPercentageValue(100 - book.currentDiscount, book.price) : book.price;
+    }
+    const price = sumBy(bundledBooks, (x: any) => x.discountedPrice);
+    const weight = sumBy(bundledBooks, (x: any) => x.weight);
+
+    this.bundleFormGroup.patchValue({
+      price,
+      weight,
+      membersPrice: price,
+    });
   }
 
   remove(index): void {
@@ -177,11 +264,13 @@ export class BundleUpdateComponent implements OnInit {
   }
 
   onSubmit(): void {
-    const {books, ...rest} = this.bundleFormGroup.value;
+    const {bundledBooks, relatedCollections, relatedBundles, ...rest} = this.bundleFormGroup.value;
     const payload = {
       ...this.bundle,
       ...rest,
-      bundledBooks: books.map(x => x._id),
+      bundledBooks: bundledBooks.map(x => x._id),
+      relatedCollections: relatedCollections.map(x => x._id),
+      relatedBundles: relatedBundles.map(x => x._id),
       poster: this.bundle.poster.split('/').pop(),
     };
 
