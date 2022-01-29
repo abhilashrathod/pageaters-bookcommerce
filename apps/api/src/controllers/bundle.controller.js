@@ -9,11 +9,11 @@ module.exports.getAll = async (req, res) => {
   try {
     let { page, limit, sortBy, sortOrder } = req.allParams();
 
-    const query = {isDeleted: false};
+    const query = { isDeleted: false };
     const allowedSortingFields = ['title', 'createdAt', 'popularity', 'priority', 'currentDiscount', 'price'];
 
     if (sortBy && !allowedSortingFields.includes(sortBy)) {
-      return res.error('SORTING_NOT_ALLOWED')
+      return res.error('SORTING_NOT_ALLOWED');
     }
 
     const options = {
@@ -21,7 +21,7 @@ module.exports.getAll = async (req, res) => {
       limit,
       select: `bundleId _id title bundledBooks poster currentDiscount price membersPrice`,
       sort: {
-        [sortBy]: Number(sortOrder),
+        [sortBy]: sortOrder,
       },
     };
 
@@ -35,11 +35,26 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    let { title, description, tags, poster, currentDiscount, bundledBooks, price, membersPrice } = req.allParams();
+    let { title, description, tags, poster, popularity, priority, currentDiscount, bundledBooks, relatedBundles, relatedCollections, weight, price, membersPrice } = req.allParams();
 
     let bundleId = `BL-${generateRandomNumber()}`;
 
-    const payload = { bundleId, title, description, tags, poster, currentDiscount, bundledBooks, price, membersPrice };
+    const payload = {
+      bundleId,
+      title,
+      description,
+      tags,
+      poster,
+      currentDiscount,
+      bundledBooks,
+      relatedBundles,
+      relatedCollections,
+      price,
+      weight,
+      popularity,
+      priority,
+      membersPrice,
+    };
 
     const bundle = await Bundles.create(payload);
 
@@ -51,15 +66,15 @@ module.exports.create = async (req, res) => {
 
 module.exports.update = async (req, res) => {
   try {
-    let { id, title, description, tags, poster, } = req.allParams();
+    let { id, title, description, tags, poster, popularity, priority, relatedBundles, bundledBooks, relatedCollections, currentDiscount, price, membersPrice } = req.allParams();
 
-    const bundle = await Bundles.findOne({_id: id, isDeleted: false });
+    const bundle = await Bundles.findOne({ _id: id, isDeleted: false });
 
     if (!bundle) {
       return res.error('BUNDLE_NOT_EXIST');
     }
 
-    const payload = { title, description, tags, poster};
+    const payload = { title, description, tags, poster, popularity, priority, relatedBundles, bundledBooks, relatedCollections, currentDiscount, price, membersPrice };
 
     const bundleRes = await Bundles.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
 
@@ -94,15 +109,25 @@ module.exports.getById = async (req, res) => {
   try {
     let { id } = req.allParams();
 
-    const populateOptions = {
+    const populateOptions = [{
       path: 'bundledBooks',
-      select: `title ISBN author poster price popularity editorsPick inventory currentDiscount bestSeller`
-    };
+      select: `title bookId ISBN author poster price popularity editorsPick inventory currentDiscount bestSeller`,
+    }, {
+      path: 'relatedCollections',
+      select: 'collectionId title tags poster books',
+      populate: {
+        path: 'books',
+        select: 'title poster',
+      },
+    }, {
+      path: 'relatedBundles',
+      select: '_id bundleId title poster price',
+    }];
 
     const bundles = await Bundles.findOne({ _id: id, isDeleted: false }).populate(populateOptions);
 
     if (bundles) {
-      return res.ok({ message: 'BUNDLE_LIST_SUCCESS', data: bundles })
+      return res.ok({ message: 'BUNDLE_LIST_SUCCESS', data: bundles });
     } else {
       return res.error('BUNDLE_NOT_EXIST');
     }
@@ -115,15 +140,25 @@ module.exports.getByUniqueId = async (req, res) => {
   try {
     let { id } = req.allParams();
 
-    const populateOptions = {
+    const populateOptions = [{
       path: 'bundledBooks',
-      select: 'title ISBN author poster price popularity editorsPick inventory currentDiscount bestSeller'
-    };
+      select: `title bookId ISBN author poster price popularity editorsPick inventory currentDiscount bestSeller`,
+    }, {
+      path: 'relatedCollections',
+      select: 'collectionId title tags poster books',
+      populate: {
+        path: 'books',
+        select: 'title poster',
+      },
+    }, {
+      path: 'relatedBundles',
+      select: '_id bundleId title poster price',
+    }];
 
     const bundle = await Bundles.findOne({ bundleId: id, isDeleted: false }).populate(populateOptions);
 
     if (bundle) {
-      return res.ok({ message: 'BUNDLE_LIST_SUCCESS', data: bundle })
+      return res.ok({ message: 'BUNDLE_LIST_SUCCESS', data: bundle });
     } else {
       return res.error('BUNDLE_NOT_EXIST');
     }

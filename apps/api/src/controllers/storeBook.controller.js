@@ -26,7 +26,7 @@ module.exports.getAll = async (req, res) => {
       sort: {
         [sortBy]: Number(sortOrder),
       },
-      select: `title bookId ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller`,
+      select: `title bookId ISBN author inventory poster price weight popularity editorsPick currentDiscount bestSeller`,
       populate: {
         path: 'author',
         select: 'name intro avatar',
@@ -138,7 +138,7 @@ module.exports.search = async (req, res) => {
     const query = { _id: { $in: lunrIdArray }, isDeleted: false };
 
     const books = await Book.find(query)
-      .select('title ISBN bookId author poster price popularity editorsPick currentDiscount bestSeller')
+      .select('title ISBN bookId author poster weight price popularity inventory editorsPick currentDiscount bestSeller')
       .limit(10)
       .populate(populateOptions);
 
@@ -167,6 +167,10 @@ module.exports.getById = async (req, res) => {
     }, {
       path: 'relatedCollections',
       select: '_id collectionId title poster books',
+      populate: {
+        path: 'books',
+        select: 'title poster',
+      }
     }];
 
     const book = await Book.findOne({ _id: id, isDeleted: false }).populate(populateOptions);
@@ -200,6 +204,10 @@ module.exports.getByUniqueId = async (req, res) => {
     }, {
       path: 'relatedCollections',
       select: '_id collectionId title poster books',
+      populate: {
+        path: 'books',
+        select: 'title poster',
+      }
     }];
 
     const book = await Book.findOne({ bookId: id, isDeleted: false }).populate(populateOptions);

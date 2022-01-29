@@ -37,38 +37,23 @@ module.exports.checkServiceabilityInternal = async function(pincode) {
   });
 };
 
-
-module.exports.prepareProductsForOrder = async function(books) {
+module.exports.calculateTotalWeight = async function(products, bundles) {
   return new Promise(async (resolve, reject) => {
     try {
-      if (books.length === 0) {
-        resolve([]);
+      let finalProductsWeight = sumBy(products, (obj) => (obj.product.weight * obj.quantity));
+      let finalBundleWeight = 0;
+
+      for (let bundleItem of bundles) {
+        const bundleWeight = sumBy(bundleItem.bundledBooks, (obj) => obj.weight);
+        finalBundleWeight = finalBundleWeight + (bundleWeight * bundleItem * bundleItem.quantity);
       }
 
-      let finalProducts = [];
-
-      for (let book of books) {
-        const selectionString = `currentDiscount price membersPrice`;
-        const bookRes = await Book.findOne({ isDeleted: false, _id: book.product }).select(selectionString);
-
-        if (book.quantity <= bookRes.inventory) {
-          const item = {
-            quantity: book.quantity,
-            price: bookRes.price,
-            discount: bookRes.currentDiscount,
-            productTotal: book.quantity * (bookRes.price - ((bookRes.currentDiscount * bookRes.price) / 100)),
-            product: book.product,
-          };
-          finalProducts.push(item);
-        }
-
-      }
-
-      resolve(finalProducts);
+      resolve(finalProductsWeight + finalBundleWeight)
     } catch (e) {
-      resolve(null);
+      console.log(colors.red("ERROR"), JSON.stringify(e));
+      resolve(0);
     }
-  });
+  })
 };
 
 
@@ -77,7 +62,11 @@ module.exports.calculateShipping = async function(isFree, totalWeight, deliveryC
     try {
 
       if (isFree) {
-        resolve(0);
+        resolve({
+          taxes: 0,
+          deliveryAmount: 0,
+          totalDeliveryCharges: 0,
+        });
       }
 
       const config = {

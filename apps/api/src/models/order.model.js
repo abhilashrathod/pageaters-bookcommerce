@@ -26,6 +26,15 @@ const schema = new Schema({
       product: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
     }],
 
+    bundles: [{
+      quantity: { type: Number, default: 1 },
+      price: { type: Number, default: 1 },
+      discount: { type: Number, default: 0 },
+      total: { type: Number, default: 1 },
+      weight: { type: Number, default: 0 },
+      bundle: { type: Schema.Types.ObjectId, ref: models.BUNDLE },
+    }],
+
     rentals: [{
       quantity: { type: Number, default: 1 },
       product: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
@@ -36,7 +45,7 @@ const schema = new Schema({
 
     subTotal: { type: Number, default: 0 },
     shipping: { type: Number, default: 0 },
-    currentDiscount: { type: Number, default: 0 },
+    weight: { type: Number, default: 0 },
     total: { type: Number, default: 0 },
   },
   {

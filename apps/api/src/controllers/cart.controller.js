@@ -12,7 +12,7 @@ module.exports.retrieve = async (req, res) => {
   try {
     const userId = get(req, 'user.userId', '');
 
-    const populate = [{
+    const populateOptions = [{
       path: 'products.product',
       select: 'bookId title poster author currentDiscount price',
       populate: {
@@ -25,7 +25,7 @@ module.exports.retrieve = async (req, res) => {
     }];
 
     if (userId) {
-      let userCart = await Cart.findOne({ user: userId }).populate(populate);
+      let userCart = await Cart.findOne({ user: userId }).populate(populateOptions);
 
       if (userCart) {
         userCart = userCart.toObject();

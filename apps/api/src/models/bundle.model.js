@@ -13,6 +13,7 @@ const schema = new Schema({
     poster: { type: String, default: '' },
 
     currentDiscount: { type: Number, default: 0 },
+    weight: { type: Number, default: 0 },
 
     bundledBooks: [{ type: Schema.Types.ObjectId, ref: models.STORE_BOOK }],
 
@@ -24,6 +25,9 @@ const schema = new Schema({
 
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: String, default: '' },
+
+    relatedCollections: [{ type: Schema.Types.ObjectId, ref: models.COLLECTION }],
+    relatedBundles: [{ type: Schema.Types.ObjectId, ref: models.BUNDLE }],
   },
   {
     timestamps: true,
