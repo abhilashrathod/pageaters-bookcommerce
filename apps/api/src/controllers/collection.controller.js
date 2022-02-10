@@ -115,7 +115,7 @@ module.exports.getById = async (req, res) => {
       select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller',
     }, {
       path: 'relatedCategories',
-      select: `categoryId _id title numberOfBooks thumbnail`,
+      select: 'categoryId _id title numberOfBooks thumbnail',
     }, {
       path: 'featuredAuthors',
       select: 'name avatar books authorId',

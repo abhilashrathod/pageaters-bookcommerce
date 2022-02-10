@@ -103,8 +103,6 @@ this.app.use(compression({ threshold: 512 }));
 //   credentials: true, //included credentials as true
 // };
 
-let whitelist = ['http://localhost:2305', undefined];
-
 let corsOptions = {
   origin: true,
   credentials: true,

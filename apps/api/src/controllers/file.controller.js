@@ -111,6 +111,9 @@ const getBucketName = (module) => {
     case enums.FILE_MODULES.BUNDLE:
       return enums.BUCKETS.BUNDLES;
 
+    case enums.FILE_MODULES.ASSETS:
+      return enums.BUCKETS.ASSETS;
+
     default:
       return enums.BUCKETS.BOOK;
   }

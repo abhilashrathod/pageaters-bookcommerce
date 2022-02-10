@@ -4,7 +4,7 @@ const aggregatePaginate = require("mongoose-aggregate-paginate-v2");
 const { enums, models } = require('./../constants');
 
 const schema = new Schema({
-    user: { type: Schema.Types.ObjectId, ref: models.USER }, // can be blank for non-registered user and object for registered user
+    user: { type: Schema.Types.ObjectId, ref: models.USER },
     product: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: String, default: '' },

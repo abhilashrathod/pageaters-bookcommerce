@@ -19,12 +19,14 @@ module.exports = {
     STORE_BOOK: 'STORE_BOOK',
     AUTHOR: 'AUTHOR',
     COLLECTION: 'COLLECTION',
+    ASSETS: 'ASSETS',
     CATEGORY: 'CATEGORY',
     BUNDLE: 'BUNDLE',
   },
   BUCKETS: {
     AUTHOR: 'pageaters-authors',
     COLLECTIONS: 'pageaters-collections',
+    ASSETS: 'pageaters-assets',
     CATEGORIES: 'pageaters-categories',
     BUNDLES: 'pageaters-bundles',
     BOOK: 'storebooks'
