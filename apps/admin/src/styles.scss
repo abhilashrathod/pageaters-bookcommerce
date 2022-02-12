@@ -26,6 +26,14 @@ body {
   }
 }
 
+.c-pointer {
+  cursor: pointer;
+}
+
+.c-handle {
+  cursor: grab;
+}
+
 /* APP STYLES */
 
 @import "assets/styles/index";

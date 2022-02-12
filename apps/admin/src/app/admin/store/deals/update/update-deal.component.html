@@ -1,0 +1,97 @@
+<form *ngIf="isReady" [formGroup]="dealFormGroup" (ngSubmit)="onSubmit()">
+  <div class="row">
+    <div class="col-4">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Update Deal</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="col-12">
+            <div class="mb-4">
+              <div *ngIf="!poster" class="image-upload-thumbnail" style="font-size: large;" (click)="profileImage.click()">Poster
+              </div>
+              <img *ngIf="poster" class="pointer img-fluid img-thumbnail" [src]="poster"
+                   (click)="profileImage.click()"/>
+              <input #profileImage class="d-none" type="file" (change)="previewImage($event)">
+            </div>
+            <p class="text-center">
+              <button type="button" mat-stroked-button [color]="'accent'" (click)="uploadImage()">
+                Upload
+              </button>
+            </p>
+          </div>
+          <div class="">
+            <mat-form-field class="w-100">
+              <mat-label>Title</mat-label>
+              <input matInput formControlName="title">
+            </mat-form-field>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              <mat-form-field class="w-100">
+                <mat-label>CTA Button Text</mat-label>
+                <input matInput formControlName="ctaText">
+              </mat-form-field>
+            </div>
+            <div class="col-6">
+              <mat-form-field class="w-100">
+                <mat-label>Priority</mat-label>
+                <input matInput formControlName="priority">
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="">
+            <mat-form-field class="w-100">
+              <mat-label>Description</mat-label>
+              <textarea matInput
+                        cdkTextareaAutosize
+                        #autosize="cdkTextareaAutosize"
+                        cdkAutosizeMinRows="5"
+                        cdkAutosizeMaxRows="15"
+                        formControlName="description"></textarea>
+            </mat-form-field>
+          </div>
+
+          <div class="mb-3">
+            <angular2-multiselect [data]="categories" formControlName="categories"
+                                  (onSelect)="addOrUpdateSelectedCategory($event)"
+                                  (onDeSelect)="addOrUpdateSelectedCategory($event)"
+                                  [settings]="categoryDropdownSettings">
+            </angular2-multiselect>
+          </div>
+          <div class="mb-3">
+            <angular2-multiselect [data]="productSets" formControlName="productSets"
+                                  (onSelect)="addOrUpdateSelectedBooks($event)"
+                                  (onDeSelect)="addOrUpdateSelectedBooks($event)"
+                                  [settings]="productSetDropdownSettings">
+            </angular2-multiselect>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-8">
+      <div class="list-group" [sortablejs]="selectedSets">
+        <div class="list-group-item list-group-item-action c-handle" *ngFor="let set of selectedSets; let i = index;">
+          <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">{{set.slug}}</h5>
+            <small>{{set.setId}}</small>
+          </div>
+          <p class="mb-1">{{set.title}}</p>
+          <small *ngFor="let product of set.products">{{product.product.title}}, </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-button-row">
+    <button class="me-3" mat-fab color="warn" [routerLink]="['/', 'admin', 'store', 'deals']">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+
+    <button mat-fab color="primary" type="submit">
+      <mat-icon>check</mat-icon>
+    </button>
+  </div>
+
+</form>
+

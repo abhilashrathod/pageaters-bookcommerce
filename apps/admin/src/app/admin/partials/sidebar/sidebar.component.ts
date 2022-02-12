@@ -60,9 +60,9 @@ export class SidebarComponent implements OnInit {
       title: 'Carts'
     },
     {
-      icon: 'assignment_return',
-      path: [],
-      title: 'Refunds'
+      icon: 'layers',
+      path: ['/', 'admin', 'sets'],
+      title: 'Product Sets'
     },
     {
       icon: 'paid',
@@ -76,7 +76,7 @@ export class SidebarComponent implements OnInit {
     },
     {
       icon: 'store',
-      path: [],
+      path: ['/', 'admin', 'store'],
       title: 'Store'
     },
 

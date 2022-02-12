@@ -1,9 +1,11 @@
 export const FILE_UPLOAD_MODULES = {
+  DEFAULT: 'DEFAULT',
+  STORE_BOOK: 'STORE_BOOK',
   AUTHOR: 'AUTHOR',
   COLLECTION: 'COLLECTION',
   CATEGORY: 'CATEGORY',
-  STORE_BOOK: 'STORE_BOOK',
   BUNDLE: 'BUNDLE',
+  ASSETS: 'ASSETS',
 };
 
 export const BOOK_VERSIONS = ['hardcover', 'paperback', 'mass market paperback'];
