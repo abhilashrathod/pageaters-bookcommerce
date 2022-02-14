@@ -1,0 +1,26 @@
+/* FONT_FAMILY */
+@font-face {
+  font-family: 'Metropolis Regular';
+  src: url("../../public/fonts/Metropolis-Regular.otf") format("opentype");
+}
+
+@font-face {
+  font-family: 'Metropolis Semibold';
+  src: url('../../public/fonts/Metropolis-SemiBold.otf') format("truetype")
+}
+
+@font-face {
+  font-family: 'Metropolis Light';
+  src: url('../../public/fonts/Metropolis-Light.otf') format("truetype")
+}
+
+@font-face {
+  font-family: 'Metropolis Medium';
+  src: url('../../public/fonts/Metropolis-Medium.otf') format("truetype")
+}
+
+$font-family-semi-bold: 'Metropolis Semibold', sans-serif;
+$font-family-regular: 'Metropolis Regular', sans-serif;
+$font-family-light: 'Metropolis Light', sans-serif;
+$font-family-medium: 'Metropolis Medium', sans-serif;
+

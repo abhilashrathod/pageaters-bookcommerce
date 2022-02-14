@@ -1,0 +1,85 @@
+import React from 'react';
+import styled from "styled-components";
+
+import {ICategory} from "../../schemas/category";
+import {MD} from "../../core/_variables";
+
+interface Props {
+  category: ICategory;
+}
+
+const CategoryItem = styled.div`
+  border-radius: 1rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  display: flex;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+  
+  @media screen and (max-width: ${MD - 1}px) {      
+    flex-direction: column;
+    align-items: center;
+  }
+`;
+
+const CategoryImageArea = styled.div`
+   @media screen and (max-width: ${MD - 1}px) {      
+    margin-bottom: 1rem;
+  }
+`;
+
+const CategoryImage = styled.img`         
+  object-fit: cover;
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;  
+`;
+
+const CategoryContentArea = styled.div`         
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0 1rem;
+
+  @media screen and (max-width: ${MD - 1}px) {      
+    align-items: center;
+  } 
+`;
+
+const CategoryTitle = styled.h4`
+  font-size: 1rem;
+  margin-bottom: .1rem;
+  letter-spacing: normal;
+  
+   @media screen and (max-width: ${MD - 1}px) {      
+    text-align: center;
+  } 
+`;
+
+const CategoryDescription = styled.p`
+  margin-bottom: 0;
+  
+  @media screen and (max-width: ${MD - 1}px) {      
+    text-align: center;
+  }
+`;
+
+
+const CategoryLandscapeCard: React.FC<Props> = ({category}) => {
+  return (
+      <>
+        <CategoryItem>
+          <CategoryImageArea>
+            <CategoryImage src={'https://pageaters-categories.s3.ap-south-1.amazonaws.com/' + category.thumbnail}
+                           alt={category.title}/>
+          </CategoryImageArea>
+          <CategoryContentArea>
+            <CategoryTitle>{category.title}</CategoryTitle>
+            <CategoryDescription>{category.numberOfBooks} Books</CategoryDescription>
+          </CategoryContentArea>
+        </CategoryItem>
+      </>
+  )
+};
+
+export default CategoryLandscapeCard;

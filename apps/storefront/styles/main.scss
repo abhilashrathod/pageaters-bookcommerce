@@ -1,0 +1,23 @@
+/* APP STYLES */
+@import "mixins";
+@import "core";
+
+/* BASE */
+@import "normalize";
+@import "skeleton";
+
+.categories-list-container {
+  margin: 0 auto;
+  overflow: auto;
+  flex-wrap: nowrap;
+  scroll-snap-type: x mandatory;
+  max-width: 100%;
+
+  @media (max-width: 991px) {
+    max-width: 768px;
+  }
+
+  @media (max-width: 991px) {
+    max-width: 500px;
+  }
+}
