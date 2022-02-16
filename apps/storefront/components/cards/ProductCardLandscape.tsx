@@ -1,11 +1,12 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from 'styled-components'
 
 import Badges from "../elements/Badge";
-import {IBook} from "../../schemas/book";
 
-import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
+import {IBook} from "../../schemas/book";
 import {LIGHT_COLOR} from "../../core/_variables";
+import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
+import {getProductImage} from "../../core/_imageRendererHelper";
 
 interface Props {
   book: IBook;
@@ -17,7 +18,9 @@ const WrapperDiv = styled.div`
   cursor: pointer;  
 `;
 
-const CardCover = styled.div``;
+const CardCover = styled.div`
+  margin-bottom: 0.625rem;
+`;
 
 const CardImage = styled.img`
       object-fit: cover;
@@ -83,12 +86,18 @@ const Crossed = styled.span`
 `;
 
 const ProductCardLandScape: React.FC<Props> = ({book}) => {
+  const [poster, setPoster] = useState('');
+
+  useEffect(() => {
+    setPoster(getProductImage(book.poster, {height: 375, fit: 'cover', width: 247}));
+  }, []);
+
   return (
       <>
         <WrapperDiv>
           <CartDiscount>{book?.currentDiscount}% Off</CartDiscount>
           <CardCover>
-            <CardImage src={'https://storebooks.s3.ap-south-1.amazonaws.com/' + book.poster} alt={book?.title}/>
+            <CardImage src={poster} alt={book?.title}/>
           </CardCover>
 
           <CardContent>
@@ -102,7 +111,8 @@ const ProductCardLandScape: React.FC<Props> = ({book}) => {
             <CardSubTitle>
               {
                 book.currentDiscount
-                    ? <><Crossed>{currencyFormat(book.price)}</Crossed><span>{currencyFormat(returnDiscountedAmount(book.price, book.currentDiscount))}</span></>
+                    ? <>
+                      <Crossed>{currencyFormat(book.price)}</Crossed><span>{currencyFormat(returnDiscountedAmount(book.price, book.currentDiscount))}</span></>
                     : <span>{currencyFormat(book.price)}</span>
 
               }

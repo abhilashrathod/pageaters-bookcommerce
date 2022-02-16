@@ -2,11 +2,11 @@ import React from 'react';
 import styled from 'styled-components'
 import Link from "next/link";
 import Image from 'next/image';
-import OutlinedButton from "../form-controls/OutlinedButton";
 
 import logo from '../../public/images/horizontal-logo.png';
 
-import {LIGHT_COLOR, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
+import {PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
+import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 
 interface Props {
@@ -97,65 +97,65 @@ const Greeting = styled.div`
 const FOOTER_NAVIGATION = [
   {
     linkName: 'Company',
-    linkHref: '',
+    linkHref: '/',
     children: [
       {
         linkName: 'About',
-        linkHref: '',
+        linkHref: '/',
       }, {
         linkName: 'Contact',
-        linkHref: '',
+        linkHref: '/',
       }, {
         linkName: 'Privacy Policy',
-        linkHref: '',
+        linkHref: '/',
       }, {
         linkName: 'Terms of Use',
-        linkHref: '',
+        linkHref: '/',
       }, {
         linkName: 'Testimonials',
-        linkHref: '',
+        linkHref: '/',
       }, {
         linkName: 'FAQs',
-        linkHref: '',
+        linkHref: '/',
       }
     ]
   }, {
     linkName: 'Shop',
-    linkHref: '',
+    linkHref: '/',
     children: [
       {
         linkName: 'Offers',
-        linkHref: '',
+        linkHref: '/',
       }, {
         linkName: 'Orders',
-        linkHref: '',
+        linkHref: '/',
       }, {
         linkName: 'Wishlist',
-        linkHref: '',
+        linkHref: '/',
       }, {
         linkName: 'Categories',
-        linkHref: '',
+        linkHref: '/',
       }, {
         linkName: 'Collections',
-        linkHref: '',
+        linkHref: '/',
       }, {
         linkName: 'Bundles',
-        linkHref: '',
+        linkHref: '/',
       }
     ]
   }, {
     linkName: 'Pages',
-    linkHref: '',
+    linkHref: '/',
     children: [
       {
         linkName: 'Membership',
-        linkHref: '',
+        linkHref: '/',
       }, {
         linkName: 'Incentive Program',
-        linkHref: '',
+        linkHref: '/',
       }, {
         linkName: 'Influencer Program',
-        linkHref: '',
+        linkHref: '/',
       }
     ]
   }
@@ -178,10 +178,10 @@ const AppFooter: React.FC<Props> = () => {
                   <address>
                     Unit 1, Demo Logistics Park, Sector 1,<br/>
                     Gandhinagar, GJ - 382016 <br/>
-                    <OutlinedButton style={{margin: '0.6rem 1rem 0.6rem 0'}} variant={'primary'}
-                                    href={'mailto:support@demo.pageaters.com'}>Mail Us</OutlinedButton>
-                    <OutlinedButton style={{margin: '0.6rem 1rem 0.6rem 0'}} variant={'primary'}
-                                    href={'tel:+919000000000'}>Call Us</OutlinedButton>
+                    <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}} size={ButtonSizes.Small}
+                               href={'mailto:support@demo.pageaters.com'}>Mail Us</AppButton>
+                    <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}}  size={ButtonSizes.Small}
+                               href={'tel:+919000000000'}>Call Us</AppButton>
                   </address>
                 </MainFooterAddress>
                 <FooterNavigation>

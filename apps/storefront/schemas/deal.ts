@@ -6,14 +6,14 @@ export interface IDeal {
   ctaLink: string;
   ctaText: string;
   title: string;
-  description: string;
-  priority: number;
-  isActive: boolean;
-  deactivatedAt: string;
+  description?: string;
+  priority?: number;
+  isActive?: boolean;
+  deactivatedAt?: string;
   _id: string;
-  createdAt: string;
-  updatedAt: string;
-  productSets: Array<ISetItem>;
+  createdAt?: string;
+  updatedAt?: string;
+  productSets?: Array<ISetItem>;
 }
 
 interface ISetItem {

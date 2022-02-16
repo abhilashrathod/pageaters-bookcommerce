@@ -1,8 +1,9 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from "styled-components";
 
 import {ICategory} from "../../schemas/category";
 import {MD} from "../../core/_variables";
+import {getCategoryImage} from "../../core/_imageRendererHelper";
 
 interface Props {
   category: ICategory;
@@ -66,11 +67,17 @@ const CategoryDescription = styled.p`
 
 
 const CategoryLandscapeCard: React.FC<Props> = ({category}) => {
+  const [poster, setPoster] = useState('');
+
+  useEffect(() => {
+    setPoster(getCategoryImage(category.thumbnail, {height: 64, fit: 'cover', width: 64}));
+  }, []);
+
   return (
       <>
         <CategoryItem>
           <CategoryImageArea>
-            <CategoryImage src={'https://pageaters-categories.s3.ap-south-1.amazonaws.com/' + category.thumbnail}
+            <CategoryImage src={poster}
                            alt={category.title}/>
           </CategoryImageArea>
           <CategoryContentArea>

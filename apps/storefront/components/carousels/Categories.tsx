@@ -67,8 +67,8 @@ const Categories: React.FC<Props> = () => {
           </div>
           <div className="row categories-list-container">
             {[0, 0, 0, 0, 0, 0, 0, 0, 0, 0,].map((x, index) => (
-                <div className="col-xxl-2 col-xl-2 col-lg-3 col-md-3 col-4">
-                  <CategoryLandscapeCard key={index} category={CATEGORY}/>
+                <div key={index} className="col-xxl-2 col-xl-2 col-lg-3 col-md-3 col-4">
+                  <CategoryLandscapeCard category={CATEGORY}/>
                 </div>
             ))}
           </div>

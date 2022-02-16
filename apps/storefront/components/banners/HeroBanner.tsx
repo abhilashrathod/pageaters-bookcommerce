@@ -1,11 +1,14 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from "styled-components";
 
 import AppButton from "../form-controls/Button";
 
 import {LG, MD, SM} from "../../core/_variables";
+import {getAssetImage} from "../../core/_imageRendererHelper";
+import {IBanner} from "../../schemas/banner";
 
 interface Props {
+  banner: IBanner;
 }
 
 const Hero = styled.section`
@@ -69,11 +72,15 @@ const HeroTitle = styled.h2`
     }
 `;
 
-const IMAGE = `https://d2jesamohckae0.cloudfront.net/eyJidWNrZXQiOiJwYWdlYXRlcnMtYXNzZXRzIiwia2V5IjoiY2FzdWFsLXdvbWFuLXJlYWRpbmctYm9vay13aGlsZS1kcmlua2luZy1taW5fZTF6bXVoLmpwZyIsImVkaXRzIjp7InJlc2l6ZSI6eyJoZWlnaHQiOjEyODAsIndpZHRoIjoxOTIwLCJmaXQiOiJjb3ZlciJ9fX0=`;
+const HeroBanner: React.FC<Props> = ({banner}) => {
+  const [poster, setPoster] = useState('');
 
-const HeroBanner: React.FC<Props> = () => {
+  useEffect(() => {
+    setPoster(getAssetImage(banner.poster, {height: 1280, width: 1920, fit: 'cover'}));
+  }, []);
+
   return (
-      <Hero style={{backgroundImage: `url(${IMAGE})`}}>
+      <Hero style={{backgroundImage: `url(${poster})`}}>
         <div className="custom-container" style={{zIndex: 1}}>
           <div className="row">
             <div className="col-xxl-4 col-lg-6 col-12">
