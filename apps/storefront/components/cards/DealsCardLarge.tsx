@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import Image from 'next/image';
 import styled from "styled-components";
 
 import {getAssetImage} from "../../core/_imageRendererHelper";
@@ -26,6 +27,7 @@ const CardCoverImage = styled.img`
   height: 520px;
   object-fit: cover;
   object-position: center center;
+  aspect-ratio: 1/1;
   filter: drop-shadow(0px 8px 6px rgba(0, 0, 0, 0.25)) !important;
   
   @media screen and (max-width: ${LG - 1}px) {      
@@ -74,7 +76,7 @@ const DealsCardLarge: React.FC<Props> = ({deal}) => {
       <>
         <MainCardWrapper>
           <CardCover>
-            <CardCoverImage src={poster} alt={deal.title}/>
+            <CardCoverImage src={poster} alt={deal.title} height={520} width={520}/>
           </CardCover>
           <CardContent>
             <CardTitle>

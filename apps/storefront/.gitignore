@@ -3,7 +3,7 @@
 
 # Compiled output
 /.build
-.next/
+.next
 
 # Yarn without Zero-install
 # https://yarnpkg.com/getting-started/qa/#which-files-should-be-gitignored

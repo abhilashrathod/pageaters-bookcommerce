@@ -1,9 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import {IBundle} from "../../schemas/bundle";
-import {getBundleImage, getCategoryImage} from "../../core/_imageRendererHelper";
+import Image from 'next/image';
 import styled from "styled-components";
+
+import {getBundleImage} from "../../core/_imageRendererHelper";
 import {LIGHT_COLOR, MD, SM} from "../../core/_variables";
 import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
+import {IBundle} from "../../schemas/bundle";
 
 interface Props {
   bundle: IBundle;
@@ -19,7 +21,7 @@ const CardImageSpace = styled.div`
   margin-bottom: 0.625rem;
 `;
 
-const CardImage = styled.img`
+const CardImage = styled(Image)`
   border-radius: 1rem;
   object-fit: cover;
   width: 385px;
@@ -68,15 +70,16 @@ const Crossed = styled.span`
 
 const BundlesCardMedium: React.FC<Props> = ({bundle}) => {
   const [poster, setPoster] = useState('');
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
     setPoster(getBundleImage(bundle.poster, {height: 385, fit: 'cover', width: 385}));
   }, []);
-
   return (
       <WrapperDiv>
+        <button onClick={() => setCount(+new Date())}>somebutton</button>
         <CardImageSpace>
-          <CardImage src={poster} alt={bundle.title} />
+          <CardImage src={poster} alt={bundle.title} height={385} width={385}/>
         </CardImageSpace>
         <CardContent>
           <div>
@@ -84,12 +87,10 @@ const BundlesCardMedium: React.FC<Props> = ({bundle}) => {
               {bundle.title}
             </CardTitle>
             <CardSubTitle>
-
               {
                 (bundle.currentDiscount > 0)
-                    ? <>
-                      <Crossed>{currencyFormat(bundle.price)}</Crossed><span>{currencyFormat(returnDiscountedAmount(bundle.price, bundle.currentDiscount))}</span></>
-                    : <span>{currencyFormat(bundle.price)}</span>
+                && <>
+                  <Crossed>{currencyFormat(bundle.price)}</Crossed><span>{currencyFormat(returnDiscountedAmount(bundle.price, bundle.currentDiscount))}</span></>
 
               }
               <span>
@@ -97,7 +98,7 @@ const BundlesCardMedium: React.FC<Props> = ({bundle}) => {
               </span>
             </CardSubTitle>
           </div>
-        </CardContent>s
+        </CardContent>
       </WrapperDiv>
   )
 };

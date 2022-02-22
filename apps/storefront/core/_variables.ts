@@ -38,6 +38,15 @@ export const FILE_MODULES = {
   ASSETS: 'ASSETS',
 };
 
+export const BUCKETS_ORIGINS = {
+  BOOKS: 'https://storebooks.s3.ap-south-1.amazonaws.com',
+  ASSETS: 'https://pageaters-assets.s3.ap-south-1.amazonaws.com',
+  AUTHORS: 'https://pageaters-authors.s3.ap-south-1.amazonaws.com',
+  BUNDLES: 'https://pageaters-bundles.s3.ap-south-1.amazonaws.com',
+  COLLECTIONS: 'https://pageaters-collections.s3.ap-south-1.amazonaws.com',
+  CATEGORIES: 'https://pageaters-categories.s3.ap-south-1.amazonaws.com',
+};
+
 export const BUCKETS = {
   AUTHOR: 'pageaters-authors',
   ASSETS: 'pageaters-assets',
@@ -46,4 +55,33 @@ export const BUCKETS = {
   BUNDLES: 'pageaters-bundles',
   BOOK: 'storebooks'
 };
+
+/***
+ *
+ * DROPDOWN OPTIONS FOR SELECT BOXES
+ */
+
+export const CATEGORY_SORT_OPTIONS = [
+  {label: 'New Arrivals', value: 'createdAt|desc'},
+  {label: 'Popularity', value: 'popularity|desc'},
+  {label: 'Discounts', value: 'currentDiscount|desc'},
+  {label: 'Price: High to Low', value: 'price|desc'},
+  {label: 'Price: Low to High', value: 'price|asc'},
+];
+
+export const COLLECTION_SORT_OPTIONS = [
+  {title: 'New Added', key: 'createdAt', sortValue: -1},
+  {title: 'Popularity', key: 'popularity', sortValue: -1},
+  {title: 'Recommended', key: 'priority', sortValue: -1},
+  {title: 'Title', key: 'title', sortValue: 1}
+];
+
+export const BUNDLE_SORT_OPTIONS = [
+  {title: 'New Added', key: 'createdAt', sortValue: -1},
+  {title: 'Popularity', key: 'popularity', sortValue: -1},
+  {title: 'Recommended', key: 'priority', sortValue: -1},
+  {title: 'Title', key: 'title', sortValue: 1},
+  {title: 'Price: High to Low', key: 'price', sortValue: -1},
+  {title: 'Price: Low to High', key: 'price', sortValue: 1},
+];
 

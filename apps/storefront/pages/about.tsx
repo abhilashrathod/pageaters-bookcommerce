@@ -1,7 +1,7 @@
 import {NextPage} from "next";
 import Link from "next/link";
 
-const Home: NextPage = () => {
+const About: NextPage = () => {
   return (
       <div className={'continer'}>
         <Link href={'/'}><a>back</a></Link>
@@ -22,4 +22,4 @@ const Home: NextPage = () => {
   )
 };
 
-export default Home
+export default About;

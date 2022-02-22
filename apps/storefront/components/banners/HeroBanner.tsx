@@ -73,14 +73,14 @@ const HeroTitle = styled.h2`
 `;
 
 const HeroBanner: React.FC<Props> = ({banner}) => {
-  const [poster, setPoster] = useState('');
-
-  useEffect(() => {
-    setPoster(getAssetImage(banner.poster, {height: 1280, width: 1920, fit: 'cover'}));
-  }, []);
+  // const [poster, setPoster] = useState('');
+  //
+  // useEffect(() => {
+  //   setPoster(getAssetImage(banner.poster, {height: 1280, width: 1920, fit: 'cover'}));
+  // }, []);
 
   return (
-      <Hero style={{backgroundImage: `url(${poster})`}}>
+      <Hero style={{backgroundImage: `url(${banner.poster})`}}>
         <div className="custom-container" style={{zIndex: 1}}>
           <div className="row">
             <div className="col-xxl-4 col-lg-6 col-12">

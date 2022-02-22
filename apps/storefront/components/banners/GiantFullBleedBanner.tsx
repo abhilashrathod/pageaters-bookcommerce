@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from 'react';
-
 import styled from "styled-components";
 
-import {MD, PRIMARY_COLOR, SM} from "../../core/_variables";
 import {IBanner} from "../../schemas/banner";
 import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
-import {getAssetImage} from "../../core/_imageRendererHelper";
+
+import {getAssetImage, getProductImage} from "../../core/_imageRendererHelper";
+import {LG, MD, PRIMARY_COLOR, SM, XS} from "../../core/_variables";
 
 interface Props {
   banner: IBanner;
@@ -25,12 +25,13 @@ const BannerImage = styled.img`
   height: 800px;
   object-fit: cover;
   object-position: center center;
+  aspect-ratio: 16/9;
   
-  @media screen and (max-width: ${MD - 1}px) {      
+  @media screen and (max-width: ${MD - 1}px) {
      height: 600px;
   }
   
-  @media screen and (max-width: ${SM - 1}px) {      
+  @media screen and (max-width: ${SM - 1}px) {
      height: 450px;
   }
 `;
@@ -87,11 +88,20 @@ const GiantFullBleedBanner: React.FC<Props> = ({banner}) => {
     setPoster(getAssetImage(banner.poster, {height: 1280, width: 1920, fit: 'cover'}));
   }, []);
 
+  function renderImageSize(w: number, h: number) {
+    return getAssetImage(banner.poster, {height: h, width: w, fit: 'cover'});
+  }
+
   return (
       <>
         <MainCardWrapper>
           <BannerImageSpace>
-            <BannerImage src={poster} alt={banner.title}/>
+            <picture>
+              <source media={`(max-width: ${SM - 1}px)`} type="image/jpeg" srcSet={renderImageSize(375, 450)} height={450} width={375}/>
+              <source media={`(max-width: ${MD - 1}px)`} type="image/jpeg" srcSet={renderImageSize(768, 600)} height={768} width={600}/>
+              <source media={`(max-width: ${LG - 1}px)`} type="image/jpeg" srcSet={renderImageSize(1024, 800)} height={800} width={1024}/>
+              <BannerImage src={poster} alt="some-set" height={1280} width={1920}/>
+            </picture>
           </BannerImageSpace>
           <BannerContent>
             <BannerTextSpace>

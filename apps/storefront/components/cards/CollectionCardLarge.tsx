@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import Image from 'next/image';
 import styled from "styled-components";
 
 import {getCollectionImage} from "../../core/_imageRendererHelper";
@@ -19,7 +20,7 @@ const MainCardWrapper = styled.div`
 `;
 const CardCoverSpace = styled.div``;
 
-const CardImage = styled.img`
+const CardImage = styled(Image)`
   border-bottom-left-radius: 1rem;
   border-bottom-right-radius: 1rem;
   width: 100%;
@@ -100,7 +101,7 @@ const CollectionCardLarge: React.FC<Props> = ({collection}) => {
           </CardSubTitle>
         </CardContent>
         <CardCoverSpace>
-          <CardImage src={poster} alt={collection.title}/>
+          <CardImage src={poster} alt={collection.title} height={345} width={517}/>
         </CardCoverSpace>
       </MainCardWrapper>
   )

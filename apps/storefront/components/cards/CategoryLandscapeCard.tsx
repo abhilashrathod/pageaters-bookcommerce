@@ -1,9 +1,11 @@
 import React, {useEffect, useState} from 'react';
+import Image from 'next/image';
 import styled from "styled-components";
 
 import {ICategory} from "../../schemas/category";
 import {MD} from "../../core/_variables";
 import {getCategoryImage} from "../../core/_imageRendererHelper";
+import {useRouter} from "next/router";
 
 interface Props {
   category: ICategory;
@@ -68,17 +70,22 @@ const CategoryDescription = styled.p`
 
 const CategoryLandscapeCard: React.FC<Props> = ({category}) => {
   const [poster, setPoster] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     setPoster(getCategoryImage(category.thumbnail, {height: 64, fit: 'cover', width: 64}));
   }, []);
 
+  function navigateToDetails(e: any) {
+    e.preventDefault();
+    router.push(`/categories/${category.categoryId}`);
+  }
+
   return (
       <>
-        <CategoryItem>
+        <CategoryItem onClick={navigateToDetails}>
           <CategoryImageArea>
-            <CategoryImage src={poster}
-                           alt={category.title}/>
+            <CategoryImage src={poster} width={64} height={64} alt={category.title}/>
           </CategoryImageArea>
           <CategoryContentArea>
             <CategoryTitle>{category.title}</CategoryTitle>

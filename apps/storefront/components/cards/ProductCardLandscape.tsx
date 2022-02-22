@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import Image from 'next/image';
 import styled from 'styled-components'
 
 import Badges from "../elements/Badge";
@@ -97,13 +98,13 @@ const ProductCardLandScape: React.FC<Props> = ({book}) => {
         <WrapperDiv>
           <CartDiscount>{book?.currentDiscount}% Off</CartDiscount>
           <CardCover>
-            <CardImage src={poster} alt={book?.title}/>
+            <CardImage src={poster} alt={book?.title} height={375} width={247}/>
           </CardCover>
 
           <CardContent>
             <CardTags>
-              <Badges text={book.editorsPick ? 'Editor\'s Pick' : ''} color={'accent'}/>
-              <Badges text={book.bestSeller ? 'Best Seller' : ''} color={'primary'}/>
+              {book.editorsPick && <Badges text={book.editorsPick ? 'Editor\'s Pick' : ''} color={'accent'}/>}
+              {book.bestSeller && <Badges text={book.bestSeller ? 'Best Seller' : ''} color={'primary'}/>}
             </CardTags>
             <CardTitle>
               {book.title}

@@ -1,11 +1,11 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
+import Image from 'next/image';
 import styled from "styled-components";
 
 import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 import {IBanner} from "../../schemas/banner";
 import {SM} from "../../core/_variables";
-import {getAssetImage} from "../../core/_imageRendererHelper";
 
 interface Props {
   banner: IBanner
@@ -19,7 +19,7 @@ const BannerImageSpace = styled.div`
   margin-bottom: 0.625rem;
 `;
 
-const BannerImage = styled.img`
+const BannerImage = styled(Image)`
   border-radius: 1rem;
   width: 100%;
   height: 350px;
@@ -55,16 +55,16 @@ const BannerLearnMore = styled.div`
 
 
 const LandscapeBanner: React.FC<Props> = ({banner}) => {
-  const [poster, setPoster] = useState('');
-
-  useEffect(() => {
-    setPoster(getAssetImage(banner.poster, {height: 350, width: 776, fit: 'cover'}));
-  }, []);
+  // const [poster, setPoster] = useState('');
+  //
+  // useEffect(() => {
+  //   setPoster(getAssetImage(banner.poster, {height: 350, width: 776, fit: 'cover'}));
+  // }, []);
 
   return (
       <MainCardWrapper>
         <BannerImageSpace>
-          <BannerImage src={poster} alt={banner.title}/>
+          <BannerImage src={banner.poster} alt={banner.title} height={350} width={776}/>
         </BannerImageSpace>
         <BannerContent>
           <BannerTextSpace>
