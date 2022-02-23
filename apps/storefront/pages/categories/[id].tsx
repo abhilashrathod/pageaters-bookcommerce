@@ -107,9 +107,13 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
                         })
                       }
                     </div>
-                    <div className="row">
+                    <div className="row py-25">
                       <div className="col">
-                        <Pagination total={data?.data?.totalPages} color="dark" size="lg" radius="xl" page={params.page} onChange={handlePageChange}/>
+                        <Pagination style={{justifyContent: 'center'}}
+                                    total={data?.data?.totalPages}
+                                    color="dark" size="lg" radius="xl"
+                                    page={params.page}
+                                    onChange={handlePageChange}/>
                       </div>
                     </div>
                   </div>
@@ -139,10 +143,17 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
   )
 };
 
-export const getStaticPaths: GetStaticPaths = async () => {
+export const getStaticPaths: GetStaticPaths = async (context) => {
+  const promise$ = await axios.get(`/categories`, {params: {limit: 25, page: 1}});
+  const {data} = await promise$.data;
+
+  const paths = data.docs.map((doc: ICategory) => {
+    return { params: { id: doc.categoryId } }
+  });
+
   return {
-    paths: [],
-    fallback: true,
+    paths,
+    fallback: true
   };
 };
 

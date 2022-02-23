@@ -10,7 +10,7 @@ interface Props {
   showFilters?: boolean;
   defaultFilter?: any;
   filterOptions?: Array<SelectItem>;
-  onFilterSelect: (s: string) => void;
+  onFilterSelect?: (s: string) => void;
 }
 
 const HeadingText = styled.div`
@@ -21,10 +21,11 @@ const HeadingText = styled.div`
 `;
 
 const PageHeadings: React.FC<Props> = ({title, defaultFilter, showFilters, filterOptions, onFilterSelect}) => {
-  const [selectedFilters, setSelectedFilters] = useState(defaultFilter.value);
+  const [selectedFilters, setSelectedFilters] = useState(defaultFilter?.value || '');
 
   function onHandleChange(e: any) {
     setSelectedFilters(e);
+    // @ts-ignore
     onFilterSelect(e);
   }
 
