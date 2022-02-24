@@ -12,6 +12,8 @@ Router.events.on("routeChangeStart", nProgress.start);
 Router.events.on("routeChangeError", nProgress.done);
 Router.events.on("routeChangeComplete", nProgress.done);
 
+nProgress.configure({showSpinner: false});
+
 axios.defaults.baseURL = process.env.NEXT_PUBLIC_BASE_PATH || 'http://localhost:5000';
 
 /* SWR FETCHER GLOBAL FUNCTION */

@@ -1,6 +1,7 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {GetStaticPaths, GetStaticProps, InferGetStaticPropsType, NextPage} from "next";
 import axios from "axios";
+import {parseUrl, stringifyUrl} from 'query-string';
 import Head from "next/head";
 import {useRouter} from "next/router";
 import useSWR from "swr";
@@ -33,7 +34,16 @@ const FILTER_OPTIONS = {
 
 const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticPropsType<typeof getStaticProps>) => {
   const router = useRouter();
-  const [params, setParams] = useState({page: 1, limit: 12, sortBy: '', sortOrder: ''});
+
+  const [params, setParams] = useState(() => {
+    const {query} = parseUrl(router.asPath);
+    return {
+      page: Number(query.page) || 1,
+      limit: 12,
+      sortBy: query.sortBy || 'createdAt',
+      sortOrder: query.sortOrder || 'desc'
+    };
+  });
 
   const {data, error} = useSWR({
     url: `${process.env.NEXT_PUBLIC_BASE_PATH}/categories/${categoryDetails?._id}/products`,
@@ -43,11 +53,20 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
   function handleFilterSelection(e: any) {
     const [field, sortValue] = e.split('|');
 
+    const newParams = {
+      page: params.page,
+      limit: params.limit,
+      sortBy: field,
+      sortOrder: sortValue,
+    };
+
     setParams((prevState) => ({
       ...prevState,
       sortBy: field,
       sortOrder: sortValue,
     }));
+
+    redirectWithParams(newParams);
   }
 
   function handlePageChange(e: any) {
@@ -55,9 +74,24 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
       ...prevState,
       page: e,
     }));
+
+    const newParams = {
+      page: e,
+      limit: params.limit,
+      sortBy: params.sortBy || '',
+      sortOrder: params.sortOrder || '',
+    };
+
+    redirectWithParams(newParams);
+  }
+  
+  function redirectWithParams(params: any) {
+    const newPathname = stringifyUrl({url: router.pathname, query: {...params}});
+    const newAsPath = stringifyUrl({url: router.asPath, query: {...params}});
+    router.replace(newPathname, newAsPath);
   }
 
-  if (router.isFallback)  return <div>Loading...</div>;
+  if (router.isFallback) return <div>Loading...</div>;
   if (error) return <div>failed to load</div>;
 
   return (
@@ -126,7 +160,7 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
                             [0, 0, 0, 0, 0, 0].map((item, index) => {
                               return (
                                   <div key={index} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                                    <Skeleton height={300} radius="lg" />
+                                    <Skeleton height={300} radius="lg"/>
                                     <Skeleton height={10} width="100%" mt={10} radius="sm"/>
                                     <Skeleton height={10} width="100%" mt={10} radius="sm"/>
                                   </div>
@@ -148,7 +182,7 @@ export const getStaticPaths: GetStaticPaths = async (context) => {
   const {data} = await promise$.data;
 
   const paths = data.docs.map((doc: ICategory) => {
-    return { params: { id: doc.categoryId } }
+    return {params: {id: doc.categoryId}}
   });
 
   return {

@@ -98,7 +98,7 @@ const ProductCardLandScape: React.FC<Props> = ({book}) => {
         <WrapperDiv>
           <CartDiscount>{book?.currentDiscount}% Off</CartDiscount>
           <CardCover>
-            <CardImage src={poster} alt={book?.title} height={375} width={247}/>
+            <CardImage src={poster} alt={book?.title} loading="lazy" height={375} width={247}/>
           </CardCover>
 
           <CardContent>

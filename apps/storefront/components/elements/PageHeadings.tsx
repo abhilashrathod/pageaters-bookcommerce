@@ -18,6 +18,7 @@ const HeadingText = styled.div`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 1rem;
 `;
 
 const PageHeadings: React.FC<Props> = ({title, defaultFilter, showFilters, filterOptions, onFilterSelect}) => {
@@ -44,7 +45,6 @@ const PageHeadings: React.FC<Props> = ({title, defaultFilter, showFilters, filte
                       <div>
                         <Select
                             defaultValue={defaultFilter.value}
-                            label={'Sort By'}
                             placeholder={'Select Option'}
                             size={'xs'}
                             transition={'pop'}

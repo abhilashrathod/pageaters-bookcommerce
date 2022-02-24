@@ -1,13 +1,15 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import Head from "next/head";
+import {useRouter} from "next/router";
+import useSWR from "swr";
+import {Skeleton} from "@mantine/core";
+
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
-import {useRouter} from "next/router";
-import useSWR from "swr";
 import CategoryCardLarge from "../../components/cards/CategoryCardLarge";
+
 import {ICategory} from "../../schemas/category";
-import {Skeleton} from "@mantine/core";
 
 interface Props {
 }
