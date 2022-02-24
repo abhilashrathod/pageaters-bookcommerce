@@ -85,7 +85,7 @@ const CategoryLandscapeCard: React.FC<Props> = ({category}) => {
       <>
         <CategoryItem onClick={navigateToDetails}>
           <CategoryImageArea>
-            <CategoryImage src={poster} width={64} height={64} alt={category.title}/>
+            <CategoryImage src={poster} loading={"lazy"} width={64} height={64} alt={category.title}/>
           </CategoryImageArea>
           <CategoryContentArea>
             <CategoryTitle>{category.title}</CategoryTitle>

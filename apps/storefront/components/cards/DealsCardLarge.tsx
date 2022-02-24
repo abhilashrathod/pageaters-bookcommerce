@@ -76,7 +76,7 @@ const DealsCardLarge: React.FC<Props> = ({deal}) => {
       <>
         <MainCardWrapper>
           <CardCover>
-            <CardCoverImage src={poster} alt={deal.title} height={520} width={520}/>
+            <CardCoverImage loading={"lazy"} src={poster} alt={deal.title} height={520} width={520}/>
           </CardCover>
           <CardContent>
             <CardTitle>

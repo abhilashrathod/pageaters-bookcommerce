@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import Image from 'next/image';
 import styled from "styled-components";
 
 import {getBundleImage} from "../../core/_imageRendererHelper";
@@ -21,7 +20,7 @@ const CardImageSpace = styled.div`
   margin-bottom: 0.625rem;
 `;
 
-const CardImage = styled(Image)`
+const CardImage = styled.img`
   border-radius: 1rem;
   object-fit: cover;
   width: 385px;
@@ -70,16 +69,15 @@ const Crossed = styled.span`
 
 const BundlesCardMedium: React.FC<Props> = ({bundle}) => {
   const [poster, setPoster] = useState('');
-  const [count, setCount] = useState(0);
 
   useEffect(() => {
     setPoster(getBundleImage(bundle.poster, {height: 385, fit: 'cover', width: 385}));
   }, []);
+
   return (
       <WrapperDiv>
-        <button onClick={() => setCount(+new Date())}>somebutton</button>
         <CardImageSpace>
-          <CardImage src={poster} alt={bundle.title} height={385} width={385}/>
+          <CardImage src={poster} loading={'lazy'} alt={bundle.title} height={385} width={385}/>
         </CardImageSpace>
         <CardContent>
           <div>

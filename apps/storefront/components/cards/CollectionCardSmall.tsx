@@ -34,7 +34,7 @@ const MainCardWrapper = styled.div`
 `;
 const CardCoverSpace = styled.div``;
 
-const CardImage = styled(Image)`
+const CardImage = styled.img`
   border-radius: 1rem;
   width: 100%;
   max-width: 100%;
@@ -102,7 +102,7 @@ const AvatarStyles = `
   object-position: top center;
 `;
 
-const AvatarImage = styled(Image)`${AvatarStyles}`;
+const AvatarImage = styled.img`${AvatarStyles}`;
 const AvatarSpan = styled.span`${AvatarStyles}`;
 
 
@@ -126,7 +126,7 @@ const CollectionCardSmall: React.FC<Props> = ({collection}) => {
   return (
       <MainCardWrapper>
         <CardCoverSpace>
-          <CardImage src={poster} alt={collection.title} height={345} width={517}/>
+          <CardImage src={poster} loading={'lazy'} alt={collection.title} height={345} width={517}/>
         </CardCoverSpace>
         <CardContent>
           <CardTextSpace>
@@ -141,7 +141,7 @@ const CollectionCardSmall: React.FC<Props> = ({collection}) => {
                   return (
                       <AvatarListItem key={index} title={book.title}>
                         <AvatarImageSpace>
-                          {/*<AvatarImage src={handleProductImage(book.poster)} alt={book.title} height={48} width={48}/>*/}
+                          <AvatarImage loading={'lazy'} src={handleProductImage(book.poster)} alt={book.title} height={48} width={48}/>
                         </AvatarImageSpace>
                       </AvatarListItem>
                   )
