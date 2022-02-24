@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {GetStaticPaths, GetStaticProps, InferGetStaticPropsType, NextPage} from "next";
 import axios from "axios";
 import {parseUrl, stringifyUrl} from 'query-string';
@@ -11,6 +11,7 @@ import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
 import ProductCardLandScape from "../../components/cards/ProductCardLandscape";
+import EmptySectionMessage from "../../components/elements/FailedToLoad";
 
 import {ICategory} from "../../schemas/category";
 import {IBook} from "../../schemas/book";
@@ -84,15 +85,15 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
 
     redirectWithParams(newParams);
   }
-  
+
   function redirectWithParams(params: any) {
     const newPathname = stringifyUrl({url: router.pathname, query: {...params}});
     const newAsPath = stringifyUrl({url: router.asPath, query: {...params}});
     router.replace(newPathname, newAsPath);
   }
 
-  if (router.isFallback) return <div>Loading...</div>;
-  if (error) return <div>failed to load</div>;
+  if (router.isFallback) return <EmptySectionMessage title={'Loading...'} />;
+  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
 
   return (
       <>

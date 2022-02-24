@@ -15,7 +15,8 @@ export interface IProductSet {
   _id: string;
 }
 
-interface IProductItem {
+export interface IProductItem {
+  _id: string;
   priority: number;
   product: IBook;
 }

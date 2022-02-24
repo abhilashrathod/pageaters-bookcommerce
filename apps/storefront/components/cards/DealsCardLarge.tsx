@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import Image from 'next/image';
 import styled from "styled-components";
 
 import {getAssetImage} from "../../core/_imageRendererHelper";
 
 import {IDeal} from "../../schemas/deal";
 import {LG, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
+import {useRouter} from "next/router";
 
 interface Props {
   deal: IDeal;
@@ -67,14 +67,19 @@ const CardSubTitle = styled.p`
 
 const DealsCardLarge: React.FC<Props> = ({deal}) => {
   const [poster, setPoster] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     setPoster(getAssetImage(deal.poster, {height: 520, width: 520, fit: 'cover'}));
   }, []);
 
+  function handleNavigation() {
+    router.push(`/deals/${deal.dealId}`);
+  }
+
   return (
       <>
-        <MainCardWrapper>
+        <MainCardWrapper onClick={handleNavigation}>
           <CardCover>
             <CardCoverImage loading={"lazy"} src={poster} alt={deal.title} height={520} width={520}/>
           </CardCover>

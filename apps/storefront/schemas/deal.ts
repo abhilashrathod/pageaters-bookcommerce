@@ -16,7 +16,8 @@ export interface IDeal {
   productSets?: Array<ISetItem>;
 }
 
-interface ISetItem {
+export interface ISetItem {
+  _id: string;
   priority: number;
   set: IProductSet;
 }

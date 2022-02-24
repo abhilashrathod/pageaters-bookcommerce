@@ -1,7 +1,6 @@
 import React from "react";
 import {NextPage} from 'next'
 import useSWR from "swr";
-import {Icon} from "@iconify/react";
 import {Skeleton} from "@mantine/core";
 
 import HeroBanner from "../components/banners/HeroBanner";
@@ -9,26 +8,18 @@ import Categories from "../components/carousels/Categories";
 import GiantFullBleedBanner from "../components/banners/GiantFullBleedBanner";
 import DealsCardLarge from "../components/cards/DealsCardLarge";
 import SectionHeading from "../components/elements/SectionHeading";
+import ProductCardLandScape from "../components/cards/ProductCardLandscape";
+import LandscapeBanner from "../components/banners/LandscapeBanner";
+import CollectionCardSmall from "../components/cards/CollectionCardSmall";
+import BundlesCardMedium from "../components/cards/BundlesCardMedium";
+import EmptySectionMessage from "../components/elements/FailedToLoad";
 
 import {IBanner} from "../schemas/banner";
 import {IDeal} from "../schemas/deal";
-import ProductCardLandScape from "../components/cards/ProductCardLandscape";
 import {IBook} from "../schemas/book";
-import LandscapeBanner from "../components/banners/LandscapeBanner";
 import {ICollection} from "../schemas/collection";
-import CollectionCardSmall from "../components/cards/CollectionCardSmall";
 import {IBundle} from "../schemas/bundle";
-import BundlesCardMedium from "../components/cards/BundlesCardMedium";
 
-const FailedToLoad = () => (
-    <div className="custom-container">
-      <div className="row">
-        <div className="col">
-          <h2>Failed to Load!</h2>
-        </div>
-      </div>
-    </div>
-);
 
 const DealsSection = () => {
   const {data, error} = useSWR({
@@ -36,7 +27,7 @@ const DealsSection = () => {
     args: {page: 1, limit: 3, sortBy: 'priority', sortOrder: 'asc'}
   });
 
-  if (error) return <FailedToLoad/>;
+  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
 
   return (
       <div className="custom-container">
@@ -71,7 +62,7 @@ const BestSellers = () => {
     args: {page: 1, limit: 6, sortBy: 'currentDiscount', sortOrder: 'desc'}
   });
 
-  if (error) return <FailedToLoad/>;
+  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
 
   return (
       <div className="custom-container">
@@ -105,7 +96,7 @@ const NewArrivals = () => {
     args: {page: 1, limit: 6, sortBy: 'createdAt', sortOrder: 'desc'}
   });
 
-  if (error) return <FailedToLoad/>;
+  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
 
   return (
       <div className="custom-container">
@@ -139,7 +130,7 @@ const MostPopular = () => {
     args: {page: 1, limit: 6, sortBy: 'popularity', sortOrder: 'desc'}
   });
 
-  if (error) return <FailedToLoad/>;
+  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
 
   return (
       <div className="custom-container">
@@ -173,13 +164,14 @@ const CollectionsSection = () => {
     args: {page: 1, limit: 3, sortBy: 'priority', sortOrder: 'asc'}
   });
 
-  if (error) return <FailedToLoad/>;
+  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
 
   return (
       <div className="custom-container">
         <div className="row">
           <div className="col">
-            <SectionHeading sectionTitle={'Spotlight Collections'} navigateButtonProps={{buttonText: 'View All', buttonNavigationUrl: '/collections'}}/>
+            <SectionHeading sectionTitle={'Spotlight Collections'}
+                            navigateButtonProps={{buttonText: 'View All', buttonNavigationUrl: '/collections'}}/>
           </div>
         </div>
         <div className="row">
@@ -187,10 +179,10 @@ const CollectionsSection = () => {
             data
                 ? data?.data?.docs.map((item: ICollection) => (
                     <div key={item.collectionId} className="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6 col-12">
-                      <CollectionCardSmall collection={item} />
+                      <CollectionCardSmall collection={item}/>
                     </div>
                 ))
-                : [0, 0, 0, 0, 0, 0].map((item: any, index) => (
+                : [0, 0, 0].map((item: any, index) => (
                     <div key={index} className="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6 col-12">
                       <Skeleton height={350} radius="lg"/>
                     </div>
@@ -207,13 +199,14 @@ const BundlesSection = () => {
     args: {page: 1, limit: 4, sortBy: 'priority', sortOrder: 'asc'}
   });
 
-  if (error) return <FailedToLoad/>;
+  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
 
   return (
       <div className="custom-container">
         <div className="row">
           <div className="col">
-            <SectionHeading sectionTitle={'Spectacular Bundles'} navigateButtonProps={{buttonText: 'View All', buttonNavigationUrl: '/bundles'}}/>
+            <SectionHeading sectionTitle={'Spectacular Bundles'}
+                            navigateButtonProps={{buttonText: 'View All', buttonNavigationUrl: '/bundles'}}/>
           </div>
         </div>
         <div className="row">
@@ -224,7 +217,7 @@ const BundlesSection = () => {
                       <BundlesCardMedium bundle={item}/>
                     </div>
                 ))
-                : [0, 0, 0, 0, 0, 0].map((item: any, index) => (
+                : [0, 0, 0, 0].map((item: any, index) => (
                     <div key={index} className="col-lg-3 col-6">
                       <Skeleton height={385} radius="lg"/>
                     </div>
@@ -277,7 +270,7 @@ const Home: NextPage = (props: any) => {
         </section>
 
         <section className={'mb-25'}>
-          <CollectionsSection />
+          <CollectionsSection/>
         </section>
 
         <section className={'mb-25'}>
