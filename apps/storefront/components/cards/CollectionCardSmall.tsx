@@ -39,12 +39,7 @@ const CardImage = styled.img`
   width: 100%;
   max-width: 100%;
   height: 345px;
-  object-fit: cover;
-  vertical-align: middle;
-    
-  @media screen and (max-width: ${SM - 1}px) {      
-     object-position: left;
-  }
+  object-fit: cover;  
 `;
 
 const CardContent = styled.div`
@@ -159,7 +154,7 @@ const CollectionCardSmall: React.FC<Props> = ({collection}) => {
                 )
               }
             </AvatarList>
-            <AppButton href={'/'} variant={ButtonVariants.Secondary} size={ButtonSizes.Small}>
+            <AppButton href={`/collections/${collection.collectionId}`} variant={ButtonVariants.Secondary} size={ButtonSizes.Small}>
               View
             </AppButton>
           </CardLearnMore>

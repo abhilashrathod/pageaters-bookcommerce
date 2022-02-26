@@ -92,8 +92,8 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
     router.replace(newPathname, newAsPath);
   }
 
-  if (router.isFallback) return <EmptySectionMessage title={'Loading...'} />;
-  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
+  if (router.isFallback) return <PageWrapper><EmptySectionMessage title={'Loading...'} /></PageWrapper>;
+  if (error) return <PageWrapper><EmptySectionMessage title={'Failed to load data...'}/></PageWrapper>;
 
   return (
       <>

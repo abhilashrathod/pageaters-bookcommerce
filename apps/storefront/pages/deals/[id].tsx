@@ -69,13 +69,13 @@ const ViewDeal: NextPage<Props> = ({dealInfo}: InferGetStaticPropsType<typeof ge
           <meta name="og:title" content={`${dealInfo?.title} | Pageaters`}/>
           <meta name="og:description" content={dealInfo?.description}/>
           <meta name="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL}/categories/${dealInfo.categoryId}`}/>
-          <meta name="og:image" content={`${BUCKETS_ORIGINS.CATEGORIES}/${dealInfo.poster}`}/>
+          <meta name="og:image" content={`${BUCKETS_ORIGINS.ASSETS}/${dealInfo.poster}`}/>
           <meta name="twitter:title" content={`${dealInfo.title} | Pageaters`}/>
           <meta name="twitter:description" content={dealInfo.description}/>
-          <meta name="twitter:image" content={`${BUCKETS_ORIGINS.CATEGORIES}/${dealInfo.thumbnail}`}/>
+          <meta name="twitter:image" content={`${BUCKETS_ORIGINS.ASSETS}/${dealInfo.thumbnail}`}/>
           <meta name="fb:pages" content="Pageaters-101873422124838"/>
           <meta name="description" content={dealInfo.description}/>
-          <meta name="image" content={`${BUCKETS_ORIGINS.CATEGORIES}/${dealInfo.thumbnail}`}/>
+          <meta name="image" content={`${BUCKETS_ORIGINS.ASSETS}/${dealInfo.thumbnail}`}/>
         </Head>
         <PageWrapper>
           <div className="custom-container">

@@ -12,21 +12,13 @@ import {ICategory} from "../../schemas/category";
 interface Props {
 }
 
-const CATEGORY = {
-  categoryId: "CA-5609114898",
-  numberOfBooks: 15,
-  thumbnail: "fantacy-2bMBXeHBTu-1641323949900.jpg",
-  title: "Fantacy",
-  _id: "60f1600772a7bf2650dfb53c"
-};
-
-const CategoryTitleSpace = styled.div`
+export const CategoryTitleSpace = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
 `;
 
-const SectionTitle = styled.h3`
+export const SectionTitle = styled.h3`
   font-size: 2rem;
   letter-spacing: normal;
 `;
