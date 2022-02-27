@@ -64,8 +64,6 @@ const Deals: React.FC<Props> = () => {
   if (router.isFallback) return <EmptySectionMessage title={'Loading...'}/>;
   if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
 
-  // @ts-ignore
-  // @ts-ignore
   return (
       <>
         <Head>

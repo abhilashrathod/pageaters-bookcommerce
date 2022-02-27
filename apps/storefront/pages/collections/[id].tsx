@@ -94,6 +94,10 @@ const CollectionTitle = styled.h1`
 const TagList = styled.div`
   margin: 0;
   padding: 0;
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  flex-wrap: wrap;
 `;
 
 const Tag = styled.span`
@@ -102,6 +106,7 @@ const Tag = styled.span`
   position: relative;
   color: ${PRIMARY_COLOR};
   font-size: 0.825rem;
+  margin-bottom: 0.5rem;
   background-color: ${SECONDARY_COLOR};
 
   text-decoration: none;
