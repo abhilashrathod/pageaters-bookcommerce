@@ -10,19 +10,18 @@ import styled from "styled-components";
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageWrapper from "../../components/elements/PageWrapper";
 import EmptySectionMessage from "../../components/elements/FailedToLoad";
-
-import {IBundle} from "../../schemas/bundle";
+import SectionHeading from "../../components/elements/SectionHeading";
+import ProductCardLandScape from "../../components/cards/ProductCardLandscape";
+import BundlesCardMedium from "../../components/cards/BundlesCardMedium";
+import CollectionCardSmall from "../../components/cards/CollectionCardSmall";
 
 import {ACCENT_COLOR, LIGHT_COLOR, PRIMARY_COLOR, PRIMARY_SUCCESS, SECONDARY_COLOR, SM} from "../../core/_variables";
 import {getBundleImage} from "../../core/_imageRendererHelper";
 import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
-import SectionHeading from "../../components/elements/SectionHeading";
-import {IBook} from "../../schemas/book";
-import ProductCardLandScape from "../../components/cards/ProductCardLandscape";
-import BundlesCardMedium from "../../components/cards/BundlesCardMedium";
-import {ICollection} from "../../schemas/collection";
-import CollectionCardSmall from "../../components/cards/CollectionCardSmall";
 
+import {IBundle} from "../../schemas/bundle";
+import {IBook} from "../../schemas/book";
+import {ICollection} from "../../schemas/collection";
 
 const BREADCRUMBS_ITEMS = (activeItem: any) => [
   {title: 'Home', href: '/'},

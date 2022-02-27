@@ -2,6 +2,7 @@ export const PRIMARY_COLOR = '#222222';
 export const LIGHTER_PRIMARY_COLOR = '#3c3c3c';
 
 export const PRIMARY_SUCCESS = '#009432';
+export const PRIMARY_DANGER = '#e55039';
 
 export const ACCENT_COLOR = '#FF5F25';
 export const LIGHTER_ACCENT_COLOR = '#FF5F25';

@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import Image from 'next/image';
 import styled from 'styled-components'
 
 import Badges from "../elements/Badge";
@@ -8,6 +7,7 @@ import {IBook} from "../../schemas/book";
 import {LIGHT_COLOR} from "../../core/_variables";
 import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
 import {getProductImage} from "../../core/_imageRendererHelper";
+import {useRouter} from "next/router";
 
 interface Props {
   book: IBook;
@@ -88,14 +88,19 @@ const Crossed = styled.span`
 
 const ProductCardLandScape: React.FC<Props> = ({book}) => {
   const [poster, setPoster] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     setPoster(getProductImage(book.poster, {height: 375, fit: 'cover', width: 247}));
   }, []);
 
+  function handleNavigation() {
+    router.push(`/books/${book.bookId}`);
+  }
+
   return (
       <>
-        <WrapperDiv>
+        <WrapperDiv onClick={handleNavigation}>
           <CartDiscount>{book?.currentDiscount}% Off</CartDiscount>
           <CardCover>
             <CardImage src={poster} alt={book?.title} loading="lazy" height={375} width={247}/>
