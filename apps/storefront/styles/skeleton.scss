@@ -144,20 +144,18 @@ button,
 input[type="submit"],
 input[type="reset"],
 input[type="button"] {
-  display: inline-block;
+  display: inline-flex;
   font-weight: 600;
   line-height: 1.429rem;
   color: $primary;
   text-align: center;
   text-decoration: none;
-  vertical-align: middle;
   cursor: pointer;
   -webkit-user-select: none;
   user-select: none;
   background-color: transparent;
   border: 1px solid transparent;
   transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-  box-shadow: 0 2px 10px 0 rgb(0 0 0 / 16%);
 }
 
 

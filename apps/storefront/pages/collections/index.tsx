@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Head from "next/head";
 import {useRouter} from "next/router";
 import useSWR from "swr";
@@ -9,11 +9,9 @@ import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
 import EmptySectionMessage from "../../components/elements/FailedToLoad";
-import DealsCardLarge from "../../components/cards/DealsCardLarge";
-
-import {IDeal} from "../../schemas/deal";
-import {ICollection} from "../../schemas/collection";
 import CollectionCardLarge from "../../components/cards/CollectionCardLarge";
+
+import {ICollection} from "../../schemas/collection";
 
 interface Props {
 }
@@ -32,6 +30,10 @@ const BREADCRUMBS_ITEMS = [
 
 const Deals: React.FC<Props> = () => {
   const router = useRouter();
+
+  useEffect(() => {
+
+  }, []);
 
   const [params, setParams] = useState(() => {
     const {query} = parseUrl(router.asPath);
@@ -109,7 +111,8 @@ const Deals: React.FC<Props> = () => {
                           {
                             data?.data?.docs.map((collection: ICollection) => {
                               return (
-                                  <div key={collection.collectionId} className="col-xxl-4 col-xl-4 col-lg-6 col-md-6 col-sm-6 col-12">
+                                  <div key={collection.collectionId}
+                                       className="col-xxl-4 col-xl-4 col-lg-6 col-md-6 col-sm-6 col-12">
                                     <CollectionCardLarge collection={collection}/>
                                   </div>
                               )

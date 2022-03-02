@@ -2,11 +2,13 @@ import React from 'react';
 import styled from 'styled-components'
 import Link from "next/link";
 import Image from 'next/image';
+import {useRouter} from "next/router";
+
+import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 import logo from '../../public/images/horizontal-logo.png';
 
-import {PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
-import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
+import {FOOTER_NAVIGATION, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 
 
 interface Props {
@@ -94,74 +96,8 @@ const Greeting = styled.div`
   }
 `;
 
-const FOOTER_NAVIGATION = [
-  {
-    linkName: 'Company',
-    linkHref: '/',
-    children: [
-      {
-        linkName: 'About',
-        linkHref: '/',
-      }, {
-        linkName: 'Contact',
-        linkHref: '/',
-      }, {
-        linkName: 'Privacy Policy',
-        linkHref: '/',
-      }, {
-        linkName: 'Terms of Use',
-        linkHref: '/',
-      }, {
-        linkName: 'Testimonials',
-        linkHref: '/',
-      }, {
-        linkName: 'FAQs',
-        linkHref: '/',
-      }
-    ]
-  }, {
-    linkName: 'Shop',
-    linkHref: '/',
-    children: [
-      {
-        linkName: 'Offers',
-        linkHref: '/',
-      }, {
-        linkName: 'Orders',
-        linkHref: '/',
-      }, {
-        linkName: 'Wishlist',
-        linkHref: '/',
-      }, {
-        linkName: 'Categories',
-        linkHref: '/',
-      }, {
-        linkName: 'Collections',
-        linkHref: '/',
-      }, {
-        linkName: 'Bundles',
-        linkHref: '/',
-      }
-    ]
-  }, {
-    linkName: 'Pages',
-    linkHref: '/',
-    children: [
-      {
-        linkName: 'Membership',
-        linkHref: '/',
-      }, {
-        linkName: 'Incentive Program',
-        linkHref: '/',
-      }, {
-        linkName: 'Influencer Program',
-        linkHref: '/',
-      }
-    ]
-  }
-];
-
 const AppFooter: React.FC<Props> = () => {
+  const router = useRouter();
   return (
       <>
         <div className="custom-container">
@@ -178,10 +114,8 @@ const AppFooter: React.FC<Props> = () => {
                   <address>
                     Unit 1, Demo Logistics Park, Sector 1,<br/>
                     Gandhinagar, GJ - 382016 <br/>
-                    <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}} size={ButtonSizes.Small}
-                               href={'mailto:support@demo.pageaters.com'}>Mail Us</AppButton>
-                    <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}}  size={ButtonSizes.Small}
-                               href={'tel:+919000000000'}>Call Us</AppButton>
+                    <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}} size={ButtonSizes.Small} onClick={() => router.push( 'mailto:support@demo.pageaters.com')}>Mail Us</AppButton>
+                    <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}}  size={ButtonSizes.Small} onClick={() => router.push( 'tel:+919000000000')}>Call Us</AppButton>
                   </address>
                 </MainFooterAddress>
                 <FooterNavigation>

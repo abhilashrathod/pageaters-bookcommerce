@@ -1,5 +1,6 @@
 export const PRIMARY_COLOR = '#222222';
 export const LIGHTER_PRIMARY_COLOR = '#3c3c3c';
+export const DARKER_PRIMARY_COLOR = '#717171';
 
 export const PRIMARY_SUCCESS = '#009432';
 export const PRIMARY_DANGER = '#e55039';
@@ -86,3 +87,135 @@ export const BUNDLE_SORT_OPTIONS = [
   {title: 'Price: Low to High', key: 'price', sortValue: 1},
 ];
 
+/***
+ *
+ * FULL VIEW PAGES
+ */
+
+export const FULL_PAGE = ['/', '/auth/register'];
+
+/***
+ *
+ * NAVIGATION
+ */
+
+export const FOOTER_NAVIGATION = [
+  {
+    linkName: 'Company',
+    linkHref: '/',
+    children: [
+      {
+        linkName: 'About',
+        linkHref: '/',
+      }, {
+        linkName: 'Contact',
+        linkHref: '/',
+      }, {
+        linkName: 'Privacy Policy',
+        linkHref: '/',
+      }, {
+        linkName: 'Terms of Use',
+        linkHref: '/',
+      }, {
+        linkName: 'Testimonials',
+        linkHref: '/',
+      }, {
+        linkName: 'FAQs',
+        linkHref: '/',
+      }
+    ]
+  }, {
+    linkName: 'Shop',
+    linkHref: '/',
+    children: [
+      {
+        linkName: 'Offers',
+        linkHref: '/',
+      }, {
+        linkName: 'Orders',
+        linkHref: '/',
+      }, {
+        linkName: 'Wishlist',
+        linkHref: '/',
+      }, {
+        linkName: 'Categories',
+        linkHref: '/',
+      }, {
+        linkName: 'Collections',
+        linkHref: '/',
+      }, {
+        linkName: 'Bundles',
+        linkHref: '/',
+      }
+    ]
+  }, {
+    linkName: 'Pages',
+    linkHref: '/',
+    children: [
+      {
+        linkName: 'Membership',
+        linkHref: '/',
+      }, {
+        linkName: 'Incentive Program',
+        linkHref: '/',
+      }, {
+        linkName: 'Influencer Program',
+        linkHref: '/',
+      }
+    ]
+  }
+];
+
+export const SIDE_NAVIGATION = [
+  {
+    linkName: 'Shop',
+    linkHref: '/',
+    children: [
+      {
+        linkName: 'Offers & Discounts',
+        linkHref: '/deals',
+      }, {
+        linkName: 'Categories',
+        linkHref: '/categories',
+      }, {
+        linkName: 'Collections',
+        linkHref: '/collections',
+      }, {
+        linkName: 'Bundles',
+        linkHref: '/bundles',
+      }
+    ]
+  },
+  {
+    linkName: 'Account',
+    linkHref: '/',
+    children: [
+      {
+        linkName: 'Orders',
+        linkHref: '/account/orders',
+      }, {
+        linkName: 'Wishlist',
+        linkHref: '/account/wishlist',
+      }, {
+        linkName: 'Account',
+        linkHref: '/account',
+      }
+    ]
+  },
+  {
+    linkName: 'Pages',
+    linkHref: '/',
+    children: [
+      {
+        linkName: 'Membership',
+        linkHref: '/',
+      }, {
+        linkName: 'Incentive Program',
+        linkHref: '/',
+      }, {
+        linkName: 'Influencer Program',
+        linkHref: '/',
+      }
+    ]
+  }
+];

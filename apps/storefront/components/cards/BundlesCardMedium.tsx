@@ -52,14 +52,15 @@ const CardTitle = styled.h4`
     align-items: center;
     line-height: 1.375rem;
     font-size: 1.125rem;
+    letter-spacing: 0;
 `;
 
-const CardSubTitle = styled.p`
-      font-size: 1rem;
-      line-height: 1.5rem;
-      width: 100%;
-      margin-bottom: 0.5rem;
-      font-weight: 600;
+const CardSubTitle = styled.div`
+    font-size: 1rem;
+    line-height: 1.5rem;
+    width: 100%;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
 `;
 
 const Crossed = styled.span`
@@ -97,9 +98,9 @@ const BundlesCardMedium: React.FC<Props> = ({bundle}) => {
                   <Crossed>{currencyFormat(bundle.price)}</Crossed><span>{currencyFormat(returnDiscountedAmount(bundle.price, bundle.currentDiscount))}</span></>
 
               }
-              <span>
+              <p>
                 <small className="text-positive">&nbsp;(Additional {bundle.currentDiscount} % Off)</small>
-              </span>
+              </p>
             </CardSubTitle>
           </div>
         </CardContent>

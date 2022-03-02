@@ -9,13 +9,9 @@ import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
 import EmptySectionMessage from "../../components/elements/FailedToLoad";
-import DealsCardLarge from "../../components/cards/DealsCardLarge";
-
-import {IDeal} from "../../schemas/deal";
-import {ICollection} from "../../schemas/collection";
-import CollectionCardLarge from "../../components/cards/CollectionCardLarge";
-import {IBundle} from "../../schemas/bundle";
 import BundlesCardMedium from "../../components/cards/BundlesCardMedium";
+
+import {IBundle} from "../../schemas/bundle";
 
 interface Props {
 }

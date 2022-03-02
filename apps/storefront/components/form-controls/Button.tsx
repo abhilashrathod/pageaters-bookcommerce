@@ -7,9 +7,10 @@ import {ACCENT_COLOR, PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variable
 
 interface Props {
   variant: string;
-  href: string;
   size?: string;
   styles?: React.CSSProperties;
+  type?: 'button' | 'submit';
+  onClick: () => void;
 }
 
 export enum ButtonVariants {
@@ -79,19 +80,19 @@ const MainButton = styled.button`
   border-radius: ${({theme}) => handleBorderRadius(theme.size)};
   font-size: ${({theme}) => handleFont(theme.size)};
   border: 1px solid ${PRIMARY_COLOR};
+  box-shadow: 0 2px 10px 0 rgb(0 0 0 / 16%);
 `;
 
-const AppButton: React.FC<Props> = ({variant, href, size, styles, children}) => {
+const AppButton: React.FC<Props> = ({variant, size, styles, type, onClick, children}) => {
   const router = useRouter();
 
   const handleClick = (e: any) => {
-    e.preventDefault();
-    router.push(href)
+    onClick();
   };
 
   return (
       <>
-        <MainButton style={styles} theme={{variant, size}} onClick={handleClick}>
+        <MainButton style={styles} type={type || 'button'} theme={{variant, size}} onClick={handleClick}>
           {children}
         </MainButton>
       </>

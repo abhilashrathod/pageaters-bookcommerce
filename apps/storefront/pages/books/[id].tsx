@@ -14,7 +14,6 @@ import SectionHeading from "../../components/elements/SectionHeading";
 import ProductCardLandScape from "../../components/cards/ProductCardLandscape";
 import BundlesCardMedium from "../../components/cards/BundlesCardMedium";
 import CollectionCardSmall from "../../components/cards/CollectionCardSmall";
-import AppButton, {ButtonVariants} from "../../components/form-controls/Button";
 import Badges from "../../components/elements/Badge";
 
 import {
@@ -28,7 +27,7 @@ import {
   SM
 } from "../../core/_variables";
 import {getProductImage} from "../../core/_imageRendererHelper";
-import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
+import {currencyFormat, returnDiscountedAmount, returnReadingHours} from "../../core/_helpers";
 
 import {IBundle} from "../../schemas/bundle";
 import {IBook} from "../../schemas/book";
@@ -38,7 +37,7 @@ import {ICategory} from "../../schemas/category";
 
 const BREADCRUMBS_ITEMS = (activeItem: any) => [
   {title: 'Home', href: '/'},
-  {title: activeItem.title, isActive: true, href: ''},
+  {title: activeItem.title, isActive: true, href: '/'},
 ];
 
 const SITE_FEATURES = [
@@ -50,6 +49,11 @@ const SITE_FEATURES = [
     description: 'Via Debit & Credit Cards, Net Banking, UPIs, COD'
   },
   {icon: 'ep:refresh', title: 'Easy Return & Replacements', description: '7 Days Return Policy. No questions asked.'},
+];
+
+const PRODUCT_SPECS = [
+  {prop: 'Type', value: (val: string) => val, icon: 'iconoir:remove-page'},
+  {prop: 'Pages', value: (val: string) => `${val} | ${returnReadingHours(val)}`, icon: 'ant-design:copy-outlined'},
 ];
 
 const ProductCoverSpace = styled.div`
@@ -149,7 +153,7 @@ const ProductButton = styled.button`
   }
   
   @media screen and (max-width: ${SM - 1}px) {
-    margin-left: 0;
+    margin-left: 0.5rem;
     font-size: 1.2rem;
     padding: 0.825rem 2rem;
     line-height: 1.2rem;
@@ -263,9 +267,55 @@ const CategoryName = styled.span`
   margin-left: 0.5rem;
 `;
 
+const ProductDetailSpec = styled.div`
+  display: flex;
+  flex-direction: row;
+`;
+const SpecIcon = styled.div`
+  min-width: 3.25rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+`;
+const SpecContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+`;
+const SpecProp = styled.span`
+  font-size: 0.825rem;
+`;
+const SpecValue = styled.span`
+  font-weight: 600;
+`;
+
 interface Props {
   book: IBook;
 }
+
+interface SpecProps {
+  icon: string;
+  prop: string;
+  value: string | number | undefined;
+}
+
+const ProductSpecification = ({icon, prop, value}: SpecProps) => {
+  return (
+      <ProductDetailSpec>
+        <SpecIcon>
+          <Icon icon={icon} height={36} width={36}/>
+        </SpecIcon>
+        <SpecContent>
+          <SpecProp>
+            {prop}
+          </SpecProp>
+          <SpecValue>
+            {value}
+          </SpecValue>
+        </SpecContent>
+      </ProductDetailSpec>
+  )
+};
 
 const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof getStaticProps>) => {
   const router = useRouter();
@@ -327,8 +377,8 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                     </TagsList>
                   </TagsSpace>
                   <SuggestionButtons>
-                    <AppButton variant={ButtonVariants.Secondary} href={'/'}>Wishlist</AppButton>
-                    <AppButton variant={ButtonVariants.Secondary} href={'/'}>Share</AppButton>
+                    {/*<AppButton variant={ButtonVariants.Secondary} href={'/'}>Wishlist</AppButton>*/}
+                    {/*<AppButton variant={ButtonVariants.Secondary} href={'/'}>Share</AppButton>*/}
                   </SuggestionButtons>
                 </div>
 
@@ -427,28 +477,88 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
               </div>
             </div>
           </section>
+
+          <section className="mb-25">
+            <div className="custom-container">
+              <div className="row">
+                <div className="col">
+                  <SectionHeading sectionTitle={'Book Specifications'}/>
+                </div>
+              </div>
+              <div className="row">
+                <div className="col-xxl-3 col-xl-3 col-6">
+                  <ProductSpecification
+                      value={book.version}
+                      prop={'Version'}
+                      icon={'iconoir:remove-page'}/>
+                </div>
+                <div className="col-xxl-3 col-xl-3 col-6">
+                  <ProductSpecification
+                      value={`${book.pages} Pages | ${returnReadingHours(book.pages)}`}
+                      prop={'Pages'}
+                      icon={'ant-design:copy-outlined'}/>
+                </div>
+                <div className="col-xxl-3 col-xl-3 col-6">
+                  <ProductSpecification
+                      value={book.readingLevel}
+                      prop={'Reading Level'}
+                      icon={'ant-design:read-outlined'}/>
+                </div>
+                <div className="col-xxl-3 col-xl-3 col-6">
+                  <ProductSpecification
+                      value={book.language}
+                      prop={'Language'}
+                      icon={'carbon:translate'}/>
+                </div>
+                <div className="col-xxl-3 col-xl-3 col-6">
+                  <ProductSpecification
+                      value={book.ISBN}
+                      prop={'ISBN'}
+                      icon={'eva:hash-fill'}/>
+                </div>
+                <div className="col-xxl-3 col-xl-3 col-6">
+                  <ProductSpecification
+                      value={book.publisher}
+                      prop={'Publication'}
+                      icon={'clarity:building-line'}/>
+                </div>
+                <div className="col-xxl-3 col-xl-3 col-6">
+                  <ProductSpecification
+                      value={book.publicationYear}
+                      prop={'Publication Year'}
+                      icon={'ant-design:calendar-twotone'}/>
+                </div>
+                <div className="col-xxl-3 col-xl-3 col-6">
+                  <ProductSpecification
+                      value={`${book.dimensions + ' CM'} | ${book.weight + ' GRAMS'}`}
+                      prop={'Specs'}
+                      icon={'radix-icons:dimensions'}/>
+                </div>
+              </div>
+            </div>
+          </section>
           {
             book.relatedBooks.length > 0 && (
-              <section className="mb-25">
-                <div className="custom-container">
-                  <div className="row">
-                    <div className="col">
-                      <SectionHeading sectionTitle={'Related Books'}/>
-                    </div>
+                <section className="mb-25">
+                  <div className="custom-container">
                     <div className="row">
-                      {
-                        book.relatedBooks.map((book: IBook) => {
-                          return (
-                              <div key={book.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                                <ProductCardLandScape book={book}/>
-                              </div>
-                          )
-                        })
-                      }
+                      <div className="col">
+                        <SectionHeading sectionTitle={'Related Books'}/>
+                      </div>
+                      <div className="row">
+                        {
+                          book.relatedBooks.map((book: IBook) => {
+                            return (
+                                <div key={book.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
+                                  <ProductCardLandScape book={book}/>
+                                </div>
+                            )
+                          })
+                        }
+                      </div>
                     </div>
                   </div>
-                </div>
-              </section>
+                </section>
             )
           }
           {

@@ -9,6 +9,8 @@ const Page = styled.section`
   margin-top: 4rem;
   padding-bottom: 0.5rem;
   padding-top: 3rem;
+  min-height: 80vh;
+  height: auto;
 
   @media screen and (max-width: ${SM - 1}px) {      
     margin-top: 2rem;

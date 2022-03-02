@@ -1,49 +1,196 @@
-import React from 'react';
+import React, {forwardRef, useEffect, useState} from 'react';
 import styled from "styled-components";
+import classNames from 'classnames';
 import Image from 'next/image';
 import Link from 'next/link';
+import {useRouter} from "next/router";
 import {Icon} from '@iconify/react';
+import {useDebouncedValue} from "@mantine/hooks";
+import {Autocomplete, Avatar, Divider, Group, Menu, Text} from '@mantine/core';
 
 import logo from '../../public/images/brand-logo.svg';
-import {MD} from "../../core/_variables";
+import {FULL_PAGE, LG, LIGHTER_PRIMARY_COLOR, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
+import useSWR from "swr";
+import {IBook} from "../../schemas/book";
+import {getProductImage} from "../../core/_imageRendererHelper";
+import useSticky from "../../hooks/useSticky";
 
 interface Props {
 }
 
 const AppHeaderSpace = styled.header`
-  color: #fff;
-  position: absolute;
+  color: ${SECONDARY_COLOR};
+  width: 100%;
   display: flex;
   flex-flow: row wrap;
-  width: 100%;
   margin: 0;
   padding: 0;
+  
   top: 0;
   left: 0;
   z-index: 9;
+  
+  box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2);
+  background: ${SECONDARY_COLOR};
+  
+  position: absolute;
+  
+  &.fixed {
+    position: fixed;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(0, -200px);
+    box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2) !important;
+    background: ${SECONDARY_COLOR} !important;
+  
+    button {
+      color: ${PRIMARY_COLOR} !important;
+    }
+  }
+
+  &.in-view {
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.3s ease;
+    transform: translate(0, 0);
+  }
+  
+  &.transparent {
+    background: transparent;
+    box-shadow: none; 
+    
+    button {
+      color: ${SECONDARY_COLOR}
+    }
+  }
 `;
 
 const LogoSpace = styled.div`
-    text-transform: uppercase;
-    font-weight: bold;
-    display: inline-flex;
-    flex: 1;
-    
-     @media screen and (max-width: ${MD - 1}px) {      
-      display: none;  
-    }
+  text-transform: uppercase;
+  font-weight: bold;
+  display: inline-flex;
+  flex: 1;
+  
+   @media screen and (max-width: ${MD - 1}px) {      
+    display: none;  
+  }
 `;
 
 const BackSpace = styled.div`
-    text-transform: uppercase;
-    font-weight: bold;
-    display: inline-flex;
+  display: none;
+      
+  @media screen and (max-width: ${MD - 1}px) {      
     flex: 1;
-    display: none;
-        
-    @media screen and (max-width: ${MD - 1}px) {      
-      display: block;      
+    display: inline-flex;      
+  }
+`;
+
+const Nav = styled.nav`
+  justify-content: flex-end;
+  display: flex;
+  flex: 2 auto;
+  
+  @media screen and (max-width: ${SM - 1}px) {      
+    flex: 9;
+  }
+`;
+
+const NavList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: flex-end;
+  
+  li {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 0.5rem;
+    margin: 0;
+  
+    &:last-child {
+      margin-right: 0;
     }
+  }
+`;
+
+const SearchSection = styled.li`
+  width: 50%;
+  
+  @media screen and (max-width: ${MD - 1}px) {
+    width: 75%;
+    margin-right: 0;
+  }
+
+  @media screen and (max-width: ${SM - 1}px) {
+    width: 100%;
+    margin-right: 0;
+  }
+`;
+
+const ProfileSection = styled.li``;
+
+const CartSection = styled.li`
+  display: none !important;
+  
+  @media screen and (min-width: ${LG - 1}px) {      
+    display: block !important; 
+  }
+`;
+
+const HamburgerSection = styled.li`
+  display: none !important;
+  
+  @media screen and (min-width: ${LG - 1}px) {      
+    display: block !important; 
+  }  
+`;
+
+const AppSmallIconButton = styled.button`
+  box-shadow: none;
+  padding: 0.25rem 0.5rem;
+`;
+
+const MobileMenu = styled.div`
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.9);
+  width: 100%;
+  border-top: 1px solid #ccc;
+  z-index: 12;
+  display: none;
+  
+  @media screen and (max-width: ${MD - 1}px) {
+    display: block;
+  }
+`;
+
+const MobileMenuList = styled.ul`
+  display:flex;
+  justify-content: space-evenly;
+  list-style: none;
+`;
+
+const MobileMenuListItem = styled.li`
+  padding: 0.825rem;
+  display: inline-flex;
+  margin: 0;
+`;
+
+const LinkItem = styled.a`
+  flex-direction: column;
+  align-items: center;
+
+  &.active-link {
+    color: $accent;
+  }
+`;
+
+const LinkName = styled.span`
+  font-size: 0.75rem;
 `;
 
 const HeaderContainerStyles = {
@@ -53,24 +200,206 @@ const HeaderContainerStyles = {
   padding: '10px 0',
 };
 
-const AppHeader: React.FC<Props> = () => {
-  return (
-      <AppHeaderSpace>
-        <div className="custom-container" style={HeaderContainerStyles}>
-          <LogoSpace>
-            <Link href={'/'}>
-              <a><Image src={logo} alt="pageaters-logo" height={44} width={42}/></a>
-            </Link>
-          </LogoSpace>
-          <BackSpace>
-            <Link href={'/'}>
-              <a>
-                <Icon icon="bx:bx-chevron-left-circle" height={30} width={30}/>
-              </a>
-            </Link>
-          </BackSpace>
+const AutoCompleteItem = forwardRef<HTMLDivElement, any>(({description, id, value, image, ...others}: any, ref) =>
+    <div ref={ref} {...others}>
+      <Group noWrap>
+        <Avatar src={image}/>
+        <div>
+          <Text>{value}</Text>
+          <Text size="xs" color="dimmed">
+            {description}
+          </Text>
         </div>
-      </AppHeaderSpace>
+      </Group>
+    </div>
+);
+
+
+const AppHeader: React.FC<Props> = () => {
+  const router = useRouter();
+
+  const {isSticky, tableRef} = useSticky(true);
+
+  const [sticky, setSticky] = useState(false);
+  const [sidenav, setSidenav] = useState(false);
+  const [transparent, setTransparent] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const [searchDebounced] = useDebouncedValue(search, 1000);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      console.log('scroll');
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const {data, error} = useSWR({
+    url: `${process.env.NEXT_PUBLIC_BASE_PATH}/store-books/search`,
+    args: {q: searchDebounced}
+  });
+
+  useEffect(() => {
+    const currentPath = router.asPath;
+    if (FULL_PAGE.includes(currentPath)) {
+      setTransparent(true);
+    } else {
+      setTransparent(false);
+    }
+  }, [router]);
+
+  function transformData(arr: any) {
+    // console.log("fun" );
+    return arr.map((item: IBook) => {
+      return {
+        value: item.title,
+        id: item.bookId,
+        image: getProductImage(item.poster, {height: 64, fit: 'cover', width: 64})
+      }
+    })
+  }
+
+  function handleSearchSelection(e: any) {
+    router.push(`/books/${e.id}`);
+  }
+
+  function toggleSidenav() {
+    setSidenav((prevState => !prevState));
+  }
+
+  console.log("sidenav", sidenav);
+
+  return (
+      <>
+        <AppHeaderSpace ref={tableRef} id={'header'}
+                        className={classNames({'fixed in-view': sticky, 'transparent': transparent})}>
+          <div className="custom-container" style={HeaderContainerStyles}>
+            <LogoSpace>
+              <Link href={'/'}>
+                <a><Image src={logo} alt="pageaters-logo" height={44} width={42}/></a>
+              </Link>
+            </LogoSpace>
+            <BackSpace>
+              <AppSmallIconButton onClick={() => router.back()}>
+                <a>
+                  <Icon icon="bx:bx-chevron-left-circle" height={30} width={30}/>
+                </a>
+              </AppSmallIconButton>
+            </BackSpace>
+            <Nav>
+              <NavList>
+                <SearchSection>
+                  <Autocomplete
+                      placeholder="What are you reading next?"
+                      radius="xl"
+                      size="sm"
+                      value={search}
+                      onItemSubmit={handleSearchSelection}
+                      onChange={setSearch}
+                      style={{width: '100%'}}
+                      itemComponent={AutoCompleteItem}
+                      data={data ? transformData(data.data) : []}
+                  />
+                </SearchSection>
+                <HamburgerSection>
+                  <Menu withArrow placement={'end'} control={<AppSmallIconButton><Icon icon={'bx:grid-alt'} width={30}
+                                                                                       height={30}/></AppSmallIconButton>}>
+                    <Menu.Label>Explore Store</Menu.Label>
+                    <Menu.Item icon={<Icon icon={'ic:twotone-discount'} width={20} height={20}/>}>Deals &
+                      Discounts</Menu.Item>
+                    <Menu.Item icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
+                    <Menu.Item icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20}
+                                           height={20}/>}>Collections</Menu.Item>
+                    <Menu.Item icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
+
+                    <Divider/>
+                    <Menu.Label>Help</Menu.Label>
+                    <Menu.Item>FAQs</Menu.Item>
+                    <Menu.Item>Contact</Menu.Item>
+                  </Menu>
+                </HamburgerSection>
+                <ProfileSection>
+                  <Menu withArrow placement={'end'}
+                        control={<AppSmallIconButton><Icon icon={'bx:bx-user-circle'} width={30}
+                                                           height={30}/></AppSmallIconButton>}>
+                    <Menu.Label>Hello Abhilash!</Menu.Label>
+                    <Menu.Item icon={<Icon icon={'ph:shopping-bag-bold'} width={20} height={20}/>}>Orders</Menu.Item>
+                    <Menu.Item icon={<Icon icon={'bx:bx-heart'} width={20} height={20}/>}>Wishlist</Menu.Item>
+                    <Menu.Item icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
+                    <Menu.Item icon={<Icon icon={'bx:log-out'} width={20} height={20}/>}>Logout</Menu.Item>
+                  </Menu>
+
+
+                </ProfileSection>
+                <CartSection>
+                  <AppSmallIconButton>
+                    <Icon icon={'bx:bx-cart'} width={30} height={30}/>
+                  </AppSmallIconButton>
+                </CartSection>
+              </NavList>
+            </Nav>
+          </div>
+        </AppHeaderSpace>
+
+        <MobileMenu>
+          <MobileMenuList>
+            <MobileMenuListItem>
+              <Link href={'/'}>
+                <LinkItem>
+                  <Icon icon={'bx:bx-home-smile'} width={30} height={30}/>
+                  <LinkName>Home</LinkName>
+                </LinkItem>
+              </Link>
+            </MobileMenuListItem>
+            <MobileMenuListItem>
+              <Link href={'/'}>
+                <LinkItem>
+                  <Icon icon={'bx:bx-heart'} width={30} height={30}/>
+                  <LinkName>Wishlist</LinkName>
+                </LinkItem>
+              </Link>
+            </MobileMenuListItem>
+            <MobileMenuListItem>
+              <Link href={'/'}>
+                <LinkItem>
+                  <Icon icon={'ph:shopping-bag-bold'} width={30} height={30}/>
+                  <LinkName>Orders</LinkName>
+                </LinkItem>
+              </Link>
+            </MobileMenuListItem>
+            <MobileMenuListItem>
+              <Link href={'/'}>
+                <LinkItem>
+                  <Icon icon={'bx:bx-cart'} width={30} height={30}/>
+                  <LinkName>Cart</LinkName>
+                </LinkItem>
+              </Link>
+            </MobileMenuListItem>
+            <MobileMenuListItem>
+              <Menu withArrow placement={'end'} control={<LinkItem><Icon icon={'bx:grid-alt'} width={30}
+                                                                                   height={30}/><LinkName>Store</LinkName></LinkItem>}>
+                <Menu.Label>Explore Store</Menu.Label>
+                <Menu.Item icon={<Icon icon={'ic:twotone-discount'} width={20} height={20}/>}>Deals &
+                  Discounts</Menu.Item>
+                <Menu.Item icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
+                <Menu.Item icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20}
+                                       height={20}/>}>Collections</Menu.Item>
+                <Menu.Item icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
+
+                <Divider/>
+                <Menu.Label>Help</Menu.Label>
+                <Menu.Item>FAQs</Menu.Item>
+                <Menu.Item>Contact</Menu.Item>
+              </Menu>
+            </MobileMenuListItem>
+          </MobileMenuList>
+        </MobileMenu>
+
+      </>
   )
 };
 

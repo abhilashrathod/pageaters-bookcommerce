@@ -1,11 +1,11 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import styled from "styled-components";
 
 import AppButton from "../form-controls/Button";
 
 import {LG, MD, SM} from "../../core/_variables";
-import {getAssetImage} from "../../core/_imageRendererHelper";
 import {IBanner} from "../../schemas/banner";
+import {useRouter} from "next/router";
 
 interface Props {
   banner: IBanner;
@@ -52,32 +52,39 @@ const HeroTitleSection = styled.div`
 `;
 
 const HeroTitle = styled.h2`
-      color: #fff;
-      position: relative;
-      font-size: 5rem;
-      line-height: 5.286rem;
-      letter-spacing: -3px;
-      margin-bottom: 2rem;
-      
-     @media screen and (max-width: ${MD - 1}px) {      
-        font-size: 4rem;
-        line-height: 4rem;
-        letter-spacing: -1px;
-      }
+  color: #fff;
+  position: relative;
+  font-size: 5rem;
+  line-height: 5.286rem;
+  letter-spacing: -3px;
+  margin-bottom: 2rem;
   
-     @media screen and (max-width: ${SM - 1}px) {      
-        font-size: 2.5rem;
-        line-height: 2.5rem;
-        letter-spacing: -2px;
-    }
+ @media screen and (max-width: ${MD - 1}px) {      
+    font-size: 4rem;
+    line-height: 4rem;
+    letter-spacing: -1px;
+  }
+
+ @media screen and (max-width: ${SM - 1}px) {      
+    font-size: 2.5rem;
+    line-height: 2.5rem;
+    letter-spacing: -2px;
+  }
 `;
 
 const HeroBanner: React.FC<Props> = ({banner}) => {
+  const router = useRouter();
+
   // const [poster, setPoster] = useState('');
   //
   // useEffect(() => {
   //   setPoster(getAssetImage(banner.poster, {height: 1280, width: 1920, fit: 'cover'}));
   // }, []);
+
+  function handleNavigation() {
+    // @ts-ignore
+    router.push(banner.ctaLink);
+  }
 
   return (
       <Hero style={{backgroundImage: `url(${banner.poster})`}}>
@@ -87,7 +94,7 @@ const HeroBanner: React.FC<Props> = ({banner}) => {
               <HeroTitleSection>
                 <HeroTitle>Buy, Sell, Rent Books and More</HeroTitle>
                 <div>
-                  <AppButton variant={'secondary'} href={'/about'}>Get Started</AppButton>
+                  <AppButton variant={'secondary'} onClick={handleNavigation}>Get Started</AppButton>
                 </div>
               </HeroTitleSection>
             </div>

@@ -8,6 +8,7 @@ import {getCollectionImage, getProductImage} from "../../core/_imageRendererHelp
 
 import {ICollection} from "../../schemas/collection";
 import {SECONDARY_COLOR, SM} from "../../core/_variables";
+import {useRouter} from "next/router";
 
 interface Props {
   collection: ICollection;
@@ -104,6 +105,7 @@ const AvatarSpan = styled.span`${AvatarStyles}`;
 const CollectionCardSmall: React.FC<Props> = ({collection}) => {
   const [showRestCounter, setShowRestCounter] = useState(0);
   const [poster, setPoster] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     if (collection.books.length > 4) {
@@ -116,6 +118,10 @@ const CollectionCardSmall: React.FC<Props> = ({collection}) => {
 
   function handleProductImage(imageUrl: string) {
     return getProductImage(imageUrl, {height: 48, width: 48, fit: 'cover'});
+  }
+
+  function handleNavigation() {
+    router.push(`/collections/${collection.collectionId}`);
   }
 
   return (
@@ -154,7 +160,7 @@ const CollectionCardSmall: React.FC<Props> = ({collection}) => {
                 )
               }
             </AvatarList>
-            <AppButton href={`/collections/${collection.collectionId}`} variant={ButtonVariants.Secondary} size={ButtonSizes.Small}>
+            <AppButton onClick={handleNavigation} variant={ButtonVariants.Secondary} size={ButtonSizes.Small}>
               View
             </AppButton>
           </CardLearnMore>

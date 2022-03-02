@@ -1,14 +1,13 @@
 import React, {useEffect, useState} from 'react';
 
 import styled from "styled-components";
-
-import Image from 'next/image';
 import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 import {SM} from "../../core/_variables";
 import {getAssetImage} from "../../core/_imageRendererHelper";
 
 import {IBanner} from "../../schemas/banner";
+import {useRouter} from "next/router";
 
 interface Props {
   banner: IBanner
@@ -59,10 +58,17 @@ const BannerLearnMore = styled.div`
 
 const LandscapeBanner: React.FC<Props> = ({banner}) => {
   const [poster, setPoster] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     setPoster(getAssetImage(banner.poster, {height: 350, width: 776, fit: 'cover'}));
   }, []);
+
+
+  function handleNavigation() {
+    // @ts-ignore
+    router.push(banner.ctaLink);
+  }
 
   return (
       <MainCardWrapper>
@@ -74,7 +80,7 @@ const LandscapeBanner: React.FC<Props> = ({banner}) => {
             <BannerTitle>{banner.title}</BannerTitle>
           </BannerTextSpace>
           <BannerLearnMore>
-            <AppButton href={'/'} variant={ButtonVariants.Default} size={ButtonSizes.Default}>
+            <AppButton onClick={handleNavigation} variant={ButtonVariants.Default} size={ButtonSizes.Default}>
               Learn More
             </AppButton>
           </BannerLearnMore>

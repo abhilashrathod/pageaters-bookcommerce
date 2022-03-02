@@ -1,7 +1,5 @@
 import React from 'react';
-import styled from "styled-components";
 import Link from "next/link";
-import {PRIMARY_COLOR} from "../../core/_variables";
 
 interface BreadcrumbItem {
   href: string;
@@ -42,11 +40,12 @@ const Breadcrumbs: React.FC<Props> = ({items}) => {
             {
               items.map((item, index) => {
                 return (
-                    <li key={index} className={"breadcrumb-item " + (item.isActive ? 'active': '')} aria-current="page">
+                    <li key={index} className={"breadcrumb-item " + (item.isActive ? 'active' : '')}
+                        aria-current="page">
                       {
                         item.isActive
-                              ? <span>{item.title}</span>
-                              : <Link href={item.href}><a>{item.title}</a></Link>
+                            ? <span>{item.title.length > 15 ? item.title.slice(0, 15) + '...' : item.title}</span>
+                            : <Link href={item.href}><a>{item.title}</a></Link>
 
                       }
                     </li>
@@ -55,7 +54,7 @@ const Breadcrumbs: React.FC<Props> = ({items}) => {
             }
 
           </ol>
-      </div>
+        </div>
       </>
   )
 };

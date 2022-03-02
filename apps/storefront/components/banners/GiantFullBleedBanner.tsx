@@ -6,6 +6,7 @@ import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 import {getAssetImage, getProductImage} from "../../core/_imageRendererHelper";
 import {LG, MD, PRIMARY_COLOR, SM, XS} from "../../core/_variables";
+import {useRouter} from "next/router";
 
 interface Props {
   banner: IBanner;
@@ -67,7 +68,7 @@ const BannerTitle = styled.h2`
   line-height: 5.286rem;
   letter-spacing: -3px;
   
-  @media screen and (max-width: ${MD - 1}px) {      
+  @media screen and (max-width: ${MD - 1}px) {
    font-size: 4rem;
    line-height: 4rem;
    letter-spacing: -1px;
@@ -83,6 +84,7 @@ const BannerTitle = styled.h2`
 
 const GiantFullBleedBanner: React.FC<Props> = ({banner}) => {
   const [poster, setPoster] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     setPoster(getAssetImage(banner.poster, {height: 1280, width: 1920, fit: 'cover'}));
@@ -90,6 +92,11 @@ const GiantFullBleedBanner: React.FC<Props> = ({banner}) => {
 
   function renderImageSize(w: number, h: number) {
     return getAssetImage(banner.poster, {height: h, width: w, fit: 'cover'});
+  }
+
+  function handleNavigation() {
+    // @ts-ignore
+    router.push(banner.ctaLink);
   }
 
   return (
@@ -110,7 +117,7 @@ const GiantFullBleedBanner: React.FC<Props> = ({banner}) => {
               </BannerTitle>
             </BannerTextSpace>
             <div>
-              <AppButton href={'/'} variant={ButtonVariants.Secondary} size={ButtonSizes.Default}>
+              <AppButton onClick={handleNavigation} variant={ButtonVariants.Secondary} size={ButtonSizes.Default}>
                 Learn More
               </AppButton>
             </div>
