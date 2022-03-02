@@ -29,6 +29,7 @@ const fetcher = (configuration: any) => {
 
 import AppHeader from "../components/partials/Header";
 import AppFooter from "../components/partials/Footer";
+import AppMobileMenu from "../components/partials/MobileMenu";
 
 
 function MyApp({Component, pageProps}: AppProps) {
@@ -42,6 +43,7 @@ function MyApp({Component, pageProps}: AppProps) {
             <AppHeader/>
             <Component {...pageProps} />
             <AppFooter/>
+            <AppMobileMenu/>
           </MantineProvider>
         </SWRConfig>
       </>

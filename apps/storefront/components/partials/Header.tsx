@@ -1,5 +1,6 @@
 import React, {forwardRef, useEffect, useState} from 'react';
 import styled from "styled-components";
+import useSWR from "swr";
 import classNames from 'classnames';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,11 +10,10 @@ import {useDebouncedValue} from "@mantine/hooks";
 import {Autocomplete, Avatar, Divider, Group, Menu, Text} from '@mantine/core';
 
 import logo from '../../public/images/brand-logo.svg';
-import {FULL_PAGE, LG, LIGHTER_PRIMARY_COLOR, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
-import useSWR from "swr";
-import {IBook} from "../../schemas/book";
+import {FULL_PAGE, LG, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 import {getProductImage} from "../../core/_imageRendererHelper";
-import useSticky from "../../hooks/useSticky";
+
+import {IBook} from "../../schemas/book";
 
 interface Props {
 }
@@ -153,46 +153,6 @@ const AppSmallIconButton = styled.button`
   padding: 0.25rem 0.5rem;
 `;
 
-const MobileMenu = styled.div`
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  background: rgba(255,255,255,0.9);
-  width: 100%;
-  border-top: 1px solid #ccc;
-  z-index: 12;
-  display: none;
-  
-  @media screen and (max-width: ${MD - 1}px) {
-    display: block;
-  }
-`;
-
-const MobileMenuList = styled.ul`
-  display:flex;
-  justify-content: space-evenly;
-  list-style: none;
-`;
-
-const MobileMenuListItem = styled.li`
-  padding: 0.825rem;
-  display: inline-flex;
-  margin: 0;
-`;
-
-const LinkItem = styled.a`
-  flex-direction: column;
-  align-items: center;
-
-  &.active-link {
-    color: $accent;
-  }
-`;
-
-const LinkName = styled.span`
-  font-size: 0.75rem;
-`;
-
 const HeaderContainerStyles = {
   display: 'flex',
   flexFlow: 'row wrap',
@@ -218,10 +178,7 @@ const AutoCompleteItem = forwardRef<HTMLDivElement, any>(({description, id, valu
 const AppHeader: React.FC<Props> = () => {
   const router = useRouter();
 
-  const {isSticky, tableRef} = useSticky(true);
-
   const [sticky, setSticky] = useState(false);
-  const [sidenav, setSidenav] = useState(false);
   const [transparent, setTransparent] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -253,7 +210,6 @@ const AppHeader: React.FC<Props> = () => {
   }, [router]);
 
   function transformData(arr: any) {
-    // console.log("fun" );
     return arr.map((item: IBook) => {
       return {
         value: item.title,
@@ -267,15 +223,9 @@ const AppHeader: React.FC<Props> = () => {
     router.push(`/books/${e.id}`);
   }
 
-  function toggleSidenav() {
-    setSidenav((prevState => !prevState));
-  }
-
-  console.log("sidenav", sidenav);
-
   return (
       <>
-        <AppHeaderSpace ref={tableRef} id={'header'}
+        <AppHeaderSpace id={'header'}
                         className={classNames({'fixed in-view': sticky, 'transparent': transparent})}>
           <div className="custom-container" style={HeaderContainerStyles}>
             <LogoSpace>
@@ -332,8 +282,6 @@ const AppHeader: React.FC<Props> = () => {
                     <Menu.Item icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
                     <Menu.Item icon={<Icon icon={'bx:log-out'} width={20} height={20}/>}>Logout</Menu.Item>
                   </Menu>
-
-
                 </ProfileSection>
                 <CartSection>
                   <AppSmallIconButton>
@@ -344,61 +292,6 @@ const AppHeader: React.FC<Props> = () => {
             </Nav>
           </div>
         </AppHeaderSpace>
-
-        <MobileMenu>
-          <MobileMenuList>
-            <MobileMenuListItem>
-              <Link href={'/'}>
-                <LinkItem>
-                  <Icon icon={'bx:bx-home-smile'} width={30} height={30}/>
-                  <LinkName>Home</LinkName>
-                </LinkItem>
-              </Link>
-            </MobileMenuListItem>
-            <MobileMenuListItem>
-              <Link href={'/'}>
-                <LinkItem>
-                  <Icon icon={'bx:bx-heart'} width={30} height={30}/>
-                  <LinkName>Wishlist</LinkName>
-                </LinkItem>
-              </Link>
-            </MobileMenuListItem>
-            <MobileMenuListItem>
-              <Link href={'/'}>
-                <LinkItem>
-                  <Icon icon={'ph:shopping-bag-bold'} width={30} height={30}/>
-                  <LinkName>Orders</LinkName>
-                </LinkItem>
-              </Link>
-            </MobileMenuListItem>
-            <MobileMenuListItem>
-              <Link href={'/'}>
-                <LinkItem>
-                  <Icon icon={'bx:bx-cart'} width={30} height={30}/>
-                  <LinkName>Cart</LinkName>
-                </LinkItem>
-              </Link>
-            </MobileMenuListItem>
-            <MobileMenuListItem>
-              <Menu withArrow placement={'end'} control={<LinkItem><Icon icon={'bx:grid-alt'} width={30}
-                                                                                   height={30}/><LinkName>Store</LinkName></LinkItem>}>
-                <Menu.Label>Explore Store</Menu.Label>
-                <Menu.Item icon={<Icon icon={'ic:twotone-discount'} width={20} height={20}/>}>Deals &
-                  Discounts</Menu.Item>
-                <Menu.Item icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
-                <Menu.Item icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20}
-                                       height={20}/>}>Collections</Menu.Item>
-                <Menu.Item icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
-
-                <Divider/>
-                <Menu.Label>Help</Menu.Label>
-                <Menu.Item>FAQs</Menu.Item>
-                <Menu.Item>Contact</Menu.Item>
-              </Menu>
-            </MobileMenuListItem>
-          </MobileMenuList>
-        </MobileMenu>
-
       </>
   )
 };
