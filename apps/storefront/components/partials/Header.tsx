@@ -1,6 +1,8 @@
 import React, {forwardRef, useEffect, useState} from 'react';
 import styled from "styled-components";
 import useSWR from "swr";
+import cookie from "js-cookie";
+import axios from "axios";
 import classNames from 'classnames';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,16 +11,13 @@ import {Icon} from '@iconify/react';
 import {useDebouncedValue} from "@mantine/hooks";
 import {Autocomplete, Avatar, Divider, Group, Menu, Text} from '@mantine/core';
 
+import {useUser} from "../../contexts/user.context";
+
 import logo from '../../public/images/brand-logo.svg';
 import {AUTH_COOKIE, FULL_PAGE, LG, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 import {getProductImage} from "../../core/_imageRendererHelper";
 
 import {IBook} from "../../schemas/book";
-import {useUser} from "../../contexts/user.context";
-import cookie from "js-cookie";
-import axios from "axios";
-import {fetcher} from "../../core/_service";
-import {IUser} from "../../schemas/user";
 
 interface Props {
 }
@@ -219,10 +218,6 @@ const AppHeader: React.FC<Props> = () => {
     }
   };
 
-  useEffect(() => {
-
-  }, []);
-
   const {data, error} = useSWR({
     url: `${process.env.NEXT_PUBLIC_BASE_PATH}/store-books/search`,
     args: {q: searchDebounced}
@@ -303,16 +298,25 @@ const AppHeader: React.FC<Props> = () => {
                 <ProfileSection>
                   {
                     !user
-                    ? <AppSmallIconButton onClick={() => router.push('/auth/login', {query: {redirect: router.asPath}})}><Icon icon={'bx:bx-user-circle'} width={30} height={30}/></AppSmallIconButton>
-                    : (
-                        <Menu withArrow placement={'end'} control={<AppSmallIconButton><Icon icon={'bx:bx-user-circle'} width={30} height={30}/></AppSmallIconButton>}>
-                          <Menu.Label>Hello, {user ? user.fullName : 'Reader'}!</Menu.Label>
-                          <Menu.Item onClick={() => router.push('/account/orders')} icon={<Icon icon={'ph:shopping-bag-bold'} width={20} height={20}/>}>Orders</Menu.Item>
-                          <Menu.Item onClick={() => router.push('/account/orders')} icon={<Icon icon={'bx:bx-heart'} width={20} height={20}/>}>Wishlist</Menu.Item>
-                          <Menu.Item onClick={() => router.push('/account/orders')} icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
-                          <Menu.Item onClick={logout} icon={<Icon icon={'bx:log-out'} width={20} height={20}/>}>Logout</Menu.Item>
-                        </Menu>
-                    )
+                        ? <AppSmallIconButton
+                            onClick={() => router.push(`/auth/login?redirect=${router.asPath}`)}><Icon
+                            icon={'bx:bx-user-circle'} width={30} height={30}/></AppSmallIconButton>
+                        : (
+                            <Menu withArrow placement={'end'}
+                                  control={<AppSmallIconButton><Icon icon={'bx:bx-user-circle'} width={30}
+                                                                     height={30}/></AppSmallIconButton>}>
+                              <Menu.Label>Hello, {user ? user.fullName : 'Reader'}!</Menu.Label>
+                              <Menu.Item onClick={() => router.push('/account/orders')}
+                                         icon={<Icon icon={'ph:shopping-bag-bold'} width={20}
+                                                     height={20}/>}>Orders</Menu.Item>
+                              <Menu.Item onClick={() => router.push('/account/orders')}
+                                         icon={<Icon icon={'bx:bx-heart'} width={20} height={20}/>}>Wishlist</Menu.Item>
+                              <Menu.Item onClick={() => router.push('/account/orders')}
+                                         icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
+                              <Menu.Item onClick={logout}
+                                         icon={<Icon icon={'bx:log-out'} width={20} height={20}/>}>Logout</Menu.Item>
+                            </Menu>
+                        )
                   }
                 </ProfileSection>
                 <CartSection>

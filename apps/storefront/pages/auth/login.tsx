@@ -1,7 +1,8 @@
 import React, {useState} from 'react';
 import styled from "styled-components";
-import {parseUrl, stringifyUrl} from 'query-string';
+import {parseUrl} from 'query-string';
 import {useForm} from '@mantine/hooks';
+import {useNotifications} from '@mantine/notifications';
 import axios from "axios";
 import Link from "next/link";
 import cookie from 'js-cookie';
@@ -52,9 +53,9 @@ const LoginButton = styled.button`
 const Login: React.FC<Props> = () => {
   const {user, setUser} = useUser();
   const router = useRouter();
+  const notif = useNotifications();
 
-  // @ts-ignore
-  const {redirect, setRedirect} = useState(() => {
+  const [redirect, setRedirect] = useState(() => {
     const {query} = parseUrl(router.asPath);
     return query.redirect || ''
   });
@@ -78,17 +79,19 @@ const Login: React.FC<Props> = () => {
 
   function handleSubmit(values: any) {
     axios.post(`/auth/login`, values, {withCredentials: true})
-      .then((data) => {
-        cookie.set(AUTH_COOKIE, `${+ new Date()}`);
-        setUser(data.data.data);
+        .then(({data}) => {
+          notif.showNotification({message: 'Login Successfully!', color: 'green', autoClose: 3000});
 
-        if (redirect) return (redirect);
+          cookie.set(AUTH_COOKIE, `${+new Date()}`);
+          setUser(data.data);
 
-        router.push('/');
-      })
-      .catch((err) => {
-        console.log("err", err);
-      })
+          if (redirect) return router.replace(`${redirect}`);
+
+          router.push('/');
+        })
+        .catch((err) => {
+          notif.showNotification({message: err.message, color: 'red', autoClose: 3000});
+        })
   }
 
 
