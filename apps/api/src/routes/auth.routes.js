@@ -12,7 +12,7 @@ const validator = require('./../validators/auth.validator');
 router.post('/register', requestValidator(validator.registerPayload), controller.register);
 router.get('/verify-email', requestValidator(validator.verifyEmail), controller.verifyEmail);
 router.post('/login', requestValidator(validator.login), controller.login);
-router.post('/refresh-token', controller.refreshToken);
+// router.post('/refresh-token', controller.refreshToken);
 router.post('/logout', permissionValidator(), requestValidator(validator.revokeValidation), controller.revokeToken);
 router.get('/me', permissionValidator(USER_ROLES.USER), controller.me);
 router.put('/me', permissionValidator(), requestValidator(validator.updateProfile), controller.updateProfile);

@@ -2,15 +2,20 @@ const mongoose = require('mongoose');
 const { get } = require('lodash');
 const { getId } = require('../helpers/utils.helper');
 const { calculateTotal } = require('../helpers/cart.helper');
-const { models } = require('../constants');
+const { models, enums } = require('../constants');
 
 const Cart = mongoose.model(models.CART);
 const Book = mongoose.model(models.STORE_BOOK);
 const Bundle = mongoose.model(models.BUNDLE);
 
+const CART_COOKIE_OPTIONS = {
+  httpOnly: true,
+};
+
 module.exports.retrieve = async (req, res) => {
   try {
     const userId = get(req, 'user.userId', '');
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
 
     const populateOptions = [{
       path: 'products.product',
@@ -24,18 +29,18 @@ module.exports.retrieve = async (req, res) => {
       select: 'bundleId title poster bundledBooks currentDiscount price',
     }];
 
-    if (userId) {
-      let userCart = await Cart.findOne({ user: userId }).populate(populateOptions);
+    let userCart = await Cart.findOne({ user: userId, _id: cart }).populate(populateOptions);
 
-      if (userCart) {
-        userCart = userCart.toObject();
-        res.cookie('cart', userCart._id, { httpOnly: true });
-        userCart.subTotal = await calculateTotal(userCart.products, userCart.bundles);
-        return res.ok({ message: 'CART_LIST_SUCCESS', data: userCart });
-      }
+    if (userCart) {
+      userCart = userCart.toObject();
+
+      res.cookie(enums.TOKEN_ID.CART_COOKIE, userCart._id, CART_COOKIE_OPTIONS);
+
+      userCart.subTotal = await calculateTotal(userCart.products, userCart.bundles);
+      return res.ok({ message: 'CART_LIST_SUCCESS', data: userCart });
     }
 
-    return res.ok({ message: 'CART_NOT_EXIST', data: null });
+    return res.error('CART_NOT_EXIST');
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -43,7 +48,7 @@ module.exports.retrieve = async (req, res) => {
 
 module.exports.add = async (req, res) => {
   try {
-    const { cart } = req.cookies;
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
     let { product, quantity } = req.allParams();
     const userId = get(req, 'user.userId', '');
 
@@ -100,13 +105,13 @@ module.exports.add = async (req, res) => {
         addedOn: new Date(),
       };
 
-      const updatedCart = await Cart.findOneAndUpdate({ _id: cart }, {
+      await Cart.findOneAndUpdate({ _id: cart }, {
         $addToSet: {
           products: addedBook,
         },
       }, { new: true });
 
-      return res.ok({ message: 'CART_UPDATE_SUCCESS', data: updatedCart });
+      return res.ok({ message: 'CART_UPDATE_SUCCESS', data: true });
     }
   } catch (e) {
     return res.internalServerError(e);
@@ -115,11 +120,9 @@ module.exports.add = async (req, res) => {
 
 module.exports.update = async (req, res) => {
   try {
-    const { cart } = req.cookies;
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
     let { id, quantity } = req.allParams();
     const userId = get(req, 'user.userId', '');
-
-    if (!cart) return res.error('CART_NOT_EXIST');
 
     let currentCart = await Cart.findOne({ _id: cart, user: userId });
     if (!currentCart) return res.error('CART_NOT_EXIST');
@@ -147,12 +150,12 @@ module.exports.update = async (req, res) => {
 
 module.exports.remove = async (req, res) => {
   try {
-    const { cart } = req.cookies;
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
+    const userId = get(req, 'user.userId', '');
+
     let { id } = req.allParams(); // id is the productObjectId
 
-    if (!cart) return res.error('CART_NOT_EXIST');
-
-    let currentCart = await Cart.findOne({ _id: cart });
+    let currentCart = await Cart.findOne({ _id: cart, user: userId });
     if (!currentCart) return res.error('CART_NOT_EXIST');
 
     let book = await Book.findOne({ _id: id });
@@ -162,9 +165,9 @@ module.exports.remove = async (req, res) => {
     const update = { $pull: { 'products': { product: id } } };
     const options = { new: true };
 
-    const updatedCart = await Cart.findOneAndUpdate(query, update, options);
+    await Cart.findOneAndUpdate(query, update, options);
 
-    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: updatedCart });
+    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: true });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -177,7 +180,7 @@ module.exports.clear = async (req, res) => {
       httpOnly: true,
       expires: 0,
     };
-    res.cookie('cart', '', cookieOptions);
+    res.cookie(enums.TOKEN_ID.CART_COOKIE, '', cookieOptions);
 
     res.ok('CART_DELETE_SUCCESS');
   } catch (e) {
@@ -187,20 +190,20 @@ module.exports.clear = async (req, res) => {
 
 module.exports.empty = async (req, res) => {
   try {
-    const { cart } = req.cookies;
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
+    const userId = get(req, 'user.userId', '');
     if (!cart) return res.error('CART_NOT_EXIST');
 
-    let currentCart = await Cart.findOne({ _id: cart });
+    let currentCart = await Cart.findOne({ _id: cart, user: userId });
     if (!currentCart) return res.error('CART_NOT_EXIST');
 
     const query = { _id: cart };
     const update = { $set: { products: [] } };
     const options = { new: true };
 
+    await Cart.findOneAndUpdate(query, update, options);
 
-    const updatedCart = await Cart.findOneAndUpdate(query, update, options);
-
-    res.ok({ message: 'CART_DELETE_SUCCESS', data: updatedCart });
+    res.ok({ message: 'CART_DELETE_SUCCESS', data: true });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -235,12 +238,11 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.addBundle = async (req, res) => {
   try {
-    const { cart } = req.cookies;
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
+    const userId = get(req, 'user.userId', '');
     let { bundle, quantity = 1 } = req.allParams();
 
-    if (!cart) return res.error('CART_NOT_EXIST');
-
-    let currentCart = await Cart.findOne({ _id: cart });
+    let currentCart = await Cart.findOne({ _id: cart, user: userId });
     if (!currentCart) return res.error('CART_NOT_EXIST');
 
     currentCart = currentCart.toObject();
@@ -287,13 +289,13 @@ module.exports.addBundle = async (req, res) => {
       addedOn: new Date(),
     };
 
-    const updatedCart = await Cart.findOneAndUpdate({ _id: cart }, {
+    await Cart.findOneAndUpdate({ _id: cart }, {
       $addToSet: {
         bundles: addedBundle,
       },
     }, { new: true });
 
-    return res.ok({ message: 'BUNDLE_ADD_SUCCESS', data: updatedCart });
+    return res.ok({ message: 'BUNDLE_ADD_SUCCESS', data: true });
 
   } catch (e) {
     return res.internalServerError(e);
@@ -302,12 +304,11 @@ module.exports.addBundle = async (req, res) => {
 
 module.exports.removeBundle = async (req, res) => {
   try {
-    const { cart } = req.cookies;
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
+    const userId = get(req, 'user.userId', '');
     let { bundleId } = req.allParams(); // id is the productObjectId
 
-    if (!cart) return res.error('CART_NOT_EXIST');
-
-    let currentCart = await Cart.findOne({ _id: cart });
+    let currentCart = await Cart.findOne({ _id: cart, user: userId });
     if (!currentCart) return res.error('CART_NOT_EXIST');
 
     let bundleRes = await Bundle.findOne({ _id: bundleId, isDeleted: false });
@@ -317,9 +318,9 @@ module.exports.removeBundle = async (req, res) => {
     const update = { $pull: { 'bundles': { bundle: bundleId } } };
     const options = { new: true };
 
-    const updatedCartRes = await Cart.findOneAndUpdate(query, update, options);
+    await Cart.findOneAndUpdate(query, update, options);
 
-    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: updatedCartRes });
+    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: true });
   } catch (e) {
     return res.internalServerError(e);
   }

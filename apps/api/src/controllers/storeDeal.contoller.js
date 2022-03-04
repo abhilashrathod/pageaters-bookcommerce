@@ -23,6 +23,7 @@ module.exports.getAll = async (req, res) => {
       sort: {
         [sortBy]: sortOrder,
       },
+      select: 'ctaLink ctaText dealId poster title _id',
     };
 
     const dealsRes = await StoreDeal.paginate(query, options);

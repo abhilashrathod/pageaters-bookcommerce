@@ -19,7 +19,7 @@ module.exports.getAll = async (req, res) => {
     const options = {
       page,
       limit,
-      select: `bundleId _id title bundledBooks poster currentDiscount price membersPrice`,
+      select: `bundleId _id title bundledBooks poster currentDiscount priority price membersPrice`,
       sort: {
         [sortBy]: sortOrder,
       },
@@ -121,7 +121,7 @@ module.exports.getById = async (req, res) => {
       },
     }, {
       path: 'relatedBundles',
-      select: '_id bundleId title poster price',
+      select: 'bundleId _id title bundledBooks poster currentDiscount priority price membersPrice',
     }];
 
     const bundles = await Bundles.findOne({ _id: id, isDeleted: false }).populate(populateOptions);
@@ -152,7 +152,7 @@ module.exports.getByUniqueId = async (req, res) => {
       },
     }, {
       path: 'relatedBundles',
-      select: '_id bundleId title poster price',
+      select: 'bundleId _id title bundledBooks poster currentDiscount priority price membersPrice',
     }];
 
     const bundle = await Bundles.findOne({ bundleId: id, isDeleted: false }).populate(populateOptions);

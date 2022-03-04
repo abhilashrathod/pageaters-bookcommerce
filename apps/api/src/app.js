@@ -39,11 +39,11 @@ this.app.set('views', path.join(PROJECT_ROOT, 'src', 'views'));
 this.app.set('view engine', 'ejs');
 
 // slow down before threshold
-const speedLimiter = slowDown({
-  windowMs: 60 * 1000, // 1 minute
-  delayAfter: 50,
-  delayMs: 500,
-});
+// const speedLimiter = slowDown({
+//   windowMs: 60 * 1000, // 1 minute
+//   delayAfter: 50,
+//   delayMs: 500,
+// });
 
 // i18n
 i18n.configure({
@@ -67,7 +67,7 @@ this.app.set('env', ENVIRONMENT);
 
 // Handle `OPTIONS` request.
 this.app.all('*', (req, res, next) => {
-  const allowedOrigins = ['http://localhost:2305', 'http://localhost:4200', 'http://192.168.0.107:2305', 'http://localhost:4000'];
+  const allowedOrigins = ['http://localhost:3000', 'http://localhost:2305', 'http://localhost:4200', 'http://192.168.0.107:2305', 'http://localhost:4000'];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -115,15 +115,16 @@ this.app.use(`/resources`, express.static(path.join(PROJECT_ROOT, 'resources')))
 this.app.use(multer().any());
 
 // rate limiting
-const apiLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute will have "max" 75 API request
-  max: 75,
-  message: 'LIMIT REACHED: Too many requests were created from this IP. Please try again after an hour. Please contact support in such case if you were not responsible',
-});
+// const apiLimiter = rateLimit({
+//   windowMs: 60 * 1000, // 1 minute will have "max" 75 API request
+//   max: 75,
+//   message: 'LIMIT REACHED: Too many requests were created from this IP. Please try again after an hour. Please contact support in such case if you were not responsible',
+// });
+// apiLimiter, speedLimiter,
 
 // load routes
 const router = require('./routes');
-this.app.use('/api/v1', apiLimiter, speedLimiter, router);
+this.app.use('/api/v1', router);
 
 // static files middleware
 this.app.use('/', express.static(path.join(PROJECT_ROOT, 'public')));

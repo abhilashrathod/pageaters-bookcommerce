@@ -1,4 +1,9 @@
 module.exports = {
+  TOKEN_ID: {
+    REFRESH_TOKEN_COOKIE: '_RID',
+    CART_COOKIE: '_CID',
+    ACCESS_TOKEN_COOKIE: '_PID',
+  },
   SOURCES: {
     POSTMAN: 'POSTMAN',
     WEB: 'WEB',

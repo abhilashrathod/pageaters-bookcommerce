@@ -9,11 +9,11 @@ module.exports.getAll = async (req, res) => {
   try {
     let { page, limit, sortBy, sortOrder } = req.allParams();
 
-    const query = {isDeleted: false};
+    const query = { isDeleted: false };
     const allowedSortingFields = ['title', 'createdAt', 'popularity', 'currentDiscount', 'price'];
 
     if (sortBy && !allowedSortingFields.includes(sortBy)) {
-      return res.error('SORTING_NOT_ALLOWED')
+      return res.error('SORTING_NOT_ALLOWED');
     }
 
     const options = {
@@ -53,7 +53,7 @@ module.exports.update = async (req, res) => {
   try {
     let { id, title, description, thumbnail, meta } = req.allParams();
 
-    const category = await Category.findOne({_id: id, isDeleted: false });
+    const category = await Category.findOne({ _id: id, isDeleted: false });
 
     if (!category) {
       return res.error('CATEGORY_NOT_EXIST');
@@ -99,7 +99,7 @@ module.exports.getById = async (req, res) => {
     const category = await Category.findOne({ _id: id, isDeleted: false });
 
     if (category) {
-      return res.ok({ message: 'CATEGORY_LIST_SUCCESS', data: category })
+      return res.ok({ message: 'CATEGORY_LIST_SUCCESS', data: category });
     } else {
       return res.error('CATEGORY_NOT_EXIST');
     }
@@ -115,7 +115,7 @@ module.exports.getByUniqueId = async (req, res) => {
     const category = await Category.findOne({ categoryId: id, isDeleted: false });
 
     if (category) {
-      return res.ok({ message: 'CATEGORY_LIST_SUCCESS', data: category })
+      return res.ok({ message: 'CATEGORY_LIST_SUCCESS', data: category });
     } else {
       return res.error('CATEGORY_NOT_EXIST');
     }
@@ -131,22 +131,25 @@ module.exports.getAllProducts = async (req, res) => {
     const query = { isDeleted: false, categories: id };
     const allowedSortingFields = ['title', 'createdAt', 'popularity', 'currentDiscount', 'price'];
 
-    if (!allowedSortingFields.includes(sortBy)) {
-      return res.error('SORTING_NOT_ALLOWED')
+    if (sortBy && !allowedSortingFields.includes(sortBy)) {
+      return res.error('SORTING_NOT_ALLOWED');
     }
 
     const options = {
       page,
       limit,
-      sort: {
-        [sortBy]: [sortOrder]
-      },
       select: `title bookId ISBN author poster price popularity editorsPick currentDiscount bestSeller`,
       populate: {
         path: 'author',
         select: 'name intro avatar',
       },
     };
+
+    if (sortBy && sortOrder) {
+      options.sort = {
+        [sortBy]: [sortOrder],
+      };
+    }
 
     const booksRes = await Book.paginate(query, options);
 

@@ -1,10 +1,12 @@
+const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const moment = require('moment');
 const path = require('path');
 const Razorpay = require('razorpay');
 const colors = require('colors');
+const { get } = require('lodash');
 
-const { HOST, PROJECT_ROOT, TWILIO, RAZOR_PAY } = require('./../appConfig');
+const { HOST, PROJECT_ROOT, TWILIO, RAZOR_PAY, ENCRYPTION_KEY } = require('./../appConfig');
 const { models, enums } = require('../constants');
 
 const { encrypt, decrypt, generateJwtToken, generateRefreshToken } = require('../helpers/encryption.helper');
@@ -12,17 +14,30 @@ const { writeFile } = require('./../helpers/utils.helper');
 const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const User = mongoose.model(models.USER);
-const RefreshTokens = mongoose.model(models.REFRESH_TOKEN);
+const AccessTokens = mongoose.model(models.ACCESS_TOKEN);
 const Cart = mongoose.model(models.CART);
 
 const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
 const razorPayInstance = new Razorpay({ key_id: RAZOR_PAY.USER_ID, key_secret: RAZOR_PAY.PASSWORD });
 
+const REFRESH_TOKEN_OPTIONS = {
+  httpOnly: true,
+  expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
+};
+
+const ACCESS_TOKEN_OPTIONS = {
+  httpOnly: true,
+  expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
+};
+
+const CART_COOKIE_OPTIONS = {
+  httpOnly: true,
+};
+
 module.exports.register = async (req, res) => {
   try {
     let { email, password, fullName } = req.allParams();
     const ipAddress = req.ip;
-    const cart = req.cookies.cart;
 
     const isEmailAvailable = await User.isEmailAvailable(email);
 
@@ -34,20 +49,20 @@ module.exports.register = async (req, res) => {
     const razorPayCustomer = await razorPayInstance.customers.create({ name: fullName, email, contact: '', notes: {} });
 
     await user.setPassword(password);
-    const token = await user.generateVerifyEmailToken();
+    const verifyToken = await user.generateVerifyEmailToken();
 
     user.razorPayCustId = razorPayCustomer.id;
-    user.verifyEmailToken = token;
+    user.verifyEmailToken = verifyToken;
     user.lastVerifyEmailSentOn = new Date().toISOString();
 
     user.save();
 
     const newUserCart = await Cart.create({ user: user._id });
 
-    const jwtToken = generateJwtToken(user);
-    const refreshToken = generateRefreshToken(user, ipAddress);
+    const { payload, token } = generateJwtToken(user, ipAddress);
+    // const refreshToken = generateRefreshToken(user, ipAddress);
 
-    await RefreshTokens.create(refreshToken);
+    await AccessTokens.create(payload);
     const profile = await User.getProfile(user._id); // TODO: Improvement could be made
 
     sendMailQueue.add({
@@ -56,19 +71,20 @@ module.exports.register = async (req, res) => {
       subject: 'Welcome to Pageaters!',
       data: {
         FULL_NAME: fullName,
-        VERIFICATION_TOKEN: token
+        VERIFICATION_TOKEN: verifyToken,
       },
     });
 
     // create a refresh token cookie that will also expires in 7 days
-    const cookieOptions = {
-      httpOnly: true,
-      expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
-    };
-    res.cookie('refreshToken', refreshToken.token, cookieOptions);
-    res.cookie('cart', newUserCart._id, { httpOnly: true });
+    // res.cookie(enums.TOKEN_ID.REFRESH_TOKEN_COOKIE, refreshToken.token, REFRESH_TOKEN_OPTIONS);
 
-    return res.ok({ message: 'REGISTRATION_SUCCESS', data: { profile, token: jwtToken } });
+    // create an access token cookie that will also expires in 7 days
+    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
+
+    // Attach cart cookie for shopping cart
+    res.cookie(enums.TOKEN_ID.CART_COOKIE, newUserCart._id, CART_COOKIE_OPTIONS);
+
+    return res.ok({ message: 'REGISTRATION_SUCCESS', data: profile });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -78,7 +94,6 @@ module.exports.login = async (req, res) => {
   try {
     const { email, password } = req.allParams();
     const ipAddress = req.ip;
-    const cartCookie = req.cookies.cart;
 
     let user = await User.findOne({ email, status: enums.USER_STATUS.ACTIVE });
 
@@ -94,33 +109,29 @@ module.exports.login = async (req, res) => {
     user.lastLoginAt = new Date();
     user.save();
 
-    // generate necessary tokens
-    const jwtToken = generateJwtToken(user);
-    const refreshToken = generateRefreshToken(user, ipAddress);
-    await RefreshTokens.create(refreshToken);
+    // generate necessary token
+    const { token, payload } = generateJwtToken(user, ipAddress);
+    // const refreshToken = generateRefreshToken(user, ipAddress);
+    await AccessTokens.create({ ...payload, token });
 
     // get user profile
     user = await User.getProfile(user._id);
     const cartRes = await Cart.findOne({ user: user._id });
 
-    if (cartCookie) {
-      const previousCartRes = await Cart.findOne({ user: user._id });
-    }
-
-
     // create a refresh token cookie that will also expires in 7 days
-    const cookieOptions = {
-      httpOnly: true,
-      expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
-    };
-    res.cookie('refreshToken', refreshToken.token, cookieOptions);
-    if (cartRes) res.cookie('cart', cartRes._id, { httpOnly: true });
+    // res.cookie(enums.TOKEN_ID.REFRESH_TOKEN_COOKIE, refreshToken.token, REFRESH_TOKEN_OPTIONS);
+
+    // create an access token cookie that will also expires in 7 days
+    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
+
+    // Attach cart cookie for shopping cart
+    res.cookie(enums.TOKEN_ID.CART_COOKIE, cartRes._id, CART_COOKIE_OPTIONS);
 
     if (!user.emailVerified) {
-      return res.ok({ message: 'EMAIL_VERIFICATION_PENDING', data: { user, token: jwtToken } });
+      return res.ok({ message: 'EMAIL_VERIFICATION_PENDING', data: user });
     }
 
-    return res.ok({ message: 'LOGIN_SUCCESS', data: { user, token: jwtToken } });
+    return res.ok({ message: 'LOGIN_SUCCESS', data: user });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -128,46 +139,7 @@ module.exports.login = async (req, res) => {
 
 module.exports.refreshToken = async (req, res) => {
   try {
-    const token = req.cookies.refreshToken;
-    const ipAddress = req.ip;
-
-    if (!token) {
-      return res.ok();
-    }
-
-    const refreshToken = await RefreshTokens.findOne({ token });
-
-    if (!refreshToken || !refreshToken.isActive) {
-      res.cookie('refreshToken', '', {httpOnly: true, expires: 0});
-      return res.unauthorized('INVALID_TOKEN');
-    }
-    const { account } = refreshToken;
-
-    // replace old refresh token with a new one and save
-    const newRefreshToken = generateRefreshToken(account, ipAddress);
-
-    refreshToken.token = newRefreshToken.token;
-    await refreshToken.save();
-
-    const userRes = await User.findOne({ _id: account }).select('email role');
-
-    // generate new jwt
-    const dataToEncrypt = {
-      id: account,
-      role: userRes.role,
-      email: userRes.email,
-    };
-    const jwtToken = generateJwtToken(dataToEncrypt);
-
-    // create a refresh token cookie that will also expires in 7 days
-    const cookieOptions = {
-      httpOnly: true,
-      expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
-    };
-    res.cookie('refreshToken', newRefreshToken.token, cookieOptions);
-
-    return res.ok({ message: 'TOKEN_UPDATED', data: { token: jwtToken } });
-
+    console.info('in progress');
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -175,32 +147,34 @@ module.exports.refreshToken = async (req, res) => {
 
 module.exports.revokeToken = async (req, res) => {
   try {
-    const token = req.cookies.refreshToken;
+    const token = req.cookies[enums.TOKEN_ID.ACCESS_TOKEN_COOKIE];
     const ipAddress = req.ip;
+    const userId = get(req, 'user.userId', '');
 
     if (!token) {
       return res.unauthorized('INVALID_TOKEN');
     }
 
     // users can revoke their own tokens and admins can revoke any tokens
-    if (!req.user.ownsToken(token) && req.user.role !== enums.USER_ROLES.ADMIN) {
+    const accessToken = await AccessTokens.findOne({ token, userId });
+    if (!accessToken) {
       return res.unauthorized('TOKEN_UNMATCHED');
     }
 
-    const refreshToken = await RefreshTokens.findOne({ token });
-
     // revoke token and save
-    refreshToken.revoked = Date.now();
-    refreshToken.revokedByIp = ipAddress;
-    await refreshToken.save();
+    accessToken.revoked = Date.now();
+    accessToken.revokedByIp = ipAddress;
+    await accessToken.save();
 
     // revoke refresh token & cart cookie
     const cookieOptions = {
       httpOnly: true,
       expires: 0,
     };
-    res.cookie('refreshToken', '', cookieOptions);
-    res.cookie('cart', '', cookieOptions);
+
+    // res.cookie(enums.TOKEN_ID.REFRESH_TOKEN_COOKIE, '', cookieOptions);
+    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, '', cookieOptions);
+    res.cookie(enums.TOKEN_ID.CART_COOKIE, '', cookieOptions);
 
     return res.ok({ message: 'TOKEN_REVOKED', data: {} });
   } catch (e) {
@@ -248,7 +222,7 @@ module.exports.adminRegister = async (req, res) => {
 
     const profile = await User.getProfile(user._id); // TODO: Improvement could be made
 
-    return res.ok({ message: 'REGISTRATION_SUCCESS', data: { profile, token } });
+    return res.ok({ message: 'REGISTRATION_SUCCESS', data: profile });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -274,7 +248,7 @@ module.exports.updateProfile = async (req, res) => {
 
     user = await User.getProfile(user._id);
 
-    return res.ok({ message: 'PROFILE_UPDATED', data: { user } });
+    return res.ok({ message: 'PROFILE_UPDATED', data: user });
   } catch (e) {
     return res.internalServerError(e);
   }

@@ -4,9 +4,9 @@ const router = new Router();
 const controller = require('./../controllers/storeBook.controller');
 
 router.get('/', controller.getAll);
-router.get('/:id', controller.getById);
+router.get('/get/:id', controller.getById);
 router.get('/unique/:id', controller.getByUniqueId);
-router.get('/search/:q', controller.search);
+router.get('/search', controller.search);
 
 router.post('/', controller.create);
 

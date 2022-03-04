@@ -20,7 +20,7 @@ module.exports.getAll = async (req, res) => {
       page,
       limit,
       sort: {
-        [sortBy]: Number(sortOrder),
+        [sortBy]: sortOrder,
       },
       populate: {
         path: 'books',
