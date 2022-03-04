@@ -1,10 +1,17 @@
-import React from 'react';
-import PageWrapper from "../../components/elements/PageWrapper";
-import {useForm} from '@mantine/hooks';
-import {ACCENT_COLOR, LIGHTER_PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variables";
-import AppTextInput from "../../components/form-controls/AppTextInput";
+import React, {useState} from 'react';
 import styled from "styled-components";
+import {parseUrl, stringifyUrl} from 'query-string';
+import {useForm} from '@mantine/hooks';
+import axios from "axios";
 import Link from "next/link";
+import cookie from 'js-cookie';
+
+import PageWrapper from "../../components/elements/PageWrapper";
+import AppTextInput from "../../components/form-controls/AppTextInput";
+
+import {ACCENT_COLOR, AUTH_COOKIE, LIGHTER_PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variables";
+import {useUser} from "../../contexts/user.context";
+import {useRouter} from "next/router";
 
 interface Props {
 }
@@ -43,6 +50,15 @@ const LoginButton = styled.button`
 `;
 
 const Login: React.FC<Props> = () => {
+  const {user, setUser} = useUser();
+  const router = useRouter();
+
+  // @ts-ignore
+  const {redirect, setRedirect} = useState(() => {
+    const {query} = parseUrl(router.asPath);
+    return query.redirect || ''
+  });
+
   const form = useForm({
     initialValues: {
       email: '',
@@ -60,6 +76,21 @@ const Login: React.FC<Props> = () => {
     },
   });
 
+  function handleSubmit(values: any) {
+    axios.post(`/auth/login`, values, {withCredentials: true})
+      .then((data) => {
+        cookie.set(AUTH_COOKIE, `${+ new Date()}`);
+        setUser(data.data.data);
+
+        if (redirect) return (redirect);
+
+        router.push('/');
+      })
+      .catch((err) => {
+        console.log("err", err);
+      })
+  }
+
 
   return (
       <PageWrapper>
@@ -73,7 +104,7 @@ const Login: React.FC<Props> = () => {
             </div>
             <div className="clearfix"></div>
             <div className="col-xxl-4 col-xl-4 col-lg-8 col-md-8 col-12" style={{margin: '0 auto'}}>
-              <form onSubmit={form.onSubmit((values) => console.log(values))}>
+              <form onSubmit={form.onSubmit(handleSubmit)}>
                 <AppTextInput id={'email'}
                               required={true}
                               label={'Email'}

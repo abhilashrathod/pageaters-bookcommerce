@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import styled from 'styled-components';
 import {Select} from '@mantine/core';
 import {SelectItem} from "@mantine/core/lib/components/Select/types";

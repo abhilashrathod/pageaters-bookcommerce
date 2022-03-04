@@ -10,10 +10,15 @@ import {useDebouncedValue} from "@mantine/hooks";
 import {Autocomplete, Avatar, Divider, Group, Menu, Text} from '@mantine/core';
 
 import logo from '../../public/images/brand-logo.svg';
-import {FULL_PAGE, LG, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
+import {AUTH_COOKIE, FULL_PAGE, LG, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 import {getProductImage} from "../../core/_imageRendererHelper";
 
 import {IBook} from "../../schemas/book";
+import {useUser} from "../../contexts/user.context";
+import cookie from "js-cookie";
+import axios from "axios";
+import {fetcher} from "../../core/_service";
+import {IUser} from "../../schemas/user";
 
 interface Props {
 }
@@ -177,6 +182,7 @@ const AutoCompleteItem = forwardRef<HTMLDivElement, any>(({description, id, valu
 
 const AppHeader: React.FC<Props> = () => {
   const router = useRouter();
+  const {user, setUser} = useUser();
 
   const [sticky, setSticky] = useState(false);
   const [transparent, setTransparent] = useState(false);
@@ -185,14 +191,36 @@ const AppHeader: React.FC<Props> = () => {
   const [searchDebounced] = useDebouncedValue(search, 1000);
 
   useEffect(() => {
-    const handleScroll = () => {
-      console.log('scroll');
-    };
+    const auth = cookie.get(AUTH_COOKIE);
+    if (auth) {
+      getMe();
+    }
+  }, []);
 
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+  const getMe = async () => {
+    try {
+      const response$ = await axios.get(`/auth/me`, {withCredentials: true});
+      const data = await response$.data;
+
+      setUser(data.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await axios.post(`/auth/logout`, {}, {withCredentials: true});
+      setUser(undefined);
+      cookie.remove(AUTH_COOKIE);
+      router.replace('/');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+
   }, []);
 
   const {data, error} = useSWR({
@@ -273,15 +301,19 @@ const AppHeader: React.FC<Props> = () => {
                   </Menu>
                 </HamburgerSection>
                 <ProfileSection>
-                  <Menu withArrow placement={'end'}
-                        control={<AppSmallIconButton><Icon icon={'bx:bx-user-circle'} width={30}
-                                                           height={30}/></AppSmallIconButton>}>
-                    <Menu.Label>Hello Abhilash!</Menu.Label>
-                    <Menu.Item icon={<Icon icon={'ph:shopping-bag-bold'} width={20} height={20}/>}>Orders</Menu.Item>
-                    <Menu.Item icon={<Icon icon={'bx:bx-heart'} width={20} height={20}/>}>Wishlist</Menu.Item>
-                    <Menu.Item icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
-                    <Menu.Item icon={<Icon icon={'bx:log-out'} width={20} height={20}/>}>Logout</Menu.Item>
-                  </Menu>
+                  {
+                    !user
+                    ? <AppSmallIconButton onClick={() => router.push('/auth/login', {query: {redirect: router.asPath}})}><Icon icon={'bx:bx-user-circle'} width={30} height={30}/></AppSmallIconButton>
+                    : (
+                        <Menu withArrow placement={'end'} control={<AppSmallIconButton><Icon icon={'bx:bx-user-circle'} width={30} height={30}/></AppSmallIconButton>}>
+                          <Menu.Label>Hello, {user ? user.fullName : 'Reader'}!</Menu.Label>
+                          <Menu.Item onClick={() => router.push('/account/orders')} icon={<Icon icon={'ph:shopping-bag-bold'} width={20} height={20}/>}>Orders</Menu.Item>
+                          <Menu.Item onClick={() => router.push('/account/orders')} icon={<Icon icon={'bx:bx-heart'} width={20} height={20}/>}>Wishlist</Menu.Item>
+                          <Menu.Item onClick={() => router.push('/account/orders')} icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
+                          <Menu.Item onClick={logout} icon={<Icon icon={'bx:log-out'} width={20} height={20}/>}>Logout</Menu.Item>
+                        </Menu>
+                    )
+                  }
                 </ProfileSection>
                 <CartSection>
                   <AppSmallIconButton>

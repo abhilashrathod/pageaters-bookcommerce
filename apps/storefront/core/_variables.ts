@@ -16,6 +16,13 @@ export const LIGHT_COLOR = '#868686';
 
 /***
  *
+ * AUTH
+ * ***********/
+
+export const AUTH_COOKIE = `_LID`;
+
+/***
+ *
  * MEDIA BREAKPOINTS
  * ***********/
 
