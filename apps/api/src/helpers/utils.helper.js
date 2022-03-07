@@ -50,8 +50,8 @@ module.exports.generateRandomString = (length = 12) => {
   return randomString(length);
 };
 
-module.exports.generateRandomNumber = () => {
-  return Math.floor(Math.random() * 9000000000) + 1000000000;
+module.exports.generateRandomNumber = (n) => {
+  return Math.floor(Math.random() * (9 * Math.pow(10, n - 1))) + Math.pow(10, n - 1);
 };
 
 module.exports.getId = (id) => {

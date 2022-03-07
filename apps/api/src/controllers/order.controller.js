@@ -39,7 +39,7 @@ module.exports.attempt = async (req, res) => {
     const { address, instructions } = req.allParams();
     const cart = get(req, 'cookies.cart', '');
     const userId = get(req, 'user.userId', '');
-    const orderId = `OD-${generateRandomNumber()}`;
+    const orderId = `OD-${generateRandomNumber(10)}`;
 
     if (!cart || !userId) {
       return res.error('ORDER_INFO_ATTEMPT_FAILED');
@@ -249,6 +249,21 @@ module.exports.getById = async (req, res) => {
     const { id } = req.allParams();
     const userId = get(req, 'user.userId', '');
     const orderRes = await Order.findOne({ _id: id, userId });
+
+    if (orderRes) {
+      return res.ok({ message: 'ORDER_LIST_SUCCESS', data: orderRes });
+    }
+
+    return res.error('ORDER_NOT_EXIST');
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.getAllByUser = async (req, res) => {
+  try {
+    const userId = get(req, 'user.userId', '');
+    const orderRes = await Order.find({ userId });
 
     if (orderRes) {
       return res.ok({ message: 'ORDER_LIST_SUCCESS', data: orderRes });

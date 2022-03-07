@@ -40,7 +40,7 @@ module.exports.create = async (req, res) => {
   try {
     let { title, description, tags, books, poster, relatedCollections, relatedCategories, featuredAuthors, priority, popularity } = req.allParams();
 
-    let collectionId = `CL-${generateRandomNumber()}`;
+    let collectionId = `CL-${generateRandomNumber(10)}`;
 
     const payload = {
       collectionId, title, description, tags,

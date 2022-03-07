@@ -37,7 +37,7 @@ module.exports.create = async (req, res) => {
   try {
     let { title, description, thumbnail, meta } = req.allParams();
 
-    let categoryId = `CA-${generateRandomNumber()}`;
+    let categoryId = `CA-${generateRandomNumber(10)}`;
 
     const payload = { categoryId, title, description, thumbnail, meta };
 

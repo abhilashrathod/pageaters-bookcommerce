@@ -20,6 +20,14 @@ module.exports.phone = Joi.string()
   .description('Contact No')
   .error(new Error('INVALID_PHONE'));
 
+module.exports.otp = Joi.string()
+  .length(6)
+  .required()
+  .regex(/^\d+$/)
+  .trim()
+  .description('OTP')
+  .error(new Error('INVALID_OTP'));
+
 module.exports.limit = Joi.number()
   .integer()
   .min(0)

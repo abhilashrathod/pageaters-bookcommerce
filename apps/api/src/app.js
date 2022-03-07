@@ -58,8 +58,8 @@ this.app.use(i18n.init);
 this.app.use(require('./middlewares/extendReq.middleware'));
 
 // for indexing
-const { runIndexing } = require('./libs/indexing');
-runIndexing(this.app);
+// const { runIndexing } = require('./libs/indexing');
+// runIndexing(this.app);
 
 // Disable x-powered-by header
 this.app.disable('x-powered-by');
@@ -67,7 +67,7 @@ this.app.set('env', ENVIRONMENT);
 
 // Handle `OPTIONS` request.
 this.app.all('*', (req, res, next) => {
-  const allowedOrigins = ['http://localhost:3000', 'http://localhost:2305', 'http://localhost:4200', 'http://192.168.0.107:2305', 'http://localhost:4000'];
+  const allowedOrigins = ['https://strong-ladybug-77.loca.lt', 'http://localhost:3000', 'http://localhost:2305', 'http://localhost:4200', 'http://192.168.0.107:3000', 'http://192.168.0.107:2305', 'http://localhost:4000'];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);

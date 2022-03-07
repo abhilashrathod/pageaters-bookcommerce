@@ -10,7 +10,7 @@ const { HOST, PROJECT_ROOT, TWILIO, RAZOR_PAY, ENCRYPTION_KEY } = require('./../
 const { models, enums } = require('../constants');
 
 const { encrypt, decrypt, generateJwtToken, generateRefreshToken } = require('../helpers/encryption.helper');
-const { writeFile } = require('./../helpers/utils.helper');
+const { writeFile, generateRandomNumber } = require('./../helpers/utils.helper');
 const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const User = mongoose.model(models.USER);
@@ -36,7 +36,7 @@ const CART_COOKIE_OPTIONS = {
 
 module.exports.register = async (req, res) => {
   try {
-    let { email, password, fullName } = req.allParams();
+    let { email, password } = req.allParams();
     const ipAddress = req.ip;
 
     const isEmailAvailable = await User.isEmailAvailable(email);
@@ -45,13 +45,13 @@ module.exports.register = async (req, res) => {
       return res.error('USER_ALREADY_REGISTERED');
     }
 
-    const user = await User.create({ fullName, email, role: enums.USER_ROLES.USER });
-    const razorPayCustomer = await razorPayInstance.customers.create({ name: fullName, email, contact: '', notes: {} });
+    const user = await User.create({ email, role: enums.USER_ROLES.USER });
+    // const razorPayCustomer = await razorPayInstance.customers.create({ name: fullName, email, contact: '', notes: {} }); TODO: remove this later
 
     await user.setPassword(password);
     const verifyToken = await user.generateVerifyEmailToken();
 
-    user.razorPayCustId = razorPayCustomer.id;
+    // user.razorPayCustId = razorPayCustomer.id; TODO: remove this later
     user.verifyEmailToken = verifyToken;
     user.lastVerifyEmailSentOn = new Date().toISOString();
 
@@ -331,6 +331,116 @@ module.exports.verifyEmail = async (req, res) => {
   }
 };
 
+module.exports.sendContactVerification = async (req, res) => {
+  try {
+    let { contactNo } = req.allParams();
+    const verificationCode = generateRandomNumber(6);
+
+    const userId = get(req, 'user.userId', '');
+
+    const loggedInUser = await User.findOne({ _id: userId });
+
+    if (loggedInUser.contactVerified) {
+      return res.error('CONTACT_VERIFICATION_EXIST');
+    }
+
+    loggedInUser.lastMessageSentOn = new Date().toISOString();
+    loggedInUser.contactOtp = verificationCode;
+    loggedInUser.contactNo = contactNo;
+    loggedInUser.save();
+
+    let message = {
+      body: textMessage(loggedInUser.fullName, loggedInUser.email, verificationCode),
+      from: TWILIO.PHONE,
+      to: '+919000000000', // TODO: Change to original contact no
+    };
+
+    await twilioClient.messages.create(message);
+
+    return res.ok({ message: 'CONTACT_VERIFICATION_INITIATED', data: {} });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.resendContactVerification = async (req, res) => {
+  try {
+    const userId = get(req, 'user.userId', '');
+
+    const user = await User.findOne({ _id: userId });
+
+    if (user.contactVerified) {
+      return res.error('CONTACT_VERIFICATION_EXIST');
+    }
+
+    if (!user.contactOtp) {
+      return res.error('CONTACT_VERIFICATION_NOT_EXIST');
+    }
+
+    const limitExceeded =
+      user.lastMessageSentOn &&
+      user.lastMessageSentOn >=
+      moment()
+        .subtract(3, 'm')
+        .toDate()
+        .toISOString();
+
+    if (limitExceeded) {
+      return res.error('RESEND_OTP_LIMIT_EXCEEDED');
+    }
+
+    user.lastMessageSentOn = new Date().toISOString();
+    user.save();
+
+    let message = {
+      body: textMessage(user.fullName, user.email, user.contactOtp),
+      from: TWILIO.PHONE,
+      to: '+919000000000', // TODO: Change to contact no later
+    };
+
+    await twilioClient.messages.create(message);
+
+    return res.ok('CONTACT_VERIFICATION_INITIATED');
+
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.verifyContact = async (req, res) => {
+  try {
+    const { otp } = req.allParams();
+
+    const userId = get(req, 'user.userId', '');
+
+    const user = await User.findOne({ _id: userId });
+
+    if (user.contactVerified) {
+      return res.error('CONTACT_VERIFICATION_EXIST');
+    }
+
+    if (!user.contactOtp) {
+      return res.error('CONTACT_VERIFICATION_NOT_EXIST');
+    }
+
+    if (user.contactOtp !== otp) {
+      return res.error('OTP_VERIFICATION_FAILED');
+    }
+
+    if (user.contactOtp === otp && !user.contactVerified) {
+      user.contactVerified = true;
+      user.lastMessageSentOn = '';
+      user.contactOtp = '';
+      user.save();
+      return res.ok('OTP_VERIFICATION_SUCCESS');
+    }
+
+    return res.error('OTP_VERIFICATION_FAILED');
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
 module.exports.resetPassword = async (req, res) => {
   try {
     let { email, token, newPassword, confirmPassword } = req.allParams();
@@ -526,7 +636,7 @@ module.exports.sms = async (req, res) => {
 
     // const razorPayCustomer = await razorPayInstance.customers.create(payload);
 
-    // const success = await twilioClient.messages.create(payload);
+    const success = await twilioClient.messages.create(payload);
 
     // {
     //   "id": "cust_IIHBr2RHTMWmuc",
@@ -568,3 +678,7 @@ module.exports.sms = async (req, res) => {
     return res.internalServerError(e);
   }
 };
+
+function textMessage(name, email, code) {
+  return `Hi ${name ? name : email.split('@')[0]}, Pageaters verification code: ${code}`;
+}

@@ -26,6 +26,7 @@ const schema = new Schema(
     emailVerified: { type: Boolean, default: false },
 
     contactVerified: { type: Boolean, default: false },
+    lastMessageSentOn: { type: String, default: '' },
     contactOtp: { type: String, default: '' },
 
     forgotPasswordToken: { type: String, default: '' },

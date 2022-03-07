@@ -45,7 +45,7 @@ module.exports.create = async (req, res) => {
   try {
     let { title, tagline, author, description, tags, language, pages, readingLevel, version, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, bestSeller, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
 
-    let bookId = `BK-${generateRandomNumber()}`;
+    let bookId = `BK-${generateRandomNumber(10)}`;
     const payload = {
       bookId,
       title, tagline, author, description, tags,

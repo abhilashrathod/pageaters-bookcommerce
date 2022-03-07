@@ -10,6 +10,7 @@ const requestValidator = require('../middlewares/requestValidator.middleware');
 
 router.get('/getById/:id', permissionValidator(USER_ROLES.USER), controller.getById);
 router.get('/getByUniqueId/:uniqueId', permissionValidator(USER_ROLES.USER), controller.getByUniqueId);
+router.get('/list', permissionValidator(USER_ROLES.USER), controller.getAllByUser);
 
 router.post('/create', permissionValidator(USER_ROLES.USER), controller.create);
 router.post('/attempt', permissionValidator(USER_ROLES.USER), controller.attempt);

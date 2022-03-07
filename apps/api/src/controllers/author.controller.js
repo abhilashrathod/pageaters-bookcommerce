@@ -32,7 +32,7 @@ module.exports.create = async (req, res) => {
   try {
     let { name, intro, avatar, books } = req.allParams();
 
-    let authorId = `AU-${generateRandomNumber()}`;
+    let authorId = `AU-${generateRandomNumber(10)}`;
     const payload = {
       authorId,
       name, intro,
