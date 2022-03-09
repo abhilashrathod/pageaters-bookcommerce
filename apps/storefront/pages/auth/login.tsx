@@ -6,42 +6,127 @@ import {useNotifications} from '@mantine/notifications';
 import axios from "axios";
 import Link from "next/link";
 import cookie from 'js-cookie';
-
-import PageWrapper from "../../components/elements/PageWrapper";
 import AppTextInput from "../../components/form-controls/AppTextInput";
 
-import {ACCENT_COLOR, AUTH_COOKIE, LIGHTER_PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variables";
+import {
+  ACCENT_COLOR,
+  AUTH_COOKIE,
+  LG,
+  LIGHTER_PRIMARY_COLOR,
+  MD,
+  PRIMARY_COLOR,
+  SECONDARY_COLOR,
+  SM
+} from "../../core/_variables";
 import {useUser} from "../../contexts/user.context";
 import {useRouter} from "next/router";
+import {getAssetImage} from "../../core/_imageRendererHelper";
+import {Divider} from "@mantine/core";
+import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
 
 interface Props {
 }
 
-const AuthPageHeading = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  margin: 1rem 0 3rem 0;
+
+const RegisterPage = styled.div`
+  min-height: 100vh;
+  height: auto;
   
-  h2 {
-    font-size: 3rem;
-    letter-spacing: -1px;
+  @media screen and (max-width: ${LG - 1}px) and (min-width: ${MD - 1}px) {
+    min-height: auto;
   }
   
-  h5 {
-    color: ${LIGHTER_PRIMARY_COLOR};
-    font-size: 1.5rem;
+  @media screen and (max-width: ${MD - 1}px) {
+    min-height: 100vh;
+  }
+`;
+
+const ContentSpace = styled.div`
+  padding: 7.5rem 5rem 7.5rem 5.714rem;
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  justify-content: center;
+  
+  @media screen and (max-width: ${LG - 1}px) and (min-width: ${MD - 1}px) {
+    padding: 2.5rem;
+    height: 70vh;
+  }
+  
+  @media screen and (max-width: ${MD - 1}px) {
+    padding: 2.5rem;
+    height: auto;
+  }
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    padding: 1rem;
+    height: auto;
+  }
+`;
+
+const HeroSpace = styled.div`
+  display: flex;
+  min-height: 100%;
+  align-items: stretch;
+  
+  @media screen and (max-width: ${MD - 1}px) {
+    display: none;
+  }
+`;
+
+const GradientSpace = styled.div`
+  
+  min-height: 100%;
+
+  background: hsla(0, 0%, 0%, 1);
+  background: linear-gradient(135deg, hsla(0, 0%, 0%, 1) 0%, hsla(0, 0%, 28%, 1) 65%, hsla(0, 0%, 29%, 1) 100%);
+  background: -moz-linear-gradient(135deg, hsla(0, 0%, 0%, 1) 0%, hsla(0, 0%, 28%, 1) 65%, hsla(0, 0%, 29%, 1) 100%);
+  background: -webkit-linear-gradient(135deg, hsla(0, 0%, 0%, 1) 0%, hsla(0, 0%, 28%, 1) 65%, hsla(0, 0%, 29%, 1) 100%);
+  filter: progid: DXImageTransform.Microsoft.gradient( startColorstr="#000000", endColorstr="#474747", GradientType=1 );
+  
+  height: 25vh;
+  display:none; 
+  
+  @media screen and (max-width: ${MD - 1}px) {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1rem 2.5rem;    
+  }
+  
+  @media screen and (max-width: ${SM - 1}px) {    
+    padding: 1rem;
+  }
+`;
+
+const HeroImage = styled.img`
+  height: 100vh;
+  object-fit: cover;
+  width: 100%;
+  object-position: center center;
+  
+  @media screen and (max-width: ${LG - 1}px) and (min-width: ${MD - 1}px) {
+   height: 70vh;
+  }
+  
+  @media screen and (max-width: ${MD - 1}px) {
+    height: 40vh;
+  }
+`;
+
+const ContentTitles = styled.div`
+  margin-bottom: 2rem;
+  
+  @media screen and (max-width: ${MD - 1}px) {
+    display:none;
   }
 `;
 
 const LoginButton = styled.button`
   color: ${SECONDARY_COLOR};
-  background: ${LIGHTER_PRIMARY_COLOR};
+  background: ${ACCENT_COLOR};
   font-size: 1.2rem;
-  line-height: 20px;
-  color: #fff;
-  background: #222;
+  line-height: 1.486rem;
   padding: 14px 24px;
   border-radius: 0.5rem;
   margin-bottom: 1.2rem;
@@ -77,6 +162,10 @@ const Login: React.FC<Props> = () => {
     },
   });
 
+  function renderImageSize(i: string, w: number, h: number) {
+    return getAssetImage(i, {height: h, width: w, fit: 'cover'});
+  }
+
   function handleSubmit(values: any) {
     axios.post(`/auth/login`, values, {withCredentials: true})
         .then(({data}) => {
@@ -96,42 +185,65 @@ const Login: React.FC<Props> = () => {
 
 
   return (
-      <PageWrapper>
-        <div className="custom-container">
-          <div className="row">
-            <div className="col-xxl-6 col-xl-6 col-lg-8 col-md-8 col-12" style={{margin: '0 auto'}}>
-              <AuthPageHeading>
-                <h2>Glad to have you back!</h2>
-                <h5>Please enter your details to login</h5>
-              </AuthPageHeading>
-            </div>
-            <div className="clearfix"></div>
-            <div className="col-xxl-4 col-xl-4 col-lg-8 col-md-8 col-12" style={{margin: '0 auto'}}>
-              <form onSubmit={form.onSubmit(handleSubmit)}>
-                <AppTextInput id={'email'}
-                              required={true}
-                              label={'Email'}
-                              name={'email'}
-                              type={'email'}
-                              {...form.getInputProps('email')}/>
-                <AppTextInput id={'password'}
-                              required={true}
-                              label={'Password'}
-                              name={'password'}
-                              type={'password'}
-                              {...form.getInputProps('password')}/>
-                <p style={{marginBottom: '1.25rem'}}>
-                  <Link href={`/auth/forgot-password`}><a>Forgot Password?</a></Link>
-                </p>
-                <LoginButton type="submit">Submit</LoginButton>
-              </form>
-              <hr/>
-              <h5 style={{textAlign: 'center'}}>New to Pageaters?</h5>
-              <LoginButton style={{backgroundColor: `${ACCENT_COLOR}`}} type="button">Create Account</LoginButton>
+      <>
+        <RegisterPage>
+          <div className="container-fluid g-0">
+            <div className="row g-0">
+              <div
+                  className="order-last order-lg-first order-xl-first order-xxl-first col-12 col-lg-6 col-xl-5 col-xxl-5">
+                <ContentSpace>
+                  <ContentTitles>
+                    <h1 className="display-1">Glad to have you back!</h1>
+                    <h5 style={{color: LIGHTER_PRIMARY_COLOR}}>Login to access account and shopping.</h5>
+                  </ContentTitles>
+
+                  <form onSubmit={form.onSubmit(handleSubmit)}>
+                    <AppTextInput id={'email'}
+                                  required={true}
+                                  label={'Email'}
+                                  name={'email'}
+                                  type={'email'}
+                                  {...form.getInputProps('email')}/>
+                    <AppTextInput id={'password'}
+                                  required={true}
+                                  label={'Password'}
+                                  name={'password'}
+                                  type={'password'}
+                                  {...form.getInputProps('password')}/>
+                    <p style={{marginBottom: '1.25rem'}}>
+                      <Link href={`/auth/forgot-password`}><a>Forgot Password?</a></Link>
+                    </p>
+                    <LoginButton type="submit">Login</LoginButton>
+                  </form>
+                  <Divider my="xs" label="OR" labelPosition="center"/>
+                  <h5 style={{textAlign: 'center'}}>New to Pageaters?</h5>
+                  <AppButton styles={{width: '33%', margin: '0 auto'}} variant={ButtonVariants.Secondary} size={ButtonSizes.Small} onClick={() => router.push(`/auth/register`)} type="button">Create Account</AppButton>
+                </ContentSpace>
+              </div>
+              <div className="order-first order-lg-last order-xl-last order-xxl-last col-12 col-lg-6 col-xl-7 col-xxl-7">
+                <HeroSpace>
+                  <picture style={{width: '100%'}}>
+                    <source media={`(max-width: ${SM - 1}px)`} type="image/jpeg"
+                            srcSet={renderImageSize('happy-reader-with-stack-of-books.jpg', 375, 450)} height={450}
+                            width={375}/>
+                    <source media={`(max-width: ${MD - 1}px)`} type="image/jpeg"
+                            srcSet={renderImageSize('happy-reader-with-stack-of-books.jpg', 768, 600)} height={768}
+                            width={600}/>
+                    <source media={`(max-width: ${LG - 1}px)`} type="image/jpeg"
+                            srcSet={renderImageSize('happy-reader-with-stack-of-books.jpg', 1024, 800)} height={800}
+                            width={1024}/>
+                    <HeroImage src={renderImageSize('happy-reader-with-stack-of-books.jpg', 1920, 1280)}
+                               alt="login-banner"/>
+                  </picture>
+                </HeroSpace>
+                <GradientSpace>
+                  <h1 className={'display-1'} style={{color: SECONDARY_COLOR}}>Glad to have you back!</h1>
+                </GradientSpace>
+              </div>
             </div>
           </div>
-        </div>
-      </PageWrapper>
+        </RegisterPage>
+      </>
   )
 };
 

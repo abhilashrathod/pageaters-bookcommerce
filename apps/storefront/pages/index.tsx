@@ -297,7 +297,7 @@ const Home: NextPage = (props: any) => {
 
 Home.getInitialProps = () => {
   const HERO_BANNER = {
-    poster: 'https://d2jesamohckae0.cloudfront.net/eyJidWNrZXQiOiJwYWdlYXRlcnMtYXNzZXRzIiwia2V5IjoiY2FzdWFsLXdvbWFuLXJlYWRpbmctYm9vay13aGlsZS1kcmlua2luZy1taW5fZTF6bXVoLmpwZyIsImVkaXRzIjp7InJlc2l6ZSI6eyJoZWlnaHQiOjEyODAsIndpZHRoIjoxOTIwLCJmaXQiOiJjb3ZlciJ9fX0=',
+    poster: 'girl-is-reading-book-cafe.jpg',
     title: 'Incentive Program'
   };
 

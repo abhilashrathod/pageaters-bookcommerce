@@ -45,6 +45,34 @@ body {
   color: $primary;
 }
 
+/* Spacing
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+button,
+.button {
+  margin: 0;
+  padding: 0;
+}
+
+input,
+textarea,
+select,
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+pre,
+blockquote,
+dl,
+figure,
+table,
+p,
+ul,
+ol,
+form {
+  margin: 0;
+  padding: 0;
+}
 
 /* Typography
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
@@ -120,6 +148,14 @@ h6 {
 
 p {
   margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+small {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 0.75rem;
+  color: $secondary-black;
 }
 
 /* Links
@@ -145,6 +181,7 @@ input[type="submit"],
 input[type="reset"],
 input[type="button"] {
   display: inline-flex;
+  justify-content: center;
   font-weight: 600;
   line-height: 1.429rem;
   color: $primary;
@@ -161,50 +198,6 @@ input[type="button"] {
 
 /* Forms
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
-input,
-input[type="email"],
-input[type="number"],
-input[type="search"],
-input[type="text"],
-input[type="tel"],
-input[type="url"],
-input[type="password"],
-textarea,
-select {
-  ::placeholder {
-    color: $secondary-black;
-  }
-  ::-webkit-input-placeholder { /* Chrome/Opera/Safari */
-    color: $secondary-black;
-  }
-  ::-moz-placeholder { /* Firefox 19+ */
-    color: $secondary-black;
-  }
-  :-ms-input-placeholder { /* IE 10+ */
-    color: $secondary-black;
-  }
-  :-moz-placeholder { /* Firefox 18- */
-    color: $secondary-black;
-  }
-}
-
-::-webkit-input-placeholder {
-  color:red;
-}
-
-::-moz-placeholder {
-  color:red;
-}
-
-::-ms-placeholder {
-  color:red;
-}
-
-::placeholder {
-  color:red;
-}
-
-
 .form-element {
   height: 38px;
   padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
@@ -331,36 +324,6 @@ td:first-child {
 th:last-child,
 td:last-child {
   padding-right: 0;
-}
-
-
-/* Spacing
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-button,
-.button {
-  margin: 0;
-  padding: 0;
-}
-
-input,
-textarea,
-select,
-fieldset {
-  margin: 0;
-  padding: 0;
-}
-
-pre,
-blockquote,
-dl,
-figure,
-table,
-p,
-ul,
-ol,
-form {
-  margin: 0;
-  padding: 0;
 }
 
 /* Misc

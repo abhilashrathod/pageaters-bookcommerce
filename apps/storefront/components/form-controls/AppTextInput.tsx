@@ -21,6 +21,7 @@ const AppTextInput: React.FC<Props> = ({id, required, label, name, type, ...rest
         <TextInput
             label={label}
             size="md"
+            id={id}
             type={type}
             styles={{
               input: {

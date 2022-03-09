@@ -1,13 +1,12 @@
 import React from 'react';
 import styled from 'styled-components'
 
-import {useRouter} from "next/router";
-
 import {ACCENT_COLOR, PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variables";
 
 interface Props {
   variant: string;
   size?: string;
+  disabled?: boolean;
   styles?: React.CSSProperties;
   type?: 'button' | 'submit';
   onClick: () => void;
@@ -83,16 +82,14 @@ const MainButton = styled.button`
   box-shadow: 0 2px 10px 0 rgb(0 0 0 / 16%);
 `;
 
-const AppButton: React.FC<Props> = ({variant, size, styles, type, onClick, children}) => {
-  const router = useRouter();
-
+const AppButton: React.FC<Props> = ({variant, size, styles, type, disabled, onClick, children}) => {
   const handleClick = (e: any) => {
     onClick();
   };
 
   return (
       <>
-        <MainButton style={styles} type={type || 'button'} theme={{variant, size}} onClick={handleClick}>
+        <MainButton style={styles} disabled={disabled} type={type || 'button'} theme={{variant, size}} onClick={handleClick}>
           {children}
         </MainButton>
       </>

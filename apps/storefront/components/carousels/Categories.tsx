@@ -8,6 +8,7 @@ import CategoryLandscapeCard from "../cards/CategoryLandscapeCard";
 
 import {MD} from "../../core/_variables";
 import {ICategory} from "../../schemas/category";
+import EmptySectionMessage from "../elements/FailedToLoad";
 
 interface Props {
 }
@@ -57,7 +58,7 @@ const Categories: React.FC<Props> = () => {
     carouselContainer.current.scrollTo({left: (carouselContainer.current.scrollLeft - 500), behavior: 'smooth'});
   }
 
-  if (error) return <div>failed to load</div>;
+  if (error) return <EmptySectionMessage title={'Failed to Load Categories...'}/>;
   if (!data) return (
       <div className="custom-container">
         <div className="row">

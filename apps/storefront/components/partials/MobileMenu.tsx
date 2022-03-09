@@ -4,6 +4,8 @@ import Link from "next/link";
 import {Icon} from "@iconify/react";
 import {Divider, Menu} from "@mantine/core";
 import {MD} from "../../core/_variables";
+import {useUser} from "../../contexts/user.context";
+import {useRouter} from "next/router";
 
 interface Props {
 }
@@ -50,6 +52,13 @@ const LinkName = styled.span`
 `;
 
 const AppMobileMenu: React.FC<Props> = () => {
+  const {user} = useUser();
+  const router = useRouter();
+
+  function navigateToUrl(url: string) {
+    router.push(url);
+  }
+
   return (
       <>
         <MobileMenu>
@@ -62,24 +71,33 @@ const AppMobileMenu: React.FC<Props> = () => {
                 </LinkItem>
               </Link>
             </MobileMenuListItem>
+            {
+              user && (
+                <MobileMenuListItem>
+                  <Link href={'/account/wishlist'}>
+                    <LinkItem>
+                      <Icon icon={'bx:bx-heart'} width={30} height={30}/>
+                      <LinkName>Wishlist</LinkName>
+                    </LinkItem>
+                  </Link>
+                </MobileMenuListItem>
+              )
+            }
+            {
+              user && (
+                <MobileMenuListItem>
+                  <Link href={'/account/orders'}>
+                    <LinkItem>
+                      <Icon icon={'ph:shopping-bag-bold'} width={30} height={30}/>
+                      <LinkName>Orders</LinkName>
+                    </LinkItem>
+                  </Link>
+                </MobileMenuListItem>
+              )
+            }
+
             <MobileMenuListItem>
-              <Link href={'/'}>
-                <LinkItem>
-                  <Icon icon={'bx:bx-heart'} width={30} height={30}/>
-                  <LinkName>Wishlist</LinkName>
-                </LinkItem>
-              </Link>
-            </MobileMenuListItem>
-            <MobileMenuListItem>
-              <Link href={'/'}>
-                <LinkItem>
-                  <Icon icon={'ph:shopping-bag-bold'} width={30} height={30}/>
-                  <LinkName>Orders</LinkName>
-                </LinkItem>
-              </Link>
-            </MobileMenuListItem>
-            <MobileMenuListItem>
-              <Link href={'/'}>
+              <Link href={'/cart'}>
                 <LinkItem>
                   <Icon icon={'bx:bx-cart'} width={30} height={30}/>
                   <LinkName>Cart</LinkName>
@@ -90,12 +108,10 @@ const AppMobileMenu: React.FC<Props> = () => {
               <Menu withArrow placement={'end'} control={<LinkItem><Icon icon={'bx:grid-alt'} width={30}
                                                                          height={30}/><LinkName>Store</LinkName></LinkItem>}>
                 <Menu.Label>Explore Store</Menu.Label>
-                <Menu.Item icon={<Icon icon={'ic:twotone-discount'} width={20} height={20}/>}>Deals &
-                  Discounts</Menu.Item>
-                <Menu.Item icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
-                <Menu.Item icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20}
-                                       height={20}/>}>Collections</Menu.Item>
-                <Menu.Item icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
+                <Menu.Item onClick={() => navigateToUrl('/deals')} icon={<Icon icon={'ic:twotone-discount'} width={20} height={20}/>}>Deals & Discounts</Menu.Item>
+                <Menu.Item onClick={() => navigateToUrl('/categories')} icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
+                <Menu.Item onClick={() => navigateToUrl('/collections')} icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20} height={20}/>}>Collections</Menu.Item>
+                <Menu.Item onClick={() => navigateToUrl('/bundles')} icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
 
                 <Divider/>
                 <Menu.Label>Help</Menu.Label>

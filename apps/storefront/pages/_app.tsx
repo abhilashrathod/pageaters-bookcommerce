@@ -15,6 +15,7 @@ import AppFooter from "../components/partials/Footer";
 import AppMobileMenu from "../components/partials/MobileMenu";
 // User Context
 import {UserProvider} from "../contexts/user.context";
+import {ACCENT_COLOR} from "../core/_variables";
 
 Router.events.on("routeChangeStart", nProgress.start);
 Router.events.on("routeChangeError", nProgress.done);

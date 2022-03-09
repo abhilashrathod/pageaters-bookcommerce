@@ -99,7 +99,7 @@ export const BUNDLE_SORT_OPTIONS = [
  * FULL VIEW PAGES
  */
 
-export const FULL_PAGE = ['/', '/auth/register'];
+export const FULL_PAGE = ['/', '/auth/register', '/auth/login'];
 
 /***
  *

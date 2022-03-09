@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from "styled-components";
 
 import AppButton from "../form-controls/Button";
@@ -6,6 +6,7 @@ import AppButton from "../form-controls/Button";
 import {LG, MD, SM} from "../../core/_variables";
 import {IBanner} from "../../schemas/banner";
 import {useRouter} from "next/router";
+import {getAssetImage} from "../../core/_imageRendererHelper";
 
 interface Props {
   banner: IBanner;
@@ -13,7 +14,7 @@ interface Props {
 
 const Hero = styled.section`
   background-repeat: no-repeat;
-  background-position: center center;
+  background-position: center right;
   background-size: cover;
 
   display: flex;
@@ -75,11 +76,9 @@ const HeroTitle = styled.h2`
 const HeroBanner: React.FC<Props> = ({banner}) => {
   const router = useRouter();
 
-  // const [poster, setPoster] = useState('');
-  //
-  // useEffect(() => {
-  //   setPoster(getAssetImage(banner.poster, {height: 1280, width: 1920, fit: 'cover'}));
-  // }, []);
+  function renderBanner(image: string) {
+    return getAssetImage(image, {height: 1280, width: 1920, fit: 'cover'})
+  }
 
   function handleNavigation() {
     // @ts-ignore
@@ -87,7 +86,7 @@ const HeroBanner: React.FC<Props> = ({banner}) => {
   }
 
   return (
-      <Hero style={{backgroundImage: `url(${banner.poster})`}}>
+      <Hero style={{backgroundImage: `url(${renderBanner(banner.poster)})`}}>
         <div className="custom-container" style={{zIndex: 1}}>
           <div className="row">
             <div className="col-xxl-4 col-lg-6 col-12">

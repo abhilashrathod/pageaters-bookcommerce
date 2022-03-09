@@ -7,7 +7,7 @@ $span-line-height: 24px;
   margin-bottom: 0;
 
   @include respond-below(sm) {
-    font-size: 1.825rem;
+    font-size: 2rem;
     letter-spacing: -1px;
   }
 }

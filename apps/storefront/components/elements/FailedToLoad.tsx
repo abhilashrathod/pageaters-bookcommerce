@@ -10,7 +10,7 @@ const EmptySectionMessage: React.FC<Props> = ({title}) => {
       <div className="custom-container">
         <div className="row">
           <div className="col">
-            <h2>{title}</h2>
+            <h2 className={'display-1'}>{title}</h2>
           </div>
         </div>
       </div>

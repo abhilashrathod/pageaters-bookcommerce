@@ -139,7 +139,7 @@ const ProfileSection = styled.li``;
 const CartSection = styled.li`
   display: none !important;
   
-  @media screen and (min-width: ${LG - 1}px) {      
+  @media screen and (min-width: ${MD - 1}px) {      
     display: block !important; 
   }
 `;
@@ -147,7 +147,7 @@ const CartSection = styled.li`
 const HamburgerSection = styled.li`
   display: none !important;
   
-  @media screen and (min-width: ${LG - 1}px) {      
+  @media screen and (min-width: ${MD - 1}px) {      
     display: block !important; 
   }  
 `;
@@ -221,10 +221,10 @@ const AppHeader: React.FC<Props> = () => {
   const {data, error} = useSWR({
     url: `${process.env.NEXT_PUBLIC_BASE_PATH}/store-books/search`,
     args: {q: searchDebounced}
-  });
+  }, {revalidateOnFocus : false});
 
   useEffect(() => {
-    const currentPath = router.asPath;
+    const currentPath = router.pathname;
     if (FULL_PAGE.includes(currentPath)) {
       setTransparent(true);
     } else {
@@ -246,6 +246,10 @@ const AppHeader: React.FC<Props> = () => {
     router.push(`/books/${e.id}`);
   }
 
+  function navigateToUrl(url: string) {
+    router.push(url);
+  }
+
   return (
       <>
         <AppHeaderSpace id={'header'}
@@ -258,9 +262,7 @@ const AppHeader: React.FC<Props> = () => {
             </LogoSpace>
             <BackSpace>
               <AppSmallIconButton onClick={() => router.back()}>
-                <a>
-                  <Icon icon="bx:bx-chevron-left-circle" height={30} width={30}/>
-                </a>
+                <Icon icon="bx:bx-chevron-left-circle" height={30} width={30}/>
               </AppSmallIconButton>
             </BackSpace>
             <Nav>
@@ -282,13 +284,10 @@ const AppHeader: React.FC<Props> = () => {
                   <Menu withArrow placement={'end'} control={<AppSmallIconButton><Icon icon={'bx:grid-alt'} width={30}
                                                                                        height={30}/></AppSmallIconButton>}>
                     <Menu.Label>Explore Store</Menu.Label>
-                    <Menu.Item icon={<Icon icon={'ic:twotone-discount'} width={20} height={20}/>}>Deals &
-                      Discounts</Menu.Item>
-                    <Menu.Item icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
-                    <Menu.Item icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20}
-                                           height={20}/>}>Collections</Menu.Item>
-                    <Menu.Item icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
-
+                    <Menu.Item onClick={() => navigateToUrl('/deals')} icon={<Icon icon={'ic:twotone-discount'} width={20} height={20}/>}>Deals & Discounts</Menu.Item>
+                    <Menu.Item onClick={() => navigateToUrl('/categories')} icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
+                    <Menu.Item onClick={() => navigateToUrl('/collections')} icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20} height={20}/>}>Collections</Menu.Item>
+                    <Menu.Item onClick={() => navigateToUrl('/bundles')} icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
                     <Divider/>
                     <Menu.Label>Help</Menu.Label>
                     <Menu.Item>FAQs</Menu.Item>
@@ -306,21 +305,16 @@ const AppHeader: React.FC<Props> = () => {
                                   control={<AppSmallIconButton><Icon icon={'bx:bx-user-circle'} width={30}
                                                                      height={30}/></AppSmallIconButton>}>
                               <Menu.Label>Hello, {user ? user.fullName : 'Reader'}!</Menu.Label>
-                              <Menu.Item onClick={() => router.push('/account/orders')}
-                                         icon={<Icon icon={'ph:shopping-bag-bold'} width={20}
-                                                     height={20}/>}>Orders</Menu.Item>
-                              <Menu.Item onClick={() => router.push('/account/orders')}
-                                         icon={<Icon icon={'bx:bx-heart'} width={20} height={20}/>}>Wishlist</Menu.Item>
-                              <Menu.Item onClick={() => router.push('/account/orders')}
-                                         icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
-                              <Menu.Item onClick={logout}
-                                         icon={<Icon icon={'bx:log-out'} width={20} height={20}/>}>Logout</Menu.Item>
+                              <Menu.Item onClick={() => navigateToUrl('/account/orders')} icon={<Icon icon={'ph:shopping-bag-bold'} width={20} height={20}/>}>Orders</Menu.Item>
+                              <Menu.Item onClick={() => navigateToUrl('/account/wishlist')} icon={<Icon icon={'bx:bx-heart'} width={20} height={20}/>}>Wishlist</Menu.Item>
+                              <Menu.Item onClick={() => navigateToUrl('/account')} icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
+                              <Menu.Item onClick={logout} icon={<Icon icon={'bx:log-out'} width={20} height={20}/>}>Logout</Menu.Item>
                             </Menu>
                         )
                   }
                 </ProfileSection>
                 <CartSection>
-                  <AppSmallIconButton>
+                  <AppSmallIconButton onClick={() => navigateToUrl('/cart')}>
                     <Icon icon={'bx:bx-cart'} width={30} height={30}/>
                   </AppSmallIconButton>
                 </CartSection>
