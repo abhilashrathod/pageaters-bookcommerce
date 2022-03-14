@@ -2,7 +2,6 @@ const fs = require('fs');
 const { Schema, model } = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 
-const { API_URL } = require('./../appConfig');
 const { hashString, encrypt, generateRandomString, decrypt } = require('./../helpers/encryption.helper');
 
 const { enums, models } = require('./../constants');
@@ -105,6 +104,9 @@ class User {
 
     const user = await this.findOne({ email: tokenData.email, verifyEmailToken: { $ne: '' }, isDeleted: false });
 
+    console.log("user", JSON.stringify(user));
+    console.log("tokenData", JSON.stringify(tokenData));
+
     if (!user) {
       return { success: false, message: 'INVALID_TOKEN', helper: 'USER_NOT_FOUND' };
     } else if (user._id.toString() !== tokenData.userId) {
@@ -187,7 +189,7 @@ class User {
     this.salt = generateRandomString(16);
     this.password = hashString(password, this.salt);
     this.forgotPasswordToken = '';
-    this.allowAuthTokenGeneratedAfter = new Date().toISOString();
+    this.lastForgotPasswordSentOn = '';
     this.lastPasswordSetAt = new Date().toISOString();
 
     await this.save();

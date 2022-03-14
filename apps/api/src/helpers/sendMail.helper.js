@@ -25,7 +25,7 @@ module.exports.sendMail = async ({ to, subject, body, emailModule = '' }) => {
 
       resolve();
     } catch (e) {
-      console.log(colors.red(e));
+      console.log(colors.red( JSON.stringify(e)));
       reject();
     }
   });

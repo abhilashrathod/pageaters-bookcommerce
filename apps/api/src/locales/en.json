@@ -87,7 +87,6 @@
 	"RESEND_OTP_LIMIT_EXCEEDED": "Resend OTP limit exceeded. Please try again after 3 minutes",
 	"OTP_VERIFICATION_FAILED": "OTP information is invalid. Please try again.",
 	"OTP_VERIFICATION_SUCCESS": "Great, your contact info is successfully verified!",
-
 	"BOOK_LIST_SUCCESS": "All book info listed",
 	"BOOK_NOT_EXIST": "Book doesn't exist",
 	"BOOK_CREATE_SUCCESS": "New Book Created",
@@ -186,18 +185,18 @@
 	"QUANTITY_LIMIT_BUNDLE": "A Reader can only checkout maximum 1 quantity per bundle",
 	"BUNDLE_BOOKS_ALREADY_PRESENT": "QUANTITY LIMIT: One of the bundled books is already present in the cart.",
 	"INVALID_ID": "ID is not valid",
-
 	"STORE_DEAL_LIST_SUCCESS": "Store Deal list success",
 	"STORE_DEAL_NOT_EXIST": "Store Deal doesn't exist",
 	"STORE_DEAL_CREATE_SUCCESS": "New Store Deal Created",
 	"STORE_DEAL_UPDATE_SUCCESS": "Store Deal Information Updated",
 	"STORE_DEAL_SEARCH_SUCCESS": "Store Deal Search Successful",
 	"STORE_DEAL_DELETE_SUCCESS": "Store Deal Deleted Successfully",
-
 	"PRODUCT_SET_LIST_SUCCESS": "Product Set list success",
 	"PRODUCT_SET_NOT_EXIST": "Product Set doesn't exist",
 	"PRODUCT_SET_CREATE_SUCCESS": "New Product Set Created",
 	"PRODUCT_SET_UPDATE_SUCCESS": "Product Set Information Updated",
 	"PRODUCT_SET_SEARCH_SUCCESS": "Product Set Search Successful",
-	"PRODUCT_SET_DELETE_SUCCESS": "Product Set Deleted Successfully"
+	"PRODUCT_SET_DELETE_SUCCESS": "Product Set Deleted Successfully",
+	"FORGOT_PASSWORD_LIMIT_EXCEEDED": "Reset Password request limit reached. Please try again after few minutes",
+	"\"token\" is not allowed": "\"token\" is not allowed"
 }

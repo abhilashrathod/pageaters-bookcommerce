@@ -61,7 +61,14 @@ module.exports.verifyForgotPasswordToken = Joi.object({
 });
 
 module.exports.updateProfile = Joi.object({
-  fullName
+  fullName,
+  contactNo: Joi.string()
+    .length(10)
+    .regex(/^\d+$/)
+    .allow('')
+    .trim()
+    .description('Contact No')
+    .error(new Error('INVALID_PHONE'))
 });
 
 module.exports.resendVerificationEmail = Joi.object({

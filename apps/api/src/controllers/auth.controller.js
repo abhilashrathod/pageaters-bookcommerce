@@ -63,15 +63,15 @@ module.exports.register = async (req, res) => {
     // const refreshToken = generateRefreshToken(user, ipAddress);
 
     await AccessTokens.create(payload);
-    const profile = await User.getProfile(user._id); // TODO: Improvement could be made
+    // const profile = await User.getProfile(user._id); // TODO: Improvement could be made
 
     sendMailQueue.add({
       emailModule: 'REGISTRATION',
       to: user.email,
-      subject: 'Welcome to Pageaters!',
+      subject: 'Pageaters Account - Greetings from Pageaters!',
       data: {
-        FULL_NAME: fullName,
-        VERIFICATION_TOKEN: verifyToken,
+        FULL_NAME: returnAddressName('', user.email),
+        LINK: `${HOST}/auth/verify?token=${verifyToken}&email=${encodeURIComponent(user.email)}`,
       },
     });
 
@@ -84,7 +84,7 @@ module.exports.register = async (req, res) => {
     // Attach cart cookie for shopping cart
     res.cookie(enums.TOKEN_ID.CART_COOKIE, newUserCart._id, CART_COOKIE_OPTIONS);
 
-    return res.ok({ message: 'REGISTRATION_SUCCESS', data: profile });
+    return res.ok({ message: 'REGISTRATION_SUCCESS', data: {} });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -204,7 +204,8 @@ module.exports.logout = async (req, res) => {
 
 module.exports.adminRegister = async (req, res) => {
   try {
-    let { email, password, fullName, role } = req.allParams();
+    let { email, password, fullName } = req.allParams();
+    const ipAddress = req.ip;
 
     const isEmailAvailable = await User.isEmailAvailable(email);
 
@@ -212,17 +213,18 @@ module.exports.adminRegister = async (req, res) => {
       return res.error('EMAIL_UNAVAILABLE');
     }
 
-    const user = await User.create({ email, fullName, role });
+    const user = await User.create({ email, fullName, role: enums.USER_ROLES.ADMIN, emailVerified: true, contactVerified: true });
 
     await user.setPassword(password);
 
-    // const token = await user.generateVerifyEmailToken();
+    const { payload, token } = generateJwtToken(user, ipAddress);
 
-    const token = user.generateAuthToken(user._id, user.email, user.role);
+    await AccessTokens.create(payload);
 
-    const profile = await User.getProfile(user._id); // TODO: Improvement could be made
+    // create an access token cookie that will also expires in 7 days
+    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
 
-    return res.ok({ message: 'REGISTRATION_SUCCESS', data: profile });
+    return res.ok({ message: 'REGISTRATION_SUCCESS', data: {} });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -230,7 +232,7 @@ module.exports.adminRegister = async (req, res) => {
 
 module.exports.updateProfile = async (req, res) => {
   try {
-    const { fullName, telephone } = req.allParams();
+    const { fullName, contactNo } = req.allParams();
     let { user } = req;
 
     const fieldsToUpdate = {};
@@ -239,14 +241,13 @@ module.exports.updateProfile = async (req, res) => {
       fieldsToUpdate.fullName = fullName;
     }
 
-    if (telephone) {
-      fieldsToUpdate.telephone = telephone;
+    if (contactNo) {
+      fieldsToUpdate.contactNo = contactNo;
     }
 
-    // update user
-    await User.findByIdAndUpdate(user._id, fieldsToUpdate);
+    await User.findOneAndUpdate({_id: user.userId}, {$set: {...fieldsToUpdate}});
 
-    user = await User.getProfile(user._id);
+    user = await User.getProfile(user.userId);
 
     return res.ok({ message: 'PROFILE_UPDATED', data: user });
   } catch (e) {
@@ -281,7 +282,7 @@ module.exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.allParams();
 
-    const user = await User.findOne({ email, status: 'ACTIVE', isDeleted: false });
+    const user = await User.findOne({ email, isDeleted: false });
 
     if (!user) {
       return res.error('NO_USER_FOUND_FOR_THIS_EMAIL');
@@ -291,7 +292,7 @@ module.exports.forgotPassword = async (req, res) => {
       user.lastForgotPasswordSentOn &&
       user.lastForgotPasswordSentOn >=
       moment()
-        .subtract(30, 'm')
+        .subtract(3, 'm')
         .toDate()
         .toISOString();
 
@@ -304,8 +305,47 @@ module.exports.forgotPassword = async (req, res) => {
     sendMailQueue.add({
       emailModule: 'FORGOT_PASSWORD',
       to: user.email,
+      subject: 'Pageaters Account - Reset Password Requested',
       data: {
-        LINK: `${HOST}/auth/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`,
+        FULL_NAME: returnAddressName(user.fullName, user.email),
+        LINK: `${HOST}/auth/reset?token=${token}&email=${encodeURIComponent(user.email)}`,
+      },
+    });
+
+    return res.ok('FORGOT_PASSWORD_MAIL_SENT');
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.resendForgetPasswordEmail = async (req, res) => {
+  try {
+    const { email } = req.allParams();
+
+    const user = await User.findOne({ email, isDeleted: false });
+
+    if (!user) {
+      return res.error('NO_USER_FOUND_FOR_THIS_EMAIL');
+    }
+
+    const currentTime = moment().subtract(1, 'm').toDate().toISOString();
+
+    const limitExceeded = user.lastForgotPasswordSentOn && user.lastForgotPasswordSentOn >= currentTime;
+
+    if (limitExceeded) {
+      return res.error('FORGOT_PASSWORD_LIMIT_EXCEEDED');
+    }
+
+    user.lastForgotPasswordSentOn = new Date().toISOString();
+    await user.save();
+
+    sendMailQueue.add({
+      emailModule: 'FORGOT_PASSWORD',
+      to: user.email,
+      subject: 'Pageaters Account - Reset Password Requested',
+      data: {
+        FULL_NAME: returnAddressName(user.fullName, user.email),
+        LINK: `${HOST}/auth/reset?token=${user.forgotPasswordToken}&email=${encodeURIComponent(user.email)}`,
       },
     });
 
@@ -326,6 +366,46 @@ module.exports.verifyEmail = async (req, res) => {
     }
 
     return res.ok('EMAIL_VERIFIED');
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.allParams();
+
+    const user = await User.findOne({ email, isDeleted: false });
+
+    if (!user) {
+      return res.error('NO_USER_FOUND_FOR_THIS_EMAIL');
+    }
+
+    const limitExceeded =
+      user.lastverifyEmailSentOn &&
+      user.lastverifyEmailSentOn >=
+      moment()
+        .subtract(1, 'm')
+        .toDate()
+        .toISOString();
+
+    if (limitExceeded) {
+      return res.error('VERIFY_EMAIL_LIMIT_EXCEEDED');
+    }
+
+    const token = await user.generateVerifyEmailToken();
+
+    sendMailQueue.add({
+      emailModule: 'REGISTRATION',
+      to: user.email,
+      subject: 'Pageaters Account - Greetings from Pageaters!',
+      data: {
+        FULL_NAME: returnAddressName('', user.email),
+        LINK: `${HOST}/auth/verify?token=${token}&email=${encodeURIComponent(user.email)}`,
+      },
+    });
+
+    return res.ok();
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -381,7 +461,7 @@ module.exports.resendContactVerification = async (req, res) => {
       user.lastMessageSentOn &&
       user.lastMessageSentOn >=
       moment()
-        .subtract(3, 'm')
+        .subtract(1, 'm')
         .toDate()
         .toISOString();
 
@@ -500,44 +580,6 @@ module.exports.deleteAccount = async (req, res) => {
     await user.save();
 
     return res.ok('ACCOUNT_DELETED');
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-module.exports.resendVerificationEmail = async (req, res) => {
-  try {
-    const { email } = req.allParams();
-
-    const user = await User.findOne({ email, isDeleted: false });
-
-    if (!user) {
-      return res.error('NO_USER_FOUND_FOR_THIS_EMAIL');
-    }
-
-    const limitExceeded =
-      user.lastverifyEmailSentOn &&
-      user.lastverifyEmailSentOn >=
-      moment()
-        .subtract(30, 'm')
-        .toDate()
-        .toISOString();
-
-    if (limitExceeded) {
-      return res.error('VERIFY_EMAIL_LIMIT_EXCEEDED');
-    }
-
-    const token = await user.generateVerifyEmailToken();
-
-    sendMailQueue.add({
-      emailModule: 'REGISTRATION',
-      to: user.email,
-      data: {
-        LINK: `${HOST}/auth/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`,
-      },
-    });
-
-    return res.ok();
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -681,4 +723,8 @@ module.exports.sms = async (req, res) => {
 
 function textMessage(name, email, code) {
   return `Hi ${name ? name : email.split('@')[0]}, Pageaters verification code: ${code}`;
+}
+
+function returnAddressName(name, email) {
+  return `${name ? name : email.split('@')[0]}`;
 }
