@@ -15,6 +15,7 @@ import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-cont
 import {useUser} from "../../contexts/user.context";
 import {getAssetImage} from "../../core/_imageRendererHelper";
 import {ACCENT_COLOR, AUTH_COOKIE, LG, LIGHTER_PRIMARY_COLOR, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
+import Head from "next/head";
 
 interface Props {
 }
@@ -154,17 +155,15 @@ const RegistrationForm = ({onStepChange, onSubmit}: any) => {
           <AppTextInput id={'email'}
                         required={true}
                         label={'Email'}
-                        name={'email'}
                         type={'email'}
                         {...form.getInputProps('email')}/>
           <AppTextInput id={'password'}
                         required={true}
                         label={'Password'}
-                        name={'password'}
                         type={'password'}
                         {...form.getInputProps('password')}/>
           <p style={{marginBottom: '1.25rem'}}>
-            By registering you're agreeing to our <Link href={'/terms'}><a>terms of
+            By registering you&#39;re agreeing to our <Link href={'/terms'}><a>terms of
             use</a></Link> and <Link href={'/terms'}>privacy policy.</Link>
           </p>
           <LoginButton type="submit">Register</LoginButton>
@@ -208,7 +207,6 @@ const PersonalInfoForm = ({onStepChange, onSubmit}: any) => {
         <AppTextInput id={'fullName'}
                       required={true}
                       label={'Full Name'}
-                      name={'fullName'}
                       type={'text'}
                       {...personalDetailsForm.getInputProps('fullName')}/>
         <LoginButton type="submit">Save</LoginButton>
@@ -296,8 +294,7 @@ const ContactForm = ({onStepChange, onSubmit, onVerifySubmit, onResend}: any) =>
               ? <form onSubmit={contactForm.onSubmit(handleSubmit)}>
                 <AppTextInput id={'contactNo'}
                               required={true}
-                              label={'Contact'}
-                              name={'contactNo'}
+                              label={'Contact No'}
                               type={'tel'}
                               {...contactForm.getInputProps('contactNo')}/>
                 <LoginButton type="submit">Save</LoginButton>
@@ -310,7 +307,6 @@ const ContactForm = ({onStepChange, onSubmit, onVerifySubmit, onResend}: any) =>
                 <AppTextInput id={'otp'}
                               required={true}
                               label={'OTP Code (6 Digits)'}
-                              name={'otp'}
                               type={'text'}
                               {...otpForm.getInputProps('otp')}/>
                 <LoginButton type="submit">Verify</LoginButton>
@@ -405,7 +401,7 @@ const Register: React.FC<Props> = () => {
 
   async function handleResend(values: any) {
     try {
-      await axios.post(`/contact/send`, values, {withCredentials: true});
+      await axios.post(`/auth/contact/send`, values, {withCredentials: true});
       // show alert
       notif.showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 3000});
 
@@ -423,7 +419,24 @@ const Register: React.FC<Props> = () => {
     setStep(val);
   }
 
+  function returnCurrentStepTitle() {
+    switch (step) {
+      case 0:
+        return <h6>Step I. Add Credentials</h6>;
+      case 1:
+        return <h6>Step II. Add Personal Info</h6>;
+      case 2:
+        return <h6>Step III. Add Contact Info</h6>;
+      default:
+        return null;
+    }
+  }
+
   return (
+      <>
+      <Head>
+        <title>Sign Up | Pageaters</title>
+      </Head>
       <RegisterPage>
         <div className="container-fluid g-0">
           <div className="row g-0">
@@ -432,9 +445,9 @@ const Register: React.FC<Props> = () => {
               <ContentSpace>
                 <ContentTitles>
                   <h1 className="display-1">
-                    Let's Get You Started
+                    Let&#39;s Get You Started
                   </h1>
-                  <h5 style={{color: LIGHTER_PRIMARY_COLOR}}>Register to shop, it's quick and easy</h5>
+                  <h5 style={{color: LIGHTER_PRIMARY_COLOR}}>Register to shop, it&#39;s quick and easy</h5>
                 </ContentTitles>
 
                 <Stepper style={{margin: '0 0 2rem 0'}} color={'orange'} size={'lg'} active={step}>
@@ -442,6 +455,8 @@ const Register: React.FC<Props> = () => {
                   <Stepper.Step icon={<Icon icon={'ic:twotone-person-add-alt'} width={24} height={24}/>}/>
                   <Stepper.Step icon={<Icon icon={'ic:twotone-perm-phone-msg'} width={24} height={24}/>}/>
                 </Stepper>
+
+                <h5>{returnCurrentStepTitle()}</h5>
 
                 {
                   step === 0 &&
@@ -478,12 +493,13 @@ const Register: React.FC<Props> = () => {
                 </picture>
               </HeroSpace>
               <GradientSpace>
-                <h1 className={'display-1'} style={{color: SECONDARY_COLOR}}>Let's Get You Started</h1>
+                <h1 className={'display-1'} style={{color: SECONDARY_COLOR}}>Let&#39;s Get You Started</h1>
               </GradientSpace>
             </div>
           </div>
         </div>
       </RegisterPage>
+      </>
   )
 };
 

@@ -1,6 +1,10 @@
 import React, {useState} from 'react';
+import Head from "next/head";
+import {useRouter} from "next/router";
 import styled from "styled-components";
 import {parseUrl} from 'query-string';
+import {Divider} from "@mantine/core";
+import {Icon} from "@iconify/react";
 import {useForm} from '@mantine/hooks';
 import {useNotifications} from '@mantine/notifications';
 import axios from "axios";
@@ -8,20 +12,12 @@ import Link from "next/link";
 import cookie from 'js-cookie';
 import AppTextInput from "../../components/form-controls/AppTextInput";
 
-import {
-  ACCENT_COLOR,
-  AUTH_COOKIE,
-  LG,
-  LIGHTER_PRIMARY_COLOR,
-  MD,
-  PRIMARY_COLOR,
-  SECONDARY_COLOR,
-  SM
-} from "../../core/_variables";
+import {ACCENT_COLOR, AUTH_COOKIE, LG, LIGHTER_PRIMARY_COLOR, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
+
 import {useUser} from "../../contexts/user.context";
-import {useRouter} from "next/router";
+
 import {getAssetImage} from "../../core/_imageRendererHelper";
-import {Divider} from "@mantine/core";
+
 import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
 
 interface Props {
@@ -186,6 +182,9 @@ const Login: React.FC<Props> = () => {
 
   return (
       <>
+        <Head>
+          <title>Sign In | Pageaters</title>
+        </Head>
         <RegisterPage>
           <div className="container-fluid g-0">
             <div className="row g-0">
@@ -201,26 +200,30 @@ const Login: React.FC<Props> = () => {
                     <AppTextInput id={'email'}
                                   required={true}
                                   label={'Email'}
-                                  name={'email'}
                                   type={'email'}
                                   {...form.getInputProps('email')}/>
                     <AppTextInput id={'password'}
                                   required={true}
                                   label={'Password'}
-                                  name={'password'}
                                   type={'password'}
                                   {...form.getInputProps('password')}/>
-                    <p style={{marginBottom: '1.25rem'}}>
-                      <Link href={`/auth/forgot-password`}><a>Forgot Password?</a></Link>
-                    </p>
                     <LoginButton type="submit">Login</LoginButton>
+                    <p style={{marginBottom: '1.25rem'}}>
+                      <Link href={`/auth/forgot`}><a style={{
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}>Forgot Password? <Icon icon={'bx:bx-chevron-right'} width={16} height={16}/></a></Link>
+                    </p>
                   </form>
                   <Divider my="xs" label="OR" labelPosition="center"/>
                   <h5 style={{textAlign: 'center'}}>New to Pageaters?</h5>
-                  <AppButton styles={{width: '33%', margin: '0 auto'}} variant={ButtonVariants.Secondary} size={ButtonSizes.Small} onClick={() => router.push(`/auth/register`)} type="button">Create Account</AppButton>
+                  <AppButton styles={{width: '33%', margin: '0 auto'}} variant={ButtonVariants.Secondary}
+                             size={ButtonSizes.Small} onClick={() => router.push(`/auth/register`)} type="button">Create
+                    Account</AppButton>
                 </ContentSpace>
               </div>
-              <div className="order-first order-lg-last order-xl-last order-xxl-last col-12 col-lg-6 col-xl-7 col-xxl-7">
+              <div
+                  className="order-first order-lg-last order-xl-last order-xxl-last col-12 col-lg-6 col-xl-7 col-xxl-7">
                 <HeroSpace>
                   <picture style={{width: '100%'}}>
                     <source media={`(max-width: ${SM - 1}px)`} type="image/jpeg"

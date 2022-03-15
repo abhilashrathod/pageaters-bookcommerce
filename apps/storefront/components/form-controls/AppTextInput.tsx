@@ -5,7 +5,6 @@ import {DARKER_PRIMARY_COLOR, PRIMARY_COLOR} from "../../core/_variables";
 
 interface Props {
   id: string;
-  name: string;
   label: string;
   required: boolean;
   type: 'text' | 'password' | 'email' | 'search' | 'tel' | 'url' | 'number';
@@ -15,7 +14,7 @@ const InputWrapper = styled.div`
   margin-bottom: 1rem;
 `;
 
-const AppTextInput: React.FC<Props> = ({id, required, label, name, type, ...rest}) => {
+const AppTextInput: React.FC<Props> = ({id, required, label, type, ...rest}) => {
   return (
       <InputWrapper>
         <TextInput
