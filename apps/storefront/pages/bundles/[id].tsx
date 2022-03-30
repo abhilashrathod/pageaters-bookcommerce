@@ -1,8 +1,10 @@
 import React from "react";
 import {GetStaticPaths, GetStaticProps, InferGetStaticPropsType, NextPage} from "next";
 import axios from "axios";
+import {mutate} from "swr";
 import Head from "next/head";
 import {useRouter} from "next/router";
+import {useNotifications} from "@mantine/notifications";
 import {Spoiler} from '@mantine/core';
 import {Icon} from "@iconify/react";
 import styled from "styled-components";
@@ -163,6 +165,7 @@ interface Props {
 
 const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType<typeof getStaticProps>) => {
   const router = useRouter();
+  const notif = useNotifications();
 
   if (router.isFallback) return <PageWrapper><EmptySectionMessage title={'Loading...'}/></PageWrapper>;
 
@@ -172,6 +175,20 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
 
   function returnSavedAmount() {
     return Math.floor((bundleDetails.currentDiscount * bundleDetails.price) / 100);
+  }
+
+  async function handleAddCart() {
+    try {
+      await axios.post(`/cart/add/bundle`, {bundle: bundleDetails._id}, {withCredentials: true});
+      notif.showNotification({message: 'Bundle Added to Cart', color: 'green', autoClose: 3000});
+      updateCart();
+    } catch (e: any) {
+      notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
+    }
+  }
+
+  function updateCart() {
+    mutate({url: `/cart/retrieve`, withCredentials: true});
   }
 
   return (
@@ -253,7 +270,7 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
                     </ProductPricing>
 
                     <AddToCartSpace>
-                      <AddToCartButton>
+                      <AddToCartButton onClick={handleAddCart}>
                         Add to Cart
                       </AddToCartButton>
                     </AddToCartSpace>

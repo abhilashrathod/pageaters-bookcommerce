@@ -23,7 +23,7 @@ import {IBundle} from "../schemas/bundle";
 
 const DealsSection = () => {
   const {data, error} = useSWR({
-    url: `${process.env.NEXT_PUBLIC_BASE_PATH}/deals`,
+    url: `/deals`,
     args: {page: 1, limit: 3, sortBy: 'priority', sortOrder: 'asc'}
   });
 
@@ -58,7 +58,7 @@ const DealsSection = () => {
 
 const BestSellers = () => {
   const {data, error} = useSWR({
-    url: `${process.env.NEXT_PUBLIC_BASE_PATH}/store-books`,
+    url: `/store-books`,
     args: {page: 1, limit: 6, sortBy: 'currentDiscount', sortOrder: 'desc'}
   });
 
@@ -92,7 +92,7 @@ const BestSellers = () => {
 
 const NewArrivals = () => {
   const {data, error} = useSWR({
-    url: `${process.env.NEXT_PUBLIC_BASE_PATH}/store-books`,
+    url: `/store-books`,
     args: {page: 1, limit: 6, sortBy: 'createdAt', sortOrder: 'desc'}
   });
 
@@ -126,7 +126,7 @@ const NewArrivals = () => {
 
 const MostPopular = () => {
   const {data, error} = useSWR({
-    url: `${process.env.NEXT_PUBLIC_BASE_PATH}/store-books`,
+    url: `/store-books`,
     args: {page: 1, limit: 6, sortBy: 'popularity', sortOrder: 'desc'}
   });
 
@@ -160,7 +160,7 @@ const MostPopular = () => {
 
 const CollectionsSection = () => {
   const {data, error} = useSWR({
-    url: `${process.env.NEXT_PUBLIC_BASE_PATH}/collections`,
+    url: `/collections`,
     args: {page: 1, limit: 3, sortBy: 'priority', sortOrder: 'asc'}
   });
 
@@ -195,7 +195,7 @@ const CollectionsSection = () => {
 
 const BundlesSection = () => {
   const {data, error} = useSWR({
-    url: `${process.env.NEXT_PUBLIC_BASE_PATH}/bundles`,
+    url: `/bundles`,
     args: {page: 1, limit: 4, sortBy: 'priority', sortOrder: 'asc'}
   });
 

@@ -1,4 +1,7 @@
 import React from 'react';
+
+import useSWR from "swr";
+
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
@@ -13,6 +16,8 @@ interface Props {
 }
 
 const Orders: React.FC<Props> = () => {
+  const {data, error} = useSWR({url: `/orders/list`, withCredentials: true});
+
   return (
       <PageWrapper>
         <div className="custom-container">
@@ -24,6 +29,9 @@ const Orders: React.FC<Props> = () => {
         </div>
         <section>
           <PageHeadings title={'Orders'}/>
+        </section>
+        <section>
+
         </section>
       </PageWrapper>
   )

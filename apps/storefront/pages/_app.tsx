@@ -3,7 +3,7 @@ import axios from "axios";
 import {AppProps} from 'next/app'
 import Router from "next/router";
 import nProgress from "nprogress";
-import {SWRConfig} from 'swr'
+import {SWRConfig, Middleware, SWRHook} from 'swr'
 import {MantineProvider} from "@mantine/core";
 import {NotificationsProvider} from '@mantine/notifications';
 
@@ -15,7 +15,6 @@ import AppFooter from "../components/partials/Footer";
 import AppMobileMenu from "../components/partials/MobileMenu";
 // User Context
 import {UserProvider} from "../contexts/user.context";
-import {ACCENT_COLOR} from "../core/_variables";
 
 Router.events.on("routeChangeStart", nProgress.start);
 Router.events.on("routeChangeError", nProgress.done);
@@ -25,10 +24,14 @@ nProgress.configure({showSpinner: false});
 
 /* SWR FETCHER GLOBAL FUNCTION */
 
-const fetcher = (configuration: any) => {
-  const {args, url} = configuration;
+const swrMiddleware: Middleware = (useSWRNext: SWRHook) => (key, fetcher, config) => {
+  return useSWRNext(key, fetcher, config)
+};
 
-  return axios.get(url, {params: args})
+const fetcher = (configuration: any) => {
+  const { withCredentials = false , args, url, } = configuration;
+
+  return axios.get(url, {params: args, withCredentials })
       .then((res) => res.data);
 };
 
@@ -37,9 +40,9 @@ const fetcher = (configuration: any) => {
 function MyApp({Component, pageProps}: AppProps) {
   return (
       <>
-        <SWRConfig value={{fetcher}}>
+        <SWRConfig value={{use: [swrMiddleware], fetcher}}>
           <MantineProvider theme={{fontFamily: 'Metropolis Regular'}}>
-            <NotificationsProvider position={'bottom-center'}>
+            <NotificationsProvider position={'bottom-right'}>
               <UserProvider initialUser={pageProps?.user}>
                 <AppHeader/>
                 <Component {...pageProps} />

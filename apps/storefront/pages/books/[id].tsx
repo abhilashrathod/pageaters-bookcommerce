@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {GetStaticPaths, GetStaticProps, InferGetStaticPropsType, NextPage} from "next";
 import axios from "axios";
 import Head from "next/head";
@@ -18,6 +18,7 @@ import Badges from "../../components/elements/Badge";
 
 import {
   ACCENT_COLOR,
+  AUTH_COOKIE,
   LIGHT_COLOR,
   LIGHTER_PRIMARY_COLOR,
   PRIMARY_COLOR,
@@ -33,6 +34,12 @@ import {IBundle} from "../../schemas/bundle";
 import {IBook} from "../../schemas/book";
 import {ICollection} from "../../schemas/collection";
 import {ICategory} from "../../schemas/category";
+import {ButtonVariants} from "../../components/form-controls/Button";
+import AppIconButton from "../../components/form-controls/IconButton";
+import {useNotifications} from "@mantine/notifications";
+import useSWR, {mutate} from "swr";
+
+import useAuth from "../../hooks/useAuth";
 
 
 const BREADCRUMBS_ITEMS = (activeItem: any) => [
@@ -49,11 +56,6 @@ const SITE_FEATURES = [
     description: 'Via Debit & Credit Cards, Net Banking, UPIs, COD'
   },
   {icon: 'ep:refresh', title: 'Easy Return & Replacements', description: '7 Days Return Policy. No questions asked.'},
-];
-
-const PRODUCT_SPECS = [
-  {prop: 'Type', value: (val: string) => val, icon: 'iconoir:remove-page'},
-  {prop: 'Pages', value: (val: string) => `${val} | ${returnReadingHours(val)}`, icon: 'ant-design:copy-outlined'},
 ];
 
 const ProductCoverSpace = styled.div`
@@ -317,6 +319,97 @@ const ProductSpecification = ({icon, prop, value}: SpecProps) => {
   )
 };
 
+const AddToCart = ({product}: any) => {
+  const [quantity, setQuantity] = useState(1);
+  const notif = useNotifications();
+
+  async function handleAddCart() {
+    try {
+      await axios.post(`/cart/add`, {quantity, product}, {withCredentials: true});
+      notif.showNotification({message: 'Book Added to Cart', color: 'green', autoClose: 3000});
+      updateCart();
+    } catch (e: any) {
+      notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
+    }
+  }
+
+  function updateCart() {
+    mutate({url: `/cart/retrieve`, withCredentials: true});
+  }
+
+  return (
+      <>
+        <QuantitySelectLabel>Quantity</QuantitySelectLabel>
+        <QuantitySelection value={quantity} onChange={(e) => setQuantity(Number(e.target.value))}>
+          <option value={1}>1</option>
+          <option value={2}>2</option>
+        </QuantitySelection>
+        <ProductButton onClick={handleAddCart}>Add to Cart</ProductButton>
+      </>
+  )
+};
+
+const NotifyMe = ({product}: any) => {
+  const notif = useNotifications();
+
+  async function handleNotify() {
+    try {
+      await axios.post(`/stock-alerts`, {product}, {withCredentials: true});
+      notif.showNotification({message: 'We will notify you when it is back', color: 'green', autoClose: 3000});
+    } catch (e: any) {
+      notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
+    }
+  }
+
+  return (
+      <>
+        <OutOfStockLabel>Out of Stock</OutOfStockLabel>
+        <ProductButton onClick={handleNotify}>Notify Me</ProductButton>
+      </>
+  )
+};
+
+const BookWishlist = ({product}: any) => {
+  const auth = useAuth();
+  const notif = useNotifications();
+
+  const {data} = useSWR({url: auth ? `/wishlist/${product}` : null, withCredentials: true});
+
+  async function toggleWishlist() {
+    if (data?.data) {
+      removeFromWishlist();
+    } else {
+      addToWishlist();
+    }
+  }
+
+  async function addToWishlist() {
+    try {
+      await axios.post(`/wishlist`, {product}, {withCredentials: true});
+      notif.showNotification({message: 'Book Added from Wishlist', color: 'green', autoClose: 3000});
+      mutate({url:`/wishlist/${product}`, withCredentials: true});
+    } catch (e: any) {
+      notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
+    }
+  }
+
+  async function removeFromWishlist() {
+    try {
+      await axios.delete(`/wishlist/${product}`, {withCredentials: true});
+      notif.showNotification({message: 'Book Removed from Wishlist', color: 'green', autoClose: 3000});
+      mutate({url:`/wishlist/${product}`, withCredentials: true});
+    } catch (e: any) {
+      notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
+    }
+  }
+
+  return (
+      <AppIconButton variant={data?.data ? ButtonVariants.Danger : ButtonVariants.Secondary} onClick={toggleWishlist}>
+        <Icon icon={'bx:bx-heart'} width={18} height={18}/>&nbsp; {data?.data ? 'Wishlisted' : 'Wishlist'}
+      </AppIconButton>
+  )
+};
+
 const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof getStaticProps>) => {
   const router = useRouter();
 
@@ -377,8 +470,10 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                     </TagsList>
                   </TagsSpace>
                   <SuggestionButtons>
-                    {/*<AppButton variant={ButtonVariants.Secondary} href={'/'}>Wishlist</AppButton>*/}
-                    {/*<AppButton variant={ButtonVariants.Secondary} href={'/'}>Share</AppButton>*/}
+                    <BookWishlist product={book._id}/>
+                    <AppIconButton variant={ButtonVariants.Secondary} onClick={() => console.log('1')}>
+                      <Icon icon={'bx:share-alt'} width={18} height={18}/>&nbsp;Share
+                    </AppIconButton>
                   </SuggestionButtons>
                 </div>
 
@@ -423,25 +518,10 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
 
                     <AddToCartSpace>
                       {
-                        book.inventory > 0 ? <QuantitySelectLabel>Quantity</QuantitySelectLabel> :
-                            <OutOfStockLabel>Out of Stock</OutOfStockLabel>
-                      }
-
-                      {
-                        book.inventory > 0 && (
-                            <QuantitySelection>
-                              <option value="1">1</option>
-                              <option value="2">2</option>
-                            </QuantitySelection>
-                        )
-                      }
-
-                      {
                         book.inventory > 0
-                            ? <ProductButton>Add to Cart</ProductButton>
-                            : <ProductButton>Notify Me</ProductButton>
+                            ? <AddToCart product={book._id}/>
+                            : <NotifyMe product={book._id}/>
                       }
-
                     </AddToCartSpace>
 
                     <ProductCategories>

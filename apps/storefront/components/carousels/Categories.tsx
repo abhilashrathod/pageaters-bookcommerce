@@ -46,7 +46,7 @@ const Categories: React.FC<Props> = () => {
   const carouselContainer = useRef(null);
   const [params, setParams] = useState({page: 1, limit: 25});
 
-  const {data, error} = useSWR({url: `${process.env.NEXT_PUBLIC_BASE_PATH}/categories`, args: params});
+  const {data, error} = useSWR({url: `/categories`, args: params});
 
   function scrollRight() {
     // @ts-ignore

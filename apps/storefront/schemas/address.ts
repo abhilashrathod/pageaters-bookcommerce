@@ -1,4 +1,5 @@
 export interface IAddress {
+  _id: string;
   fullName: string;
   contactNo: string;
   email: string;

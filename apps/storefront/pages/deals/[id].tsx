@@ -93,7 +93,7 @@ const ViewDeal: NextPage<Props> = ({dealInfo}: InferGetStaticPropsType<typeof ge
             dealInfo.productSets.map((productSet: ISetItem) => {
               return (
                   <section key={productSet._id} className="mb-25">
-                    <div className="custom-container">
+                    <div className="custom-container">s
                       <div className="row">
                         <div className="col-12">
                           <DealSectionHeadingSpace>

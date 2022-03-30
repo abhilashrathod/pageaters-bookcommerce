@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components'
 
-import {ACCENT_COLOR, PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variables";
+import {ACCENT_COLOR, LIGHTEST_PRIMARY_COLOR, PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variables";
 
 interface Props {
   variant: string;
@@ -16,6 +16,9 @@ export enum ButtonVariants {
   Default = 'default',
   Accent = 'accent',
   Secondary = 'secondary',
+  Danger = 'danger',
+  LightPrimary = 'light-primary',
+  LightestPrimary = 'lightest-primary',
 }
 
 export enum ButtonSizes {
@@ -63,6 +66,15 @@ const handleBorderRadius = (size: string) => {
   }
 };
 
+const handleBorderColor = (color: string) => {
+  switch (color) {
+    case ButtonVariants.Secondary:
+      return PRIMARY_COLOR;
+    default:
+      return 'transparent';
+  }
+};
+
 const handleFont = (size: string) => {
   switch (size) {
     case "sm":
@@ -74,11 +86,11 @@ const handleFont = (size: string) => {
 
 const MainButton = styled.button`
   color: ${({theme}) => handleColor(theme.variant)};
-  background-color: ${({theme}) => handleBackgroundColor(theme.variant)};
-  padding: ${({theme}) => handlePadding(theme.size)};  
+  background-color: ${({theme}) => theme.disabled ? LIGHTEST_PRIMARY_COLOR : handleBackgroundColor(theme.variant)};
+  padding: ${({theme}) => handlePadding(theme.size)};
   border-radius: ${({theme}) => handleBorderRadius(theme.size)};
   font-size: ${({theme}) => handleFont(theme.size)};
-  border: 1px solid ${PRIMARY_COLOR};
+  border: 1px solid ${({theme}) => handleBorderColor(theme.variant)};
   box-shadow: 0 2px 10px 0 rgb(0 0 0 / 16%);
 `;
 
@@ -89,7 +101,8 @@ const AppButton: React.FC<Props> = ({variant, size, styles, type, disabled, onCl
 
   return (
       <>
-        <MainButton style={styles} disabled={disabled} type={type || 'button'} theme={{variant, size}} onClick={handleClick}>
+        <MainButton style={styles} disabled={disabled} type={type || 'button'} theme={{variant, size, disabled}}
+                    onClick={handleClick}>
           {children}
         </MainButton>
       </>

@@ -41,7 +41,7 @@ const Bundles: React.FC<Props> = () => {
     };
   });
 
-  const {data, error} = useSWR({url: `${process.env.NEXT_PUBLIC_BASE_PATH}/bundles`, args: {...params}});
+  const {data, error} = useSWR({url: `/bundles`, args: {...params}});
 
   function handlePageChange(e: any) {
     setParams((prevState) => ({

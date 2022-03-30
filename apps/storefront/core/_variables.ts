@@ -1,6 +1,6 @@
 export const PRIMARY_COLOR = '#222222';
 export const LIGHTER_PRIMARY_COLOR = '#3c3c3c';
-export const DARKER_PRIMARY_COLOR = '#717171';
+export const LIGHTEST_PRIMARY_COLOR = '#717171';
 
 export const PRIMARY_SUCCESS = '#009432';
 export const PRIMARY_DANGER = '#e55039';
@@ -13,6 +13,13 @@ export const SECONDARY_COLOR = '#FFFFFF';
 
 export const LIGHT_COLOR = '#868686';
 
+
+/***
+ *
+ * REGEX
+ * ***********/
+
+export const CONTACT_NO_REGEX = /^\d{10}$/;
 
 /***
  *

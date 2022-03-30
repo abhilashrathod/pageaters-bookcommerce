@@ -1,6 +1,8 @@
 import React, {forwardRef, useEffect, useState} from 'react';
+import {Autocomplete, Avatar, Badge, Divider, Group, Menu, Text} from '@mantine/core';
+import useSWR, { useSWRConfig } from "swr";
+import {useDebouncedValue} from "@mantine/hooks";
 import styled from "styled-components";
-import useSWR from "swr";
 import cookie from "js-cookie";
 import axios from "axios";
 import classNames from 'classnames';
@@ -8,14 +10,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {useRouter} from "next/router";
 import {Icon} from '@iconify/react';
-import {useDebouncedValue} from "@mantine/hooks";
-import {Autocomplete, Avatar, Divider, Group, Menu, Text} from '@mantine/core';
+import {get} from 'lodash';
 
 import {useUser} from "../../contexts/user.context";
+import useAuth from "../../hooks/useAuth";
 
 import logo from '../../public/images/brand-logo.svg';
-import {AUTH_COOKIE, FULL_PAGE, LG, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 import {getProductImage} from "../../core/_imageRendererHelper";
+import {AUTH_COOKIE, FULL_PAGE, LG, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 
 import {IBook} from "../../schemas/book";
 
@@ -138,6 +140,7 @@ const ProfileSection = styled.li``;
 
 const CartSection = styled.li`
   display: none !important;
+  position: relative;
   
   @media screen and (min-width: ${MD - 1}px) {      
     display: block !important; 
@@ -181,45 +184,36 @@ const AutoCompleteItem = forwardRef<HTMLDivElement, any>(({description, id, valu
 
 const AppHeader: React.FC<Props> = () => {
   const router = useRouter();
-  const {user, setUser} = useUser();
+  const {mutate} = useSWRConfig();
+  const {setUser} = useUser();
 
   const [sticky, setSticky] = useState(false);
   const [transparent, setTransparent] = useState(false);
   const [search, setSearch] = useState('');
+  const auth = useAuth();
+
+  const {data: cart} = useSWR({url: auth ? `/cart/retrieve` : null, withCredentials: true});
+  const {data: person} = useSWR({url: auth ? `/auth/me` : null, withCredentials: true});
 
   const [searchDebounced] = useDebouncedValue(search, 1000);
-
-  useEffect(() => {
-    const auth = cookie.get(AUTH_COOKIE);
-    if (auth) {
-      getMe();
-    }
-  }, []);
-
-  const getMe = async () => {
-    try {
-      const response$ = await axios.get(`/auth/me`, {withCredentials: true});
-      const data = await response$.data;
-
-      setUser(data.data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const logout = async () => {
     try {
       await axios.post(`/auth/logout`, {}, {withCredentials: true});
       setUser(undefined);
       cookie.remove(AUTH_COOKIE);
+
       router.replace('/');
+
+      mutate({url: `/auth/me`, withCredentials: true});
+      mutate({url: `/cart/retrieve`, withCredentials: true});
     } catch (e) {
       console.error(e);
     }
   };
 
   const {data, error} = useSWR({
-    url: `${process.env.NEXT_PUBLIC_BASE_PATH}/store-books/search`,
+    url: `/store-books/search`,
     args: {q: searchDebounced}
   }, {revalidateOnFocus : false});
 
@@ -252,8 +246,7 @@ const AppHeader: React.FC<Props> = () => {
 
   return (
       <>
-        <AppHeaderSpace id={'header'}
-                        className={classNames({'fixed in-view': sticky, 'transparent': transparent})}>
+        <AppHeaderSpace id={'header'}  className={classNames({'fixed in-view': sticky, 'transparent': transparent})}>
           <div className="custom-container" style={HeaderContainerStyles}>
             <LogoSpace>
               <Link href={'/'}>
@@ -296,15 +289,15 @@ const AppHeader: React.FC<Props> = () => {
                 </HamburgerSection>
                 <ProfileSection>
                   {
-                    !user
-                        ? <AppSmallIconButton
-                            onClick={() => router.push(`/auth/login?redirect=${router.asPath}`)}><Icon
-                            icon={'bx:bx-user-circle'} width={30} height={30}/></AppSmallIconButton>
+                    !person?.data
+                        ? <AppSmallIconButton onClick={() => router.push(`/auth/login?redirect=${router.asPath}`)}>
+                            <Icon icon={'bx:bx-user-circle'} width={30} height={30}/>
+                          </AppSmallIconButton>
                         : (
-                            <Menu withArrow placement={'end'}
-                                  control={<AppSmallIconButton><Icon icon={'bx:bx-user-circle'} width={30}
-                                                                     height={30}/></AppSmallIconButton>}>
-                              <Menu.Label>Hello, {user ? user.fullName : 'Reader'}!</Menu.Label>
+                            <Menu withArrow placement={'end'} control={<AppSmallIconButton>
+                                <Icon icon={'bx:bx-user-circle'} width={30} height={30}/>
+                              </AppSmallIconButton>}>
+                              <Menu.Label>Hello, {person ? person?.data?.fullName : 'Reader'}!</Menu.Label>
                               <Menu.Item onClick={() => navigateToUrl('/account/orders')} icon={<Icon icon={'ph:shopping-bag-bold'} width={20} height={20}/>}>Orders</Menu.Item>
                               <Menu.Item onClick={() => navigateToUrl('/account/wishlist')} icon={<Icon icon={'bx:bx-heart'} width={20} height={20}/>}>Wishlist</Menu.Item>
                               <Menu.Item onClick={() => navigateToUrl('/account')} icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
@@ -314,6 +307,9 @@ const AppHeader: React.FC<Props> = () => {
                   }
                 </ProfileSection>
                 <CartSection>
+                  <Badge style={{position: 'absolute', top: 0, right: 0, padding: '0 6px'}} variant="filled" color="orange">
+                    {get(cart, 'data.products', []).length + get(cart, 'data.bundles', []).length}
+                  </Badge>
                   <AppSmallIconButton onClick={() => navigateToUrl('/cart')}>
                     <Icon icon={'bx:bx-cart'} width={30} height={30}/>
                   </AppSmallIconButton>

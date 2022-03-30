@@ -16,7 +16,6 @@ const IllustrationImage = styled.img`
 `;
 
 const EmptyMessageWithGraphic: React.FC<Props> = ({title, illustration, illustrationHeight, illustrationWidth}) => {
-
   return (
       <>
         <div className="row">
@@ -28,7 +27,7 @@ const EmptyMessageWithGraphic: React.FC<Props> = ({title, illustration, illustra
         </div>
         <div className="row">
           <div className="col">
-            <p style={{textAlign: 'center'}}>{title}</p>
+            <h6 style={{textAlign: 'center'}}>{title}</h6>
           </div>
         </div>
       </>

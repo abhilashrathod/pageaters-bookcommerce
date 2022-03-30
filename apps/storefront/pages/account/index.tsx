@@ -1,20 +1,68 @@
 import React from 'react';
-import styled from 'styled-components';
+import {Icon} from "@iconify/react";
+
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageHeadings from "../../components/elements/PageHeadings";
 import PageWrapper from "../../components/elements/PageWrapper";
+
 import {useUser} from "../../contexts/user.context";
+import styled from "styled-components";
+import {PRIMARY_COLOR, SM} from "../../core/_variables";
+import {useRouter} from "next/router";
 
 interface Props {
 }
+
+const ProfileOptionSpace = styled.div`
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #ddd;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.5s ease;
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+  }
+  
+  &:hover {
+   border: 1px solid ${PRIMARY_COLOR};
+  }
+`;
+
+const ProfileOptionTitle = styled.h6`
+  display: flex;
+  align-items: center;
+  line-height: 1;
+`;
 
 const BREADCRUMBS_ITEMS = [
   {title: 'Home', href: '/'},
   {title: 'Account', href: '/account', isActive: true},
 ];
 
+const PROFILE_OPTIONS = [
+  {link: '/account/orders', title: 'Orders', icon: 'bx:bx-cart', description: 'Your current and past order history'},
+  {link: '/account/wishlist', title: 'Wishlist', icon: 'bx:bx-heart', description: 'See and update all the books you\'ve wishlisted'},
+  {link: '/account/payments', title: 'Payment History', icon: 'bx:bx-credit-card-alt', description: 'All the payment history of your orders and refunds'},
+  {link: '/account/profile', title: 'Personal Info', icon: 'bx:bx-user-circle', description: 'Personal Details you provided and contact information'},
+  {link: '/account/security', title: 'Login & Security', icon: 'bx:bx-lock-open', description: 'Make your account more secure. Update Password'},
+  {link: '/account/notifications', title: 'Notification Prefrences', icon: 'bx:bx-bell', description: 'Choose how you would like to be contacted'},
+  {link: '/account/addresses', title: 'Addresses', icon: 'bx:bx-location-plus', description: 'View and update addresses for orders'},
+  {link: '/account/rewards', title: 'Rewards', icon: 'bx:bx-gift', description: 'Rewards you\'ve earned through purchases and other'},
+  {link: '/account/subscription', title: 'Subscription', icon: 'bx:bx-book-reader', description: 'One subscription to rule them all!'},
+];
+
 const Account: React.FC<Props> = () => {
   const {user} = useUser();
+  const router = useRouter();
+
+  function handleRedirect(route: string) {
+    router.push(route)
+  }
+
   return (
       <PageWrapper>
         <div className="custom-container">
@@ -26,6 +74,28 @@ const Account: React.FC<Props> = () => {
         </div>
         <section>
           <PageHeadings title={`Hello, ${user ? user.fullName : ''}`}/>
+        </section>
+        <section>
+          <div className="custom-container">
+            <div className="row">
+              {
+                PROFILE_OPTIONS.map((option, index) => {
+                  return (
+                      <div key={index} className="col-xxl-4 col-xl-4 col-lg-6 col-sm-6 col-12">
+                        <ProfileOptionSpace onClick={() => handleRedirect(option.link)}>
+                          <ProfileOptionTitle>
+                            <Icon width="30" height="30" icon={option.icon}/>
+                            &nbsp;<span>{option.title}</span>
+                          </ProfileOptionTitle>
+                          <p>{option.description}</p>
+                        </ProfileOptionSpace>
+                      </div>
+                  )
+                })
+              }
+
+            </div>
+          </div>
         </section>
       </PageWrapper>
   )

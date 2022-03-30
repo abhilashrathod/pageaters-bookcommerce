@@ -29,7 +29,7 @@ const BREADCRUMBS_ITEMS = [
 const Categories: React.FC<Props> = () => {
   const router = useRouter();
 
-  const {data, error} = useSWR({url: `${process.env.NEXT_PUBLIC_BASE_PATH}/categories`, args: {page: 1, limit: 25}});
+  const {data, error} = useSWR({url: `/categories`, args: {page: 1, limit: 25}});
 
   if (error) return <div>failed to load</div>;
 

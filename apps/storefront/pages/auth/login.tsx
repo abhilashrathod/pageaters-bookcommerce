@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import Head from "next/head";
 import {useRouter} from "next/router";
+import {useSWRConfig} from "swr";
 import styled from "styled-components";
 import {parseUrl} from 'query-string';
 import {Divider} from "@mantine/core";
@@ -19,6 +20,7 @@ import {useUser} from "../../contexts/user.context";
 import {getAssetImage} from "../../core/_imageRendererHelper";
 
 import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
+
 
 interface Props {
 }
@@ -134,6 +136,7 @@ const LoginButton = styled.button`
 const Login: React.FC<Props> = () => {
   const {user, setUser} = useUser();
   const router = useRouter();
+  const { mutate } = useSWRConfig();
   const notif = useNotifications();
 
   const [redirect, setRedirect] = useState(() => {
@@ -173,6 +176,9 @@ const Login: React.FC<Props> = () => {
           if (redirect) return router.replace(`${redirect}`);
 
           router.push('/');
+
+          mutate({url: `/auth/me`, withCredentials: true});
+          mutate({url: `/cart/retrieve`, withCredentials: true});
         })
         .catch((err) => {
           notif.showNotification({message: err.message, color: 'red', autoClose: 3000});

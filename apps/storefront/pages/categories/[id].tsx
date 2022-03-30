@@ -47,7 +47,7 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
   });
 
   const {data, error} = useSWR({
-    url: `${process.env.NEXT_PUBLIC_BASE_PATH}/categories/${categoryDetails?._id}/products`,
+    url: `/categories/${categoryDetails?._id}/products`,
     args: params
   });
 

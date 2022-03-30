@@ -43,7 +43,7 @@ const Deals: React.FC<Props> = () => {
     };
   });
 
-  const {data, error} = useSWR({url: `${process.env.NEXT_PUBLIC_BASE_PATH}/collections`, args: {...params}});
+  const {data, error} = useSWR({url: `/collections`, args: {...params}});
 
   function handlePageChange(e: any) {
     setParams((prevState) => ({
