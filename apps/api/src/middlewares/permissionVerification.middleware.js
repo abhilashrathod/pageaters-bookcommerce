@@ -46,10 +46,10 @@ module.exports = (...permissionsRequired) => {
       }
 
       // if the token is accessed via another IP address then issued one
-      if (createdByIp !== ipAddress) {
-        console.error('Ip mismatch');
-        return res.unauthorized('INVALID_TOKEN');
-      }
+      // if (createdByIp !== ipAddress) {
+      //   console.error('Ip mismatch');
+      //   return res.unauthorized('INVALID_TOKEN');
+      // }
 
       // if scheduled for deletion send back
       if (user.scheduledForDeletion) {
