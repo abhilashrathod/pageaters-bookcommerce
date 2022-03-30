@@ -45,7 +45,7 @@ module.exports.calculateTotalWeight = async function(products, bundles) {
 
       for (let bundleItem of bundles) {
         const bundleWeight = sumBy(bundleItem.bundledBooks, (obj) => obj.weight);
-        finalBundleWeight = finalBundleWeight + (bundleWeight * bundleItem * bundleItem.quantity);
+        finalBundleWeight = finalBundleWeight + (bundleWeight * bundleItem.quantity);
       }
 
       resolve(finalProductsWeight + finalBundleWeight)

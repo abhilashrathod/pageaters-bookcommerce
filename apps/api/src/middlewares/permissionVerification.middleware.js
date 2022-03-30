@@ -28,7 +28,6 @@ module.exports = (...permissionsRequired) => {
 
       jwt.verify(accessToken, ENCRYPTION_KEY, (err, data) => {
         if (err) {
-          console.log("verify err", err);
           return res.unauthorized('INVALID_TOKEN');
         }
         req.user = data;

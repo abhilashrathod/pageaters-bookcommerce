@@ -37,8 +37,9 @@ const populateOptions = [{
 module.exports.attempt = async (req, res) => {
   try {
     const { address, instructions } = req.allParams();
-    const cart = get(req, 'cookies.cart', '');
     const userId = get(req, 'user.userId', '');
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
+
     const orderId = `OD-${generateRandomNumber(10)}`;
 
     if (!cart || !userId) {
@@ -93,7 +94,7 @@ module.exports.attempt = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    const cart = get(req, 'cookies.cart', '');
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
     const userId = get(req, 'user.userId', '');
 
     let total;
@@ -145,8 +146,6 @@ module.exports.create = async (req, res) => {
         weight: bookRes.weight * book.quantity,
       };
       finalProducts.push(item);
-      bookRes.inventory = bookRes.inventory - book.quantity;
-      bookRes.save();
     }
 
     let finalBundles = [];
@@ -170,12 +169,6 @@ module.exports.create = async (req, res) => {
         weight: bundleWeight * bundleItem.quantity,
       };
       finalBundles.push(item);
-
-      for (let bundledBook of bundleRes.bundledBooks) {
-        const bookRes = await Book.findOne({ isDeleted: false, _id: bundledBook._id }).select(selectionString);
-        bookRes.inventory = bookRes.inventory - bundleItem.quantity;
-        bookRes.save();
-      }
     }
 
     let subTotal = await calculateTotal(books, bundles);
@@ -199,7 +192,7 @@ module.exports.create = async (req, res) => {
     const payload = {
       amount: total * 100,
       currency: 'INR',
-      receipt: `${currentOrderRes.orderId}-RCPTID-01`,
+      receipt: `${currentOrderRes.orderId}-RCPTID`,
     };
 
     const razorPayOrderResponse = await razorPayInstance.orders.create(payload);
@@ -207,11 +200,11 @@ module.exports.create = async (req, res) => {
     currentOrderRes.razorOrderId = razorPayOrderResponse.id;
     currentOrderRes.orderStatus = enums.ORDER_STAGES.CREATED;
     currentOrderRes.products = finalProducts;
+    currentOrderRes.bundles = finalBundles;
     currentOrderRes.weight = totalWeight;
     currentOrderRes.subTotal = subTotal;
     currentOrderRes.shipping = shipping;
     currentOrderRes.total = total;
-    currentOrderRes.bundles = finalBundles;
     currentOrderRes.giftCard = null; // here goes the gift card id
     currentOrderRes.discount = null; // here goes the discount id
     await currentOrderRes.save();
@@ -220,9 +213,72 @@ module.exports.create = async (req, res) => {
 
     /* TODO: SEND TEXT-MESSAGE TO USER */
 
-    /* TODO: CLEAR CART ITEMS */
+    return res.ok({ message: 'ORDER_CREATE_SUCCESS', data: { razorOrderId: razorPayOrderResponse.id, total, orderId: currentOrderRes.orderId, } });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
 
-    return res.ok({ message: 'ORDER_CREATE_SUCCESS', data: { razorOrderId: razorPayOrderResponse.id, total } });
+module.exports.verifyAndConfirm = async (req, res) => {
+  try {
+    const { payload } = req.allParams();
+    const signature = req.get('x-razorpay-signature');
+    const body = JSON.stringify(req.body);
+
+    if (!signature) {
+      return res.json({ status: 'ok' });
+    }
+
+    const paymentId = get(payload, 'payment.entity.id', '');
+    const orderId = get(payload, 'payment.entity.order_id', '');
+
+    const isValid = Razorpay.validateWebhookSignature(body, signature, RAZOR_PAY_WEBHOOKS.PAYMENT_CAPTURED);
+
+    if (isValid) {
+      let selectionString = 'currentDiscount price membersPrice inventory weight';
+      const orderRes = await Order.findOne({ orderStatus: enums.ORDER_STAGES.CREATED, razorOrderId: orderId }).populate(populateOptions);
+      if (orderRes) {
+        orderRes.orderStatus = enums.ORDER_STAGES.PAID;
+        orderRes.payment = get(payload, 'payment.entity', {});
+        orderRes.razorPaymentId = paymentId;
+        await orderRes.save();
+
+        const userRes = await User.findOne({ _id: orderRes.userId });
+        userRes.currentOrder = null;
+        await userRes.save();
+
+        // deduct inventory
+        for (let book of orderRes.products) {
+          const bookRes = await Book.findOne({ isDeleted: false, _id: book.product._id }).select(selectionString);
+          bookRes.inventory = bookRes.inventory - book.quantity;
+          bookRes.save();
+        }
+
+        for (let bundleItem of orderRes.bundles) {
+          const bundleRes = await Bundle.findOne({ isDeleted: false, _id: bundleItem.bundle._id })
+            .select('currentDiscount bundledBooks price')
+            .populate({
+              path: 'bundledBooks',
+              select: 'bookId title poster author currentDiscount price inventory weight',
+            });
+
+          for (let bundledBook of bundleRes.bundledBooks) {
+            const bookRes = await Book.findOne({ isDeleted: false, _id: bundledBook._id }).select(selectionString);
+            bookRes.inventory = bookRes.inventory - bundleItem.quantity;
+            bookRes.save();
+          }
+        }
+
+        // clear the cart
+
+
+        return res.json({ status: 'ok' });
+      } else {
+        return res.json({ status: 'ok' }); // do nothing but send success to webhook
+      }
+    }
+
+    return res.json({ status: 'ok' });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -232,7 +288,23 @@ module.exports.getByUniqueId = async (req, res) => {
   try {
     const { uniqueId } = req.allParams();
     const userId = get(req, 'user.userId', '');
-    const orderRes = await Order.findOne({ orderId: uniqueId, userId });
+
+    const populateOptions = [{
+      path: 'deliveryAddress',
+    }, {
+      path: 'products.product',
+      select: 'bookId title poster author currentDiscount price',
+      populate: {
+        path: 'author',
+        select: 'name avatar',
+      },
+    }, {
+      path: 'bundles.bundle',
+      select: 'bundleId title poster bundledBooks currentDiscount price',
+    },
+    ];
+
+    const orderRes = await Order.findOne({ orderId: uniqueId, userId }).populate(populateOptions);
 
     if (orderRes) {
       return res.ok({ message: 'ORDER_LIST_SUCCESS', data: orderRes });
@@ -288,45 +360,6 @@ module.exports.retrieve = async (req, res) => {
     }
 
     return res.error('ORDER_INFO_ATTEMPT_FAILED');
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-module.exports.verifyAndConfirm = async (req, res) => {
-  try {
-    const { payload } = req.allParams();
-    const signature = req.get('x-razorpay-signature');
-    const body = JSON.stringify(req.body);
-
-    if (!signature) {
-      return res.json({ status: 'ok' });
-    }
-
-    const paymentId = get(payload, 'payment.entity.id', '');
-    const orderId = get(payload, 'payment.entity.order_id', '');
-
-    const isValid = Razorpay.validateWebhookSignature(body, signature, RAZOR_PAY_WEBHOOKS.PAYMENT_CAPTURED);
-
-    if (isValid) {
-      const orderRes = await Order.findOne({ orderStatus: enums.ORDER_STAGES.CREATED, razorOrderId: orderId });
-      if (orderRes) {
-        orderRes.orderStatus = enums.ORDER_STAGES.PAID;
-        orderRes.payment = get(payload, 'payment.entity', {});
-        orderRes.razorPaymentId = paymentId;
-        await orderRes.save();
-
-        const userRes = await User.findOne({ _id: orderRes.userId });
-        userRes.currentOrder = null;
-        await userRes.save();
-
-        return res.json({ status: 'ok' });
-      } else {
-        return res.json({ status: 'ok' }); // do nothing but send success to webhook
-      }
-    }
-
-    return res.json({ status: 'ok' });
   } catch (e) {
     return res.internalServerError(e);
   }
