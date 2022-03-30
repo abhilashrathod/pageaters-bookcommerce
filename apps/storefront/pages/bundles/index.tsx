@@ -107,7 +107,7 @@ const Bundles: React.FC<Props> = () => {
                       <div className="custom-container">
                         <div className="row">
                           {
-                            data?.docs.map((bundle: IBundle) => {
+                            data?.data?.docs?.map((bundle: IBundle) => {
                               return (
                                   <div key={bundle.bundleId} className="col-xxl-3 col-lg-4 col-md-4 col-6">
                                     <BundlesCardMedium bundle={bundle}/>

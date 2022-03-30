@@ -4,6 +4,7 @@ import styled from "styled-components";
 import cookie from "js-cookie";
 import {Skeleton} from '@mantine/core';
 import {useRouter} from "next/router";
+import {get} from 'lodash';
 
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
@@ -15,9 +16,9 @@ import {useUser} from "../../contexts/user.context";
 
 import {AUTH_COOKIE, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 
-import CartBreakdown from "./cart-breakdown";
-import ProductItem from "./cart-product-item";
-import BundleItem from "./cart-bundle-item";
+import CartBreakdown from "../../components/cart-elements/cart-breakdown";
+import ProductItem from "../../components/cart-elements/cart-product-item";
+import BundleItem from "../../components/cart-elements/cart-bundle-item";
 import axios from "axios";
 import {useNotifications} from "@mantine/notifications";
 
@@ -150,7 +151,7 @@ const Cart: React.FC<Props> = () => {
                       <ProductListSpace>
                         <ProductList>
                           {
-                            cart?.data?.products.map((item: any) => {
+                            get(cart, 'data.products', []).map((item: any) => {
                               return (
                                   <ProductListItem key={item._id}>
                                     <ProductItem book={item} onDelete={handleOnDelete} onQuantityChange={handleQuantityChange} />
@@ -159,7 +160,7 @@ const Cart: React.FC<Props> = () => {
                             })
                           }
                           {
-                            cart?.data?.bundles.map((item: any) => {
+                            get(cart, 'data.bundles', []).map((item: any) => {
                               return (
                                   <ProductListItem key={item._id}>
                                     <BundleItem onDelete={handleOnBundleDelete} cartBundle={item} />
@@ -173,7 +174,7 @@ const Cart: React.FC<Props> = () => {
                     <div className="col-xl-4 col-md-4 col-12">
                       <div className="breakdown">
                         <h5>Bill Details</h5>
-                        <CartBreakdown cart={cart?.data} shippingCharges={'Calculated at Checkout'}/>
+                        {(cart && cart.data) && <CartBreakdown cart={cart?.data} shippingCharges={'Calculated at Checkout'}/>}
                         <AppButton variant={ButtonVariants.Accent}
                                    size={ButtonSizes.Large}
                                    styles={{width: '100%', display: 'block'}}

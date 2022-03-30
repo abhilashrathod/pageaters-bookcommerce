@@ -1,9 +1,9 @@
 import React, {useState} from "react";
 import {Icon} from "@iconify/react";
 
-import AppIconButton from "../../components/form-controls/IconButton";
+import AppIconButton from "../form-controls/IconButton";
 
-import {ButtonVariants} from "../../components/form-controls/Button";
+import {ButtonVariants} from "../form-controls/Button";
 
 import {getProductImage} from "../../core/_imageRendererHelper";
 import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
@@ -29,7 +29,7 @@ interface Props {
 }
 
 const ProductItem = ({book, onDelete, onQuantityChange}: Props) => {
-  const [quantity, setQuantity] = useState(book.quantity);
+  const [quantity, setQuantity] = useState(book.quantity || 1);
   const router = useRouter();
   function renderImageSize(p: string, w: number, h: number) {
     return getProductImage(p, {height: h, width: w, fit: 'cover'});

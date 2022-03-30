@@ -2,9 +2,9 @@ import React from "react";
 import Link from "next/link";
 import {Icon} from "@iconify/react";
 
-import AppIconButton from "../../components/form-controls/IconButton";
+import AppIconButton from "../form-controls/IconButton";
 
-import {ButtonVariants} from "../../components/form-controls/Button";
+import {ButtonVariants} from "../form-controls/Button";
 
 import {getBundleImage} from "../../core/_imageRendererHelper";
 import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
@@ -40,14 +40,14 @@ const BundleItem = ({onDelete, cartBundle}: Props) => {
       <CartItem>
         <CartContent>
           <div className="image">
-            <Link href={`/bundles/${cartBundle?.bundle?.bundleId}`}><CartImage
+            <Link href={`/bundles/${cartBundle.bundle.bundleId}`}><CartImage
                 src={renderImageSize(cartBundle.bundle.poster, 300, 300)}
                 alt={cartBundle.bundle.title}
                 width={300} height={300}/></Link>
           </div>
           <CartProductInfo>
             <Link
-                href={`/bundles/${cartBundle?.bundle?.bundleId}`}><CartProductTitle>{cartBundle.bundle.title}</CartProductTitle></Link>
+                href={`/bundles/${cartBundle.bundle.bundleId}`}><CartProductTitle>{cartBundle.bundle.title}</CartProductTitle></Link>
             <p>
               {
                 cartBundle.bundle.currentDiscount

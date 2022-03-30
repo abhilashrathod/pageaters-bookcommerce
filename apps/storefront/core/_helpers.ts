@@ -1,5 +1,5 @@
 export const currencyFormat = (num: number) => {
-  return '₹' + num.toFixed(2)
+  return num ? '₹' + num.toFixed(2) : 0;
 };
 
 export const returnDiscountedAmount = (price: number, discount: number) => {

@@ -8,7 +8,7 @@ import useSWR, {useSWRConfig} from "swr";
 import {Icon} from "@iconify/react";
 
 import AddOrUpdateAddress from "../../components/dialogs/add-or-update-address";
-import CartBreakdown from "../cart/cart-breakdown";
+import CartBreakdown from "../../components/cart-elements/cart-breakdown";
 import PageWrapper from "../../components/elements/PageWrapper";
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageHeadings from "../../components/elements/PageHeadings";

@@ -8,7 +8,7 @@ import PageHeadings from "../../components/elements/PageHeadings";
 import {AUTH_COOKIE, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import styled from "styled-components";
-import CartBreakdown from "../cart/cart-breakdown";
+import CartBreakdown from "../../components/cart-elements/cart-breakdown";
 import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
 import axios from "axios";
 import {useNotifications} from "@mantine/notifications";
