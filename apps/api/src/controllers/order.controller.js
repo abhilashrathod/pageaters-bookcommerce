@@ -34,6 +34,24 @@ const populateOptions = [{
   },
 }];
 
+const orderPopulateOptions = [
+  {
+    path: 'deliveryAddress',
+  },
+  {
+    path: 'products.product',
+    select: 'bookId title poster author currentDiscount price',
+    populate: {
+      path: 'author',
+      select: 'name avatar',
+    },
+  },
+  {
+    path: 'bundles.bundle',
+    select: 'bundleId title poster bundledBooks currentDiscount price',
+  },
+];
+
 module.exports.attempt = async (req, res) => {
   try {
     const { address, instructions } = req.allParams();
@@ -71,6 +89,7 @@ module.exports.attempt = async (req, res) => {
       deliveryAddress: address,
       orderStatus: enums.ORDER_STAGES.ATTEMPTED,
       subTotal,
+      total: subTotal + shipping,
       shipping,
     };
 
@@ -213,7 +232,10 @@ module.exports.create = async (req, res) => {
 
     /* TODO: SEND TEXT-MESSAGE TO USER */
 
-    return res.ok({ message: 'ORDER_CREATE_SUCCESS', data: { razorOrderId: razorPayOrderResponse.id, total, orderId: currentOrderRes.orderId, } });
+    return res.ok({
+      message: 'ORDER_CREATE_SUCCESS',
+      data: { razorOrderId: razorPayOrderResponse.id, total, orderId: currentOrderRes.orderId },
+    });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -236,7 +258,10 @@ module.exports.verifyAndConfirm = async (req, res) => {
 
     if (isValid) {
       let selectionString = 'currentDiscount price membersPrice inventory weight';
-      const orderRes = await Order.findOne({ orderStatus: enums.ORDER_STAGES.CREATED, razorOrderId: orderId }).populate(populateOptions);
+      const orderRes = await Order.findOne({
+        orderStatus: enums.ORDER_STAGES.CREATED,
+        razorOrderId: orderId,
+      }).populate(populateOptions);
       if (orderRes) {
         orderRes.orderStatus = enums.ORDER_STAGES.PAID;
         orderRes.payment = get(payload, 'payment.entity', {});
@@ -289,21 +314,6 @@ module.exports.getByUniqueId = async (req, res) => {
     const { uniqueId } = req.allParams();
     const userId = get(req, 'user.userId', '');
 
-    const populateOptions = [{
-      path: 'deliveryAddress',
-    }, {
-      path: 'products.product',
-      select: 'bookId title poster author currentDiscount price',
-      populate: {
-        path: 'author',
-        select: 'name avatar',
-      },
-    }, {
-      path: 'bundles.bundle',
-      select: 'bundleId title poster bundledBooks currentDiscount price',
-    },
-    ];
-
     const orderRes = await Order.findOne({ orderId: uniqueId, userId }).populate(populateOptions);
 
     if (orderRes) {
@@ -355,7 +365,7 @@ module.exports.retrieve = async (req, res) => {
     let orderRes;
 
     if (userRes.currentOrder) {
-      orderRes = await Order.findOne({ _id: userRes.currentOrder });
+      orderRes = await Order.findOne({ _id: userRes.currentOrder }).populate(orderPopulateOptions);
       return res.ok({ message: 'ORDER_LIST_SUCCESS', data: orderRes });
     }
 

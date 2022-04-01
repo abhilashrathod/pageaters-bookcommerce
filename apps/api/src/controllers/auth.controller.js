@@ -62,7 +62,7 @@ module.exports.register = async (req, res) => {
     const { payload, token } = generateJwtToken(user, ipAddress);
     // const refreshToken = generateRefreshToken(user, ipAddress);
 
-    await AccessTokens.create(payload);
+    await AccessTokens.create({ ...payload, token });
     // const profile = await User.getProfile(user._id); // TODO: Improvement could be made
 
     sendMailQueue.add({
