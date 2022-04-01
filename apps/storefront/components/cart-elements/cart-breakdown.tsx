@@ -25,22 +25,24 @@ const BillingListItem = styled.li`
 
 interface Props {
   cart: any;
-  shippingCharges?: any;
+  shippingCharges: number | string;
+  orderTotal: number;
 }
 
-const CartBreakdown = ({cart, shippingCharges}: Props) => {
+const CartBreakdown = ({cart, shippingCharges, orderTotal}: Props) => {
 
+  const [retailTotal, setRetailTotal] = useState(0);
   const [total, setTotal] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [toBePaid, setToBePaid] = useState(0);
-  const [shipping, setShipping] = useState(shippingCharges);
+  const [shipping, setShipping] = useState(0);
 
   useEffect(() => {
     if (cart) {
-      let discountedAmount = 0, productTotal = 0, bundleTotal = 0;
+      let discountedAmount = 0;
+      let productTotal = sumBy(cart.products, (book: ICartItem) => (book.price * book.quantity));
+      let bundleTotal = sumBy(cart.bundles, (bundle: ICartBundle) => (bundle.bundle.price));
 
-      productTotal = sumBy(cart.products, (book: ICartItem) => (book.price * book.quantity));
-      bundleTotal = sumBy(cart.bundles, (bundle: ICartBundle) => (bundle.bundle.price));
 
       for (const cartItem of cart.products) {
         discountedAmount = discountedAmount + ((cartItem.quantity * cartItem.price) - cartItem.productTotal);
@@ -51,32 +53,45 @@ const CartBreakdown = ({cart, shippingCharges}: Props) => {
       }
 
       setDiscountAmount(discountedAmount);
-      setTotal(productTotal + bundleTotal);
-      setToBePaid(cart?.subTotal);
+      setRetailTotal(productTotal + bundleTotal);
+      setToBePaid(cart.subTotal);
+      setTotal(orderTotal);
     }
   }, [cart]);
+
+  useEffect(() => {
+    if (orderTotal) {
+      setTotal(orderTotal);
+    }
+  }, [orderTotal]);
+
+  useEffect(() => {
+    let shippingInfo = isString(shippingCharges) ? shippingCharges : currencyFormat(shippingCharges);
+    // @ts-ignore
+    setShipping(shippingInfo);
+  }, [shippingCharges]);
 
   return (
       <BillItemList>
         <BillingListItem>
           <span>Total MRP:</span>
-          <span className="text-bold">{total && currencyFormat(total)}</span>
+          <span className="text-bold">{currencyFormat(retailTotal)}</span>
         </BillingListItem>
         <BillingListItem>
           <span>Savings:</span>
-          <span className="text-bold">{discountAmount && currencyFormat(discountAmount)}</span>
+          <span className="text-bold">{currencyFormat(discountAmount)}</span>
         </BillingListItem>
         <BillingListItem>
           <span>Subtotal:</span>
-          <span className="text-bold">{toBePaid && currencyFormat(toBePaid)}</span>
+          <span className="text-bold">{currencyFormat(toBePaid)}</span>
         </BillingListItem>
         <BillingListItem>
           <span>Shipping:</span>
-          <span className="text-bold">{isString(shipping) ? shipping : currencyFormat(shipping)}</span>
+          <span className="text-bold">{shipping}</span>
         </BillingListItem>
         <BillingListItem>
-          <h6>Subtotal:</h6>
-          <h6 className="text-bold">{get(cart, 'subTotal', '') && currencyFormat(cart.subTotal)}</h6>
+          <h6>Total:</h6>
+          <h6 className="text-bold">{currencyFormat(total)}</h6>
         </BillingListItem>
       </BillItemList>
   )

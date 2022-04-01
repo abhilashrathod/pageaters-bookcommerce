@@ -233,3 +233,11 @@ export const SIDE_NAVIGATION = [
     ]
   }
 ];
+
+/* ORDER */
+export const ORDER_STAGES = {
+  ATTEMPTED: 'attempted',
+  CREATED: 'created',
+  PAID: 'paid',
+  SHIPPED: 'shipped',
+};

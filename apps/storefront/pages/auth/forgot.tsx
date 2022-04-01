@@ -17,6 +17,7 @@ import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-cont
 import {useRouter} from "next/router";
 import {Icon} from "@iconify/react";
 import Head from "next/head";
+import {obscureEmail} from "../../core/_helpers";
 
 interface Props {
 }
@@ -76,7 +77,7 @@ const ForgotPassword: React.FC<Props> = () => {
   async function handleSubmit(values: any) {
     try {
       await axios.post(`/auth/forgot-password`, values);
-      setMessage('A reset password email has been sent to your registered account. Please follow the instructions to reset your password');
+      setMessage(`A reset password email has been sent to to ${obscureEmail(form.values.email)}. Please follow the instructions to reset your password`);
       setSuccess(true);
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
@@ -86,7 +87,7 @@ const ForgotPassword: React.FC<Props> = () => {
   async function handleResentEmail() {
     try {
       await axios.post(`/auth/forgot-password/resend`, {email: form.values.email});
-      setMessage('A new reset password email has been sent to your registered account.');
+      setMessage(`A new reset password email has been sent to ${obscureEmail(form.values.email)}.`);
       notif.showNotification({message: 'Resend Success!', color: 'green', autoClose: 3000});
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
@@ -95,6 +96,11 @@ const ForgotPassword: React.FC<Props> = () => {
 
   function handleContactUs() {
     router.push('/store/contact');
+  }
+
+  function retryEmail() {
+    setMessage(``);
+    setSuccess(false);
   }
 
   return (
@@ -135,10 +141,13 @@ const ForgotPassword: React.FC<Props> = () => {
                   <div className="row">
                     <div className="col-xxl-6 col-xl-6 col-lg-8 col-md-8 col-12" style={{margin: '0 auto'}}>
                       <AuthPageHeading>
-                        <h2>Done!</h2>
+                        <h2>Instruction Email Sent!</h2>
                       </AuthPageHeading>
                       <EmptyMessageWithGraphic title={message} illustration={graphic} illustrationHeight={'250px'}
                                                illustrationWidth={'250px'}/>
+                      <Center>
+                        <AppButton variant={ButtonVariants.Default} onClick={retryEmail}>Retry Email</AppButton>
+                      </Center>
                       <Divider my="xs" label="ASSISTANCE" labelPosition="center"/>
                       <Center style={{flexDirection: 'column'}}>
                         <h6>Didn&#39;t Receive Reset Mail?</h6>

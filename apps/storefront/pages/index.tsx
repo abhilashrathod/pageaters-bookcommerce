@@ -246,7 +246,7 @@ const Home: NextPage = (props: any) => {
         <section className={'mb-25'}>
           <DealsSection/>
         </section>
-
+        {/*
         <section className="py-25 mb-25">
           <div className="custom-container">
             <div className="row">
@@ -268,9 +268,9 @@ const Home: NextPage = (props: any) => {
             </div>
           </div>
         </section>
-
+        */}
         <section className={'mb-25'}>
-          <CollectionsSection/>
+          <BundlesSection/>
         </section>
 
         <section className={'mb-25'}>
@@ -278,7 +278,7 @@ const Home: NextPage = (props: any) => {
         </section>
 
         <section className={'mb-25'}>
-          <BundlesSection/>
+          <CollectionsSection/>
         </section>
 
         <section className="py-25 mb-25">

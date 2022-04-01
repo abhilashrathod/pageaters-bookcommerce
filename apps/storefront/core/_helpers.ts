@@ -1,5 +1,5 @@
 export const currencyFormat = (num: number) => {
-  return num ? '₹' + num.toFixed(2) : 0;
+  return num ? `₹${num.toFixed(2)}` : `₹0`;
 };
 
 export const returnDiscountedAmount = (price: number, discount: number) => {
@@ -11,4 +11,9 @@ export const returnReadingHours = (value: any) => {
   const hours = Math.ceil((totalMinutes / 60));
 
   return `${hours} hours`;
+};
+
+export const obscureEmail = (email: string) => {
+  const [name, domain] = email.split("@");
+  return `${name[0]}${new Array(name.length).join("*")}@${domain}`;
 };

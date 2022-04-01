@@ -1,19 +1,23 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import useSWR from "swr";
 import cookie from "js-cookie";
+import {useRouter} from "next/router";
+import axios from "axios";
+import {get} from 'lodash';
+import styled from "styled-components";
+import {useNotifications} from "@mantine/notifications";
 
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
-
-import {AUTH_COOKIE, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
-import styled from "styled-components";
 import CartBreakdown from "../../components/cart-elements/cart-breakdown";
 import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
-import axios from "axios";
-import {useNotifications} from "@mantine/notifications";
-import {useRouter} from "next/router";
-import {useUser} from "../../contexts/user.context";
+
+import {AUTH_COOKIE, LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
+import EmptySectionMessage from "../../components/elements/FailedToLoad";
+import ProductItem from "../../components/cart-elements/cart-product-item";
+import BundleItem from "../../components/cart-elements/cart-bundle-item";
+import {Divider} from "@mantine/core";
 
 interface Props {
 }
@@ -25,7 +29,7 @@ const BREADCRUMBS_ITEMS = [
   {title: 'Checkout', href: '', isActive: true},
 ];
 
-const AddressSpace = styled.div`
+const OrderSpace = styled.div`
   padding: 1.5rem;
   border: 1px solid #eee;
   border-radius: 1rem;
@@ -38,7 +42,7 @@ const AddressSpace = styled.div`
   
   @media screen and (max-width: ${SM - 1}px) {
     padding: 0rem;
-    margin-bottom: 0.825rem;
+    margin-bottom: 1.25rem;
     border: none;
     
     &:hover {
@@ -47,21 +51,64 @@ const AddressSpace = styled.div`
   }
 `;
 
+const AddressContent = styled.div`
+  flex-direction: column;
+  display: flex;
+  width: 100%;
+  position: relative;
+`;
+
+const AddressTitle = styled.div`
+  font-weight: 600;
+`;
+
+const AddressContactInfo = styled.span`
+  color: ${LIGHTER_PRIMARY_COLOR}
+`;
+
+const AddressDetails = styled.div`
+  margin-bottom: 0.5rem;
+`;
+
+const CartItemsContent = styled.div``;
+
+const ProductList = styled.ul`
+  margin: 0;
+  padding: 0;
+  list-style: none;
+`;
+
+const ProductListItem = styled.li`
+  margin: 1.25rem 0;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 1.25rem;
+  
+  &:first-child {
+    margin-top: 0;
+  }
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+`;
+
 const Checkout: React.FC<Props> = () => {
-  const [auth, setAuth] = useState(() => {
-    return cookie.get(AUTH_COOKIE) ? true : false;
-  });
+  const isLoggedIn = cookie.get(AUTH_COOKIE);
 
   const notif = useNotifications();
   const router = useRouter();
-  const {user} = useUser();
 
-  const {data: order, error} = useSWR({url: auth ? `/orders/retrieve` : null, withCredentials: true});
-  const {data: cart} = useSWR({url: auth ? `/cart/retrieve` : null, withCredentials: true});
+  const {data, error} = useSWR({url: isLoggedIn ? `/orders/retrieve` : null, withCredentials: true});
+  const {data: person} = useSWR({url: isLoggedIn ? `/auth/me` : null, withCredentials: true});
+  const {data: cart} = useSWR({url: isLoggedIn ? `/cart/retrieve` : null, withCredentials: true});
 
   useEffect(() => {
     initializeRazorpay();
   }, []);
+
+  const user = get(person, 'data', null);
 
   async function createOrder() {
     try {
@@ -98,7 +145,7 @@ const Checkout: React.FC<Props> = () => {
     paymentObject.open();
   }
 
-  function initializeRazorpay () {
+  function initializeRazorpay() {
     return new Promise((resolve) => {
       const script = document.createElement("script");
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -113,6 +160,13 @@ const Checkout: React.FC<Props> = () => {
       document.body.appendChild(script);
     });
   }
+
+  if (error) return <EmptySectionMessage title={'Error Processing Order.. Please try again later.'}/>;
+
+  const order = get(data, 'data', null);
+  const address = get(data, 'data.deliveryAddress', null);
+  const books = get(cart, 'data.products', []);
+  const bundles = get(cart, 'data.bundles', []);
 
   return (
       <PageWrapper>
@@ -130,13 +184,53 @@ const Checkout: React.FC<Props> = () => {
           <div className="custom-container">
             <div className="row">
               <div className="col-xl-8 col-md-8 col-12">
-                <AddressSpace>
-                </AddressSpace>
+                <OrderSpace>
+                  {
+                    address && (
+                        <AddressContent>
+                          <h6>Delivery Address</h6>
+                          <AddressTitle>
+                            {address.fullName} ({address.type.toLowerCase()})
+                            | <AddressContactInfo>{address.contactNo}</AddressContactInfo> | <AddressContactInfo>{address.email}</AddressContactInfo>
+                          </AddressTitle>
+                          <AddressDetails>
+                            {address.addressLine1 + ', '} {address.addressLine2 + ', '} {address.landmark} {address.city + ', '} {address.state + ' - '} {address.pinCode}
+                          </AddressDetails>
+                        </AddressContent>
+                    )
+                  }
+                </OrderSpace>
+                <OrderSpace>
+                  <CartItemsContent>
+                    <h6>Products</h6>
+
+                    <ProductList>
+                    {
+                      books.map((item: any) => {
+                        return (
+                            <ProductListItem key={item._id}>
+                              <ProductItem book={item} viewOnly={true}/>
+                            </ProductListItem>
+                        )
+                      })
+                    }
+                    {
+                      bundles.map((item: any) => {
+                        return (
+                            <ProductListItem key={item._id}>
+                              <BundleItem viewOnly={true} cartBundle={item}/>
+                            </ProductListItem>
+                        )
+                      })
+                    }
+                    </ProductList>
+                  </CartItemsContent>
+                </OrderSpace>
               </div>
               <div className="col-xl-4 col-md-4 col-12">
                 <div className="breakdown">
                   <h5>Order Summary</h5>
-                  {cart && <CartBreakdown cart={cart?.data} shippingCharges={order?.data?.shipping}/>}
+                  {cart && <CartBreakdown cart={cart?.data} shippingCharges={order?.shipping} orderTotal={order?.total}/>}
 
                   <AppButton variant={ButtonVariants.Accent}
                              size={ButtonSizes.Large}

@@ -24,11 +24,12 @@ import {useRouter} from "next/router";
 
 interface Props {
   book: ICartItem,
-  onDelete: (id: string) => void;
-  onQuantityChange: (payload: any) => void;
+  viewOnly: boolean;
+  onDelete?: (id: string) => void;
+  onQuantityChange?: (payload: any) => void;
 }
 
-const ProductItem = ({book, onDelete, onQuantityChange}: Props) => {
+const ProductItem = ({book, viewOnly, onDelete, onQuantityChange}: Props) => {
   const [quantity, setQuantity] = useState(book.quantity || 1);
   const router = useRouter();
   function renderImageSize(p: string, w: number, h: number) {
@@ -36,12 +37,14 @@ const ProductItem = ({book, onDelete, onQuantityChange}: Props) => {
   }
 
   function handleDeleteProduct() {
+    // @ts-ignore
     onDelete(book.product._id);
   }
 
   function handleQuantityChange(e: any) {
-    setQuantity(Number(e.target.value));
+    // @ts-ignore
     onQuantityChange({quantity: e.target.value, product: book.product._id});
+    setQuantity(Number(e.target.value));
   }
 
   function viewProductDetails() {
@@ -51,7 +54,7 @@ const ProductItem = ({book, onDelete, onQuantityChange}: Props) => {
   return (
       <CartItem>
         <CartContent>
-          <div className="image">
+          <div>
             <CartImage onClick={viewProductDetails} src={renderImageSize(book.product.poster, 274, 375)} alt={book.product.title} width={75}
                        height={110}/>
           </div>
@@ -63,28 +66,32 @@ const ProductItem = ({book, onDelete, onQuantityChange}: Props) => {
                 book.product.currentDiscount
                     ? <>
                       <Crossed>{currencyFormat(book.price)}</Crossed>
-                      <span>{currencyFormat(returnDiscountedAmount(book.price, book.product.currentDiscount))}</span>
+                      <span>{currencyFormat(returnDiscountedAmount(book.price, book.product.currentDiscount))} x {quantity}</span>
                     </>
                     : <span>{currencyFormat(book.product.price)}</span>
 
               }
               <small className="text-positive">&nbsp;({book.product.currentDiscount} % Off)</small>
             </p>
-            <CartActionsWrapper>
-              <CartQuantity>
-                Qty:
-                <select name="qty" id="qty" value={quantity} onChange={(e) => handleQuantityChange(e)}>
-                  <option value={1}>1</option>
-                  <option value={2}>2</option>
-                </select>
-              </CartQuantity>
-              <CartActions>
-                {/*<AppIconButton variant={ButtonVariants.Default} onClick={() => console.log('1')}><Icon*/}
-                {/*    icon="bx:bx-heart" height={18} width={18}/>&nbsp;Wishlist</AppIconButton>*/}
-                <AppIconButton variant={ButtonVariants.Default} onClick={handleDeleteProduct}><Icon
-                    icon="bx:bx-trash" height={18} width={18}/>&nbsp;Delete</AppIconButton>
-              </CartActions>
-            </CartActionsWrapper>
+            {
+              !viewOnly && (
+                  <CartActionsWrapper>
+                    <CartQuantity>
+                      Qty:
+                      <select name="qty" id="qty" value={quantity} onChange={(e) => handleQuantityChange(e)}>
+                        <option value={1}>1</option>
+                        <option value={2}>2</option>
+                      </select>
+                    </CartQuantity>
+                    <CartActions>
+                      {/*<AppIconButton variant={ButtonVariants.Default} onClick={() => console.log('1')}><Icon*/}
+                      {/*    icon="bx:bx-heart" height={18} width={18}/>&nbsp;Wishlist</AppIconButton>*/}
+                      <AppIconButton variant={ButtonVariants.Default} onClick={handleDeleteProduct}><Icon
+                          icon="bx:bx-trash" height={18} width={18}/>&nbsp;Delete</AppIconButton>
+                    </CartActions>
+                  </CartActionsWrapper>
+              )
+            }
           </CartProductInfo>
         </CartContent>
       </CartItem>

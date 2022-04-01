@@ -1,6 +1,6 @@
 import React, {forwardRef, useEffect, useState} from 'react';
 import {Autocomplete, Avatar, Badge, Divider, Group, Menu, Text} from '@mantine/core';
-import useSWR, { useSWRConfig } from "swr";
+import useSWR, {mutate, useSWRConfig} from "swr";
 import {useDebouncedValue} from "@mantine/hooks";
 import styled from "styled-components";
 import cookie from "js-cookie";
@@ -12,11 +12,11 @@ import {useRouter} from "next/router";
 import {Icon} from '@iconify/react';
 import {get} from 'lodash';
 
-import {useUser} from "../../contexts/user.context";
 import useAuth from "../../hooks/useAuth";
 
-import logo from '../../public/images/brand-logo.svg';
 import {getProductImage} from "../../core/_imageRendererHelper";
+
+import logo from '../../public/images/brand-logo.svg';
 import {AUTH_COOKIE, FULL_PAGE, LG, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 
 import {IBook} from "../../schemas/book";
@@ -184,29 +184,23 @@ const AutoCompleteItem = forwardRef<HTMLDivElement, any>(({description, id, valu
 
 const AppHeader: React.FC<Props> = () => {
   const router = useRouter();
-  const {mutate} = useSWRConfig();
-  const {setUser} = useUser();
+  const isLoggedIn = cookie.get(AUTH_COOKIE);
 
   const [sticky, setSticky] = useState(false);
   const [transparent, setTransparent] = useState(false);
   const [search, setSearch] = useState('');
-  const auth = useAuth();
 
-  const {data: cart} = useSWR({url: auth ? `/cart/retrieve` : null, withCredentials: true});
-  const {data: person} = useSWR({url: auth ? `/auth/me` : null, withCredentials: true});
+  const {data: cart} = useSWR({url: isLoggedIn ? `/cart/retrieve` : null, withCredentials: true});
+  const {data: person} = useSWR({url: isLoggedIn ? `/auth/me` : null, withCredentials: true});
 
   const [searchDebounced] = useDebouncedValue(search, 1000);
 
   const logout = async () => {
     try {
       await axios.post(`/auth/logout`, {}, {withCredentials: true});
-      setUser(undefined);
       cookie.remove(AUTH_COOKIE);
 
       router.replace('/');
-
-      mutate({url: `/auth/me`, withCredentials: true});
-      mutate({url: `/cart/retrieve`, withCredentials: true});
     } catch (e) {
       console.error(e);
     }
@@ -297,7 +291,7 @@ const AppHeader: React.FC<Props> = () => {
                             <Menu withArrow placement={'end'} control={<AppSmallIconButton>
                                 <Icon icon={'bx:bx-user-circle'} width={30} height={30}/>
                               </AppSmallIconButton>}>
-                              <Menu.Label>Hello, {person ? person?.data?.fullName : 'Reader'}!</Menu.Label>
+                              <Menu.Label>Hello, {person.data.fullName ? person.data.fullName : 'Reader'}!</Menu.Label>
                               <Menu.Item onClick={() => navigateToUrl('/account/orders')} icon={<Icon icon={'ph:shopping-bag-bold'} width={20} height={20}/>}>Orders</Menu.Item>
                               <Menu.Item onClick={() => navigateToUrl('/account/wishlist')} icon={<Icon icon={'bx:bx-heart'} width={20} height={20}/>}>Wishlist</Menu.Item>
                               <Menu.Item onClick={() => navigateToUrl('/account')} icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>

@@ -3,9 +3,9 @@ import cookie from "js-cookie";
 import styled from "styled-components";
 import axios from "axios";
 import {Center} from "@mantine/core";
-import {useNotifications} from "@mantine/notifications";
 import useSWR, {useSWRConfig} from "swr";
 import {Icon} from "@iconify/react";
+import {get} from 'lodash';
 
 import AddOrUpdateAddress from "../../components/dialogs/add-or-update-address";
 import CartBreakdown from "../../components/cart-elements/cart-breakdown";
@@ -22,6 +22,7 @@ import {IAddress} from "../../schemas/address";
 
 import graphic from '../../public/illustrations/delivery-address.svg';
 import {useRouter} from "next/router";
+import {useNotifications} from "@mantine/notifications";
 
 interface Props {
 }
@@ -155,7 +156,7 @@ const AddressSelect: React.FC<Props> = () => {
   const {mutate} = useSWRConfig();
 
   const {data: address, error} = useSWR({url: auth ? `/addresses` : null, withCredentials: true});
-  const {data: cart} = useSWR({url: auth ? `/cart/retrieve` : null, withCredentials: true});
+  const {data} = useSWR({url: auth ? `/cart/retrieve` : null, withCredentials: true});
 
   useEffect(() => {
     if (address) {
@@ -193,9 +194,23 @@ const AddressSelect: React.FC<Props> = () => {
 
   async function handleAddressConfirm() {
     try {
+      notif.showNotification({
+        id: 'address-confirm',
+        loading: true,
+        title: 'Processing Address',
+        message: 'Calculating shipping charges and validating your address. Please wait...',
+        autoClose: false,
+        disallowClose: true,
+      });
       await axios.post(`/orders/attempt`, {address: selectedAddress, instructions: ''}, {withCredentials: true});
-      notif.showNotification({message: 'Delivery address confirmed.', color: 'green', autoClose: 3000});
+      notif.updateNotification('address-confirm', {
+        color: 'green',
+        title: 'Delivery address confirmed.',
+        message: '',
+        autoClose: 3000,
+      });
       router.push('/checkout');
+      mutate({key: `/orders/retrieve`, withCredentials: true});
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
@@ -227,6 +242,8 @@ const AddressSelect: React.FC<Props> = () => {
   }
 
   if (error) return <FailedToLoad title={'Error Loading Cart..'}/>;
+
+  const cart = get(data, 'data', null);
 
   return (
       <>
@@ -277,7 +294,8 @@ const AddressSelect: React.FC<Props> = () => {
                 <div className="col-xl-4 col-md-4 col-12">
                   <div className="breakdown">
                     <h5>Order Summary</h5>
-                    {cart && <CartBreakdown shippingCharges={'Calculated at Checkout'} cart={cart?.data}/>}
+                    {cart &&
+                    <CartBreakdown shippingCharges={'Calculated at Checkout'} cart={cart} orderTotal={cart.subTotal}/>}
 
                     <AppButton variant={ButtonVariants.Accent}
                                size={ButtonSizes.Large}

@@ -2,13 +2,16 @@ import React, {useRef, useState} from 'react';
 import useSWR from 'swr'
 import styled from "styled-components";
 import {Icon} from "@iconify/react";
-import {Skeleton} from '@mantine/core';
+import {ScrollArea, Skeleton} from '@mantine/core';
 
 import CategoryLandscapeCard from "../cards/CategoryLandscapeCard";
 
 import {MD} from "../../core/_variables";
 import {ICategory} from "../../schemas/category";
 import EmptySectionMessage from "../elements/FailedToLoad";
+import AppIconButton from "../form-controls/IconButton";
+import {ButtonVariants} from "../form-controls/Button";
+import {useRouter} from "next/router";
 
 interface Props {
 }
@@ -44,6 +47,8 @@ const CategoryNavigators = styled.div`
 
 const Categories: React.FC<Props> = () => {
   const carouselContainer = useRef(null);
+  const router = useRouter();
+
   const [params, setParams] = useState({page: 1, limit: 25});
 
   const {data, error} = useSWR({url: `/categories`, args: params});
@@ -76,6 +81,10 @@ const Categories: React.FC<Props> = () => {
       </div>
   );
 
+  function navigateToCategories() {
+    router.push(`/categories`);
+  }
+
   return (
       <>
         <div className="custom-container">
@@ -88,22 +97,24 @@ const Categories: React.FC<Props> = () => {
 
                 <CategoryNavigators>
                   <IconButton onClick={scrollLeft}>
-                    <Icon icon="bx:bx-chevron-left-circle" height={30} width={30}/>
+                    <Icon icon="bx:bx-chevron-left-circle" height={24} width={24}/>
                   </IconButton>
                   <IconButton onClick={scrollRight}>
-                    <Icon icon="bx:bx-chevron-right-circle" height={30} width={30}/>
+                    <Icon icon="bx:bx-chevron-right-circle" height={24} width={24}/>
                   </IconButton>
                 </CategoryNavigators>
               </CategoryTitleSpace>
             </div>
           </div>
-          <div ref={carouselContainer} className="row categories-list-container">
-            {data.data.docs.map((category: ICategory) => (
-                <div key={category._id} className="col-xxl-2 col-xl-2 col-lg-3 col-md-3 col-4">
-                  <CategoryLandscapeCard category={category}/>
-                </div>
-            ))}
-          </div>
+          <ScrollArea viewportRef={carouselContainer}>
+            <div className="row categories-list-container">
+              {data.data.docs.map((category: ICategory) => (
+                  <div key={category._id} className="col-xxl-2 col-xl-2 col-lg-3 col-md-3 col-4">
+                    <CategoryLandscapeCard category={category}/>
+                  </div>
+              ))}
+            </div>
+          </ScrollArea>
         </div>
       </>
   )

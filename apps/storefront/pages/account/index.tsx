@@ -1,14 +1,15 @@
 import React from 'react';
 import {Icon} from "@iconify/react";
+import styled from "styled-components";
+import {useRouter} from "next/router";
 
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageHeadings from "../../components/elements/PageHeadings";
 import PageWrapper from "../../components/elements/PageWrapper";
 
-import {useUser} from "../../contexts/user.context";
-import styled from "styled-components";
-import {PRIMARY_COLOR, SM} from "../../core/_variables";
-import {useRouter} from "next/router";
+import {AUTH_COOKIE, PRIMARY_COLOR, SM} from "../../core/_variables";
+import cookie from "js-cookie";
+import useSWR from "swr";
 
 interface Props {
 }
@@ -56,8 +57,10 @@ const PROFILE_OPTIONS = [
 ];
 
 const Account: React.FC<Props> = () => {
-  const {user} = useUser();
   const router = useRouter();
+  const isLoggedIn = cookie.get(AUTH_COOKIE);
+
+  const {data: person} = useSWR({url: isLoggedIn ? `/auth/me` : null, withCredentials: true});
 
   function handleRedirect(route: string) {
     router.push(route)
@@ -73,7 +76,7 @@ const Account: React.FC<Props> = () => {
           </div>
         </div>
         <section>
-          <PageHeadings title={`Hello, ${user ? user.fullName : ''}`}/>
+          <PageHeadings title={`Hello, ${person?.data?.fullName ? person?.data?.fullName : 'Reader'}`}/>
         </section>
         <section>
           <div className="custom-container">

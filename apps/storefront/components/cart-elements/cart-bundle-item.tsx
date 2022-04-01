@@ -23,16 +23,18 @@ import {
 
 interface Props {
   cartBundle: ICartBundle;
-  onDelete: (id: string) => void;
+  viewOnly: boolean;
+  onDelete?: (id: string) => void;
 }
 
-const BundleItem = ({onDelete, cartBundle}: Props) => {
+const BundleItem = ({cartBundle, viewOnly, onDelete}: Props) => {
 
   function renderImageSize(p: string, w: number, h: number) {
     return getBundleImage(p, {height: h, width: w, fit: 'cover'});
   }
 
   function handleDeleteBundle() {
+    // @ts-ignore
     onDelete(cartBundle.bundle._id);
   }
 
@@ -58,12 +60,16 @@ const BundleItem = ({onDelete, cartBundle}: Props) => {
               }
               <small className="text-positive">&nbsp;(Extra {cartBundle.bundle.currentDiscount} % Off)</small>
             </p>
-            <CartActionsWrapper>
-              <CartActions style={{marginLeft: 0}}>
-                <AppIconButton styles={{paddingLeft: 0}} variant={ButtonVariants.Default} onClick={handleDeleteBundle}><Icon
-                    icon="bx:bx-trash" height={18} width={18}/>&nbsp;Delete</AppIconButton>
-              </CartActions>
-            </CartActionsWrapper>
+            {
+              !viewOnly && (
+                  <CartActionsWrapper>
+                    <CartActions style={{marginLeft: 0}}>
+                      <AppIconButton styles={{paddingLeft: 0}} variant={ButtonVariants.Default} onClick={handleDeleteBundle}><Icon
+                          icon="bx:bx-trash" height={18} width={18}/>&nbsp;Delete</AppIconButton>
+                    </CartActions>
+                  </CartActionsWrapper>
+              )
+            }
           </CartProductInfo>
         </CartContent>
       </CartItem>

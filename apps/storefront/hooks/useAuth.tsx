@@ -1,29 +1,17 @@
-import { useState, useEffect } from 'react';
+import {useEffect, useState} from 'react';
 import cookie from "js-cookie";
 import {AUTH_COOKIE} from "../core/_variables";
-import {useUser} from "../contexts/user.context";
 
 const useAuth = () => {
   const [auth, setAuth] = useState(false);
-  const {user, setUser} = useUser();
+  const isLoggedIn = cookie.get(AUTH_COOKIE);
 
   useEffect(() => {
-    const isLoggedIn = cookie.get(AUTH_COOKIE);
+    console.log("cookie change thai", isLoggedIn);
     if (isLoggedIn) {
       setAuth(true)
     }
-  }, []);
-
-  useEffect(() => {
-    const isLoggedIn = cookie.get(AUTH_COOKIE);
-    if (!isLoggedIn && !user) {
-      setAuth(false);
-    }
-
-    if (isLoggedIn && user) {
-      setAuth(true);
-    }
-  }, [user, setUser]);
+  }, [isLoggedIn]);
 
   return auth;
 };

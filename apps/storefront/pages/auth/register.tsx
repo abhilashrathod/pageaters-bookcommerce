@@ -1,8 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components';
 import axios from "axios";
+import {mutate} from "swr";
 import cookie from 'js-cookie';
 import Link from "next/link";
+import Head from "next/head";
 import {useRouter} from "next/router";
 import {Divider, Stepper} from "@mantine/core";
 import {useNotifications} from "@mantine/notifications";
@@ -12,10 +14,9 @@ import {Icon} from "@iconify/react";
 import AppTextInput from "../../components/form-controls/AppTextInput";
 import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
 
-import {useUser} from "../../contexts/user.context";
 import {getAssetImage} from "../../core/_imageRendererHelper";
 import {ACCENT_COLOR, AUTH_COOKIE, LG, LIGHTER_PRIMARY_COLOR, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
-import Head from "next/head";
+
 
 interface Props {
 }
@@ -169,7 +170,7 @@ const RegistrationForm = ({onStepChange, onSubmit}: any) => {
           <LoginButton type="submit">Register</LoginButton>
         </form>
         <Divider my="xs" label="OR" labelPosition="center"/>
-        <h5 style={{textAlign: 'center'}}>Existing User?</h5>
+        <h6 style={{textAlign: 'center'}}>Existing User?</h6>
         <AppButton styles={{width: '33%', margin: '0 auto'}}
                    variant={ButtonVariants.Secondary}
                    size={ButtonSizes.Small}
@@ -331,7 +332,6 @@ const ContactForm = ({onStepChange, onSubmit, onVerifySubmit, onResend}: any) =>
 const Register: React.FC<Props> = () => {
   const router = useRouter();
   const notif = useNotifications();
-  const {user, setUser} = useUser();
   const [step, setStep] = useState(0);
 
   function renderImageSize(i: string, w: number, h: number) {
@@ -341,20 +341,14 @@ const Register: React.FC<Props> = () => {
   async function handleRegisterSubmit(values: any) {
     try {
       await axios.post(`/auth/register`, values, {withCredentials: true});
-      const response$ = await axios.get(`/auth/me`, {withCredentials: true});
-      const data = await response$.data;
-      // set current user to the system
-      setUser(data.data);
-      // show alert
       notif.showNotification({
         message: 'Welcome to Pageaters! Registration Successful',
         color: 'green',
         autoClose: 3000
       });
-      // set auth cookie
       cookie.set(AUTH_COOKIE, `${+new Date()}`);
-      // change step
       setStep(1);
+      updateUser();
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
@@ -363,14 +357,9 @@ const Register: React.FC<Props> = () => {
   async function handlePersonalInfoSubmit(values: any) {
     try {
       await axios.put(`/auth/me`, values, {withCredentials: true});
-      const response$ = await axios.get(`/auth/me`, {withCredentials: true});
-      const data = await response$.data;
-      // set current user to the system
-      setUser(data.data);
-      // show alert
       notif.showNotification({message: 'Profile Info Updated', color: 'green', autoClose: 3000});
-      // change step
       setStep(2);
+      updateUser();
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
@@ -379,9 +368,8 @@ const Register: React.FC<Props> = () => {
   async function handleContactSubmit(values: any) {
     try {
       await axios.post(`/auth/contact/send`, values, {withCredentials: true});
-
-      notif.showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 3000});
-
+      notif.showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 5000});
+      updateUser();
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
@@ -390,10 +378,9 @@ const Register: React.FC<Props> = () => {
   async function handleVerifySubmit(values: any) {
     try {
       await axios.post(`/auth/contact/verify`, values, {withCredentials: true});
-      // show alert
       notif.showNotification({message: 'Verification Completed. Account verified!', color: 'green', autoClose: 3000});
-
       router.replace('/');
+      updateUser();
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
@@ -402,10 +389,7 @@ const Register: React.FC<Props> = () => {
   async function handleResend(values: any) {
     try {
       await axios.post(`/auth/contact/send`, values, {withCredentials: true});
-      // show alert
       notif.showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 3000});
-
-
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
@@ -419,14 +403,18 @@ const Register: React.FC<Props> = () => {
     setStep(val);
   }
 
+  function updateUser() {
+    mutate({url: `/auth/me`, withCredentials: true});
+  }
+
   function returnCurrentStepTitle() {
     switch (step) {
       case 0:
-        return <h6>Step I. Add Credentials</h6>;
+        return 'Step I. Add Credentials';
       case 1:
-        return <h6>Step II. Add Personal Info</h6>;
+        return 'Step II. Add Personal Info';
       case 2:
-        return <h6>Step III. Add Contact Info</h6>;
+        return 'Step III. Add Contact Info';
       default:
         return null;
     }
@@ -447,7 +435,7 @@ const Register: React.FC<Props> = () => {
                   <h1 className="display-1">
                     Let&#39;s Get You Started
                   </h1>
-                  <h5 style={{color: LIGHTER_PRIMARY_COLOR}}>Register to shop, it&#39;s quick and easy</h5>
+                  <h6 style={{color: LIGHTER_PRIMARY_COLOR}}>Register to shop, it&#39;s quick and easy</h6>
                 </ContentTitles>
 
                 <Stepper style={{margin: '0 0 2rem 0'}} color={'orange'} size={'lg'} active={step}>
@@ -456,7 +444,7 @@ const Register: React.FC<Props> = () => {
                   <Stepper.Step icon={<Icon icon={'ic:twotone-perm-phone-msg'} width={24} height={24}/>}/>
                 </Stepper>
 
-                <h5>{returnCurrentStepTitle()}</h5>
+                <h6>{returnCurrentStepTitle()}</h6>
 
                 {
                   step === 0 &&

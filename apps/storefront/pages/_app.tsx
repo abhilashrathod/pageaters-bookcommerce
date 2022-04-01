@@ -13,8 +13,6 @@ import '../core/_service';
 import AppHeader from "../components/partials/Header";
 import AppFooter from "../components/partials/Footer";
 import AppMobileMenu from "../components/partials/MobileMenu";
-// User Context
-import {UserProvider} from "../contexts/user.context";
 
 Router.events.on("routeChangeStart", nProgress.start);
 Router.events.on("routeChangeError", nProgress.done);
@@ -43,12 +41,10 @@ function MyApp({Component, pageProps}: AppProps) {
         <SWRConfig value={{use: [swrMiddleware], fetcher}}>
           <MantineProvider theme={{fontFamily: 'Metropolis Regular'}}>
             <NotificationsProvider position={'bottom-right'}>
-              <UserProvider initialUser={pageProps?.user}>
-                <AppHeader/>
-                <Component {...pageProps} />
-                <AppFooter/>
-                <AppMobileMenu/>
-              </UserProvider>
+              <AppHeader/>
+              <Component {...pageProps} />
+              <AppFooter/>
+              <AppMobileMenu/>
             </NotificationsProvider>
           </MantineProvider>
         </SWRConfig>

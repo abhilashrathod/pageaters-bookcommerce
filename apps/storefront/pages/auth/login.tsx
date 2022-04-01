@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import Head from "next/head";
 import {useRouter} from "next/router";
-import {useSWRConfig} from "swr";
+import {mutate} from "swr";
 import styled from "styled-components";
 import {parseUrl} from 'query-string';
 import {Divider} from "@mantine/core";
@@ -11,16 +11,13 @@ import {useNotifications} from '@mantine/notifications';
 import axios from "axios";
 import Link from "next/link";
 import cookie from 'js-cookie';
+
 import AppTextInput from "../../components/form-controls/AppTextInput";
+import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
 
 import {ACCENT_COLOR, AUTH_COOKIE, LG, LIGHTER_PRIMARY_COLOR, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
 
-import {useUser} from "../../contexts/user.context";
-
 import {getAssetImage} from "../../core/_imageRendererHelper";
-
-import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
-
 
 interface Props {
 }
@@ -134,9 +131,7 @@ const LoginButton = styled.button`
 `;
 
 const Login: React.FC<Props> = () => {
-  const {user, setUser} = useUser();
   const router = useRouter();
-  const { mutate } = useSWRConfig();
   const notif = useNotifications();
 
   const [redirect, setRedirect] = useState(() => {
@@ -171,7 +166,6 @@ const Login: React.FC<Props> = () => {
           notif.showNotification({message: 'Login Successfully!', color: 'green', autoClose: 3000});
 
           cookie.set(AUTH_COOKIE, `${+new Date()}`);
-          setUser(data.data);
 
           if (redirect) return router.replace(`${redirect}`);
 
@@ -199,7 +193,7 @@ const Login: React.FC<Props> = () => {
                 <ContentSpace>
                   <ContentTitles>
                     <h1 className="display-1">Glad to have you back!</h1>
-                    <h5 style={{color: LIGHTER_PRIMARY_COLOR}}>Login to access account and shopping.</h5>
+                    <h6 style={{color: LIGHTER_PRIMARY_COLOR}}>Login to access account and shopping.</h6>
                   </ContentTitles>
 
                   <form onSubmit={form.onSubmit(handleSubmit)}>
@@ -222,7 +216,7 @@ const Login: React.FC<Props> = () => {
                     </p>
                   </form>
                   <Divider my="xs" label="OR" labelPosition="center"/>
-                  <h5 style={{textAlign: 'center'}}>New to Pageaters?</h5>
+                  <h6 style={{textAlign: 'center'}}>New to Pageaters?</h6>
                   <AppButton styles={{width: '33%', margin: '0 auto'}} variant={ButtonVariants.Secondary}
                              size={ButtonSizes.Small} onClick={() => router.push(`/auth/register`)} type="button">Create
                     Account</AppButton>

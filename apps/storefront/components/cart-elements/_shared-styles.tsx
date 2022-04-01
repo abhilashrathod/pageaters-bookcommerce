@@ -15,6 +15,7 @@ export const CartItem = styled.div`
 
 export const CartContent = styled.div`
   width: 100%;
+  height: auto;
   display: flex;
   flex-direction: row;
 `;
