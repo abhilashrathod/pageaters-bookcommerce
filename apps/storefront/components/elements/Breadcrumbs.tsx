@@ -14,7 +14,7 @@ interface Props {
 const Breadcrumbs: React.FC<Props> = ({items}) => {
   return (
       <>
-        <div aria-label="breadcrumb">
+        <div className={'breadcrumbs'} aria-label="breadcrumb">
           <ol className="breadcrumb mb-0">
             {
               items.map((item, index) => {

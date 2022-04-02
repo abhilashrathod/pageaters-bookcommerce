@@ -1,13 +1,16 @@
 import React, {useEffect, useState} from 'react';
 import cookie from "js-cookie";
 import styled from "styled-components";
+import {useRouter} from "next/router";
 import axios from "axios";
 import {Center} from "@mantine/core";
-import useSWR, {useSWRConfig} from "swr";
+import useSWR, {mutate} from "swr";
 import {Icon} from "@iconify/react";
 import {get} from 'lodash';
+import {useNotifications} from "@mantine/notifications";
 
 import AddOrUpdateAddress from "../../components/dialogs/add-or-update-address";
+import Address from "../../components/interactive-cards/Address";
 import CartBreakdown from "../../components/cart-elements/cart-breakdown";
 import PageWrapper from "../../components/elements/PageWrapper";
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
@@ -17,12 +20,10 @@ import AppIconButton from "../../components/form-controls/IconButton";
 import EmptyMessageWithGraphic from "../../components/elements/EmptyMessageWithGraphic";
 import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
 
-import {AUTH_COOKIE, LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
+import {AUTH_COOKIE, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 import {IAddress} from "../../schemas/address";
 
 import graphic from '../../public/illustrations/delivery-address.svg';
-import {useRouter} from "next/router";
-import {useNotifications} from "@mantine/notifications";
 
 interface Props {
 }
@@ -73,79 +74,16 @@ const AddressListWrapper = styled.li`
   }
 `;
 
-const AddressListItem = styled.div`
+const ActionCenter = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: center;
+  margin: 1.5rem;
 `;
-
-const Action = styled.div`
-  display: flex;
-  align-items: flex-start;
-`;
-
-const AddressContent = styled.div`
-  flex-direction: column;
-  display: flex;
-  width: 100%;
-  position: relative;
-  margin-left: 1rem;
-`;
-
-const AddressTitle = styled.div`
-  font-weight: 600;
-`;
-
-const AddressContactInfo = styled.span`
-  color: ${LIGHTER_PRIMARY_COLOR}
-`;
-
-const AddressDetails = styled.div`
-  margin-bottom: 0.5rem;
-`;
-
-const AddressActions = styled.span`
-
-`;
-
-const Address = ({address, onSelection, onEdit, onDelete}: any) => (
-    <AddressListItem>
-      <Action>
-        <AppIconButton
-            styles={{border: "none"}}
-            variant={address.isDefault ? ButtonVariants.Accent : ButtonVariants.Default}
-            size={ButtonSizes.Default} onClick={() => onSelection(address._id)}>
-          {
-            address.isDefault
-                ? <Icon icon="ic:twotone-check-circle" height={18} width={18}/>
-                : <Icon icon="bx:check-circle" height={18} width={18}/>
-          }
-        </AppIconButton>
-      </Action>
-      <AddressContent>
-        <AddressTitle>
-          {address.fullName} ({address.type.toLowerCase()})
-          | <AddressContactInfo>{address.contactNo}</AddressContactInfo> | <AddressContactInfo>{address.email}</AddressContactInfo>
-        </AddressTitle>
-        <AddressDetails>
-          {address.addressLine1 + ', '} {address.addressLine2 + ', '} {address.landmark} {address.city + ', '} {address.state + ' - '} {address.pinCode}
-        </AddressDetails>
-        <AddressActions>
-          <AppIconButton styles={{paddingLeft: '0'}} variant={ButtonVariants.Default} onClick={() => onEdit(address)}>
-            <Icon icon={'bx:edit-alt'} width={18} height={18}/>&nbsp;Edit
-          </AppIconButton>
-          <AppIconButton styles={{marginLeft: '1rem'}} variant={ButtonVariants.Default}
-                         onClick={() => onDelete(address)}>
-            <Icon icon={'bx:bx-trash'} width={18} height={18}/>&nbsp;Delete
-          </AppIconButton>
-        </AddressActions>
-      </AddressContent>
-    </AddressListItem>
-);
 
 const AddressSelect: React.FC<Props> = () => {
-  const [auth, setAuth] = useState(() => {
-    return cookie.get(AUTH_COOKIE) ? true : false;
-  });
+  const isLoggedIn = cookie.get(AUTH_COOKIE);
+
   const [selectedAddress, setSelectedAddress] = useState('');
   const [currentAddress, setCurrentAddress] = useState(undefined);
   const [edit, setEdit] = useState(false);
@@ -153,10 +91,9 @@ const AddressSelect: React.FC<Props> = () => {
 
   const notif = useNotifications();
   const router = useRouter();
-  const {mutate} = useSWRConfig();
 
-  const {data: address, error} = useSWR({url: auth ? `/addresses` : null, withCredentials: true});
-  const {data} = useSWR({url: auth ? `/cart/retrieve` : null, withCredentials: true});
+  const {data: address, error} = useSWR({url: isLoggedIn ? `/addresses` : null, withCredentials: true});
+  const {data} = useSWR({url: isLoggedIn ? `/cart/retrieve` : null, withCredentials: true});
 
   useEffect(() => {
     if (address) {
@@ -237,6 +174,7 @@ const AddressSelect: React.FC<Props> = () => {
   }
 
   function handleOnSave() {
+    setEdit(false);
     updateAddresses();
     toggleAddressModal();
   }
@@ -281,12 +219,12 @@ const AddressSelect: React.FC<Props> = () => {
                         })
                       }
                       <AddressListWrapper>
-                        <Center>
+                        <ActionCenter>
                           <AppIconButton variant={ButtonVariants.LightPrimary} onClick={toggleAddressModal}
                                          size={ButtonSizes.Large}>
                             <Icon icon={'ic:twotone-add-circle'} width={30} height={30}/>&nbsp;Add Address
                           </AppIconButton>
-                        </Center>
+                        </ActionCenter>
                       </AddressListWrapper>
                     </AddressList>
                   </AddressSpace>

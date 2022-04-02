@@ -92,6 +92,7 @@ const MainButton = styled.button`
   font-size: ${({theme}) => handleFont(theme.size)};
   border: 1px solid ${({theme}) => handleBorderColor(theme.variant)};
   box-shadow: 0 2px 10px 0 rgb(0 0 0 / 16%);
+  align-items:center;
 `;
 
 const AppButton: React.FC<Props> = ({variant, size, styles, type, disabled, onClick, children}) => {
