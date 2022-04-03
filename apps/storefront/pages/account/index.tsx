@@ -39,6 +39,10 @@ const ProfileOptionTitle = styled.h6`
   line-height: 1;
 `;
 
+const ProfileOptionDesc = styled.p`
+  margin-bottom: 0;
+`;
+
 const BREADCRUMBS_ITEMS = [
   {title: 'Home', href: '/'},
   {title: 'Account', href: '/account', isActive: true},
@@ -46,14 +50,14 @@ const BREADCRUMBS_ITEMS = [
 
 const PROFILE_OPTIONS = [
   {link: '/account/orders', title: 'Orders', icon: 'bx:bx-cart', description: 'Your current and past order history'},
-  {link: '/account/wishlist', title: 'Wishlist', icon: 'bx:bx-heart', description: 'See and update all the books you\'ve wishlisted'},
-  {link: '/account/payments', title: 'Payment History', icon: 'bx:bx-credit-card-alt', description: 'All the payment history of your orders and refunds'},
-  {link: '/account/profile', title: 'Personal Info', icon: 'bx:bx-user-circle', description: 'Personal Details you provided and contact information'},
-  {link: '/account/security', title: 'Login & Security', icon: 'bx:bx-lock-open', description: 'Make your account more secure. Update Password'},
-  {link: '/account/notifications', title: 'Notification Prefrences', icon: 'bx:bx-bell', description: 'Choose how you would like to be contacted'},
+  {link: '/account/wishlist', title: 'Wishlist', icon: 'bx:bx-heart', description: 'See all the books you\'ve wishlisted'},
+  {link: '/account/profile', title: 'Personal Info', icon: 'bx:bx-user-circle', description: 'Update personal & contact info'},
   {link: '/account/addresses', title: 'Addresses', icon: 'bx:bx-location-plus', description: 'View and update addresses for orders'},
-  {link: '/account/rewards', title: 'Rewards', icon: 'bx:bx-gift', description: 'Rewards you\'ve earned through purchases and other'},
-  {link: '/account/subscription', title: 'Subscription', icon: 'bx:bx-book-reader', description: 'One subscription to rule them all!'},
+  // {link: '/account/payments', title: 'Payment History', icon: 'bx:bx-credit-card-alt', description: 'All the payment history of your orders and refunds'},
+  // {link: '/account/security', title: 'Login & Security', icon: 'bx:bx-lock-open', description: 'Make your account more secure. Update Password'},
+  // {link: '/account/notifications', title: 'Notification Prefrences', icon: 'bx:bx-bell', description: 'Choose how you would like to be contacted'},
+  // {link: '/account/rewards', title: 'Rewards', icon: 'bx:bx-gift', description: 'Rewards you\'ve earned through purchases and other'},
+  // {link: '/account/subscription', title: 'Subscription', icon: 'bx:bx-book-reader', description: 'One subscription to rule them all!'},
 ];
 
 const Account: React.FC<Props> = () => {
@@ -84,13 +88,13 @@ const Account: React.FC<Props> = () => {
               {
                 PROFILE_OPTIONS.map((option, index) => {
                   return (
-                      <div key={index} className="col-xxl-4 col-xl-4 col-lg-6 col-sm-6 col-12">
+                      <div key={index} className="col-xxl-3 col-xl-3 col-lg-6 col-sm-6 col-12">
                         <ProfileOptionSpace onClick={() => handleRedirect(option.link)}>
                           <ProfileOptionTitle>
                             <Icon width="30" height="30" icon={option.icon}/>
                             &nbsp;<span>{option.title}</span>
                           </ProfileOptionTitle>
-                          <p>{option.description}</p>
+                          <ProfileOptionDesc>{option.description}</ProfileOptionDesc>
                         </ProfileOptionSpace>
                       </div>
                   )
