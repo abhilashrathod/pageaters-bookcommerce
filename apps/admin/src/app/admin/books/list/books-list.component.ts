@@ -46,11 +46,6 @@ export class BooksListComponent implements OnInit {
       cell: (element) => `${element.inventory}`,
     },
     {
-      header: 'Details',
-      columnDef: 'view',
-      cell: (element) => [...this.viewResourceUrl, element._id],
-    },
-    {
       header: 'Action',
       columnDef: 'action',
       cell: (element) => [...this.editResourceUrl, element._id],

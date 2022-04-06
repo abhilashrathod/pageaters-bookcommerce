@@ -351,6 +351,10 @@ export class BookCreateComponent implements OnInit {
     const {relatedBooks, relatedCollections, relatedBundles, categories} = this.relatedInfoFormGroup.value;
     const {author} = this.primaryFormGroup.value;
 
+    if (!this.poster) {
+      this.snackBar.open('Please select poster', 'OKAY', {duration: 5000});
+    }
+
     const payload = {
       ...this.primaryFormGroup.value,
       ...this.shippingFormGroup.value,
