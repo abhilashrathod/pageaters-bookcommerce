@@ -51,7 +51,7 @@ export class SidebarComponent implements OnInit {
     },
     {
       icon: 'shopping_bag',
-      path: [],
+      path: ['/', 'admin', 'orders'],
       title: 'Orders'
     },
     {
