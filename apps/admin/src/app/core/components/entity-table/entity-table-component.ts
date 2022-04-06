@@ -16,7 +16,8 @@ import {MatSnackBar} from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-entity-table',
-  templateUrl: 'entity-table-component.html'
+  templateUrl: 'entity-table-component.html',
+  styleUrls: ['./entity-table.component.scss'],
 })
 
 export class EntityTableComponent implements OnInit, AfterViewInit {

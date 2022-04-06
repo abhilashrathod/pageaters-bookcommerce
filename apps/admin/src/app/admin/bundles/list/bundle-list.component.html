@@ -15,7 +15,10 @@
 </div>
 
 <div class="action-button-row">
-  <button mat-fab color="primary" [routerLink]="createResourceUrl">
+  <button mat-fab color="primary" [routerLink]="['/', 'admin', 'bundles', 'arrange']">
+    <mat-icon>low_priority</mat-icon>
+  </button>
+  <button class="ms-2" mat-fab color="accent" [routerLink]="createResourceUrl">
     <mat-icon>add</mat-icon>
   </button>
 </div>

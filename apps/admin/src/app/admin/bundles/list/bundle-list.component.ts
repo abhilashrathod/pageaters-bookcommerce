@@ -33,6 +33,11 @@ export class BundleListComponent implements OnInit {
       cell: (element) => `${element.bundledBooks.length}`,
     },
     {
+      header: 'Priority',
+      columnDef: 'priority',
+      cell: (element) => `${element.priority}`,
+    },
+    {
       header: 'Discount (in %)',
       columnDef: 'currentDiscount',
       cell: (element) => `${element.currentDiscount}`,

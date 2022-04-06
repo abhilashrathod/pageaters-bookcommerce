@@ -12,17 +12,14 @@
     <mat-header-cell *matHeaderCellDef> {{col.header}}</mat-header-cell>
     <mat-cell *matCellDef="let row">
       <span *ngIf="col.columnDef == 'action'">
+          <button *ngIf="viewResource" mat-icon-button color="secondary" [routerLink]="col.cell(row)" matTooltip="View" class="me-1">
+            <mat-icon>visibility</mat-icon>
+          </button>
           <button mat-icon-button color="primary" [routerLink]="col.cell(row)" matTooltip="Edit" class="me-1">
             <mat-icon>edit</mat-icon>
           </button>
           <button mat-icon-button color="warn" (click)="deleteRecord(col.cell(row))" matTooltip="Delete">
             <mat-icon>delete</mat-icon>
-          </button>
-      </span>
-
-      <span *ngIf="col.columnDef == 'view'">
-         <button mat-icon-button color="secondary" [routerLink]="col.cell(row)" matTooltip="View" class="me-1">
-            <mat-icon>visibility</mat-icon>
           </button>
       </span>
 

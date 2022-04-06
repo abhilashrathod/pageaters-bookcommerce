@@ -27,8 +27,10 @@ export class BooksService {
   }
 
   searchBooks(title): Observable<any> {
-    const url = `${environment.BASE_PATH}/store-books/search/${title}`;
-    return this._http.get(url)
+    const url = `${environment.BASE_PATH}/store-books/search`;
+    let params = new HttpParams();
+    params = params.append('q', title);
+    return this._http.get(url, {params})
       .pipe(
         map((dt: IResponse) => dt.data),
         catchError((err) => this.handleError(err))
@@ -46,7 +48,7 @@ export class BooksService {
 
 
   getById(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/store-books/${id}`;
+    const url = `${environment.BASE_PATH}/store-books/get/${id}`;
     return this._http.get(url)
       .pipe(
         map((dt: IResponse) => dt.data),
