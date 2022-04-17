@@ -67,7 +67,7 @@ this.app.set('env', ENVIRONMENT);
 
 // Handle `OPTIONS` request.
 this.app.all('*', (req, res, next) => {
-  const allowedOrigins = ['http://localhost:3000', 'http://localhost:2305', 'http://localhost:4200', 'http://192.168.0.107:3000', 'http://192.168.0.107:2305'];
+  const allowedOrigins = ['https://manage.stg403.pageaters.com', 'http://localhost:3000', 'http://localhost:2305', 'http://localhost:4200', 'http://192.168.0.107:3000', 'http://192.168.0.107:2305'];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
