@@ -1,0 +1,14 @@
+<form [formGroup]="shipmentFormGroup" (ngSubmit)="handleShipmentSubmit()">
+  <h1 mat-dialog-title>Return Shipment</h1>
+  <div mat-dialog-content>
+    <mat-form-field class="w-100">
+      <mat-label>Shipment ID</mat-label>
+      <input matInput placeholder="Enter Shipment ID From Delhivery" formControlName="shipment" required>
+    </mat-form-field>
+
+  </div>
+  <div mat-dialog-actions>
+    <button class="me-3" type="submit" mat-stroked-button color="primary">Align</button>
+    <button type="button" mat-stroked-button color="danger" (click)="dialogRef.close()">Close</button>
+  </div>
+</form>

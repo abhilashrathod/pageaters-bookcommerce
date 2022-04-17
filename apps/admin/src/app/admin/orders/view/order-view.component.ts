@@ -1,17 +1,11 @@
 import {Component, OnInit} from '@angular/core';
-import {FormBuilder} from '@angular/forms';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {ActivatedRoute, Router} from '@angular/router';
-
-import {BundleService} from '../../../core/services/bundle.service';
-import {CategoryService} from '../../../core/services/category.service';
-import {AuthorService} from '../../../core/services/author.service';
-import {CollectionService} from '../../../core/services/collection.service';
-import {BooksService} from '../../../core/services/books.service';
-import {FilesService} from '../../../core/services/files.service';
-
-import {IBook} from '../../../core/schema/book';
-import {BUCKETS} from '../../../core/helpers/constants';
+import {OrderServices} from '../../../core/services/order.services';
+import {IOrder} from '../../../core/schema/order';
+import {AlignShipmentDialogComponent} from './align-shipment-dialog.component';
+import {MatDialog} from '@angular/material/dialog';
 
 @Component({
   selector: 'app-order-view',
@@ -19,38 +13,121 @@ import {BUCKETS} from '../../../core/helpers/constants';
 })
 
 export class OrderViewComponent implements OnInit {
-  book: IBook;
+  order: IOrder;
   isReady = false;
+
+  shipmentFormGroup: FormGroup;
 
   constructor(private formBuilder: FormBuilder,
               private snackBar: MatSnackBar,
-              private bundleService: BundleService,
-              private categoryService: CategoryService,
-              private authorService: AuthorService,
-              private collectionService: CollectionService,
               private router: Router,
+              private dialog: MatDialog,
               private route: ActivatedRoute,
-              private booksService: BooksService,
-              private filesService: FilesService) {
+              private orderServices: OrderServices) {
   }
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params.id) {
-        this.getBookDetails(params.id);
+        this.getOrderDetails(params.id);
       }
     });
   }
 
-  getBookDetails(id): void {
-    const book$ = this.booksService.getById(id);
-    book$.subscribe(res => {
-      this.book = res;
-      this.book.poster = `${BUCKETS.BOOKS}/${this.book.poster}`;
+  getOrderDetails(id): void {
+    const order$ = this.orderServices.getById(id);
+    order$.subscribe(res => {
+      this.order = res;
       this.isReady = true;
-      // this.buildForms(res);
+
+      this.prepareShipmentForm();
+      this.prepareRequestInfo();
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
+    });
+  }
+
+  prepareRequestInfo(): void {
+    for (const req of this.order.requests) {
+
+    }
+  }
+
+  prepareShipmentForm(): void {
+    this.shipmentFormGroup = this.formBuilder.group({
+      shipmentTrackingId: [this.order.shipmentTrackingId ? this.order.shipmentTrackingId : '', Validators.required],
+    });
+  }
+
+  cancelShipment(): void {
+    // write shipment cancel code
+  }
+
+  dumpRecord(): string {
+    return JSON.stringify(this.order, null, `\t`);
+  }
+
+  handleShipmentSubmit(): void {
+    const {value} = this.shipmentFormGroup;
+
+    const payload = {
+      ...value,
+      orderId: this.order._id,
+    };
+
+    const update$ = this.orderServices.ship(payload);
+    update$.subscribe(res => {
+      this.snackBar.open('Order Shipped', 'OKAY', {duration: 3000});
+    }, err => {
+      this.snackBar.open(err, 'OKAY', {duration: 5000});
+    });
+  }
+
+  markAsDelivered(): void {
+    const update$ = this.orderServices.fulfilled(this.order._id);
+    update$.subscribe(res => {
+      this.snackBar.open('Order Marked as Fulfilled', 'OKAY', {duration: 3000});
+    }, err => {
+      this.snackBar.open(err, 'OKAY', {duration: 5000});
+    });
+  }
+
+  /* RETURNS */
+
+  alignReturn(requestId: string): void {
+    const dialogRef = this.dialog.open(AlignShipmentDialogComponent, {
+      width: '400px',
+    });
+
+    dialogRef.afterClosed()
+      .subscribe(res => {
+        if (res) {
+          this.doReverseShipment(requestId, res);
+        }
+      });
+  }
+
+  closeReturnRequest(requestId: string): void {
+    const obs$ = this.orderServices.closeReturnShipment(this.order._id, requestId);
+    obs$.subscribe(res => {
+      this.getOrderDetails(this.order._id);
+      this.snackBar.open('Request closed', 'OKAY', {duration: 3000});
+    });
+  }
+
+  closeReplaceRequest(requestId: string): void {
+    const obs$ = this.orderServices.closeReplacementShipment(this.order._id, requestId);
+    obs$.subscribe(res => {
+      this.getOrderDetails(this.order._id);
+      this.snackBar.open('Replacement closed', 'OKAY', {duration: 3000});
+    });
+  }
+
+  doReverseShipment(requestId: string, data: any): void {
+    const obs$ = this.orderServices.alignReturnShipment(this.order._id, requestId, data);
+    obs$.subscribe(res => {
+      this.getOrderDetails(this.order._id);
+      this.snackBar.open('Return shipment aligned.', 'OKAY', {duration: 3000});
     });
   }
 }

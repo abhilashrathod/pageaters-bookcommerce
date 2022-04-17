@@ -25,8 +25,18 @@ export class OrderServices {
       );
   }
 
-  create(payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/deals`;
+  getById(id): Observable<any> {
+    const url = `${environment.BASE_PATH}/orders/getById/${id}`;
+    return this._http.get(url)
+      .pipe(
+        map((dt: IResponse) => dt.data),
+        catchError((err) => this.handleError(err))
+      );
+  }
+
+  /** FORWARD SHIPMENT **/
+  ship(payload): Observable<any> {
+    const url = `${environment.BASE_PATH}/orders/ship`;
     return this._http.post(url, payload)
       .pipe(
         map((dt: IResponse) => dt.data),
@@ -34,33 +44,43 @@ export class OrderServices {
       );
   }
 
-  getById(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/deals/${id}`;
-    return this._http.get(url)
+  fulfilled(orderId: string): Observable<any> {
+    const url = `${environment.BASE_PATH}/orders/ship/${orderId}/complete`;
+    return this._http.patch(url, {})
       .pipe(
         map((dt: IResponse) => dt.data),
         catchError((err) => this.handleError(err))
       );
   }
 
-  getByUniqueId(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/deals/unique/${id}`;
-    return this._http.get(url)
+  /** RETURN / REPLACEMENT SHIPMENTS **/
+
+  alignReturnShipment(orderId: string, requestId: string, payload: any): Observable<any> {
+    const url = `${environment.BASE_PATH}/orders/return/${orderId}/shipment/${requestId}`;
+    return this._http.patch(url, payload)
       .pipe(
         map((dt: IResponse) => dt.data),
         catchError((err) => this.handleError(err))
       );
   }
 
-  update(id, payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/deals/${id}`;
-    return this._http.put(url, payload)
+  closeReturnShipment(orderId: string, requestId: string): Observable<any> {
+    const url = `${environment.BASE_PATH}/orders/return/${orderId}/shipment/${requestId}/close`;
+    return this._http.patch(url, {})
       .pipe(
         map((dt: IResponse) => dt.data),
         catchError((err) => this.handleError(err))
       );
   }
 
+  closeReplacementShipment(orderId: string, requestId: string): Observable<any> {
+    const url = `${environment.BASE_PATH}/orders/replace/${orderId}/shipment/${requestId}/close`;
+    return this._http.patch(url, {})
+      .pipe(
+        map((dt: IResponse) => dt.data),
+        catchError((err) => this.handleError(err))
+      );
+  }
 
   handleError(err: any): any {
     return throwError(err.error);

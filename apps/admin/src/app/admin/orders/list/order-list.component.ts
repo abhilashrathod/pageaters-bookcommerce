@@ -31,6 +31,11 @@ export class OrderListComponent implements OnInit {
 
   resourceColumns = [
     {
+      header: 'Order ID',
+      columnDef: 'orderId',
+      cell: (element) => `<strong>${element.orderId}</strong>`,
+    },
+    {
       header: 'Order Date',
       columnDef: 'orderDate',
       cell: (element) => `${moment(element.orderDate).format('DD MMM YYYY, ddd, hh:mm')}`,
@@ -49,6 +54,11 @@ export class OrderListComponent implements OnInit {
       header: 'Customer',
       columnDef: 'customer',
       cell: (element) => `<strong>${element.userId.fullName}</strong><br/><p>${element.userId.contactNo} | ${element.userId.email}</p>`,
+    },
+    {
+      header: 'View Details',
+      columnDef: 'view',
+      cell: (element) => [...this.viewResourceUrl, element._id],
     },
     {
       header: 'Action',
