@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
   CLIENT_ID: '***REMOVED***',
-  BASE_PATH: 'http://localhost:7001/api/v1',
+  BASE_PATH: 'https://stg403.pageaters.com/api/v1',
 };
