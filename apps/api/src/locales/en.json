@@ -164,6 +164,10 @@
 	"WISH_LIST_DELETE_SUCCESS": "Book Removed from Wishlist",
 	"ORDER_ADDRESS_ATTEMPT_FAILED": "Address Selection Invalid",
 	"ORDER_INFO_ATTEMPT_FAILED": "Invalid Order Request",
+	"ORDER_RETURN_PERIOD_LAPSED": "Return period for this order is over. If you still wish to return then please contact support.",
+	"ORDER_CANCEL_PERIOD_LAPSED": "Cancel period for this order is over. If you still wish to cancel then please contact support.",
+	"ORDER_CANCEL_SUCCESS": "Order cancelled.",
+	"ORDER_RETURN_SUCCESS": "Return request raised successfully",
 	"ORDER_ADDRESS_SUCCESS": "Address Selection Success",
 	"SUBSCRIPTION_PLAN_ERROR": "Please select a plan",
 	"SUBSCRIPTION_LIST_SUCCESS": "Subscription list success",
@@ -198,5 +202,5 @@
 	"PRODUCT_SET_SEARCH_SUCCESS": "Product Set Search Successful",
 	"PRODUCT_SET_DELETE_SUCCESS": "Product Set Deleted Successfully",
 	"FORGOT_PASSWORD_LIMIT_EXCEEDED": "Reset Password request limit reached. Please try again after few minutes",
-	"\"token\" is not allowed": "\"token\" is not allowed"
+	"success": "success"
 }

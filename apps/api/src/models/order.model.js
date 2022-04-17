@@ -9,13 +9,37 @@ const schema = new Schema({
 
     razorOrderId: { type: String, default: '' },
     razorPaymentId: { type: String, default: '' },
+    orderDate: { type: String, default: '' },
 
     deliveryInstructions: { type: String, default: '' },
     deliveryAddress: { type: Schema.Types.ObjectId, ref: models.ADDRESS },
     shipmentTrackingId: { type: String, default: '' },
 
-    orderStatus: {type: String, enum: Object.values(enums.ORDER_STAGES), default: ''},
-    payment: {type: Schema.Types.Mixed, default: null},
+    orderStatus: { type: String, enum: Object.values(enums.ORDER_STAGES), default: '' },
+    payment: { type: Schema.Types.Mixed, default: null },
+
+    orderHistory: [{
+      title: { type: String, default: '' },
+      description: { type: String, default: '' },
+      time: { type: String, default: '' },
+    }],
+
+    requests: [{
+      type: { type: String, default: '' }, // return, cancel, replacement
+      date: { type: String, default: '' },
+      info: {
+        reason: { type: String, default: '' },
+        comments: { type: String, default: '' },
+      },
+      status: { type: String, default: '' },
+      shipment: { type: String, default: '' },
+      books: [
+        { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
+      ],
+      bundles: [
+        { type: Schema.Types.ObjectId, ref: models.BUNDLE }
+      ]
+    }],
 
     products: [{
       quantity: { type: Number, default: 1 },

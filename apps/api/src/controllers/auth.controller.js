@@ -106,7 +106,7 @@ module.exports.login = async (req, res) => {
     }
 
     // update last login to latest
-    user.lastLoginAt = new Date();
+    user.lastLoginAt = new Date().toISOString();
     user.save();
 
     // generate necessary token
