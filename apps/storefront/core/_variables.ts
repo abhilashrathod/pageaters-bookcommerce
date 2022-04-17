@@ -106,7 +106,7 @@ export const BUNDLE_SORT_OPTIONS = [
  * FULL VIEW PAGES
  */
 
-export const FULL_PAGE = ['/', '/auth/register', '/auth/login'];
+export const FULL_PAGE = ['/', '/auth/register', '/auth/login', '/collections/[id]'];
 
 /***
  *
@@ -240,4 +240,55 @@ export const ORDER_STAGES = {
   CREATED: 'created',
   PAID: 'paid',
   SHIPPED: 'shipped',
+  FULFILLED: 'fulfilled',
+  CANCELLED: 'cancelled',
+  RETURNED: 'returned',
+  RETURNED_IN_PROGRESS: 'return in progress',
+  REPLACEMENT: 'replacement',
+  REPLACEMENT_IN_PROGRESS: 'replacement in progress',
+  REFUNDED: 'refunded',
 };
+
+export const ORDER_REQUEST_STATUS = {
+  OPEN: 'open',
+  IN_PROGRESS: 'in_progress',
+  CLOSED: 'closed',
+};
+
+export const ORDER_REQUEST_TYPES = {
+  RETURN: 'return',
+  REPLACE: 'replace',
+  CANCEL: 'cancel',
+};
+
+export const PAYMENT_METHODS = {
+  CARD: 'card',
+  NET_BAKING: 'netbanking',
+  WALLET: 'wallet',
+  EMI: 'emi',
+  UPI: 'upi',
+};
+
+export const CANCELLATION_REASONS = [
+  `No longer needed`,
+  `I've changed my mind`,
+  `Being delivered to wrong address`,
+  `It was an impulse purchase`,
+  `Delivery date keeps changing`,
+  `Found a better deal elsewhere`,
+  `Heard bad review from friends/relatives after ordering the product`,
+  `Not available to receive the package. Travelling or moving.`,
+  `Bad customer care service or representative`,
+];
+
+export const RETURN_REASONS = [
+  `Incorrect product`,
+  `No longer needed`,
+  `Did not meet my expectations`,
+  `Quality is not upto the mark`,
+  `It was damaged or defective`,
+  `Not delivered on time`,
+  `Found a better deal elsewhere`,
+];
+
+export const TRACKING_LINK = (trackingId: string) => `https://www.delhivery.com/track/package/${trackingId}`;

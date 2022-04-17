@@ -2,7 +2,7 @@ import {IAddress} from "./address";
 import {IBundle} from "./bundle";
 import {IBook} from "./book";
 
-interface IOrderProductItem {
+export interface IOrderProductItem {
   quantity: number;
   price: number;
   discount: number;
@@ -11,13 +11,34 @@ interface IOrderProductItem {
   product: IBook;
 }
 
-interface IOrderBundleItem {
+export interface IOrderBundleItem {
   quantity: number;
   price: number;
   discount: number;
   total: number;
   weight: number;
   bundle: IBundle;
+}
+
+export interface IOrderHistory {
+  _id: string;
+  title: string;
+  description: string;
+  time: string;
+}
+
+export interface IOrderRequest {
+  _id: string;
+  type: string;
+  date: string;
+  info: {
+    reason: string;
+    comments: string;
+  },
+  status: string;
+  shipment: string;
+  books: Array<string>;
+  bundles: Array<string>;
 }
 
 export interface IOrder {
@@ -34,6 +55,8 @@ export interface IOrder {
   payment: any;
   products: Array<IOrderProductItem>;
   bundles: Array<IOrderBundleItem>;
+  orderHistory: Array<IOrderHistory>;
+  requests: Array<IOrderRequest>;
   giftCard: any;
   discount: any;
   subTotal: number;

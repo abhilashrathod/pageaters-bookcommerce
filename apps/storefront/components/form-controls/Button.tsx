@@ -1,7 +1,13 @@
 import React from 'react';
 import styled from 'styled-components'
 
-import {ACCENT_COLOR, LIGHTEST_PRIMARY_COLOR, PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variables";
+import {
+  ACCENT_COLOR, LIGHTER_PRIMARY_COLOR,
+  LIGHTEST_PRIMARY_COLOR,
+  PRIMARY_COLOR,
+  PRIMARY_DANGER,
+  SECONDARY_COLOR
+} from "../../core/_variables";
 
 interface Props {
   variant: string;
@@ -31,18 +37,22 @@ const handleColor = (color: string) => {
   switch (color) {
     case "secondary":
       return PRIMARY_COLOR;
-    case "accent":
-      return SECONDARY_COLOR;
     default:
       return SECONDARY_COLOR;
   }
 };
 const handleBackgroundColor = (color: string) => {
   switch (color) {
-    case "secondary":
+    case ButtonVariants.Secondary:
       return SECONDARY_COLOR;
-    case "accent":
+    case ButtonVariants.Accent:
       return ACCENT_COLOR;
+    case ButtonVariants.Danger:
+      return PRIMARY_DANGER;
+    case ButtonVariants.LightPrimary:
+      return LIGHTER_PRIMARY_COLOR;
+    case ButtonVariants.LightestPrimary:
+      return LIGHTEST_PRIMARY_COLOR;
     default:
       return PRIMARY_COLOR;
   }
@@ -92,7 +102,8 @@ const MainButton = styled.button`
   font-size: ${({theme}) => handleFont(theme.size)};
   border: 1px solid ${({theme}) => handleBorderColor(theme.variant)};
   box-shadow: 0 2px 10px 0 rgb(0 0 0 / 16%);
-  align-items:center;
+  align-items: center;
+  pointer: ${({theme}) => theme.disabled ? 'none' : 'pointer'};
 `;
 
 const AppButton: React.FC<Props> = ({variant, size, styles, type, disabled, onClick, children}) => {

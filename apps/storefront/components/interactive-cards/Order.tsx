@@ -10,11 +10,36 @@ import {ButtonVariants} from "../form-controls/Button";
 import {currencyFormat} from "../../core/_helpers";
 import {IOrder} from "../../schemas/order";
 import styled from "styled-components";
-import {LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
+import {LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, ORDER_STAGES, SECONDARY_COLOR, SM} from "../../core/_variables";
 
 interface OrderOverviewProps {
   order: IOrder;
 }
+
+const handleBackgroundColor = (color: string) => {
+  switch (color) {
+    case ORDER_STAGES.PAID:
+      return '#2B580C';
+    case ORDER_STAGES.SHIPPED:
+      return '#BB3B0E';
+    case ORDER_STAGES.FULFILLED:
+      return '#FF5F25';
+    case ORDER_STAGES.CANCELLED:
+      return '#F90716';
+    case ORDER_STAGES.RETURNED:
+      return '#444444';
+    case ORDER_STAGES.REPLACEMENT:
+      return '#444444';
+    case ORDER_STAGES.RETURNED_IN_PROGRESS:
+      return '#E83A14';
+    case ORDER_STAGES.REPLACEMENT_IN_PROGRESS:
+      return '#E83A14';
+    case ORDER_STAGES.REFUNDED:
+      return '#001E6C';
+    default:
+      return SECONDARY_COLOR;
+  }
+};
 
 const OrderWrapper = styled.div`
   padding: 1.5rem;
@@ -56,9 +81,8 @@ const OrderTitleSpace = styled.div`
 
 const OrderStatus = styled.span`
   text-transform: uppercase;
-  border: 1px solid #146356;
-  color: #146356;
-  background-color: #A3DA8D;
+  color: #FFF;
+  background-color: ${({color}) => handleBackgroundColor(color || '')};
   padding: 0 .5rem;
   border-radius: .2rem;
 `;
@@ -91,6 +115,11 @@ const ProductListImageSpace = styled.div`
 
 const ProductListImage = styled.img`
   border-radius: 50%;
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    width: 50px;
+    height: 50px;
+  }
 `;
 
 const OrderActions = styled.div`
@@ -118,7 +147,7 @@ const OrderOverview = ({order}: OrderOverviewProps) => {
       <OrderWrapper>
         <OrderTitleSpace>
           <OrderTitle>Order # {order.orderId}</OrderTitle>
-          <OrderStatus>{order.orderStatus}</OrderStatus>
+          <OrderStatus color={order.orderStatus}>{order.orderStatus}</OrderStatus>
         </OrderTitleSpace>
 
         <p>

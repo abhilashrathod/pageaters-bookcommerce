@@ -209,7 +209,7 @@ const AppHeader: React.FC<Props> = () => {
   const {data, error} = useSWR({
     url: `/store-books/search`,
     args: {q: searchDebounced}
-  }, {revalidateOnFocus : false});
+  });
 
   useEffect(() => {
     const currentPath = router.pathname;

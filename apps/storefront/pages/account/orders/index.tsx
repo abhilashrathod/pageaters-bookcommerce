@@ -16,6 +16,7 @@ import {AUTH_COOKIE} from "../../../core/_variables";
 import {IOrder} from "../../../schemas/order";
 
 import graphic from "../../../public/illustrations/empty-orders.svg";
+import Head from "next/head";
 
 const BREADCRUMBS_ITEMS = [
   {title: 'Home', href: '/'},
@@ -63,11 +64,15 @@ const Orders: React.FC<Props> = () => {
 
   const {data, error} = useSWR({url: isLoggedIn ? `/orders/list` : null, withCredentials: true});
 
-  if (error) return <EmptySectionMessage title={'Error while loading orders...'}/>;
+  if (error) return <PageWrapper><EmptySectionMessage title={'Error while loading orders...'}/></PageWrapper>;
 
   const orders = get(data, 'data', null);
 
   return (
+      <>
+      <Head>
+        <title>Orders | Pageaters</title>
+      </Head>
       <PageWrapper>
         <div className="custom-container">
           <div className="row">
@@ -105,8 +110,8 @@ const Orders: React.FC<Props> = () => {
                       {
                         orders.map((order: IOrder) => {
                           return (
-                              <div className="col-xl-6 col-12">
-                                <OrderOverview key={order.orderId} order={order}/>
+                              <div key={order.orderId} className="col-xl-6 col-12">
+                                <OrderOverview order={order}/>
                               </div>
                           )
                         })
@@ -117,6 +122,7 @@ const Orders: React.FC<Props> = () => {
           </div>
         </section>
       </PageWrapper>
+      </>
   )
 };
 
