@@ -67,7 +67,7 @@ this.app.set('env', ENVIRONMENT);
 
 // Handle `OPTIONS` request.
 this.app.all('*', (req, res, next) => {
-  const allowedOrigins = ['http://localhost:2305', 'http://localhost:4200', 'http://192.168.0.107:2305', 'http://localhost:4000'];
+  const allowedOrigins = ['https://pageaters.com', 'http://localhost:2305', 'http://localhost:4200', 'http://192.168.0.107:2305', 'http://localhost:4000'];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
