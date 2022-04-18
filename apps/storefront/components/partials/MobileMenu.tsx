@@ -1,8 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
 import Link from "next/link";
+import {get} from 'lodash';
 import {Icon} from "@iconify/react";
-import {Divider, Menu} from "@mantine/core";
+import {Badge, Divider, Menu} from "@mantine/core";
 import {AUTH_COOKIE, MD} from "../../core/_variables";
 import {useRouter} from "next/router";
 import useSWR from "swr";
@@ -42,6 +43,7 @@ const MobileMenuListItem = styled.li`
 const LinkItem = styled.a`
   flex-direction: column;
   align-items: center;
+  position: relative;
 
   &.active-link {
     color: $accent;
@@ -57,6 +59,7 @@ const AppMobileMenu: React.FC<Props> = () => {
   const isLoggedIn = cookie.get(AUTH_COOKIE);
 
   const {data: person} = useSWR({url: isLoggedIn ? `/auth/me` : null, withCredentials: true});
+  const {data: cart} = useSWR({url: isLoggedIn ? `/cart/retrieve` : null, withCredentials: true});
 
   function navigateToUrl(url: string) {
     router.push(url);
@@ -102,6 +105,9 @@ const AppMobileMenu: React.FC<Props> = () => {
             <MobileMenuListItem>
               <Link href={'/cart'}>
                 <LinkItem>
+                  <Badge style={{position: 'absolute', top: '-10px', right: '-20px', padding: '0 8px'}} variant="filled" color="orange">
+                    {get(cart, 'data.products', []).length + get(cart, 'data.bundles', []).length}
+                  </Badge>
                   <Icon icon={'bx:bx-cart'} width={30} height={30}/>
                   <LinkName>Cart</LinkName>
                 </LinkItem>

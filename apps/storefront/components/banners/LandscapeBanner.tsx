@@ -1,13 +1,13 @@
-import React, {useEffect, useState} from 'react';
-
+import React from 'react';
+import {useRouter} from "next/router";
 import styled from "styled-components";
+
 import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 import {SM} from "../../core/_variables";
 import {getAssetImage} from "../../core/_imageRendererHelper";
 
 import {IBanner} from "../../schemas/banner";
-import {useRouter} from "next/router";
 
 interface Props {
   banner: IBanner
@@ -57,13 +57,11 @@ const BannerLearnMore = styled.div`
 
 
 const LandscapeBanner: React.FC<Props> = ({banner}) => {
-  const [poster, setPoster] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    setPoster(getAssetImage(banner.poster, {height: 350, width: 776, fit: 'cover'}));
-  }, []);
-
+  function renderImageSize(w: number, h: number) {
+    return getAssetImage(banner.poster, {height: h, width: w, fit: 'cover'});
+  }
 
   function handleNavigation() {
     // @ts-ignore
@@ -73,7 +71,7 @@ const LandscapeBanner: React.FC<Props> = ({banner}) => {
   return (
       <MainCardWrapper>
         <BannerImageSpace>
-          <BannerImage src={banner.poster} loading={"lazy"} alt={banner.title} height={350} width={776}/>
+          <BannerImage src={renderImageSize(776, 350)} loading={"lazy"} alt={banner.title} height={350} width={776}/>
         </BannerImageSpace>
         <BannerContent>
           <BannerTextSpace>

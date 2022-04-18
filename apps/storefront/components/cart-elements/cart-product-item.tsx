@@ -32,6 +32,7 @@ interface Props {
 const ProductItem = ({book, viewOnly, onDelete, onQuantityChange}: Props) => {
   const [quantity, setQuantity] = useState(book.quantity || 1);
   const router = useRouter();
+
   function renderImageSize(p: string, w: number, h: number) {
     return getProductImage(p, {height: h, width: w, fit: 'cover'});
   }

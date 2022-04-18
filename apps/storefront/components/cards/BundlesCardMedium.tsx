@@ -1,11 +1,11 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import styled from "styled-components";
+import {useRouter} from "next/router";
 
 import {getBundleImage} from "../../core/_imageRendererHelper";
 import {LIGHT_COLOR, MD, SM} from "../../core/_variables";
 import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
 import {IBundle} from "../../schemas/bundle";
-import {useRouter} from "next/router";
 
 interface Props {
   bundle: IBundle;
@@ -70,12 +70,11 @@ const Crossed = styled.span`
 `;
 
 const BundlesCardMedium: React.FC<Props> = ({bundle}) => {
-  const [poster, setPoster] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    setPoster(getBundleImage(bundle.poster, {height: 385, fit: 'cover', width: 385}));
-  }, []);
+  function renderImageSize(w: number, h: number) {
+    return getBundleImage(bundle.poster, {height: h, width: w, fit: 'cover'});
+  }
 
   function handleNavigation() {
     router.push(`/bundles/${bundle.bundleId}`);
@@ -84,7 +83,7 @@ const BundlesCardMedium: React.FC<Props> = ({bundle}) => {
   return (
       <WrapperDiv onClick={handleNavigation}>
         <CardImageSpace>
-          <CardImage src={poster} loading={'lazy'} alt={bundle.title} height={385} width={385}/>
+          <CardImage src={renderImageSize(385, 385)} loading={'lazy'} alt={bundle.title} height={385} width={385}/>
         </CardImageSpace>
         <CardContent>
           <div>

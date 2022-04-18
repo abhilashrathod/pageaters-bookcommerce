@@ -1,7 +1,6 @@
 import React from "react";
 import styled from "styled-components";
 import {Icon} from "@iconify/react";
-import {lowerCase} from 'lodash';
 
 import AppIconButton from "../form-controls/IconButton";
 

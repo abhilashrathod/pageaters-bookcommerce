@@ -1,12 +1,12 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import styled from "styled-components";
+import {useRouter} from "next/router";
 
 import {IBanner} from "../../schemas/banner";
 import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
-import {getAssetImage, getProductImage} from "../../core/_imageRendererHelper";
-import {LG, MD, PRIMARY_COLOR, SM, XS} from "../../core/_variables";
-import {useRouter} from "next/router";
+import {getAssetImage} from "../../core/_imageRendererHelper";
+import {LG, MD, PRIMARY_COLOR, SM} from "../../core/_variables";
 
 interface Props {
   banner: IBanner;
@@ -83,12 +83,7 @@ const BannerTitle = styled.h2`
 `;
 
 const GiantFullBleedBanner: React.FC<Props> = ({banner}) => {
-  const [poster, setPoster] = useState('');
   const router = useRouter();
-
-  useEffect(() => {
-    setPoster(getAssetImage(banner.poster, {height: 1280, width: 1920, fit: 'cover'}));
-  }, []);
 
   function renderImageSize(w: number, h: number) {
     return getAssetImage(banner.poster, {height: h, width: w, fit: 'cover'});
@@ -104,10 +99,13 @@ const GiantFullBleedBanner: React.FC<Props> = ({banner}) => {
         <MainCardWrapper>
           <BannerImageSpace>
             <picture>
-              <source media={`(max-width: ${SM - 1}px)`} type="image/jpeg" srcSet={renderImageSize(375, 450)} height={450} width={375}/>
-              <source media={`(max-width: ${MD - 1}px)`} type="image/jpeg" srcSet={renderImageSize(768, 600)} height={768} width={600}/>
-              <source media={`(max-width: ${LG - 1}px)`} type="image/jpeg" srcSet={renderImageSize(1024, 800)} height={800} width={1024}/>
-              <BannerImage src={poster} alt="some-set" height={1280} width={1920}/>
+              <source media={`(max-width: ${SM - 1}px)`} type="image/jpeg" srcSet={renderImageSize(375, 450)}
+                      height={450} width={375}/>
+              <source media={`(max-width: ${MD - 1}px)`} type="image/jpeg" srcSet={renderImageSize(768, 600)}
+                      height={768} width={600}/>
+              <source media={`(max-width: ${LG - 1}px)`} type="image/jpeg" srcSet={renderImageSize(1024, 800)}
+                      height={800} width={1024}/>
+              <BannerImage src={renderImageSize(1920, 1280)} alt="pageaters-banner-10" height={1280} width={1920}/>
             </picture>
           </BannerImageSpace>
           <BannerContent>

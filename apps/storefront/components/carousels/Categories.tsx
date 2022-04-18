@@ -1,17 +1,15 @@
 import React, {useRef, useState} from 'react';
 import useSWR from 'swr'
+import {useRouter} from "next/router";
 import styled from "styled-components";
 import {Icon} from "@iconify/react";
 import {ScrollArea, Skeleton} from '@mantine/core';
 
 import CategoryLandscapeCard from "../cards/CategoryLandscapeCard";
+import EmptySectionMessage from "../elements/FailedToLoad";
 
 import {MD} from "../../core/_variables";
 import {ICategory} from "../../schemas/category";
-import EmptySectionMessage from "../elements/FailedToLoad";
-import AppIconButton from "../form-controls/IconButton";
-import {ButtonVariants} from "../form-controls/Button";
-import {useRouter} from "next/router";
 
 interface Props {
 }

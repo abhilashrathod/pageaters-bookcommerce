@@ -580,14 +580,17 @@ const BundleItem = ({bundle}: any) => {
       <CartItem>
         <CartContent>
           <div className="image">
-            <Link href={`/bundles/${bundle.bundle.bundleId}`}><CartImage
+            <Link href={`/bundles/${bundle.bundle.bundleId}`} passHref>
+              <CartImage
                 src={renderImageSize(bundle.bundle.poster, 300, 300)}
                 alt={bundle.bundle.title}
-                width={300} height={300}/></Link>
+                width={300} height={300}/>
+            </Link>
           </div>
           <CartProductInfo>
-            <Link
-                href={`/bundles/${bundle.bundle.bundleId}`}><CartProductTitle>{bundle.bundle.title}</CartProductTitle></Link>
+            <Link href={`/bundles/${bundle.bundle.bundleId}`} passHref>
+              <CartProductTitle>{bundle.bundle.title}</CartProductTitle>
+            </Link>
             <p>
               {
                 bundle.discount

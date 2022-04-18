@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import styled from 'styled-components'
 
 import Badges from "../elements/Badge";
@@ -87,12 +87,11 @@ const Crossed = styled.span`
 `;
 
 const ProductCardLandScape: React.FC<Props> = ({book}) => {
-  const [poster, setPoster] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    setPoster(getProductImage(book.poster, {height: 375, fit: 'cover', width: 247}));
-  }, []);
+  function renderImageSize(w: number, h: number) {
+    return getProductImage(book.poster, {height: h, width: w, fit: 'cover'});
+  }
 
   function handleNavigation() {
     router.push(`/books/${book.bookId}`);
@@ -103,7 +102,7 @@ const ProductCardLandScape: React.FC<Props> = ({book}) => {
         <WrapperDiv onClick={handleNavigation}>
           <CartDiscount>{book?.currentDiscount}% Off</CartDiscount>
           <CardCover>
-            <CardImage src={poster} alt={book?.title} loading="lazy" height={375} width={247}/>
+            <CardImage src={renderImageSize(247, 375)} alt={book?.title} loading="lazy" height={375} width={247}/>
           </CardCover>
 
           <CardContent>

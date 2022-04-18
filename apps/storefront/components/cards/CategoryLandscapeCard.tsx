@@ -1,11 +1,10 @@
-import React, {useEffect, useState} from 'react';
-import Image from 'next/image';
+import React from 'react';
 import styled from "styled-components";
-
-import {ICategory} from "../../schemas/category";
-import {MD} from "../../core/_variables";
-import {getCategoryImage} from "../../core/_imageRendererHelper";
 import {useRouter} from "next/router";
+
+import {MD} from "../../core/_variables";
+import {ICategory} from "../../schemas/category";
+import {getCategoryImage} from "../../core/_imageRendererHelper";
 
 interface Props {
   category: ICategory;
@@ -69,12 +68,12 @@ const CategoryDescription = styled.p`
 
 
 const CategoryLandscapeCard: React.FC<Props> = ({category}) => {
-  const [poster, setPoster] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    setPoster(getCategoryImage(category.thumbnail, {height: 64, fit: 'cover', width: 64}));
-  }, []);
+  function renderImageSize(w: number, h: number) {
+    return getCategoryImage(category.thumbnail, {height: h, width: w, fit: 'cover'});
+  }
+
 
   function navigateToDetails(e: any) {
     e.preventDefault();
@@ -85,7 +84,7 @@ const CategoryLandscapeCard: React.FC<Props> = ({category}) => {
       <>
         <CategoryItem onClick={navigateToDetails}>
           <CategoryImageArea>
-            <CategoryImage src={poster} loading={"lazy"} width={64} height={64} alt={category.title}/>
+            <CategoryImage src={renderImageSize(64, 64)} loading={"lazy"} width={64} height={64} alt={category.title}/>
           </CategoryImageArea>
           <CategoryContentArea>
             <CategoryTitle>{category.title}</CategoryTitle>

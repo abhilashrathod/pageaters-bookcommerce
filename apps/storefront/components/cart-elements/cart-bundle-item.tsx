@@ -42,14 +42,17 @@ const BundleItem = ({cartBundle, viewOnly, onDelete}: Props) => {
       <CartItem>
         <CartContent>
           <div className="image">
-            <Link href={`/bundles/${cartBundle.bundle.bundleId}`}><CartImage
+            <Link href={`/bundles/${cartBundle.bundle.bundleId}`} passHref>
+              <CartImage
                 src={renderImageSize(cartBundle.bundle.poster, 300, 300)}
                 alt={cartBundle.bundle.title}
-                width={300} height={300}/></Link>
+                width={300} height={300}/>
+            </Link>
           </div>
           <CartProductInfo>
-            <Link
-                href={`/bundles/${cartBundle.bundle.bundleId}`}><CartProductTitle>{cartBundle.bundle.title}</CartProductTitle></Link>
+            <Link href={`/bundles/${cartBundle.bundle.bundleId}`} passHref>
+              <CartProductTitle>{cartBundle.bundle.title}</CartProductTitle>
+            </Link>
             <p>
               {
                 cartBundle.bundle.currentDiscount

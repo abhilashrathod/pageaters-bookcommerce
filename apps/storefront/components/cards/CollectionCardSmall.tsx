@@ -1,14 +1,13 @@
 import React, {useEffect, useState} from 'react';
-import Image from 'next/image';
 import styled from "styled-components";
+import {useRouter} from "next/router";
 
 import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 import {getCollectionImage, getProductImage} from "../../core/_imageRendererHelper";
 
 import {ICollection} from "../../schemas/collection";
-import {SECONDARY_COLOR, SM} from "../../core/_variables";
-import {useRouter} from "next/router";
+import {SECONDARY_COLOR} from "../../core/_variables";
 
 interface Props {
   collection: ICollection;
@@ -104,7 +103,6 @@ const AvatarSpan = styled.span`${AvatarStyles}`;
 
 const CollectionCardSmall: React.FC<Props> = ({collection}) => {
   const [showRestCounter, setShowRestCounter] = useState(0);
-  const [poster, setPoster] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -112,9 +110,11 @@ const CollectionCardSmall: React.FC<Props> = ({collection}) => {
       setShowRestCounter(collection.books.length - 4);
       collection.books = collection.books.splice(0, 4);
     }
+  }, [collection]);
 
-    setPoster(getCollectionImage(collection.poster, {height: 345, fit: 'cover', width: 517}));
-  }, []);
+  function renderImageSize(w: number, h: number) {
+    return getCollectionImage(collection.poster, {height: h, width: w, fit: 'cover'});
+  }
 
   function handleProductImage(imageUrl: string) {
     return getProductImage(imageUrl, {height: 48, width: 48, fit: 'cover'});
@@ -127,7 +127,7 @@ const CollectionCardSmall: React.FC<Props> = ({collection}) => {
   return (
       <MainCardWrapper>
         <CardCoverSpace>
-          <CardImage src={poster} loading={'lazy'} alt={collection.title} height={345} width={517}/>
+          <CardImage src={renderImageSize(517, 345)} loading={'lazy'} alt={collection.title} height={345} width={517}/>
         </CardCoverSpace>
         <CardContent>
           <CardTextSpace>
@@ -142,7 +142,8 @@ const CollectionCardSmall: React.FC<Props> = ({collection}) => {
                   return (
                       <AvatarListItem key={index} title={book.title}>
                         <AvatarImageSpace>
-                          <AvatarImage loading={'lazy'} src={handleProductImage(book.poster)} alt={book.title} height={48} width={48}/>
+                          <AvatarImage loading={'lazy'} src={handleProductImage(book.poster)} alt={book.title}
+                                       height={48} width={48}/>
                         </AvatarImageSpace>
                       </AvatarListItem>
                   )

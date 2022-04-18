@@ -1,11 +1,11 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import styled from "styled-components";
+import {useRouter} from "next/router";
 
 import {getAssetImage} from "../../core/_imageRendererHelper";
 
 import {IDeal} from "../../schemas/deal";
 import {LG, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
-import {useRouter} from "next/router";
 
 interface Props {
   deal: IDeal;
@@ -58,20 +58,12 @@ const CardTitle = styled.h4`
   color: ${SECONDARY_COLOR};
 `;
 
-const CardSubTitle = styled.p`
-  font-size: 0.875rem;
-  line-height: 1.125rem;
-  width: 100%;
-  margin-bottom: 0.5rem;
-`;
-
 const DealsCardLarge: React.FC<Props> = ({deal}) => {
-  const [poster, setPoster] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    setPoster(getAssetImage(deal.poster, {height: 520, width: 520, fit: 'cover'}));
-  }, []);
+  function renderImageSize(w: number, h: number) {
+    return getAssetImage(deal.poster, {height: h, width: w, fit: 'cover'});
+  }
 
   function handleNavigation() {
     router.push(`/deals/${deal.dealId}`);
@@ -81,7 +73,7 @@ const DealsCardLarge: React.FC<Props> = ({deal}) => {
       <>
         <MainCardWrapper onClick={handleNavigation}>
           <CardCover>
-            <CardCoverImage loading={"lazy"} src={poster} alt={deal.title} height={520} width={520}/>
+            <CardCoverImage loading={"lazy"} src={renderImageSize(520, 520)} alt={deal.title} height={520} width={520}/>
           </CardCover>
           <CardContent>
             <CardTitle>

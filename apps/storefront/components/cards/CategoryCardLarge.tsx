@@ -1,10 +1,10 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import styled from "styled-components";
+import {useRouter} from "next/router";
 
 import {LG, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
 import {ICategory} from "../../schemas/category";
 import {getCategoryImage} from "../../core/_imageRendererHelper";
-import {useRouter} from "next/router";
 
 interface Props {
   category: ICategory;
@@ -80,12 +80,11 @@ const CategoryTitle = styled.h4`
 `;
 
 const CategoryCardLarge: React.FC<Props> = ({category}) => {
-  const [poster, setPoster] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    setPoster(getCategoryImage(category.thumbnail, {height: 400, fit: 'cover', width: 400}));
-  }, []);
+  function renderImageSize(w: number, h: number) {
+    return getCategoryImage(category.thumbnail, {height: h, width: w, fit: 'cover'});
+  }
 
   function handleRedirection() {
     router.push(`/categories/${category.categoryId}`);
@@ -93,7 +92,7 @@ const CategoryCardLarge: React.FC<Props> = ({category}) => {
 
   return (
       <>
-        <CategoryItem style={{backgroundImage: `url(${poster})`}} onClick={handleRedirection}>
+        <CategoryItem style={{backgroundImage: `url(${renderImageSize(400, 400)})`}} onClick={handleRedirection}>
           <CategoryTitleArea>
             <CategoryTitle>
               {category.title}

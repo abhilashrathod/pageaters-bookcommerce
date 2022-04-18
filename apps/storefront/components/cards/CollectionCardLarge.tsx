@@ -1,5 +1,4 @@
-import React, {useEffect, useState} from 'react';
-import Image from 'next/image';
+import React from 'react';
 import styled from "styled-components";
 
 import {getCollectionImage} from "../../core/_imageRendererHelper";
@@ -77,12 +76,11 @@ const CardSubTitle = styled.h4`
 `;
 
 const CollectionCardLarge: React.FC<Props> = ({collection}) => {
-  const [poster, setPoster] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    setPoster(getCollectionImage(collection.poster, {height: 345, fit: 'cover', width: 517}));
-  }, []);
+  function renderImageSize(w: number, h: number) {
+    return getCollectionImage(collection.poster, {height: h, width: w, fit: 'cover'});
+  }
 
   function handleNavigation() {
     router.push(`/collections/${collection.collectionId}`);
@@ -97,11 +95,11 @@ const CollectionCardLarge: React.FC<Props> = ({collection}) => {
             </CardTitle>
           </CardTextSpace>
           <CardSubTitle>
-            { collection.tags.map((tag, index) => <span key={index}>{tag + ', '}</span>) }
+            {collection.tags.map((tag, index) => <span key={index}>{tag + ', '}</span>)}
           </CardSubTitle>
         </CardContent>
         <CardCoverSpace>
-          <CardImage src={poster} alt={collection.title} height={345} width={517}/>
+          <CardImage src={renderImageSize(517, 345)} alt={collection.title} height={345} width={517}/>
         </CardCoverSpace>
       </MainCardWrapper>
   )
