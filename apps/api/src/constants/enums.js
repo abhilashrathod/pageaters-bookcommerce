@@ -1,4 +1,9 @@
 module.exports = {
+  ENVIRONMENTS: {
+    DEVELOPMENT: 'development',
+    STAGING: 'staging',
+    PRODUCTION: 'production'
+  },
   TOKEN_ID: {
     REFRESH_TOKEN_COOKIE: '_RID',
     CART_COOKIE: '_CID',
@@ -118,7 +123,7 @@ module.exports = {
     SUBSCRIPTION: 'subscription'
   },
   SUBSCRIPTION_STATUSES: {
-    NEW: '',
+    NEW: 'new',
     CREATED: 'created',
     AUTHENTICATED: 'authenticated',
     ACTIVE: 'active',

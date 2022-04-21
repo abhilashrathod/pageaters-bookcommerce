@@ -1,21 +1,20 @@
-const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const moment = require('moment');
 const path = require('path');
 const Razorpay = require('razorpay');
-const colors = require('colors');
 const { get } = require('lodash');
 
-const { HOST, PROJECT_ROOT, TWILIO, RAZOR_PAY, ENCRYPTION_KEY } = require('./../appConfig');
+const { HOST, PROJECT_ROOT, TWILIO, RAZOR_PAY, ENVIRONMENT } = require('./../appConfig');
 const { models, enums } = require('../constants');
 
-const { encrypt, decrypt, generateJwtToken, generateRefreshToken } = require('../helpers/encryption.helper');
+const { encrypt, decrypt, generateJwtToken } = require('../helpers/encryption.helper');
 const { writeFile, generateRandomNumber } = require('./../helpers/utils.helper');
 const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const User = mongoose.model(models.USER);
 const AccessTokens = mongoose.model(models.ACCESS_TOKEN);
 const Cart = mongoose.model(models.CART);
+const Favorites = mongoose.model(models.FAVORITES);
 
 const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
 const razorPayInstance = new Razorpay({ key_id: RAZOR_PAY.USER_ID, key_secret: RAZOR_PAY.PASSWORD });
@@ -38,6 +37,7 @@ module.exports.register = async (req, res) => {
   try {
     let { email, password } = req.allParams();
     const ipAddress = req.ip;
+    let razorPayCustomer;
 
     const isEmailAvailable = await User.isEmailAvailable(email);
 
@@ -46,18 +46,23 @@ module.exports.register = async (req, res) => {
     }
 
     const user = await User.create({ email, role: enums.USER_ROLES.USER });
-    // const razorPayCustomer = await razorPayInstance.customers.create({ name: fullName, email, contact: '', notes: {} }); TODO: remove this later
+    if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
+      razorPayCustomer = await razorPayInstance.customers.create({ fullName: '', email, contact: '', notes: {} });
+    }
 
     await user.setPassword(password);
     const verifyToken = await user.generateVerifyEmailToken();
 
-    // user.razorPayCustId = razorPayCustomer.id; TODO: remove this later
+    if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
+      user.razorPayCustId = razorPayCustomer.id;
+    }
     user.verifyEmailToken = verifyToken;
     user.lastVerifyEmailSentOn = new Date().toISOString();
 
     user.save();
 
     const newUserCart = await Cart.create({ user: user._id });
+    await Favorites.create({ userId: user._id });
 
     const { payload, token } = generateJwtToken(user, ipAddress);
     // const refreshToken = generateRefreshToken(user, ipAddress);
@@ -241,10 +246,6 @@ module.exports.updateProfile = async (req, res) => {
       fieldsToUpdate.fullName = fullName;
     }
 
-    if (contactNo) {
-      fieldsToUpdate.contactNo = contactNo;
-    }
-
     await User.findOneAndUpdate({_id: user.userId}, {$set: {...fieldsToUpdate}});
 
     user = await User.getProfile(user.userId);
@@ -420,9 +421,9 @@ module.exports.sendContactVerification = async (req, res) => {
 
     const loggedInUser = await User.findOne({ _id: userId });
 
-    if (loggedInUser.contactVerified) {
-      return res.error('CONTACT_VERIFICATION_EXIST');
-    }
+    // if (loggedInUser.contactVerified) {
+    //   return res.error('CONTACT_VERIFICATION_EXIST');
+    // }
 
     loggedInUser.lastMessageSentOn = new Date().toISOString();
     loggedInUser.contactOtp = verificationCode;
@@ -449,9 +450,9 @@ module.exports.resendContactVerification = async (req, res) => {
 
     const user = await User.findOne({ _id: userId });
 
-    if (user.contactVerified) {
-      return res.error('CONTACT_VERIFICATION_EXIST');
-    }
+    // if (user.contactVerified) {
+    //   return res.error('CONTACT_VERIFICATION_EXIST');
+    // }
 
     if (!user.contactOtp) {
       return res.error('CONTACT_VERIFICATION_NOT_EXIST');
@@ -495,9 +496,9 @@ module.exports.verifyContact = async (req, res) => {
 
     const user = await User.findOne({ _id: userId });
 
-    if (user.contactVerified) {
-      return res.error('CONTACT_VERIFICATION_EXIST');
-    }
+    // if (user.contactVerified) {
+    //   return res.error('CONTACT_VERIFICATION_EXIST');
+    // }
 
     if (!user.contactOtp) {
       return res.error('CONTACT_VERIFICATION_NOT_EXIST');
@@ -507,7 +508,7 @@ module.exports.verifyContact = async (req, res) => {
       return res.error('OTP_VERIFICATION_FAILED');
     }
 
-    if (user.contactOtp === otp && !user.contactVerified) {
+    if (user.contactOtp === otp) {
       user.contactVerified = true;
       user.lastMessageSentOn = '';
       user.contactOtp = '';

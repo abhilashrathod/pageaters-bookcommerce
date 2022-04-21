@@ -20,7 +20,7 @@ router.post('/forgot-password/resend', requestValidator(validator.resendVerifica
 router.post('/reset-password', requestValidator(validator.resetPassword), controller.resetPassword);
 
 router.post('/contact/send', requestValidator(validator.sendVerifyContact), permissionValidator(USER_ROLES.USER), controller.sendContactVerification);
-router.post('/contact/resend', controller.resendContactVerification);
+router.post('/contact/resend', permissionValidator(USER_ROLES.USER), controller.resendContactVerification);
 router.post('/contact/verify', requestValidator(validator.verifyContact), permissionValidator(USER_ROLES.USER), controller.verifyContact);
 
 router.post('/logout', permissionValidator(), requestValidator(validator.revokeValidation), controller.revokeToken);
