@@ -131,9 +131,6 @@ export const FOOTER_NAVIGATION = [
         linkName: 'Terms of Use',
         linkHref: '/',
       }, {
-        linkName: 'Testimonials',
-        linkHref: '/',
-      }, {
         linkName: 'FAQs',
         linkHref: '/',
       }

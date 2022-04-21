@@ -105,7 +105,7 @@ const GiantFullBleedBanner: React.FC<Props> = ({banner}) => {
                       height={768} width={600}/>
               <source media={`(max-width: ${LG - 1}px)`} type="image/jpeg" srcSet={renderImageSize(1024, 800)}
                       height={800} width={1024}/>
-              <BannerImage src={renderImageSize(1920, 1280)} alt="pageaters-banner-10" height={1280} width={1920}/>
+              <BannerImage src={renderImageSize(1920, 1280)} alt={'Explore Membership Benefits'} loading={'lazy'} height={1280} width={1920}/>
             </picture>
           </BannerImageSpace>
           <BannerContent>

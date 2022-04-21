@@ -95,7 +95,7 @@ const WishlistActionCard: React.FC<Props> = ({book, onItemAddCart, onItemDelete}
                   <AppButton onClick={() => onItemAddCart(book._id)} variant={ButtonVariants.Accent} size={ButtonSizes.Small} styles={{marginRight: '1rem'}}>
                     Add to Cart
                   </AppButton>
-                  <AppButton onClick={() => onItemDelete(book._id)} variant={ButtonVariants.Default} size={ButtonSizes.Small}>
+                  <AppButton onClick={() => onItemDelete(book._id)} variant={ButtonVariants.Secondary} size={ButtonSizes.Small}>
                     Remove
                   </AppButton>
                 </div>

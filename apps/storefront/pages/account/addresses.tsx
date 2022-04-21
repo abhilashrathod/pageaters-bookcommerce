@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import useSWR, {mutate} from "swr";
 import cookie from "js-cookie";
 import {get} from 'lodash';
-import {Divider, Skeleton} from "@mantine/core";
+import {Skeleton} from "@mantine/core";
 import styled from "styled-components";
 import {Icon} from "@iconify/react";
 import axios from "axios";
@@ -13,7 +13,6 @@ import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageHeadings from "../../components/elements/PageHeadings";
 import EmptySectionMessage from "../../components/elements/FailedToLoad";
 import Address from "../../components/interactive-cards/Address";
-import AppIconButton from "../../components/form-controls/IconButton";
 import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
 import AddOrUpdateAddress from "../../components/dialogs/add-or-update-address";
 import EmptyMessageWithGraphic from "../../components/elements/EmptyMessageWithGraphic";
@@ -219,7 +218,7 @@ const Addresses: React.FC<Props> = () => {
                     <div className="col-12">
                       <ActionCenter>
                         <AppButton variant={ButtonVariants.Accent} onClick={toggleAddressModal}
-                                       size={ButtonSizes.Large}>
+                                   size={ButtonSizes.Large}>
                           <Icon icon={'ic:outline-add-circle-outline'} width={24} height={24}/>
                           <span style={{marginLeft: '.5rem'}}>Add Address</span>
                         </AppButton>

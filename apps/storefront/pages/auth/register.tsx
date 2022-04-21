@@ -314,7 +314,7 @@ const ContactForm = ({onStepChange, onSubmit, onVerifySubmit, onResend}: any) =>
                 <p style={{marginBottom: '1.25rem', textAlign: 'center'}}>
                   {
                     seconds > 0
-                        ? <span>Resend OTP in ${seconds}s&nbsp;</span>
+                        ? <span>Resend OTP in {seconds}s&nbsp;</span>
                         : <AppButton variant={ButtonVariants.Secondary} size={ButtonSizes.Small}
                                      onClick={handleResend}>Resend Code</AppButton>
 
@@ -388,7 +388,7 @@ const Register: React.FC<Props> = () => {
 
   async function handleResend(values: any) {
     try {
-      await axios.post(`/auth/contact/send`, values, {withCredentials: true});
+      await axios.post(`/auth/contact/resend`, values, {withCredentials: true});
       notif.showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 3000});
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});

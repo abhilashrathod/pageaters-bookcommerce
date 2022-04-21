@@ -386,7 +386,7 @@ const BookWishlist = ({product}: any) => {
   async function addToWishlist() {
     try {
       await axios.post(`/wishlist`, {product}, {withCredentials: true});
-      notif.showNotification({message: 'Book Added from Wishlist', color: 'green', autoClose: 3000});
+      notif.showNotification({message: 'Book Added to Wishlist', color: 'green', autoClose: 3000});
       mutate({url:`/wishlist/${product}`, withCredentials: true});
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 5000});

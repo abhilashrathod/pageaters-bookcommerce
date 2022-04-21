@@ -1,7 +1,9 @@
 import React, {useState} from 'react';
-import useSWR, {useSWRConfig} from "swr";
+import useSWR, {mutate} from "swr";
 import styled from "styled-components";
 import cookie from "js-cookie";
+import axios from "axios";
+import {useNotifications} from "@mantine/notifications";
 import {Skeleton} from '@mantine/core';
 import {useRouter} from "next/router";
 import {get} from 'lodash';
@@ -10,16 +12,13 @@ import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import FailedToLoad from '../../components/elements/FailedToLoad';
-import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
-
-import {AUTH_COOKIE, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
-
 import CartBreakdown from "../../components/cart-elements/cart-breakdown";
 import ProductItem from "../../components/cart-elements/cart-product-item";
 import BundleItem from "../../components/cart-elements/cart-bundle-item";
-import axios from "axios";
-import {useNotifications} from "@mantine/notifications";
 import EmptyMessageWithGraphic from "../../components/elements/EmptyMessageWithGraphic";
+import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
+
+import {AUTH_COOKIE, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 
 import graphic from '../../public/illustrations/empty-cart.svg'
 
@@ -108,7 +107,6 @@ const Cart: React.FC<Props> = () => {
 
   const router = useRouter();
   const notif = useNotifications();
-  const {mutate} = useSWRConfig();
 
   const {data, error} = useSWR({url: auth ? `/cart/retrieve` : null, withCredentials: true});
 

@@ -51,7 +51,7 @@ const BREADCRUMBS_ITEMS = [
 const PROFILE_OPTIONS = [
   {link: '/account/orders', title: 'Orders', icon: 'bx:bx-cart', description: 'Your current and past order history'},
   {link: '/account/wishlist', title: 'Wishlist', icon: 'bx:bx-heart', description: 'See all the books you\'ve wishlisted'},
-  {link: '/account/profile', title: 'Personal Info', icon: 'bx:bx-user-circle', description: 'Update personal & contact info'},
+  {link: '/account/profile', title: 'Profile', icon: 'bx:bx-user-circle', description: 'Update personal & contact info'},
   {link: '/account/addresses', title: 'Addresses', icon: 'bx:bx-location-plus', description: 'View and update addresses for orders'},
   // {link: '/account/payments', title: 'Payment History', icon: 'bx:bx-credit-card-alt', description: 'All the payment history of your orders and refunds'},
   // {link: '/account/security', title: 'Login & Security', icon: 'bx:bx-lock-open', description: 'Make your account more secure. Update Password'},

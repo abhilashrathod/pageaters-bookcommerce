@@ -7,7 +7,7 @@ interface Props {
   id: string;
   label: string;
   required: boolean;
-  type: 'text' | 'password' | 'email' | 'search' | 'tel' | 'url' | 'number';
+  type: 'text' | 'password' | 'email' | 'search' | 'tel' | 'url' | 'number' | 'date';
 }
 
 export const InputWrapper = styled.div`

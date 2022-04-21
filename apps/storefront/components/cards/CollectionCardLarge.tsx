@@ -99,7 +99,7 @@ const CollectionCardLarge: React.FC<Props> = ({collection}) => {
           </CardSubTitle>
         </CardContent>
         <CardCoverSpace>
-          <CardImage src={renderImageSize(517, 345)} alt={collection.title} height={345} width={517}/>
+          <CardImage src={renderImageSize(517, 345)} loading={'lazy'} alt={collection.title} height={345} width={517}/>
         </CardCoverSpace>
       </MainCardWrapper>
   )

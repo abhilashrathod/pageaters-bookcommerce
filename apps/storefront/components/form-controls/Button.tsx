@@ -107,14 +107,14 @@ const MainButton = styled.button`
 `;
 
 const AppButton: React.FC<Props> = ({variant, size, styles, type, disabled, onClick, children}) => {
+
   const handleClick = (e: any) => {
     onClick();
   };
 
   return (
       <>
-        <MainButton style={styles} disabled={disabled} type={type || 'button'} theme={{variant, size, disabled}}
-                    onClick={handleClick}>
+        <MainButton style={styles} disabled={disabled} type={type || 'button'} theme={{variant, size, disabled}} onClick={handleClick}>
           {children}
         </MainButton>
       </>
