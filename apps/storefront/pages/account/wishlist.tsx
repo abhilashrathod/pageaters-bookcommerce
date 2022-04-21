@@ -32,7 +32,7 @@ const Wishlist: React.FC<Props> = () => {
   const isLoggedIn = cookie.get(AUTH_COOKIE);
   const notif = useNotifications();
 
-  const {data, error} = useSWR({url: isLoggedIn ? `/wishlist` : null, withCredentials: true});
+  const {data, error} = useSWR({url: isLoggedIn ? `/favorites` : null, withCredentials: true});
 
   if (error) return <PageWrapper><EmptySectionMessage title={'Error while loading wishlist...'}/></PageWrapper>;
 
@@ -40,7 +40,7 @@ const Wishlist: React.FC<Props> = () => {
 
   async function handleDelete(id: string) {
     try {
-      await axios.delete(`/wishlist/${id}`, {withCredentials: true});
+      await axios.delete(`/favorites/${id}`, {withCredentials: true});
       notif.showNotification({message: 'Book removed from wishlist', color: 'green', autoClose: 3000});
 
       updateWishlist();
@@ -52,7 +52,7 @@ const Wishlist: React.FC<Props> = () => {
   async function handleAddCart(id: string) {
     try {
       await axios.post(`/cart/add`, {quantity: 1, product: id}, {withCredentials: true});
-      await axios.delete(`/wishlist/${id}`, {withCredentials: true});
+      await axios.delete(`/favorites/${id}`, {withCredentials: true});
 
       notif.showNotification({message: 'Book added to the cart', color: 'green', autoClose: 3000});
 
@@ -64,7 +64,7 @@ const Wishlist: React.FC<Props> = () => {
   }
 
   function updateWishlist() {
-    mutate({url: `/wishlist`, withCredentials: true});
+    mutate({url: `/favorites`, withCredentials: true});
   }
 
   function updateCart() {

@@ -373,7 +373,7 @@ const BookWishlist = ({product}: any) => {
   const auth = useAuth();
   const notif = useNotifications();
 
-  const {data} = useSWR({url: auth ? `/wishlist/${product}` : null, withCredentials: true});
+  const {data} = useSWR({url: auth ? `/favorites/${product}` : null, withCredentials: true});
 
   async function toggleWishlist() {
     if (data?.data) {
@@ -385,9 +385,9 @@ const BookWishlist = ({product}: any) => {
 
   async function addToWishlist() {
     try {
-      await axios.post(`/wishlist`, {product}, {withCredentials: true});
+      await axios.post(`/favorites`, {product}, {withCredentials: true});
       notif.showNotification({message: 'Book Added to Wishlist', color: 'green', autoClose: 3000});
-      mutate({url:`/wishlist/${product}`, withCredentials: true});
+      mutate({url:`/favorites/${product}`, withCredentials: true});
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
@@ -395,9 +395,9 @@ const BookWishlist = ({product}: any) => {
 
   async function removeFromWishlist() {
     try {
-      await axios.delete(`/wishlist/${product}`, {withCredentials: true});
+      await axios.delete(`/favorites/${product}`, {withCredentials: true});
       notif.showNotification({message: 'Book Removed from Wishlist', color: 'green', autoClose: 3000});
-      mutate({url:`/wishlist/${product}`, withCredentials: true});
+      mutate({url:`/favorites/${product}`, withCredentials: true});
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
     }

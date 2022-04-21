@@ -59,6 +59,7 @@ const HeroTitle = styled.h2`
   line-height: 5.286rem;
   letter-spacing: -3px;
   margin-bottom: 2rem;
+  text-shadow: 3px 4px 7px rgba(81,67,21,0.8);
   
  @media screen and (max-width: ${MD - 1}px) {      
     font-size: 4rem;
@@ -91,7 +92,7 @@ const HeroBanner: React.FC<Props> = ({banner}) => {
           <div className="row">
             <div className="col-xxl-4 col-lg-6 col-12">
               <HeroTitleSection>
-                <HeroTitle>Buy, Sell, Rent Books and More</HeroTitle>
+                <HeroTitle>A Bookstore you never knew you needed</HeroTitle>
                 <div>
                   <AppButton variant={'secondary'} onClick={handleNavigation}>Get Started</AppButton>
                 </div>
