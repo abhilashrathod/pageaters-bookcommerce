@@ -9,6 +9,8 @@ const { enums, models } = require('./../constants');
 const schema = new Schema(
   {
     fullName: { type: String, default: '' },
+    dateOfBirth: { type: String, default: '' },
+    gender: { type: String, default: '' },
 
     email: { type: String, default: '' },
     contactNo: { type: String, default: '' },
@@ -34,36 +36,7 @@ const schema = new Schema(
 
     lastLoginAt: { type: String, default: '' },
 
-    subscription: {
-      isActive: { type: Boolean, default: false },
-      plan: { type: Schema.Types.ObjectId, ref: models.SUBSCRIPTION_PLANS },
-      razorPaySubId: { type: String, default: '' },
-      razorPayPlanId: { type: String, default: '' },
-      currentStatus: { type: String, enum: Object.values(enums.SUBSCRIPTION_STATUSES), default: enums.SUBSCRIPTION_STATUSES.NEW },
-    },
-
-    rental: [{
-      currentlyRented: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
-      lastRentDate: { type: String, default: '' },
-    }],
-
-    cart: { type: Schema.Types.ObjectId, ref: models.CART },
-
-    wishlist: [
-      { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
-    ],
-
-    rewardPoints: {
-      type: Number, default: 0,
-    },
-
-    notifications: {
-      discounts: { type: Boolean, default: true },
-      activities: { type: Boolean, default: true },
-    },
-
     razorPayCustId: { type: 'String', default: '' },
-    currentOrder: { type: Schema.Types.ObjectId, ref: models.ORDER },
 
     __v: { type: Number, select: false },
   },
@@ -84,7 +57,7 @@ class User {
 
   static async getProfile(userId) {
     const user = await this.findById(userId).select(
-      '-isDeleted -createdAt -updatedAt -role -salt -password -status -rental -forgotPasswordToken -verifyEmailToken -lastVerifyEmailSentOn -contactOtp -forgotPasswordToken -lastForgotPasswordSentOn -lastPasswordSetAt -lastLoginAt -notifications -razorPayCustId',
+      '-isDeleted -createdAt -updatedAt -role -salt -password -status -rental -forgotPasswordToken -verifyEmailToken -lastVerifyEmailSentOn -contactOtp -forgotPasswordToken -lastForgotPasswordSentOn -lastPasswordSetAt -lastLoginAt -notifications -subscription -currentOrder -rewardPoints -wishlist -lastMessageSentOn -razorPayCustId',
     );
 
     return user;

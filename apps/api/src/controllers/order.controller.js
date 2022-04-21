@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
-const { get, sumBy } = require('lodash');
+const { get } = require('lodash');
 const Razorpay = require('razorpay');
-const colors = require('colors');
 const moment = require('moment');
 
 const { models, enums } = require('../constants');
@@ -94,19 +93,17 @@ module.exports.attempt = async (req, res) => {
       shipping,
     };
 
-    const userRes = await User.findOne({ _id: userId });
-    let orderRes;
+    const query = { userId, orderStatus: enums.ORDER_STAGES.ATTEMPTED };
 
-    if (userRes.currentOrder) {
-      orderRes = await Order.findOneAndUpdate({ _id: userRes.currentOrder }, { $set: orderPayload }, { new: true });
+    const currentOrder = await Order.findOne(query);
+
+    if (currentOrder) {
+      await Order.findOneAndUpdate(query, { $set: orderPayload }, { new: true });
     } else {
-      orderRes = await Order.create(orderPayload);
+      await Order.create(orderPayload);
     }
 
-    userRes.currentOrder = orderRes._id;
-    userRes.save();
-
-    return res.ok({ message: 'ORDER_ADDRESS_SUCCESS', data: orderRes });
+    return res.ok({ message: 'ORDER_ADDRESS_SUCCESS', data: {} });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -126,20 +123,16 @@ module.exports.create = async (req, res) => {
       return res.error('ORDER_INFO_ATTEMPT_FAILED');
     }
 
-    const userRes = await User.findOne({ _id: userId, isDeleted: false });
+    let checkIsCreatedOrder = await Order.findOne({ userId, orderStatus: enums.ORDER_STAGES.CREATED });
 
-    if (!userRes) return res.error('ORDER_INFO_ATTEMPT_FAILED');
+    if (checkIsCreatedOrder) {
+      return res.ok({ message: 'ORDER_CREATE_SUCCESS', data: checkIsCreatedOrder });
+    }
 
-    let currentlyProcessingOrder = userRes.currentOrder;
-
-    const currentOrderRes = await Order.findOne({ _id: currentlyProcessingOrder });
+    const currentOrderRes = await Order.findOne({ userId, orderStatus: enums.ORDER_STAGES.ATTEMPTED });
 
     if (!currentOrderRes) {
       return res.error('ORDER_INFO_ATTEMPT_FAILED');
-    }
-
-    if (currentOrderRes.orderStatus === enums.ORDER_STAGES.CREATED) {
-      return res.ok({ message: 'ORDER_CREATE_SUCCESS', data: currentOrderRes });
     }
 
     const cartInfoRes = await Cart.findOne({ _id: cart, user: userId }).populate(populateOptions);
@@ -411,12 +404,13 @@ module.exports.getAllByUser = async (req, res) => {
 module.exports.retrieve = async (req, res) => {
   try {
     const userId = get(req, 'user.userId', '');
-    const userRes = await User.findOne({ _id: userId, isDeleted: false });
 
-    let orderRes;
+    const orderRes = await Order.findOne({
+      userId,
+      orderStatus: enums.ORDER_STAGES.ATTEMPTED,
+    }).populate(orderPopulateOptions);
 
-    if (userRes.currentOrder) {
-      orderRes = await Order.findOne({ _id: userRes.currentOrder }).populate(orderPopulateOptions);
+    if (orderRes) {
       return res.ok({ message: 'ORDER_LIST_SUCCESS', data: orderRes });
     }
 
@@ -570,8 +564,7 @@ module.exports.returnRequest = async (req, res) => {
       return res.ok({ message: 'ORDER_RETURN_SUCCESS', data: {} });
     }
     return res.ok('ORDER_RETURN_PERIOD_LAPSED');
-  }
-  catch (e) {
+  } catch (e) {
     return res.internalServerError(e);
   }
 };
@@ -583,7 +576,7 @@ module.exports.cancelRequest = async (req, res) => {
     const PERIOD = 3;
 
     const query = {
-      $or: [{orderStatus: enums.ORDER_STAGES.PAID}, {orderStatus: enums.ORDER_STAGES.SHIPPED}],
+      $or: [{ orderStatus: enums.ORDER_STAGES.PAID }, { orderStatus: enums.ORDER_STAGES.SHIPPED }],
       orderId: uniqueId,
       userId,
     };
@@ -636,7 +629,7 @@ module.exports.alignReturnShipment = async (req, res) => {
     let { id, requestId, shipment } = req.allParams();
 
     const q = {
-      $or: [{orderStatus: enums.ORDER_STAGES.RETURNED}, {orderStatus: enums.ORDER_STAGES.REPLACEMENT}],
+      $or: [{ orderStatus: enums.ORDER_STAGES.RETURNED }, { orderStatus: enums.ORDER_STAGES.REPLACEMENT }],
       _id: id,
     };
 
@@ -681,8 +674,7 @@ module.exports.alignReturnShipment = async (req, res) => {
 
     // TODO: send email about this!
     return res.ok({ message: 'ORDER_UPDATE_SUCCESS', data: {} });
-  }
-  catch (e) {
+  } catch (e) {
     return res.internalServerError(e);
   }
 };
@@ -721,8 +713,7 @@ module.exports.closeReturnRequest = async (req, res) => {
     // TODO: send email about this!
 
     return res.ok({ message: 'ORDER_UPDATE_SUCCESS', data: {} });
-  }
-  catch (e) {
+  } catch (e) {
     return res.internalServerError(e);
   }
 };
@@ -761,8 +752,7 @@ module.exports.closeReplaceRequest = async (req, res) => {
     // TODO: send email about this!
 
     return res.ok({ message: 'ORDER_UPDATE_SUCCESS', data: {} });
-  }
-  catch (e) {
+  } catch (e) {
     return res.internalServerError(e);
   }
 };
