@@ -2,29 +2,23 @@ const mongoose = require('mongoose');
 const { get } = require('lodash');
 const { getId } = require('../helpers/utils.helper');
 
-const { models, enums } = require('../constants');
+const { models } = require('../constants');
 
-const Users = mongoose.model(models.USER);
+const Favorites = mongoose.model(models.FAVORITES);
 const Books = mongoose.model(models.STORE_BOOK);
 
 module.exports.getAll = async (req, res) => {
   try {
     const userId = get(req, 'user.userId', '');
 
-    const query = {
-      _id: userId,
-      isDeleted: false,
-      status: enums.USER_STATUS.ACTIVE,
-    };
-
     const populateOptions = {
       path: 'wishlist',
       select: `title bookId ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller`,
     };
 
-    const userRes = await Users.findOne(query).select('wishlist').populate(populateOptions);
+    const wishlistRes = await Favorites.findOne({ userId }).select('wishlist').populate(populateOptions);
 
-    return res.ok({ message: 'WISH_LIST_SUCCESS', data: userRes });
+    return res.ok({ message: 'WISH_LIST_SUCCESS', data: wishlistRes });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -36,13 +30,11 @@ module.exports.checkPresent = async (req, res) => {
     const { product } = req.allParams();
 
     const query = {
-      _id: userId,
-      isDeleted: false,
-      status: enums.USER_STATUS.ACTIVE,
+      userId,
       wishlist: getId(product),
     };
 
-    const isPresent = await Users.findOne(query);
+    const isPresent = await Favorites.findOne(query);
 
     if (isPresent) {
       return res.ok({ message: 'SUCCESS', data: true });
@@ -60,9 +52,8 @@ module.exports.add = async (req, res) => {
     const { product } = req.allParams();
 
     const query = {
-      _id: userId,
-      isDeleted: false,
-      status: enums.USER_STATUS.ACTIVE,
+      userId,
+      wishlist: getId(product),
     };
 
     const payload = {
@@ -77,13 +68,13 @@ module.exports.add = async (req, res) => {
       return res.error('BOOK_NOT_EXIST');
     }
 
-    const isPresent = await Users.findOne({ _id: userId, isDeleted: false, wishlist: getId(product) });
+    const isPresent = await Favorites.findOne(query);
 
     if (isPresent) {
       return res.error('WISH_LIST_BOOK_PRESENT');
     }
 
-    await Users.findOneAndUpdate(query, payload, { new: true });
+    await Favorites.findOneAndUpdate({ userId }, payload, { new: true });
 
     return res.ok({ message: 'WISH_LIST_ADD_SUCCESS', data: {} });
   } catch (e) {
@@ -96,15 +87,9 @@ module.exports.remove = async (req, res) => {
     const userId = get(req, 'user.userId', '');
     const { product } = req.allParams();
 
-    const query = {
-      _id: userId,
-      isDeleted: false,
-      status: enums.USER_STATUS.ACTIVE,
-    };
-
     const update = { $pull: { 'wishlist': getId(product) } };
 
-    await Users.findOneAndUpdate(query, update, { new: true });
+    await Favorites.findOneAndUpdate({ userId }, update, { new: true });
 
     return res.ok({ message: 'WISH_LIST_DELETE_SUCCESS', data: {} });
   } catch (e) {

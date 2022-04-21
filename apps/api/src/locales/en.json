@@ -56,6 +56,7 @@
 	"INVALID_CONFIRM_NEW_PASSWORD": "Invalid confirm password",
 	"VALID_FORGOT_PASSWORD_TOKEN": "Valid forgot password token",
 	"INVALID_FORGOT_PASSWORD_TOKEN": "Invalid forgot password token",
+	"FORGOT_PASSWORD_LIMIT_EXCEEDED": "Reset Password request limit reached. Please try again after few minutes",
 	"INVALID_CLINICAL_TRIAL_NOTE": "Notes for clinical trial are not valid",
 	"CLINICAL_TRIAL_NOTE_UPDATED": "Clinical trial note updated",
 	"USER_REMOVED_FROM_CLINICAL_TRIAL": "User removed from clinical trial",
@@ -201,6 +202,6 @@
 	"PRODUCT_SET_UPDATE_SUCCESS": "Product Set Information Updated",
 	"PRODUCT_SET_SEARCH_SUCCESS": "Product Set Search Successful",
 	"PRODUCT_SET_DELETE_SUCCESS": "Product Set Deleted Successfully",
-	"FORGOT_PASSWORD_LIMIT_EXCEEDED": "Reset Password request limit reached. Please try again after few minutes",
+	"INVALID_FAVORITE_TYPE": "Type is not allowed",
 	"success": "success"
 }
