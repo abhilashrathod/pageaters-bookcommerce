@@ -74,7 +74,20 @@ module.exports.update = async (req, res) => {
       return res.error('BUNDLE_NOT_EXIST');
     }
 
-    const payload = { title, description, tags, poster, popularity, priority, relatedBundles, bundledBooks, relatedCollections, currentDiscount, price, membersPrice };
+    const payload = {
+      title,
+      description,
+      tags,
+      poster,
+      popularity,
+      priority,
+      relatedBundles,
+      bundledBooks,
+      relatedCollections,
+      currentDiscount,
+      price,
+      membersPrice,
+    };
 
     const bundleRes = await Bundles.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
 
@@ -155,9 +168,14 @@ module.exports.getByUniqueId = async (req, res) => {
       select: 'bundleId _id title bundledBooks poster currentDiscount priority price membersPrice',
     }];
 
-    const bundle = await Bundles.findOne({ bundleId: id, isDeleted: false }).populate(populateOptions);
+    let bundle = await Bundles.findOne({ bundleId: id, isDeleted: false }).populate(populateOptions);
 
     if (bundle) {
+
+      bundle = bundle.toObject();
+      const outOfStockBooks = bundle.bundledBooks.filter(x => x.inventory <= 0);
+      bundle.inventory = outOfStockBooks.length > 0 ? 0 : 1;
+
       return res.ok({ message: 'BUNDLE_LIST_SUCCESS', data: bundle });
     } else {
       return res.error('BUNDLE_NOT_EXIST');

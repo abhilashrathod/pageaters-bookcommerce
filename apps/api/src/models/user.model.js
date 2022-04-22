@@ -32,8 +32,8 @@ const schema = new Schema(
 
     forgotPasswordToken: { type: String, default: '' },
     lastForgotPasswordSentOn: { type: String, default: '' },
-    lastPasswordSetAt: { type: String, default: '' },
 
+    lastPasswordSetAt: { type: String, default: '' },
     lastLoginAt: { type: String, default: '' },
 
     razorPayCustId: { type: 'String', default: '' },
@@ -57,7 +57,7 @@ class User {
 
   static async getProfile(userId) {
     const user = await this.findById(userId).select(
-      '-isDeleted -createdAt -updatedAt -role -salt -password -status -rental -forgotPasswordToken -verifyEmailToken -lastVerifyEmailSentOn -contactOtp -forgotPasswordToken -lastForgotPasswordSentOn -lastPasswordSetAt -lastLoginAt -notifications -subscription -currentOrder -rewardPoints -wishlist -lastMessageSentOn -razorPayCustId',
+      '-isDeleted -createdAt -updatedAt -role -salt -password -status -rental -forgotPasswordToken -verifyEmailToken -lastVerifyEmailSentOn -contactOtp -forgotPasswordToken -lastForgotPasswordSentOn -notifications -subscription -currentOrder -rewardPoints -wishlist -lastMessageSentOn -razorPayCustId',
     );
 
     return user;
