@@ -1,11 +1,14 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {GetStaticPaths, GetStaticProps, InferGetStaticPropsType, NextPage} from "next";
 import axios from "axios";
+import useSWR, {mutate} from "swr";
 import Head from "next/head";
 import {useRouter} from "next/router";
 import {Spoiler} from '@mantine/core';
+import {useNotifications} from "@mantine/notifications";
 import {Icon} from "@iconify/react";
 import styled from "styled-components";
+import cookie from "js-cookie";
 
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageWrapper from "../../components/elements/PageWrapper";
@@ -14,6 +17,8 @@ import SectionHeading from "../../components/elements/SectionHeading";
 import ProductCardLandScape from "../../components/cards/ProductCardLandscape";
 import BundlesCardMedium from "../../components/cards/BundlesCardMedium";
 import CollectionCardSmall from "../../components/cards/CollectionCardSmall";
+import {ButtonVariants} from "../../components/form-controls/Button";
+import AppIconButton from "../../components/form-controls/IconButton";
 import Badges from "../../components/elements/Badge";
 
 import {
@@ -34,10 +39,6 @@ import {IBundle} from "../../schemas/bundle";
 import {IBook} from "../../schemas/book";
 import {ICollection} from "../../schemas/collection";
 import {ICategory} from "../../schemas/category";
-import {ButtonVariants} from "../../components/form-controls/Button";
-import AppIconButton from "../../components/form-controls/IconButton";
-import {useNotifications} from "@mantine/notifications";
-import useSWR, {mutate} from "swr";
 
 import useAuth from "../../hooks/useAuth";
 
@@ -320,10 +321,15 @@ const ProductSpecification = ({icon, prop, value}: SpecProps) => {
 };
 
 const AddToCart = ({product}: any) => {
+  const isLoggedIn = cookie.get(AUTH_COOKIE);
+
   const [quantity, setQuantity] = useState(1);
   const notif = useNotifications();
 
   async function handleAddCart() {
+    if (!isLoggedIn) {
+      return notif.showNotification({message: 'Please login to continue shopping', color: 'orange', autoClose: 5000});
+    }
     try {
       await axios.post(`/cart/add`, {quantity, product}, {withCredentials: true});
       notif.showNotification({message: 'Book Added to Cart', color: 'green', autoClose: 3000});

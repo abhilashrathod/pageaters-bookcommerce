@@ -7,7 +7,6 @@ const useAuth = () => {
   const isLoggedIn = cookie.get(AUTH_COOKIE);
 
   useEffect(() => {
-    console.log("cookie change thai", isLoggedIn);
     if (isLoggedIn) {
       setAuth(true)
     }

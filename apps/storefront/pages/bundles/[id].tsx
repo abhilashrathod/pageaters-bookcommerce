@@ -17,13 +17,23 @@ import ProductCardLandScape from "../../components/cards/ProductCardLandscape";
 import BundlesCardMedium from "../../components/cards/BundlesCardMedium";
 import CollectionCardSmall from "../../components/cards/CollectionCardSmall";
 
-import {ACCENT_COLOR, LIGHT_COLOR, PRIMARY_COLOR, PRIMARY_SUCCESS, SECONDARY_COLOR, SM} from "../../core/_variables";
+import {
+  ACCENT_COLOR,
+  AUTH_COOKIE,
+  LIGHT_COLOR,
+  PRIMARY_COLOR, PRIMARY_DANGER,
+  PRIMARY_SUCCESS,
+  SECONDARY_COLOR,
+  SM
+} from "../../core/_variables";
 import {getBundleImage} from "../../core/_imageRendererHelper";
 import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
 
 import {IBundle} from "../../schemas/bundle";
 import {IBook} from "../../schemas/book";
 import {ICollection} from "../../schemas/collection";
+import cookie from "js-cookie";
+import AppButton, {ButtonVariants} from "../../components/form-controls/Button";
 
 const BREADCRUMBS_ITEMS = (activeItem: any) => [
   {title: 'Home', href: '/'},
@@ -116,6 +126,20 @@ const Crossed = styled.span`
     color: ${LIGHT_COLOR};
 `;
 
+const OutOfStockLabel = styled.label`
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.5rem;
+  color: ${PRIMARY_DANGER};
+  margin-right: 0.825rem;
+  margin-bottom: 0;
+  
+  @media screen and (max-width: ${SM - 1}px) {
+   margin-right: 0.5rem;
+   font-size: 1.2rem;
+  }
+`;
+
 const AddToCartSpace = styled.div`
   margin-bottom: 2.5rem;
   display: flex;
@@ -164,6 +188,8 @@ interface Props {
 }
 
 const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType<typeof getStaticProps>) => {
+  const isLoggedIn = cookie.get(AUTH_COOKIE);
+
   const router = useRouter();
   const notif = useNotifications();
 
@@ -178,6 +204,10 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
   }
 
   async function handleAddCart() {
+    if (!isLoggedIn) {
+      return notif.showNotification({message: 'Please login to continue shopping', color: 'orange', autoClose: 5000});
+    }
+
     try {
       await axios.post(`/cart/add/bundle`, {bundle: bundleDetails._id}, {withCredentials: true});
       notif.showNotification({message: 'Bundle Added to Cart', color: 'green', autoClose: 3000});
@@ -270,9 +300,13 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
                     </ProductPricing>
 
                     <AddToCartSpace>
-                      <AddToCartButton onClick={handleAddCart}>
-                        Add to Cart
-                      </AddToCartButton>
+                      {
+                        bundleDetails.inventory > 0
+                          ? <AddToCartButton onClick={handleAddCart}>
+                                Add to Cart
+                            </AddToCartButton>
+                          : <OutOfStockLabel>Out of Stock</OutOfStockLabel>
+                      }
                     </AddToCartSpace>
 
                     <div className="row">
