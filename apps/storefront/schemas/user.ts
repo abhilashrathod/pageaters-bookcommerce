@@ -8,5 +8,7 @@ export interface IUser {
   rewardPoints: string;
   subscription: string;
   wishlist: string;
+  lastPasswordSetAt: string
+  lastLoginAt: string;
   _id: string;
 }

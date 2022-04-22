@@ -7,6 +7,7 @@ import useSWR, {mutate} from "swr";
 import {Tooltip} from "@mantine/core";
 import {Icon} from "@iconify/react";
 import Head from "next/head";
+import moment from 'moment';
 import axios from "axios";
 import {useNotifications} from "@mantine/notifications";
 import {useInterval} from "@mantine/hooks";
@@ -318,6 +319,96 @@ const ContactNoCard = ({user, onVerifySubmit}: ContactCardProps) => {
   )
 };
 
+interface ChangePasswordProps {
+  user: IUser;
+}
+
+const ChangePasswordCard = ({user}: ChangePasswordProps) => {
+  const notif = useNotifications();
+
+  const [editMode, setEditMode] = useState(false);
+
+  const changePasswordForm = useForm({
+    initialValues: {
+      password: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+
+    validate: {
+      password: (value) => value == '' ? 'Please provide current password' : null,
+      newPassword: (value) => value == '' ? 'Please provide your new password' : null,
+      confirmPassword: (value, values) => value !== values.newPassword ? 'Passwords did not match' : null,
+    }
+  });
+
+  async function handleSubmit(values: any) {
+    try {
+      await axios.put(`/auth/password`, values, {withCredentials: true});
+      notif.showNotification({message: 'Password updated.', color: 'green', autoClose: 3000});
+      toggleEditMode();
+    } catch (e: any) {
+      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+    }
+  }
+
+  function toggleEditMode() {
+    setEditMode((e) => !e);
+  }
+
+  return (
+      <InfoCard>
+        <h6>Security</h6>
+        <ContentWrapper>
+          <Content>
+            <div>
+              <p>
+                <strong>Change Password</strong><br/>
+                <span>Last Changed: {moment(user.lastPasswordSetAt).format('DD MMM YYYY')}</span>
+              </p>
+              <p>
+                <strong>Last login</strong><br/>
+                <span>Last Login At: {moment(user.lastLoginAt).format('DD MMM YYYY')}</span>
+              </p>
+            </div>
+          </Content>
+          <div>
+            <AppIconButton variant={ButtonVariants.Secondary} styles={{paddingLeft: 0}} onClick={toggleEditMode}
+                           size={ButtonSizes.Small}>
+              {editMode
+                  ? <><Icon icon={'ic:twotone-close'} width={16} height={16}/>&nbsp;Close</>
+                  : <><Icon icon={'bx:edit-alt'} width={16} height={16}/>&nbsp;Change</>}
+            </AppIconButton>
+          </div>
+          {
+            editMode && (
+                <div style={{marginTop: '1rem'}}>
+                  <form onSubmit={changePasswordForm.onSubmit(handleSubmit)}>
+                    <AppTextInput id={'password'}
+                                  required={true}
+                                  label={'Current Password'}
+                                  type={'password'}
+                                  {...changePasswordForm.getInputProps('password')}/>
+                    <AppTextInput id={'newPassword'}
+                                  required={true}
+                                  label={'New Password'}
+                                  type={'password'}
+                                  {...changePasswordForm.getInputProps('newPassword')}/>
+                    <AppTextInput id={'confirmPassword'}
+                                  required={true}
+                                  label={'Confirm Password'}
+                                  type={'password'}
+                                  {...changePasswordForm.getInputProps('confirmPassword')}/>
+                    <SubmitButton type={'submit'}>Save</SubmitButton>
+                  </form>
+                </div>
+            )
+          }
+        </ContentWrapper>
+      </InfoCard>
+  )
+};
+
 const Profile: React.FC<Props> = () => {
   const notif = useNotifications();
   const isLoggedIn = cookie.get(AUTH_COOKIE);
@@ -357,6 +448,9 @@ const Profile: React.FC<Props> = () => {
                 </div>
                 <div className="col-xxl-4 col-xl-4 col-12">
                   <ContactNoCard user={user} onVerifySubmit={updateUser}/>
+                </div>
+                <div className="col-xxl-4 col-xl-4 col-12">
+                  <ChangePasswordCard user={user}/>
                 </div>
               </div>
             </div>
