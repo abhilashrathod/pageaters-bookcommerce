@@ -259,9 +259,9 @@ module.exports.updateProfile = async (req, res) => {
 module.exports.updatePassword = async (req, res) => {
   try {
     let { password, newPassword, confirmPassword } = req.allParams();
-    let { user } = req;
+    const userId = get(req, 'user.userId', '');
 
-    user = await User.findById(user._id);
+    const user = await User.findById(userId);
 
     if (!user.isPasswordValid(password)) {
       return res.error('INVALID_PASSWORD');
