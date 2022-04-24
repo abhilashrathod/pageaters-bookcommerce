@@ -115,7 +115,7 @@ const AppFooter: React.FC<Props> = () => {
                     Unit 1, Demo Logistics Park, Sector 1,<br/>
                     Gandhinagar, GJ - 382016 <br/>
                     <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}} size={ButtonSizes.Small} onClick={() => router.push( 'mailto:support@demo.pageaters.com')}>Mail Us</AppButton>
-                    <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}}  size={ButtonSizes.Small} onClick={() => router.push( 'tel:+919000000000')}>Call Us</AppButton>
+                    <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}}  size={ButtonSizes.Small} onClick={() => router.push( 'tel:+91-9000000000')}>Call Us</AppButton>
                   </address>
                 </MainFooterAddress>
                 <FooterNavigation>

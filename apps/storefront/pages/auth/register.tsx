@@ -164,8 +164,8 @@ const RegistrationForm = ({onStepChange, onSubmit}: any) => {
                         type={'password'}
                         {...form.getInputProps('password')}/>
           <p style={{marginBottom: '1.25rem'}}>
-            By registering you&#39;re agreeing to our <Link href={'/terms'}><a>terms of
-            use</a></Link> and <Link href={'/terms'}>privacy policy.</Link>
+            By registering you&#39;re agreeing to our <Link href={'/terms-and-conditions'}><a>terms of
+            use</a></Link> and <Link href={'/privacy-policy'}>privacy policy.</Link>
           </p>
           <LoginButton type="submit">Register</LoginButton>
         </form>

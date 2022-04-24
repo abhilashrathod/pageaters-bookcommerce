@@ -55,7 +55,7 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
     const [field, sortValue] = e.split('|');
 
     const newParams = {
-      page: params.page,
+      page: 1,
       limit: params.limit,
       sortBy: field,
       sortOrder: sortValue,
@@ -63,6 +63,7 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
 
     setParams((prevState) => ({
       ...prevState,
+      page: 1,
       sortBy: field,
       sortOrder: sortValue,
     }));

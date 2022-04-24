@@ -4,7 +4,7 @@ import axios from "axios";
 import useSWR, {mutate} from "swr";
 import Head from "next/head";
 import {useRouter} from "next/router";
-import {Spoiler} from '@mantine/core';
+import {Alert, Spoiler} from '@mantine/core';
 import {useNotifications} from "@mantine/notifications";
 import {Icon} from "@iconify/react";
 import styled from "styled-components";
@@ -26,6 +26,7 @@ import {
   AUTH_COOKIE,
   LIGHT_COLOR,
   LIGHTER_PRIMARY_COLOR,
+  LIGHTEST_PRIMARY_COLOR,
   PRIMARY_COLOR,
   PRIMARY_DANGER,
   PRIMARY_SUCCESS,
@@ -54,7 +55,7 @@ const SITE_FEATURES = [
   {
     icon: 'grommet-icons:insecure',
     title: 'Secure Payments',
-    description: 'Via Debit & Credit Cards, Net Banking, UPIs, COD'
+    description: 'Debit & Credit Cards, Net Banking, UPIs, Wallets'
   },
   {icon: 'ep:refresh', title: 'Easy Return & Replacements', description: '7 Days Return Policy. No questions asked.'},
 ];
@@ -142,13 +143,14 @@ const AddToCartSpace = styled.div`
 const ProductButton = styled.button`
   font-size: 1.5rem;
   line-height: 1.5rem;
-  background-color: ${PRIMARY_COLOR};
+  background-color: ${ACCENT_COLOR};
   color: ${SECONDARY_COLOR};
   letter-spacing: -1px;
   padding: 1rem 2.5rem;
   border-radius: 0.5rem;
   font-weight: normal;
   margin-left: 1.25rem;
+  box-shadow: 0 2px 10px 0 rgb(0 0 0 / 16%);
   
   &:hover {
     color: ${SECONDARY_COLOR};
@@ -393,7 +395,7 @@ const BookWishlist = ({product}: any) => {
     try {
       await axios.post(`/favorites`, {product}, {withCredentials: true});
       notif.showNotification({message: 'Book Added to Wishlist', color: 'green', autoClose: 3000});
-      mutate({url:`/favorites/${product}`, withCredentials: true});
+      mutate({url: `/favorites/${product}`, withCredentials: true});
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
@@ -403,7 +405,7 @@ const BookWishlist = ({product}: any) => {
     try {
       await axios.delete(`/favorites/${product}`, {withCredentials: true});
       notif.showNotification({message: 'Book Removed from Wishlist', color: 'green', autoClose: 3000});
-      mutate({url:`/favorites/${product}`, withCredentials: true});
+      mutate({url: `/favorites/${product}`, withCredentials: true});
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
@@ -502,10 +504,10 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                     <ProductDescription>
                       <Spoiler maxHeight={110}
                                styles={{
-                                 control: {boxShadow: 'none', color: ACCENT_COLOR}
+                                 control: {boxShadow: 'none', fontSize: '1rem', color: LIGHTEST_PRIMARY_COLOR}
                                }}
-                               showLabel="[Show more]"
-                               hideLabel="[Hide]">
+                               showLabel="[Read more]"
+                               hideLabel="[Read Less]">
                         <p>{book.description}</p>
                       </Spoiler>
                     </ProductDescription>
@@ -529,6 +531,12 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                             : <NotifyMe product={book._id}/>
                       }
                     </AddToCartSpace>
+
+                    <ProductCategories>
+                      <Alert title="Shipping" color="gray">
+                        Standard Shipping: 3-5 Days
+                      </Alert>
+                    </ProductCategories>
 
                     <ProductCategories>
                       <span>Categories:</span>

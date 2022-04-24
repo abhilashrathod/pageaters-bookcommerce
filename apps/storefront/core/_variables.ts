@@ -120,59 +120,38 @@ export const FOOTER_NAVIGATION = [
     children: [
       {
         linkName: 'About',
-        linkHref: '/',
+        linkHref: '/about',
       }, {
         linkName: 'Contact',
         linkHref: '/',
       }, {
         linkName: 'Privacy Policy',
-        linkHref: '/',
+        linkHref: '/privacy-policy',
       }, {
         linkName: 'Terms of Use',
-        linkHref: '/',
-      }, {
-        linkName: 'FAQs',
-        linkHref: '/',
-      }
+        linkHref: '/terms-and-conditions',
+      },
+      // {
+      //   linkName: 'FAQs',
+      //   linkHref: '/',
+      // }
     ]
-  }, {
-    linkName: 'Shop',
-    linkHref: '/',
-    children: [
-      {
-        linkName: 'Offers',
-        linkHref: '/',
-      }, {
-        linkName: 'Orders',
-        linkHref: '/',
-      }, {
-        linkName: 'Wishlist',
-        linkHref: '/',
-      }, {
-        linkName: 'Categories',
-        linkHref: '/',
-      }, {
-        linkName: 'Collections',
-        linkHref: '/',
-      }, {
-        linkName: 'Bundles',
-        linkHref: '/',
-      }
-    ]
-  }, {
+  },
+  {
     linkName: 'Pages',
     linkHref: '/',
     children: [
       {
         linkName: 'Membership',
         linkHref: '/',
-      }, {
-        linkName: 'Incentive Program',
-        linkHref: '/',
-      }, {
-        linkName: 'Influencer Program',
-        linkHref: '/',
-      }
+      },
+      // {
+      //   linkName: 'Incentive Program',
+      //   linkHref: '/',
+      // }, {
+      //   linkName: 'Influencer Program',
+      //   linkHref: '/',
+      // }
     ]
   }
 ];
