@@ -166,13 +166,14 @@ const Login: React.FC<Props> = () => {
           notif.showNotification({message: 'Login Successfully!', color: 'green', autoClose: 3000});
 
           cookie.set(AUTH_COOKIE, `${+new Date()}`);
-
-          if (redirect) return router.replace(`${redirect}`);
-
-          router.push('/');
-
           mutate({url: `/auth/me`, withCredentials: true});
           mutate({url: `/cart/retrieve`, withCredentials: true});
+
+          setTimeout(() => {
+            if (redirect) return router.replace(`${redirect}`);
+
+            router.push('/');
+          }, 500);
         })
         .catch((err) => {
           notif.showNotification({message: err.message, color: 'red', autoClose: 3000});

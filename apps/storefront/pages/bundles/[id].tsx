@@ -20,7 +20,7 @@ import CollectionCardSmall from "../../components/cards/CollectionCardSmall";
 import {
   ACCENT_COLOR,
   AUTH_COOKIE,
-  LIGHT_COLOR,
+  LIGHT_COLOR, LIGHTEST_PRIMARY_COLOR,
   PRIMARY_COLOR, PRIMARY_DANGER,
   PRIMARY_SUCCESS,
   SECONDARY_COLOR,
@@ -59,7 +59,8 @@ const ProductCoverSpace = styled.div`
 
 const ProductImage = styled.img`
   border-radius: 1.5rem;
-  width: 300px;
+  width: 450px;
+  height: auto;
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: rgb(0 0 0 / 18%) 0 2px 4px 0;
   
@@ -98,6 +99,7 @@ const Tag = styled.li`
 `;
 
 const ProductInfo = styled.div``;
+
 const ProductTitle = styled.h1`
   font-size: 2rem;
   letter-spacing: 0;
@@ -121,9 +123,16 @@ const ProductPricing = styled.div`
 `;
 
 const Crossed = styled.span`
-    margin-right: 0.5rem;
-    text-decoration: line-through;
-    color: ${LIGHT_COLOR};
+  margin-right: 0.5rem;
+  text-decoration: line-through;
+  color: ${LIGHT_COLOR};
+`;
+
+const ProductDiscount = styled.span`
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  font-size: 1rem;
+  color: ${PRIMARY_COLOR};
 `;
 
 const OutOfStockLabel = styled.label`
@@ -148,12 +157,13 @@ const AddToCartSpace = styled.div`
 const AddToCartButton = styled.button`
   font-size: 1.5rem;
   line-height: 1.5rem;
-  background-color: ${PRIMARY_COLOR};
+  background-color: ${ACCENT_COLOR};
   color: ${SECONDARY_COLOR};
   letter-spacing: -1px;
   padding: 1rem 2.5rem;
   border-radius: 0.5rem;
   font-weight: normal;
+  box-shadow: 0 2px 10px 0 rgb(0 0 0 / 16%);
 `;
 
 const SiteFeatures = styled.div``;
@@ -259,8 +269,7 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
               <div className="row">
                 <div className="col-xxl-4 col-xl-4 col-12">
                   <ProductCoverSpace>
-                    <ProductImage src={renderImageSize(450, 450)} alt={bundleDetails?.title} width={300}
-                                  height={'auto'}/>
+                    <ProductImage src={renderImageSize(450, 450)} alt={bundleDetails?.title} width={450} height={'auto'}/>
                   </ProductCoverSpace>
                   <TagsSpace>
                     <TagsList>
@@ -296,7 +305,7 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
                     <ProductPricing>
                       <Crossed>{currencyFormat(bundleDetails.price)}</Crossed>
                       <span>{currencyFormat(returnDiscountedAmount(bundleDetails.price, bundleDetails.currentDiscount))}</span>
-                      <small>&nbsp;(Additional {bundleDetails.currentDiscount}% Off)</small>
+                      <ProductDiscount>&nbsp;(Additional {bundleDetails.currentDiscount}% Off)</ProductDiscount>
                     </ProductPricing>
 
                     <AddToCartSpace>

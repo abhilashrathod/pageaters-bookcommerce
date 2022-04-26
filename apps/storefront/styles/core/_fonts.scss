@@ -1,34 +1,4 @@
-/* FONT_FAMILY */
-@font-face {
-  font-family: 'Metropolis Regular';
-  font-style: normal;
-  src: url("../../public/fonts/Metropolis-Regular.otf") format("opentype");
-  font-display: swap;
-}
+@import url("https://cdn.jsdelivr.net/npm/@xz/fonts@1/serve/metropolis.min.css");
+// <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xz/fonts@1/serve/metropolis.min.css">
 
-@font-face {
-  font-family: 'Metropolis Semibold';
-  font-style: normal;
-  src: url('../../public/fonts/Metropolis-SemiBold.otf') format("truetype");
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Metropolis Light';
-  font-style: normal;
-  src: url('../../public/fonts/Metropolis-Light.otf') format("truetype");
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Metropolis Medium';
-  font-style: normal;
-  src: url('../../public/fonts/Metropolis-Medium.otf') format("truetype");
-  font-display: swap;
-}
-
-$font-family-semi-bold: 'Metropolis Semibold', sans-serif;
 $font-family-regular: 'Metropolis Regular', sans-serif;
-$font-family-light: 'Metropolis Light', sans-serif;
-$font-family-medium: 'Metropolis Medium', sans-serif;
-

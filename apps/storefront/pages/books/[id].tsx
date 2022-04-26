@@ -120,6 +120,7 @@ const ProductDescription = styled.div`
 const ProductSavings = styled.span`
   margin-bottom: 0.25rem;
   font-weight: 600;
+  font-size: 1rem;
   color: ${PRIMARY_SUCCESS};
 `;
 
@@ -130,9 +131,9 @@ const ProductPricing = styled.div`
 `;
 
 const Crossed = styled.span`
-    margin-right: 0.5rem;
-    text-decoration: line-through;
-    color: ${LIGHT_COLOR};
+  margin-right: 0.5rem;
+  text-decoration: line-through;
+  color: ${LIGHT_COLOR};
 `;
 
 const AddToCartSpace = styled.div`
