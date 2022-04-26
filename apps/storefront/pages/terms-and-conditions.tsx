@@ -32,8 +32,8 @@ const Terms: NextPage = () => {
                 <p>PLEASE READ THIS TERMS OF SERVICE AGREEMENT CAREFULLY. BY USING THIS WEBSITE OR ORDERING PRODUCTS
                   FROM THIS WEBSITE YOU AGREE TO BE BOUND BY ALL OF THE TERMS AND CONDITIONS OF THIS AGREEMENT.</p>
                 <p>
-                  This Terms of Service Agreement (the "Agreement") governs your use of this website,
-                  [https://pageaters.com] (the "Website"), Pageaters Inc. ("Pageaters Inc") offer of products for
+                  This Terms of Service Agreement (the &#34;Agreement&#34;) governs your use of this website,
+                  [https://pageaters.com] (the &#34;Website&#34;), Pageaters Inc. (&#34;Pageaters Inc&#34;) offer of products for
                   purchase on this Website, or your purchase of products available on this Website. This Agreement
                   includes, and incorporates by this reference, the policies and guidelines referenced below. [Pageaters Inc]
                   reserves the right to change or revise the terms and conditions of this Agreement at any time by
@@ -51,7 +51,7 @@ const Terms: NextPage = () => {
                 </p>
 
                 <h6>1. PRODUCTS</h6>
-                <p>Terms of Offer. This Website offers for sale certain products (the "Products"). By placing an order
+                <p>Terms of Offer. This Website offers for sale certain products (the &#34;Products&#34;). By placing an order
                   for Products through this Website, you agree to the terms set forth in this Agreement.</p>
                 <p><strong>Customer Solicitation:</strong> Unless you notify our third party call center reps or direct
                   Pageaters Inc. sales reps, while they are calling you, of your desire to opt out from further direct
@@ -92,7 +92,7 @@ const Terms: NextPage = () => {
                   local, state, national, and international laws and regulations in your use of the Website (including
                   laws regarding intellectual property), (2) not interfere with or disrupt the use and enjoyment of the
                   Website by other users, (3) not resell material on the Website, (4) not engage, directly or
-                  indirectly, in transmission of "spam", chain letters, junk mail or any other type of unsolicited
+                  indirectly, in transmission of &#34;spam&#34;, chain letters, junk mail or any other type of unsolicited
                   communication, and (5) not defame, harass, abuse, or disrupt other users of the Website
                 </p>
                 <p>
@@ -112,14 +112,14 @@ const Terms: NextPage = () => {
                   content you post. Pageaters Inc. is not liable for any damage or harm resulting from any posts by or
                   interactions between users. Pageaters Inc. reserves the right, but has no obligation, to monitor
                   interactions between and among users of the Website and to remove any content Pageaters Inc. deems
-                  objectionable, in Pageaters' sole discretion.
+                  objectionable, in Pageaters&apos; sole discretion.
                 </p>
 
                 <h6>3. DISCLAIMER OF WARRANTIES</h6>
-                <p> THE WEBSITE AND PRODUCTS ARE OFFERED ON AN "AS IS" AND "AS AVAILABLE" BASIS. Pageaters Inc.
+                <p> THE WEBSITE AND PRODUCTS ARE OFFERED ON AN &#34;AS IS&#34; AND &#34;AS AVAILABLE&#34; BASIS. Pageaters Inc.
                   EXPRESSLY DISCLAIMS ALL WARRANTIES OF ANY KIND, WHETHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED
                   TO, IMPLIED WARRANTIES OF MERCHANTABILITY, AND NON-INFRINGEMENT WITH RESPECT TO THE PRODUCTS OR
-                  WEBSITE CONTENT, OR ANY RELIANCE UPON OR USE OF THE WEBSITE CONTENT OR PRODUCTS. ("PRODUCTS" INCLUDE
+                  WEBSITE CONTENT, OR ANY RELIANCE UPON OR USE OF THE WEBSITE CONTENT OR PRODUCTS. (&#34;PRODUCTS&#34; INCLUDE
                   TRIAL PRODUCTS.)
                 </p>
                 <p> WITHOUT LIMITING THE GENERALITY OF THE FOREGOING, Pageaters Inc. MAKES NO WARRANTY: </p>
@@ -157,7 +157,7 @@ const Terms: NextPage = () => {
                 <p>
                   You will release, indemnify, defend and hold harmless Pageaters Inc. , and any of its contractors,
                   agents, employees, officers, directors, shareholders, affiliates and assigns from all liabilities,
-                  claims, damages, costs and expenses, including reasonable attorneys' fees and expenses, of third
+                  claims, damages, costs and expenses, including reasonable attorneys&apos; fees and expenses, of third
                   parties relating to or arising out of <br/>
                   (1) this Agreement or the breach of your warranties, representations and obligations under this
                   Agreement; <br/>
@@ -180,7 +180,7 @@ const Terms: NextPage = () => {
                 <h6>6. PRIVACY</h6>
                 <p>
                   Pageaters Inc. believes strongly in protecting user privacy and providing you with notice of
-                  Pageaters' use of data. Please refer to Pageaters Inc. privacy policy, incorporated by reference
+                  Pageaters&apos; use of data. Please refer to Pageaters Inc. privacy policy, incorporated by reference
                   herein, that is posted on the Website.</p>
 
                 <h6>7. AGREEMENT TO BE BOUND</h6>
@@ -206,7 +206,7 @@ const Terms: NextPage = () => {
                   is
                   found by a court of competent jurisdiction to be invalid, the parties nevertheless agree that the
                   court
-                  should endeavor to give effect to the parties' intentions as reflected in the provision, and the other
+                  should endeavor to give effect to the parties&apos; intentions as reflected in the provision, and the other
                   provisions of this Agreement remain in full force and effect.
                 </p>
                 <p>

@@ -78,7 +78,7 @@ const PrivacyPolicy: NextPage = () => {
                 </p>
                 <p>
                   <strong>Other information.</strong> If you use our website, we may collect information about your IP
-                  address and the browser you're using. We might look at what site you came from, duration of time spent
+                  address and the browser you&apos;re using. We might look at what site you came from, duration of time spent
                   on our website, pages accessed. We might also collect the type of
                   mobile device you are using, or the version of the operating system your computer or device is running.
                 </p>
@@ -147,7 +147,7 @@ const PrivacyPolicy: NextPage = () => {
                   fraud. We may share information with any successor to all or part of our business. For example, if part of
                   our business is sold we may give our customer list as part of that transaction.
                 </p>
-                <p><strong>We don't sell your personal data to any third party for profits</strong> And we never will.</p>
+                <p><strong>We don&apos;t sell your personal data to any third party for profits</strong> And we never will.</p>
                 <p>
                   <strong>We may share your information for reasons not described in this policy.</strong> We will tell
                   you before we do this.
@@ -194,7 +194,7 @@ const PrivacyPolicy: NextPage = () => {
                 <h6>Jurisdiction</h6>
                 <p>
                   If you choose to visit the website, your visit and any dispute over privacy is subject to this Policy
-                  and the website's terms of use. In addition to the foregoing, any disputes arising under this Policy
+                  and the website&apos;s terms of use. In addition to the foregoing, any disputes arising under this Policy
                   shall be governed by the laws of India.
                 </p>
               </div>

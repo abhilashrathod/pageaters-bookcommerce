@@ -322,7 +322,7 @@ function FeedbackModal({type, open, books, bundles, onClose, onSubmit}: Feedback
                     label="Reason for Returning the order"
                     description=""
                     spacing="sm"
-                    variant="vertical"
+                    orientation="vertical"
                     color="gray"
                     styles={{
                       label: {color: PRIMARY_COLOR, fontSize: '1rem', fontWeight: 'normal', marginBottom: '0'},
@@ -456,7 +456,7 @@ const CancelAction = ({orderId}: CancelActionProps) => {
                     label="Reason for cancelling the order"
                     description=""
                     spacing="sm"
-                    variant="vertical"
+                    orientation="vertical"
                     color="gray"
                     styles={{
                       label: {color: PRIMARY_COLOR, fontSize: '1rem', fontWeight: 'normal', marginBottom: '0'},
