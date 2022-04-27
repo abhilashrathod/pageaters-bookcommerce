@@ -5,6 +5,7 @@ import useSWR, {mutate} from "swr";
 import Head from "next/head";
 import {useRouter} from "next/router";
 import {Alert, Spoiler} from '@mantine/core';
+import {useClipboard} from "@mantine/hooks";
 import {useNotifications} from "@mantine/notifications";
 import {Icon} from "@iconify/react";
 import styled from "styled-components";
@@ -27,7 +28,6 @@ import {
   LIGHT_COLOR,
   LIGHTER_PRIMARY_COLOR,
   LIGHTEST_PRIMARY_COLOR,
-  PRIMARY_COLOR,
   PRIMARY_DANGER,
   PRIMARY_SUCCESS,
   SECONDARY_COLOR,
@@ -421,11 +421,17 @@ const BookWishlist = ({product}: any) => {
 
 const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof getStaticProps>) => {
   const router = useRouter();
+  const auth = useAuth();
+  const clipboard = useClipboard({timeout: 500});
 
   if (router.isFallback) return <PageWrapper><EmptySectionMessage title={'Loading...'}/></PageWrapper>;
 
   function renderImageSize(w: number, h: number) {
     return getProductImage(book.poster, {height: h, width: w, fit: 'cover'});
+  }
+
+  function share() {
+    clipboard.copy(`${process.env.NEXT_PUBLIC_SITE_URL}/books/${book.bookId}`);
   }
 
   return (
@@ -455,6 +461,32 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
 
           <meta name="fb:pages" content="Pageaters-101873422124838"/>
           <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
+
+          <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  "@context": "http://schema.org",
+                  "@type": 'Product',
+                  name: `${book.title} - ${book.tagline}`,
+                  description: book.description,
+                  url: `${process.env.NEXT_PUBLIC_SITE_URL}/books/${book.bookId}`,
+                  image: [renderImageSize(300, 450)],
+                  sku: book.bookId,
+                  brand: {
+                    "@type": "Brand",
+                    "name": book.publisher
+                  },
+                  offers: {
+                    "@type": "AggregateOffer",
+                    offerCount: 1,
+                    lowPrice: returnDiscountedAmount(book.price, book.currentDiscount),
+                    highPrice: book.price,
+                    priceCurrency: "INR"
+                  }
+                }),
+              }}
+          />
         </Head>
         <PageWrapper>
           <div className="container">
@@ -479,9 +511,10 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                     </TagsList>
                   </TagsSpace>
                   <SuggestionButtons>
-                    <BookWishlist product={book._id}/>
-                    <AppIconButton variant={ButtonVariants.Secondary} onClick={() => console.log('1')}>
-                      <Icon icon={'bx:share-alt'} width={18} height={18}/>&nbsp;Share
+                    {auth && <BookWishlist product={book._id}/>}
+                    <AppIconButton variant={clipboard.copied ? ButtonVariants.Accent : ButtonVariants.Secondary}
+                                   onClick={share}>
+                      <Icon icon={'bx:share-alt'} width={18} height={18}/>&nbsp;{clipboard.copied ? 'Link Copied' : 'Share'}
                     </AppIconButton>
                   </SuggestionButtons>
                 </div>

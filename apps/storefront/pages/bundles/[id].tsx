@@ -255,6 +255,28 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
 
           <meta name="fb:pages" content="Pageaters-101873422124838"/>
           <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
+
+          <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  "@context": "http://schema.org",
+                  "@type": 'Product',
+                  name: bundleDetails.title,
+                  description: bundleDetails.description,
+                  url: `${process.env.NEXT_PUBLIC_SITE_URL}/books/${bundleDetails.bundleId}`,
+                  image: [renderImageSize(450, 450)],
+                  sku: bundleDetails.bundleId,
+                  offers: {
+                    "@type": "AggregateOffer",
+                    offerCount: 1,
+                    lowPrice: returnDiscountedAmount(bundleDetails.price, bundleDetails.currentDiscount),
+                    highPrice: bundleDetails.price,
+                    priceCurrency: "INR"
+                  }
+                }),
+              }}
+          />
         </Head>
         <PageWrapper>
           <div className="container">

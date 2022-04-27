@@ -3,7 +3,7 @@ import axios from "axios";
 import {AppProps} from 'next/app'
 import Router from "next/router";
 import nProgress from "nprogress";
-import {SWRConfig, Middleware, SWRHook} from 'swr'
+import {Middleware, SWRConfig, SWRHook} from 'swr'
 import {MantineProvider} from "@mantine/core";
 import {NotificationsProvider} from '@mantine/notifications';
 
@@ -13,6 +13,7 @@ import '../core/_service';
 import AppHeader from "../components/partials/Header";
 import AppFooter from "../components/partials/Footer";
 import AppMobileMenu from "../components/partials/MobileMenu";
+import Head from "next/head";
 
 Router.events.on("routeChangeStart", nProgress.start);
 Router.events.on("routeChangeError", nProgress.done);
@@ -27,9 +28,9 @@ const swrMiddleware: Middleware = (useSWRNext: SWRHook) => (key, fetcher, config
 };
 
 const fetcher = (configuration: any) => {
-  const { withCredentials = false , args, url, } = configuration;
+  const {withCredentials = false, args, url,} = configuration;
 
-  return axios.get(url, {params: args, withCredentials })
+  return axios.get(url, {params: args, withCredentials})
       .then((res) => res.data);
 };
 
@@ -38,6 +39,46 @@ const fetcher = (configuration: any) => {
 function MyApp({Component, pageProps}: AppProps) {
   return (
       <>
+        <Head>
+          <meta charSet="UTF-8"/>
+          <base href="/"/>
+          <title>Pageaters: Online shopping site for Buying, Selling or Renting Books in India</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+          <link rel="icon" type="image/x-icon"
+                href="https://res.cloudinary.com/pageaters/image/upload/v1651043823/Favicons/favicon_cccii1.ico"/>
+          <link rel="apple-touch-icon" sizes="180x180"
+                href="https://res.cloudinary.com/pageaters/image/upload/v1651043822/Favicons/apple-touch-icon_hsgmcm.png"/>
+          <link rel="icon" type="image/png" sizes="32x32"
+                href="https://res.cloudinary.com/pageaters/image/upload/v1651043822/Favicons/favicon-32x32_qaib2d.png"/>
+          <link rel="icon" type="image/png" sizes="16x16"
+                href="https://res.cloudinary.com/pageaters/image/upload/v1651043822/Favicons/favicon-16x16_gdsvtl.png"/>
+
+
+          <meta name="title" content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
+          <meta name="description"
+                content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books."/>
+
+
+          <meta property="og:type" content="website"/>
+          <meta property="og:url" content="http://pageaters.com/"/>
+          <meta property="og:title"
+                content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
+          <meta property="og:description"
+                content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books. "/>
+          <meta property="og:image"
+                content="https://res.cloudinary.com/pageaters/image/upload/v1624257111/pageaters-poster_ohufa0.png"/>
+
+
+          <meta property="twitter:card" content="summary_large_image"/>
+          <meta property="twitter:url" content="http://pageaters.com/"/>
+          <meta property="twitter:title"
+                content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
+          <meta property="twitter:description"
+                content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books. "/>
+          <meta property="twitter:image"
+                content="https://res.cloudinary.com/pageaters/image/upload/v1624257111/pageaters-poster_ohufa0.png"/>
+        </Head>
         <SWRConfig value={{use: [swrMiddleware], fetcher}}>
           <MantineProvider theme={{fontFamily: 'Metropolis Regular'}}>
             <NotificationsProvider position={'bottom-right'}>
