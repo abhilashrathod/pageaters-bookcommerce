@@ -298,7 +298,8 @@ const Home: NextPage = (props: any) => {
 Home.getInitialProps = () => {
   const HERO_BANNER = {
     poster: 'girl-is-reading-book-cafe.jpg',
-    title: 'Incentive Program'
+    title: 'A Bookstore you never knew you needed',
+    ctaLink: '/auth/register'
   };
 
   const BANNERS = [

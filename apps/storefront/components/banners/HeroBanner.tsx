@@ -7,6 +7,7 @@ import {LG, MD, SM} from "../../core/_variables";
 import {IBanner} from "../../schemas/banner";
 import {useRouter} from "next/router";
 import {getAssetImage} from "../../core/_imageRendererHelper";
+import useAuth from "../../hooks/useAuth";
 
 interface Props {
   banner: IBanner;
@@ -76,6 +77,7 @@ const HeroTitle = styled.h2`
 
 const HeroBanner: React.FC<Props> = ({banner}) => {
   const router = useRouter();
+  const loggedIn = useAuth();
 
   function renderBanner(image: string) {
     return getAssetImage(image, {height: 1280, width: 1920, fit: 'cover'})
@@ -83,7 +85,7 @@ const HeroBanner: React.FC<Props> = ({banner}) => {
 
   function handleNavigation() {
     // @ts-ignore
-    router.push(banner.ctaLink);
+    router.push(!loggedIn ? banner.ctaLink : '/categories');
   }
 
   return (
@@ -92,9 +94,11 @@ const HeroBanner: React.FC<Props> = ({banner}) => {
           <div className="row">
             <div className="col-xxl-4 col-lg-6 col-12">
               <HeroTitleSection>
-                <HeroTitle>A Bookstore you never knew you needed</HeroTitle>
+                <HeroTitle>{banner.title}</HeroTitle>
                 <div>
-                  <AppButton variant={'secondary'} onClick={handleNavigation}>Get Started</AppButton>
+                  <AppButton variant={'secondary'} onClick={handleNavigation}>
+                    {loggedIn ? 'Explore' : 'Get Started'}
+                  </AppButton>
                 </div>
               </HeroTitleSection>
             </div>

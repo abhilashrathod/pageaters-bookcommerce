@@ -202,7 +202,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       categoryDetails: data
-    }
+    },
+    revalidate: 1000, // value in seconds | ~ 16 mins
   }
 };
 

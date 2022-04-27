@@ -148,7 +148,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       dealInfo: data
-    }
+    },
+    revalidate: 1000, // value in seconds | ~ 16 mins
   }
 };
 

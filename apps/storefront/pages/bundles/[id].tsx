@@ -440,7 +440,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       bundleDetails: data
-    }
+    },
+    revalidate: 1000, // value in seconds | ~ 16 mins
   }
 };
 
