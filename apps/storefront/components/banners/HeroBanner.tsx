@@ -71,7 +71,7 @@ const HeroTitle = styled.h2`
  @media screen and (max-width: ${SM - 1}px) {      
     font-size: 2.5rem;
     line-height: 2.5rem;
-    letter-spacing: -2px;
+    letter-spacing: -1px;
   }
 `;
 

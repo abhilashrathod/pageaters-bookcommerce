@@ -133,11 +133,11 @@ export const FOOTER_NAVIGATION = [
       }, {
         linkName: 'Cancellation and Returns',
         linkHref: '/cancellation',
+      },
+      {
+        linkName: 'Shipping Policy',
+        linkHref: '/shipping',
       }
-      // {
-      //   linkName: 'FAQs',
-      //   linkHref: '/',
-      // }
     ]
   },
   {

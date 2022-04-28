@@ -78,7 +78,7 @@ const BannerTitle = styled.h2`
    font-size: 2.5rem;
    line-height: 2.5rem;
    max-width: 250px;
-   letter-spacing: -2px;
+   letter-spacing: -1px;
   }
 `;
 
