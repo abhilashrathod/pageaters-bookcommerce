@@ -2,7 +2,7 @@ import React from 'react';
 import styled from "styled-components";
 import {useRouter} from "next/router";
 
-import {MD} from "../../core/_variables";
+import {LIGHTER_PRIMARY_COLOR, MD} from "../../core/_variables";
 import {ICategory} from "../../schemas/category";
 import {getCategoryImage} from "../../core/_imageRendererHelper";
 
@@ -33,8 +33,9 @@ const CategoryImageArea = styled.div`
 const CategoryImage = styled.img`         
   object-fit: cover;
   border-radius: 50%;
-  width: 64px;
-  height: 64px;  
+  border: 3px solid ${LIGHTER_PRIMARY_COLOR};
+  width: 84px;
+  height: 84px;  
 `;
 
 const CategoryContentArea = styled.div`         
@@ -84,7 +85,7 @@ const CategoryLandscapeCard: React.FC<Props> = ({category}) => {
       <>
         <CategoryItem onClick={navigateToDetails}>
           <CategoryImageArea>
-            <CategoryImage src={renderImageSize(64, 64)} loading={"lazy"} width={64} height={64} alt={category.title}/>
+            <CategoryImage src={renderImageSize(84, 84)} loading={"lazy"} width={84} height={84} alt={category.title}/>
           </CategoryImageArea>
           <CategoryContentArea>
             <CategoryTitle>{category.title}</CategoryTitle>
