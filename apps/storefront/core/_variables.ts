@@ -130,7 +130,10 @@ export const FOOTER_NAVIGATION = [
       }, {
         linkName: 'Terms of Use',
         linkHref: '/terms-and-conditions',
-      },
+      }, {
+        linkName: 'Cancellation and Returns',
+        linkHref: '/cancellation',
+      }
       // {
       //   linkName: 'FAQs',
       //   linkHref: '/',

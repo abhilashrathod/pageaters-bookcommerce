@@ -57,8 +57,8 @@ const FooterColumn = styled.li`
   margin-bottom: 2rem;
   flex: 1 50%;
  
-  @media screen and (min-width: ${SM - 1}px) {      
-    flex: 1;
+  @media screen and (max-width: ${SM - 1}px) {      
+    flex: 1 100%;
   }
 `;
 
@@ -114,6 +114,7 @@ const AppFooter: React.FC<Props> = () => {
                   <address>
                     Unit 1, Demo Logistics Park, Sector 1,<br/>
                     Gandhinagar, GJ - 382016 <br/>
+                    (Active Hours: Monday to Saturday, 11AM to 7PM) <br/>
                     <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}} size={ButtonSizes.Small} onClick={() => router.push( 'mailto:support@demo.pageaters.com')}>Mail Us</AppButton>
                     <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}}  size={ButtonSizes.Small} onClick={() => router.push( 'tel:+91-9000000000')}>Call Us</AppButton>
                   </address>

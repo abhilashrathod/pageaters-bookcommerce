@@ -1,10 +1,10 @@
 import React from "react";
 import {NextPage} from "next";
+import Head from "next/head";
 
 import PageWrapper from "../components/elements/PageWrapper";
 import Breadcrumbs from "../components/elements/Breadcrumbs";
 import PageHeadings from "../components/elements/PageHeadings";
-import Head from "next/head";
 
 const BREADCRUMBS_ITEMS = [
   {title: 'Home', href: '/'},
