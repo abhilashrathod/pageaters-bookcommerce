@@ -12,8 +12,6 @@ import {useRouter} from "next/router";
 import {Icon} from '@iconify/react';
 import {get} from 'lodash';
 
-import useAuth from "../../hooks/useAuth";
-
 import {getProductImage} from "../../core/_imageRendererHelper";
 
 import logo from '../../public/images/brand-logo.svg';
