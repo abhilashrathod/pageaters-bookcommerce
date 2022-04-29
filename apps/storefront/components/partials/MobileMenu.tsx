@@ -78,7 +78,7 @@ const AppMobileMenu: React.FC<Props> = () => {
               </Link>
             </MobileMenuListItem>
             {
-              person && (
+              isLoggedIn && (
                   <MobileMenuListItem>
                     <Link href={'/account/wishlist'}>
                       <LinkItem>
@@ -90,7 +90,7 @@ const AppMobileMenu: React.FC<Props> = () => {
               )
             }
             {
-              person && (
+              isLoggedIn && (
                   <MobileMenuListItem>
                     <Link href={'/account/orders'}>
                       <LinkItem>

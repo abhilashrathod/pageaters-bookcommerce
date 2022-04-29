@@ -83,11 +83,11 @@ const CartLoading = () => (
                 {[1, 2, 3].map((j, i) => {
                   return (
                       <div key={j + i} className="row">
-                        <div className="col-1"><Skeleton circle height={75} mb="xl"/></div>
-                        <div className="col-10">
-                          <Skeleton height={12} mt={6} width="75%" radius="xl"/>
-                          <Skeleton height={12} mt={6} width="50%" radius="xl"/>
-                          <Skeleton height={12} mt={6} width="25%" radius="xl"/>
+                        <div className="col-xxl-1 col-xl-2 col-3"><Skeleton circle height={75} mb={20} /></div>
+                        <div className="col-xxl-10 col-xl-10 col-9">
+                          <Skeleton height={12} mb={12} width="75%" radius="xl"/>
+                          <Skeleton height={12} mb={12} width="50%" radius="xl"/>
+                          <Skeleton height={12} mb={20} width="25%" radius="xl"/>
                         </div>
                       </div>
                   )
@@ -151,8 +151,7 @@ const Cart: React.FC<Props> = () => {
     mutate({url: `/cart/retrieve`, withCredentials: true});
   }
 
-  if (error)
-    return <FailedToLoad title={'Error Loading Cart..'}/>;
+  if (error) return <PageWrapper><FailedToLoad title={'Error Loading Cart..'}/></PageWrapper>;
 
   const cart = get(data, 'data', null);
   const books = get(data, 'data.products', []);
@@ -173,56 +172,56 @@ const Cart: React.FC<Props> = () => {
         {
           cart
               ? <section>
-                <div className="custom-container">
-                  {
-                    (books.length === 0 && bundles.length === 0)
-                        ? <div className="row">
-                          <div className="col-12">
-                            <EmptyMessageWithGraphic title={'Add Some Books Here. Cart is Empty'} illustration={graphic} illustrationHeight={'300px'} illustrationWidth={'300px'}/>
-                          </div>
-                        </div>
-                        : <div className="row">
-                          <div className="col-xl-8 col-md-8 col-12">
-                            <ProductListSpace>
-                              <ProductList>
-                                {
-                                  books.map((item: any) => {
-                                    return (
-                                        <ProductListItem key={item._id}>
-                                          <ProductItem book={item} viewOnly={false} onDelete={handleOnDelete}
-                                                       onQuantityChange={handleQuantityChange}/>
-                                        </ProductListItem>
-                                    )
-                                  })
-                                }
-                                {
-                                  bundles.map((item: any) => {
-                                    return (
-                                        <ProductListItem key={item._id}>
-                                          <BundleItem viewOnly={false} onDelete={handleOnBundleDelete} cartBundle={item}/>
-                                        </ProductListItem>
-                                    )
-                                  })
-                                }
-                              </ProductList>
-                            </ProductListSpace>
-                          </div>
-                          <div className="col-xl-4 col-md-4 col-12">
-                            <div className="breakdown">
-                              <h5>Bill Details</h5>
-                              {cart && <CartBreakdown cart={cart} shippingCharges={'Calculated at Checkout'} orderTotal={cart.subTotal}/>}
-                              <AppButton variant={ButtonVariants.Accent}
-                                         size={ButtonSizes.Large}
-                                         styles={{width: '100%', display: 'block'}}
-                                         onClick={transferToAddress}>
-                                Proceed to Buy
-                              </AppButton>
+                  <div className="custom-container">
+                    {
+                      (books.length === 0 && bundles.length === 0)
+                          ? <div className="row">
+                            <div className="col-12">
+                              <EmptyMessageWithGraphic title={'Add Some Books Here. Cart is Empty'} illustration={graphic} illustrationHeight={'300px'} illustrationWidth={'300px'}/>
                             </div>
                           </div>
-                        </div>
-                  }
-                </div>
-              </section>
+                          : <div className="row">
+                            <div className="col-xl-8 col-md-8 col-12">
+                              <ProductListSpace>
+                                <ProductList>
+                                  {
+                                    books.map((item: any) => {
+                                      return (
+                                          <ProductListItem key={item._id}>
+                                            <ProductItem book={item} viewOnly={false} onDelete={handleOnDelete}
+                                                         onQuantityChange={handleQuantityChange}/>
+                                          </ProductListItem>
+                                      )
+                                    })
+                                  }
+                                  {
+                                    bundles.map((item: any) => {
+                                      return (
+                                          <ProductListItem key={item._id}>
+                                            <BundleItem viewOnly={false} onDelete={handleOnBundleDelete} cartBundle={item}/>
+                                          </ProductListItem>
+                                      )
+                                    })
+                                  }
+                                </ProductList>
+                              </ProductListSpace>
+                            </div>
+                            <div className="col-xl-4 col-md-4 col-12">
+                              <div className="breakdown">
+                                <h5>Bill Details</h5>
+                                {cart && <CartBreakdown cart={cart} shippingCharges={'Calculated at Checkout'} orderTotal={cart.subTotal}/>}
+                                <AppButton variant={ButtonVariants.Accent}
+                                           size={ButtonSizes.Large}
+                                           styles={{width: '100%', display: 'block'}}
+                                           onClick={transferToAddress}>
+                                  Proceed to Buy
+                                </AppButton>
+                              </div>
+                            </div>
+                          </div>
+                    }
+                  </div>
+                </section>
               : <CartLoading/>
         }
 
