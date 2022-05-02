@@ -13,6 +13,13 @@ const Accent = styled.span`
   color: ${SECONDARY_ACCENT_COLOR};
 `;
 
+const MissionStatement = styled.div`
+  height: calc(100vh - 5rem);
+  display: flex;
+  justify-content: space-around;
+  flex-direction: column;                  
+`;
+
 const ContentSpace = styled.div`
   padding: 7.5rem 5rem 7.5rem 5.714rem;
   display: flex;
@@ -122,17 +129,12 @@ const About: NextPage = () => {
             <div className="custom-container">
               <div className="row">
                 <div className="col-xxl-9 col-12">
-                  <div style={{
-                    height: 'calc(100vh - 5rem)',
-                    display: "flex",
-                    justifyContent: 'space-around',
-                    flexDirection: "column"
-                  }}>
+                  <MissionStatement>
                     <div>
                       <h1>Our mission is to <Accent>recover</Accent> the lost <Accent>love of reading</Accent> by making
                         books <Accent>affordable</Accent> & <Accent>accessible</Accent></h1>
                     </div>
-                  </div>
+                  </MissionStatement>
                 </div>
               </div>
             </div>
@@ -143,15 +145,15 @@ const About: NextPage = () => {
                 <div className="order-last order-lg-first order-xl-first order-xxl-first col-12 col-xl-6 col-xxl-6">
                   <ContentSpace>
                     <h2>Our Story</h2>
-                    <h6> We're a group of quirky bookworms who wants to provide the best reading experience for
+                    <h6> We&apos;re a group of quirky bookworms who wants to provide the best reading experience for
                       other bookworms. So we started Pageaters, an online bookstore that offers affordable reading plans
                       and
                       books. We want you to enjoy the books you love while growing as a person, without having to
                       compromise your wallet! </h6>
 
                     <h6> We strive to provide the best reading experience at affordable prices so that people can have
-                      fun, learn and grow. Reading might get costly because of the value they provide so we're providing
-                      affordable reading solutions to help readers grow. We're proving a monthly reading plan so that
+                      fun, learn and grow. Reading might get costly because of the value they provide so we&apos;re providing
+                      affordable reading solutions to help readers grow. We&apos;re proving a monthly reading plan so that
                       readers
                       would pay one fee and read anything they want.</h6>
 
@@ -208,7 +210,7 @@ const About: NextPage = () => {
                 <div className="col-xxl-3 col-xl-3 col-12">
                   <div>
                     <span><Icon icon={'ph:heart-duotone'} width={48} height={48}/></span>
-                    <p><strong>It's a personal experience</strong><br/> We treat you as our bookish friend rather than
+                    <p><strong>It&apos;s a personal experience</strong><br/> We treat you as our bookish friend rather than
                       just
                       a buyer and committed towards best reading experience.
                     </p>
