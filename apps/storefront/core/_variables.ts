@@ -9,6 +9,8 @@ export const ACCENT_COLOR = '#FF5F25';
 export const LIGHTER_ACCENT_COLOR = '#FF5F25';
 export const DARKER_ACCENT_COLOR = '#F14000';
 
+export const SECONDARY_ACCENT_COLOR = '#F90716';
+
 export const SECONDARY_COLOR = '#FFFFFF';
 
 export const LIGHT_COLOR = '#868686';
@@ -123,7 +125,7 @@ export const FOOTER_NAVIGATION = [
         linkHref: '/about',
       }, {
         linkName: 'Contact',
-        linkHref: '/',
+        linkHref: '/contact',
       }, {
         linkName: 'Privacy Policy',
         linkHref: '/privacy-policy',
@@ -140,14 +142,14 @@ export const FOOTER_NAVIGATION = [
       }
     ]
   },
-  {
-    linkName: 'Pages',
-    linkHref: '/',
-    children: [
-      {
-        linkName: 'Membership',
-        linkHref: '/',
-      },
+  // {
+  //   linkName: 'Pages',
+  //   linkHref: '/',
+  //   children: [
+  //     {
+  //       linkName: 'Membership',
+  //       linkHref: '/',
+  //     },
       // {
       //   linkName: 'Incentive Program',
       //   linkHref: '/',
@@ -155,8 +157,8 @@ export const FOOTER_NAVIGATION = [
       //   linkName: 'Influencer Program',
       //   linkHref: '/',
       // }
-    ]
-  }
+  //   ]
+  // }
 ];
 
 export const SIDE_NAVIGATION = [

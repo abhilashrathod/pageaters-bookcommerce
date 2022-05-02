@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import Badges from "../elements/Badge";
 
 import {IBook} from "../../schemas/book";
-import {LIGHT_COLOR} from "../../core/_variables";
+import {ACCENT_COLOR, LIGHT_COLOR, PRIMARY_COLOR, PRIMARY_SUCCESS, SECONDARY_COLOR} from "../../core/_variables";
 import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
 import {getProductImage} from "../../core/_imageRendererHelper";
 import {useRouter} from "next/router";
@@ -24,60 +24,56 @@ const CardCover = styled.div`
 `;
 
 const CardImage = styled.img`
-      object-fit: cover;
-      width: 100%;
-      border-radius: 1rem;
-      -webkit-box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
-      -moz-box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
-      box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
+  object-fit: cover;
+  width: 100%;
+  border-radius: 1rem;
+  -webkit-box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
+  -moz-box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
+  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
 `;
 
 const CardContent = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 `;
 
 const CardTitle = styled.div`
-      display: inline-flex;
-      align-items: center;
+  display: inline-flex;
+  align-items: center;
 `;
 
 const CardTags = styled.div`
-      font-size: 14px;
-      line-height: 18px;
-      align-items: center;
-      display: inline-flex;
+  font-size: 14px;
+  line-height: 18px;
+  align-items: center;
+  display: inline-flex;
 `;
 
 const CardSubTitle = styled.div`
-      display: inline-flex;
-      align-items: center;
-      font-size: 1rem;
-      font-weight: 600; 
-      margin-bottom: 0.1rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: 600; 
+  margin-bottom: 0.1rem;
 `;
 
 const CartDiscount = styled.div`
-    position: absolute;
-    top: 0.5rem;
-    left: 0.5rem;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 0.5rem;
-    background: rgba(255, 255, 255);
-    padding: 0.25rem 0.5rem;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    box-shadow: rgb(0 0 0 / 18%) 0 2px 4px 0;
-    font-size: 1rem;
-    transition: all 0.5s ease;
-    line-height: 1.25rem;
-
-    &:hover {
-      background-color: #27ae60;
-      color: #fff;
-    }
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 0.5rem;
+  background: ${SECONDARY_COLOR};
+  padding: 0.25rem 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: rgb(0 0 0 / 18%) 0 2px 4px 0;
+  font-size: 1rem;
+  transition: all 0.5s ease;
+  line-height: 1.25rem;
+  color: ${PRIMARY_COLOR};
 `;
 
 const Crossed = styled.span`

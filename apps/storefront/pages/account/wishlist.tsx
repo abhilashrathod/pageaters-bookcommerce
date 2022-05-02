@@ -89,7 +89,7 @@ const Wishlist: React.FC<Props> = () => {
               !wishlist
                   ? <div className="row">
                     {
-                      [0, 0, 0, 0, 0, 0].map((j, i) => (
+                      [0, 0, 0, 0].map((j, i) => (
                           <div key={i} className="col-xxl-3 col-xl-3 col-lg-4 col-md-6 col-12">
                             <Skeleton height={160} radius="lg" mb={'lg'}/>
                           </div>

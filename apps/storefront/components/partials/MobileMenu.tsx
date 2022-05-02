@@ -130,8 +130,7 @@ const AppMobileMenu: React.FC<Props> = () => {
 
                 <Divider/>
                 <Menu.Label>Help</Menu.Label>
-                <Menu.Item>FAQs</Menu.Item>
-                <Menu.Item>Contact</Menu.Item>
+                <Menu.Item onClick={() => navigateToUrl('/contact')}>Contact</Menu.Item>
               </Menu>
             </MobileMenuListItem>
           </MobileMenuList>

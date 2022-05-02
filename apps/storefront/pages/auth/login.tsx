@@ -69,8 +69,7 @@ const HeroSpace = styled.div`
   }
 `;
 
-const GradientSpace = styled.div`
-  
+const GradientSpace = styled.div`  
   min-height: 100%;
 
   background: hsla(0, 0%, 0%, 1);
@@ -189,8 +188,7 @@ const Login: React.FC<Props> = () => {
         <RegisterPage>
           <div className="container-fluid g-0">
             <div className="row g-0">
-              <div
-                  className="order-last order-lg-first order-xl-first order-xxl-first col-12 col-lg-6 col-xl-5 col-xxl-5">
+              <div className="order-last order-lg-first order-xl-first order-xxl-first col-12 col-lg-6 col-xl-5 col-xxl-5">
                 <ContentSpace>
                   <ContentTitles>
                     <h1 className="display-1">Glad to have you back!</h1>

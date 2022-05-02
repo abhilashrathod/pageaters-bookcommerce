@@ -4,7 +4,7 @@ import {get} from 'lodash';
 import {useForm} from "@mantine/form";
 import cookie from "js-cookie";
 import useSWR, {mutate} from "swr";
-import {Tooltip} from "@mantine/core";
+import {Skeleton, Tooltip} from "@mantine/core";
 import {Icon} from "@iconify/react";
 import Head from "next/head";
 import moment from 'moment';
@@ -421,7 +421,6 @@ const Profile: React.FC<Props> = () => {
     mutate({url: '/auth/me', withCredentials: true});
   }
 
-  if (!data) return <PageWrapper><EmptySectionMessage title={'Loading personal info...'}/></PageWrapper>;
   if (error) return <PageWrapper><EmptySectionMessage title={'Error while loading account info...'}/></PageWrapper>;
 
   return (
@@ -441,19 +440,37 @@ const Profile: React.FC<Props> = () => {
             <PageHeadings title={'Profile'}/>
           </section>
           <section>
-            <div className="custom-container">
-              <div className="row">
-                <div className="col-xxl-4 col-xl-4 col-12">
-                  <PersonalInfoCard user={user} onSubmit={updateUser}/>
-                </div>
-                <div className="col-xxl-4 col-xl-4 col-12">
-                  <ContactNoCard user={user} onVerifySubmit={updateUser}/>
-                </div>
-                <div className="col-xxl-4 col-xl-4 col-12">
-                  <ChangePasswordCard user={user}/>
-                </div>
-              </div>
-            </div>
+            {
+              !user
+                ? <div className="custom-container">
+                    <div className="row">
+                      {
+                        [0, 0, 0].map((j, i) => (
+                            <div key={i} className="col-xxl-3 col-xl-3 col-lg-4 col-md-6 col-12">
+                              <Skeleton height={200} radius="lg" mb={'lg'}/>
+                              <Skeleton height={12} mt={6} width="75%" radius="xl"/>
+                              <Skeleton height={12} mt={6} width="50%" radius="xl"/>
+                              <Skeleton height={12} mt={6} width="25%" radius="xl"/>
+                            </div>
+                        ))
+                      }
+                    </div>
+                  </div>
+                :  <div className="custom-container">
+                    <div className="row">
+                      <div className="col-xxl-4 col-xl-4 col-12">
+                        <PersonalInfoCard user={user} onSubmit={updateUser}/>
+                      </div>
+                      <div className="col-xxl-4 col-xl-4 col-12">
+                        <ContactNoCard user={user} onVerifySubmit={updateUser}/>
+                      </div>
+                      <div className="col-xxl-4 col-xl-4 col-12">
+                        <ChangePasswordCard user={user}/>
+                      </div>
+                    </div>
+                  </div>
+            }
+
           </section>
         </PageWrapper>
       </>

@@ -20,7 +20,7 @@ import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-cont
 
 import {AUTH_COOKIE, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 
-import graphic from '../../public/illustrations/empty-cart.svg'
+import graphic from '../../public/illustrations/empty-cart.svg';
 
 const BREADCRUMBS_ITEMS = [
   {title: 'Home', href: '/'},
