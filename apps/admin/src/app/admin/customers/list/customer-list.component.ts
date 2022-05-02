@@ -25,7 +25,7 @@ export class CustomerListComponent implements OnInit {
     {
       header: 'Name',
       columnDef: 'fullName',
-      cell: (element) => `${element.firstName} ${element.lastName}`,
+      cell: (element) => `${element.fullName}`,
     },
     {
       header: 'Email',

@@ -212,6 +212,20 @@ export class BookUpdateComponent implements OnInit {
         }
       });
 
+    this.searchBundlesCtrl.valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.searchBundles(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getBundles();
+        }
+      });
+
     this.searchAuthorsCtrl.valueChanges
       .pipe(
         debounceTime(500),
@@ -281,6 +295,11 @@ export class BookUpdateComponent implements OnInit {
   searchAuthors(q): void {
     this.authorService.searchAuthors(q)
       .subscribe(res => this.authors = res);
+  }
+
+  searchBundles(q): void {
+    this.bundleService.searchBundles(q)
+      .subscribe(res => this.bundles = res);
   }
 
   previewImage(event): void {
