@@ -46,6 +46,7 @@ module.exports.register = async (req, res) => {
     }
 
     const user = await User.create({ email, role: enums.USER_ROLES.USER });
+
     if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
       razorPayCustomer = await razorPayInstance.customers.create({ fullName: '', email, contact: '', notes: {} });
     }
@@ -130,7 +131,7 @@ module.exports.login = async (req, res) => {
     res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
 
     // Attach cart cookie for shopping cart
-    res.cookie(enums.TOKEN_ID.CART_COOKIE, cartRes._id, CART_COOKIE_OPTIONS);
+    res.cookie(enums.TOKEN_ID.CART_COOKIE, cartRes ? cartRes._id : '', CART_COOKIE_OPTIONS);
 
     if (!user.emailVerified) {
       return res.ok({ message: 'EMAIL_VERIFICATION_PENDING', data: user });
@@ -209,7 +210,7 @@ module.exports.logout = async (req, res) => {
 
 module.exports.adminRegister = async (req, res) => {
   try {
-    let { email, password, fullName } = req.allParams();
+    let { email, password } = req.allParams();
     const ipAddress = req.ip;
 
     const isEmailAvailable = await User.isEmailAvailable(email);
@@ -218,15 +219,15 @@ module.exports.adminRegister = async (req, res) => {
       return res.error('EMAIL_UNAVAILABLE');
     }
 
-    const user = await User.create({ email, fullName, role: enums.USER_ROLES.ADMIN, emailVerified: true, contactVerified: true });
+    const user = await User.create({ email, fullName: "Pageaters Admin", role: enums.USER_ROLES.ADMIN, emailVerified: true, contactVerified: true });
 
     await user.setPassword(password);
 
     const { payload, token } = generateJwtToken(user, ipAddress);
 
-    await AccessTokens.create(payload);
+    await AccessTokens.create({ ...payload, token });
 
-    // create an access token cookie that will also expires in 7 days
+    // create an access token cookie that will also expires in 30 days
     res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
 
     return res.ok({ message: 'REGISTRATION_SUCCESS', data: {} });

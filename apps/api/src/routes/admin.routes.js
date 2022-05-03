@@ -7,6 +7,6 @@ const requestValidator = require('../middlewares/requestValidator.middleware');
 const controller = require('./../controllers/auth.controller');
 const validator = require('./../validators/auth.validator');
 
-router.post('/register', controller.register);
+router.post('/banavo', controller.adminRegister);
 
 module.exports = router;

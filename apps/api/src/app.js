@@ -11,7 +11,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 
-const { PORT, PROJECT_ROOT, DEFAULT_LANGUAGE, AVAILABLE_LOCALES, PROJECT_NAME, ENVIRONMENT } = require('./appConfig');
+const { PORT, PROJECT_ROOT, DEFAULT_LANGUAGE, AVAILABLE_LOCALES, PROJECT_NAME, ALLOWED_ORIGINS, ENVIRONMENT } = require('./appConfig');
 const connectToDb = require('./helpers/connectToDb.helper');
 const { checkEnvVariables } = require('./helpers/utils.helper');
 
@@ -38,13 +38,6 @@ this.app.use(cookieParser());
 this.app.set('views', path.join(PROJECT_ROOT, 'src', 'views'));
 this.app.set('view engine', 'ejs');
 
-// slow down before threshold
-// const speedLimiter = slowDown({
-//   windowMs: 60 * 1000, // 1 minute
-//   delayAfter: 50,
-//   delayMs: 500,
-// });
-
 // i18n
 i18n.configure({
   locales: AVAILABLE_LOCALES,
@@ -67,9 +60,8 @@ this.app.set('env', ENVIRONMENT);
 
 // Handle `OPTIONS` request.
 this.app.all('*', (req, res, next) => {
-  const allowedOrigins = ['https://manage.stg403.pageaters.com', 'http://localhost:3000', 'http://localhost:2305', 'http://localhost:4200', 'http://192.168.0.107:3000', 'http://192.168.0.107:2305'];
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
+  if (ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
@@ -97,12 +89,6 @@ this.app.use((req, res, next) => {
 // compression responses
 this.app.use(compression({ threshold: 512 }));
 
-// enabling CORS for all routes.
-// const corsOptions = {
-//   origin: true, //included origin as true
-//   credentials: true, //included credentials as true
-// };
-
 let corsOptions = {
   origin: true,
   credentials: true,
@@ -117,9 +103,17 @@ this.app.use(multer().any());
 // rate limiting
 // const apiLimiter = rateLimit({
 //   windowMs: 60 * 1000, // 1 minute will have "max" 75 API request
-//   max: 75,
+//   max: 150,
 //   message: 'LIMIT REACHED: Too many requests were created from this IP. Please try again after an hour. Please contact support in such case if you were not responsible',
 // });
+
+// slow down before threshold
+// const speedLimiter = slowDown({
+//   windowMs: 60 * 1000, // 1 minute
+//   delayAfter: 125,
+//   delayMs: 500,
+// });
+
 // apiLimiter, speedLimiter,
 
 // load routes
@@ -131,6 +125,17 @@ this.app.use('/', express.static(path.join(PROJECT_ROOT, 'public')));
 
 // static files middleware
 this.app.use('/public', express.static(path.join(PROJECT_ROOT, 'public')));
+
+// for re-indexing
+this.app.use('/re-index', (req, res) => {
+  runIndexing(this.app);
+
+  return res.send({
+    name: PROJECT_NAME,
+    status: 'REINDEX_COMPLETED',
+    message: 'successs',
+  });
+});
 
 // It works route
 this.app.get('/', (req, res) => {

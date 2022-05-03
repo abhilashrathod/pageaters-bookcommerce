@@ -1,19 +1,19 @@
 const { Router } = require('express');
 const router = new Router();
 
+const { USER_ROLES } = require('./../constants/enums');
+
 const controller = require('./../controllers/productSets.controller');
+const permissionValidator = require('./../middlewares/permissionVerification.middleware');
 
-/* FOR ADMIN */
-
-router.get('/', controller.getAll);
-router.get('/:id', controller.getById);
+router.get('/', permissionValidator(USER_ROLES.ADMIN), controller.getAll);
 router.get('/unique/:id', controller.getByUniqueId);
 
-router.post('/', controller.create);
-
-router.put('/:id', controller.update);
-
-router.delete('/:id', controller.destroy);
+// ADMIN
+router.get('/:id', permissionValidator(USER_ROLES.ADMIN), controller.getById);
+router.post('/', permissionValidator(USER_ROLES.ADMIN), controller.create);
+router.put('/:id', permissionValidator(USER_ROLES.ADMIN), controller.update);
+router.delete('/:id', permissionValidator(USER_ROLES.ADMIN), controller.destroy);
 
 /* FOR STORE */
 

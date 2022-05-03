@@ -21,6 +21,6 @@ module.exports = {
   DEFAULT_LANGUAGE: config.get('DEFAULT_LANGUAGE') || '',
   AVAILABLE_LOCALES: config.get('AVAILABLE_LOCALES') || '',
   HOST: config.get('HOST') || '',
-  API_URL: config.get('API_URL') || '',
+  ALLOWED_ORIGINS: config.get('ALLOWED_ORIGINS') || '',
   DELETE_ACCOUNT_DATA_AFTER: config.get('DELETE_ACCOUNT_DATA_AFTER') || '',
 };

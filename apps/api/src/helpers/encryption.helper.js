@@ -5,9 +5,11 @@ const { v4 } = require('uuid');
 const algorithm = 'aes-256-cbc';
 const { ENCRYPTION_KEY } = require('./../appConfig');
 const { models } = require('../constants');
+const { USER_ROLES } = require('../constants/enums');
 
 module.exports.generateJwtToken = (account, ipAddress) => {
   // create a jwt token containing the info that expires in 7 days
+  // in case of admin it's 30 days
   const data = {
     userId: account.id,
     role: account.role,
@@ -17,9 +19,9 @@ module.exports.generateJwtToken = (account, ipAddress) => {
     createdByIp: ipAddress,
   };
   return {
-    token: jwt.sign(data, ENCRYPTION_KEY, { expiresIn: '7d' }),
+    token: jwt.sign(data, ENCRYPTION_KEY, { expiresIn: account.role === USER_ROLES.ADMIN ? '30d' : '7d' }),
     payload: data,
-  }
+  };
 };
 
 module.exports.generateRefreshToken = (account, ipAddress) => {

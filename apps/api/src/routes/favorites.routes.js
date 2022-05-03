@@ -10,8 +10,8 @@ const permissionValidator = require('./../middlewares/permissionVerification.mid
 const requestValidator = require('./../middlewares/requestValidator.middleware');
 
 router.get('/', permissionValidator(USER_ROLES.USER), controller.getAll);
-router.get('/:product', requestValidator(validator.requestPayload), permissionValidator(), controller.checkPresent);
-router.post('/', requestValidator(validator.requestPayload), permissionValidator(), controller.add);
-router.delete('/:product', requestValidator(validator.requestPayload), permissionValidator(), controller.remove);
+router.get('/:product', requestValidator(validator.requestPayload), permissionValidator(USER_ROLES.USER), controller.checkPresent);
+router.post('/', requestValidator(validator.requestPayload), permissionValidator(USER_ROLES.USER), controller.add);
+router.delete('/:product', requestValidator(validator.requestPayload), permissionValidator(USER_ROLES.USER), controller.remove);
 
 module.exports = router;
