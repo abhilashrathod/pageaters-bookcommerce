@@ -12,8 +12,8 @@ const requestValidator = require('../middlewares/requestValidator.middleware');
 router.get('/getByUniqueId/:uniqueId', permissionValidator(USER_ROLES.USER), controller.getByUniqueId);
 router.get('/list', permissionValidator(USER_ROLES.USER), controller.getAllByUser);
 
-router.post('/create', permissionValidator(USER_ROLES.USER), controller.create);
 router.post('/attempt', permissionValidator(USER_ROLES.USER), requestValidator(validator.orderAttempt), controller.attempt);
+router.post('/create', permissionValidator(USER_ROLES.USER), controller.create);
 router.get('/retrieve', permissionValidator(USER_ROLES.USER), controller.retrieve);
 
 router.post('/return/:uniqueId', permissionValidator(USER_ROLES.USER), controller.returnRequest); // TODO: add payload validator
