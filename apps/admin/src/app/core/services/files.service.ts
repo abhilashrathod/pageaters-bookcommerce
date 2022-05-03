@@ -33,6 +33,7 @@ export class FilesService {
         }
       };
       xhr.open('POST', url, true);
+      xhr.withCredentials = true;
       xhr.send(formData);
     });
   }

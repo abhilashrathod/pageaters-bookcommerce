@@ -47,16 +47,6 @@ export class ProductSetService {
       );
   }
 
-  getByUniqueId(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/product-sets/unique/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-
   update(id, payload): Observable<any> {
     const url = `${environment.BASE_PATH}/product-sets/${id}`;
     return this._http.put(url, payload)

@@ -3,12 +3,11 @@ import {CommonModule} from '@angular/common';
 
 import {AuthRoutingModule} from './auth-routing.module';
 
-import {EntityFormModule} from '../core/components/entity-form/entity-form.module';
-
 import {LoginComponent} from './login/login.component';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
 @NgModule({
-  imports: [CommonModule, EntityFormModule, AuthRoutingModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, AuthRoutingModule],
   exports: [],
   declarations: [LoginComponent],
   providers: [],

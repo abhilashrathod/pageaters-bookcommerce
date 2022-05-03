@@ -43,15 +43,6 @@ export class DealsService {
       );
   }
 
-  getByUniqueId(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/deals/unique/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
   update(id, payload): Observable<any> {
     const url = `${environment.BASE_PATH}/deals/${id}`;
     return this._http.put(url, payload)

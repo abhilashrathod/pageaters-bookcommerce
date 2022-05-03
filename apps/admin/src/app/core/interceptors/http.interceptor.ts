@@ -22,10 +22,7 @@ export class Interceptor implements HttpInterceptor {
     headers = headers.append('X-CLIENT-ID', environment.CLIENT_ID);
 
     // making the request changes
-    const request = req.clone(
-      {
-        headers
-      });
+    const request = req.clone({headers, withCredentials: true});
     return next.handle(request)
       .pipe(
         map((event: HttpEvent<any>) => {
@@ -34,17 +31,12 @@ export class Interceptor implements HttpInterceptor {
           }
         }),
         catchError((err: any) => {
-          // if (err instanceof HttpErrorResponse) {
-          //   if (err.status === 403) {
-          //     // user doesn't have access to that module
-          //     this._router.navigate(['/', 'admin', 'forbidden']);
-          //   }
-          //   if (err.status === 401 || err.status === 10001) {
-          //     localStorage.removeItem('token');
-          //     this._router.navigate(['/']);
-          //     return throwError(err.error);
-          //   }
-          // }
+          if (err instanceof HttpErrorResponse) {
+            if (err.status === 403 || err.status === 401) {
+              this.router.navigate(['/']);
+              return throwError(err.error);
+            }
+          }
           return throwError(err.error);
         })
       );
