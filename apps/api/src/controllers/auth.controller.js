@@ -219,7 +219,13 @@ module.exports.adminRegister = async (req, res) => {
       return res.error('EMAIL_UNAVAILABLE');
     }
 
-    const user = await User.create({ email, fullName: "Pageaters Admin", role: enums.USER_ROLES.ADMIN, emailVerified: true, contactVerified: true });
+    const user = await User.create({
+      email,
+      fullName: 'Pageaters Admin',
+      role: enums.USER_ROLES.ADMIN,
+      emailVerified: true,
+      contactVerified: true,
+    });
 
     await user.setPassword(password);
 
@@ -247,7 +253,7 @@ module.exports.updateProfile = async (req, res) => {
       fieldsToUpdate.fullName = fullName;
     }
 
-    await User.findOneAndUpdate({_id: user.userId}, {$set: {...fieldsToUpdate}});
+    await User.findOneAndUpdate({ _id: user.userId }, { $set: { ...fieldsToUpdate } });
 
     user = await User.getProfile(user.userId);
 
@@ -434,7 +440,7 @@ module.exports.sendContactVerification = async (req, res) => {
     let message = {
       body: textMessage(loggedInUser.fullName, loggedInUser.email, verificationCode),
       from: TWILIO.PHONE,
-      to: '+919000000000', // TODO: Change to original contact no
+      to: `+91${contactNo}`,
     };
 
     await twilioClient.messages.create(message);
@@ -477,7 +483,7 @@ module.exports.resendContactVerification = async (req, res) => {
     let message = {
       body: textMessage(user.fullName, user.email, user.contactOtp),
       from: TWILIO.PHONE,
-      to: '+919000000000', // TODO: Change to contact no later
+      to: `+91${user.contactOtp}`,
     };
 
     await twilioClient.messages.create(message);
