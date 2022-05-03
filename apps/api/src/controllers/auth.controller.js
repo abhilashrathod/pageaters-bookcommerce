@@ -48,7 +48,7 @@ module.exports.register = async (req, res) => {
     const user = await User.create({ email, role: enums.USER_ROLES.USER });
 
     if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
-      razorPayCustomer = await razorPayInstance.customers.create({ fullName: '', email, contact: '', notes: {} });
+      razorPayCustomer = await razorPayInstance.customers.create({ email, contact: '', notes: {} });
     }
 
     await user.setPassword(password);
@@ -483,7 +483,7 @@ module.exports.resendContactVerification = async (req, res) => {
     let message = {
       body: textMessage(user.fullName, user.email, user.contactOtp),
       from: TWILIO.PHONE,
-      to: `+91${user.contactOtp}`,
+      to: `+91${user.contactNo}`,
     };
 
     await twilioClient.messages.create(message);
