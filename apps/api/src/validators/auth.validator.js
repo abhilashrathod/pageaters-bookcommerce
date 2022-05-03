@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-const { email, password, fullName, } = require('./common.validator');
+const { email, password, fullName, otp, phone} = require('./common.validator');
 
 module.exports.registerPayload = Joi.object({
   email,
@@ -15,6 +15,14 @@ module.exports.verifyEmail = Joi.object({
     .trim()
     .description('Email verification token')
     .error(new Error('INVALID_TOKEN')),
+});
+
+module.exports.sendVerifyContact = Joi.object({
+  contactNo: phone,
+});
+
+module.exports.verifyContact = Joi.object({
+  otp,
 });
 
 module.exports.login = Joi.object({
@@ -53,7 +61,14 @@ module.exports.verifyForgotPasswordToken = Joi.object({
 });
 
 module.exports.updateProfile = Joi.object({
-  fullName
+  fullName,
+  contactNo: Joi.string()
+    .length(10)
+    .regex(/^\d+$/)
+    .allow('')
+    .trim()
+    .description('Contact No')
+    .error(new Error('INVALID_PHONE'))
 });
 
 module.exports.resendVerificationEmail = Joi.object({

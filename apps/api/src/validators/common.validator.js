@@ -20,6 +20,14 @@ module.exports.phone = Joi.string()
   .description('Contact No')
   .error(new Error('INVALID_PHONE'));
 
+module.exports.otp = Joi.string()
+  .length(6)
+  .required()
+  .regex(/^\d+$/)
+  .trim()
+  .description('OTP')
+  .error(new Error('INVALID_OTP'));
+
 module.exports.limit = Joi.number()
   .integer()
   .min(0)
@@ -30,30 +38,40 @@ module.exports.limit = Joi.number()
 
 module.exports.email = Joi.string()
   .email()
+  .max(50)
   .required()
   .trim()
   .description('Email Id')
   .error(new Error('INVALID_EMAIL'));
 
 module.exports.password = Joi.string()
+  .max(50)
   .required()
   .trim()
   .description('Password')
   .error(new Error('INVALID_PASSWORD'));
 
 module.exports.firstName = Joi.string()
+  .alphanum()
+  .max(50)
   .allow('')
   .error(new Error('INVALID_FIRST_NAME'));
 
 module.exports.lastName = Joi.string()
+  .alphanum()
+  .max(50)
   .allow('')
   .error(new Error('INVALID_LAST_NAME'));
 
 module.exports.fullName = Joi.string()
+  .alphanum()
+  .max(50)
   .allow('')
   .error(new Error('INVALID_NAME'));
 
 module.exports.name = Joi.string()
+  .alphanum()
+  .max(50)
   .allow('')
   .error(new Error('INVALID_NAME'));
 
@@ -85,6 +103,8 @@ module.exports.sortMode = Joi.string()
   .error(new Error('INVALID_SORT_MODE'));
 
 module.exports.q = Joi.string()
+  .alphanum()
+  .max(50)
   .optional()
   .allow('')
   .error(new Error('INVALID_QUERY_SEARCH'));

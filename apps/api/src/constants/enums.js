@@ -1,4 +1,14 @@
 module.exports = {
+  ENVIRONMENTS: {
+    DEVELOPMENT: 'development',
+    STAGING: 'staging',
+    PRODUCTION: 'production'
+  },
+  TOKEN_ID: {
+    REFRESH_TOKEN_COOKIE: '_RID',
+    CART_COOKIE: '_CID',
+    ACCESS_TOKEN_COOKIE: '_PID',
+  },
   SOURCES: {
     POSTMAN: 'POSTMAN',
     WEB: 'WEB',
@@ -76,11 +86,35 @@ module.exports = {
     REFUNDED: 'refunded',
     FAILED: 'failed',
   },
+  PAYMENT_METHODS: {
+    CARD: 'card',
+    NET_BAKING: 'netbanking',
+    WALLET: 'wallet',
+    EMI: 'emi',
+    UPI: 'upi',
+  },
   ORDER_STAGES: {
     ATTEMPTED: 'attempted',
     CREATED: 'created',
     PAID: 'paid',
     SHIPPED: 'shipped',
+    FULFILLED: 'fulfilled',
+    CANCELLED: 'cancelled',
+    RETURNED: 'returned',
+    REPLACEMENT: 'replacement',
+    RETURNED_IN_PROGRESS: 'return in progress',
+    REPLACEMENT_IN_PROGRESS: 'replacement in progress',
+    REFUNDED: 'refunded',
+  },
+  ORDER_REQUEST_STATUS: {
+    OPEN: 'open',
+    IN_PROGRESS: 'in progress',
+    CLOSED: 'closed',
+  },
+  ORDER_REQUEST_TYPES: {
+    RETURN: 'return',
+    REPLACE: 'replace',
+    CANCEL: 'cancel',
   },
   ORDER_TYPES: {
     HYBRID: 'hybrid',
@@ -89,7 +123,7 @@ module.exports = {
     SUBSCRIPTION: 'subscription'
   },
   SUBSCRIPTION_STATUSES: {
-    NEW: '',
+    NEW: 'new',
     CREATED: 'created',
     AUTHENTICATED: 'authenticated',
     ACTIVE: 'active',

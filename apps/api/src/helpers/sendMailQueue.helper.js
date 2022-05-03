@@ -46,6 +46,7 @@ class SendMailQueue {
           cb();
         })
         .catch(err => {
+          console.log(JSON.stringify("err > > > >", err));
           cb(err);
         });
     } else {

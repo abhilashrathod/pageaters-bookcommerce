@@ -19,7 +19,6 @@ function privateRouteValidator(req, res, next) {
 }
 
 router.get('/queueStats', privateRouteValidator, controller.getQueueStats);
-
 router.post('/hardDelete', permissionVerification(), privateRouteValidator, controller.hardDeleteUser);
 router.post('/sendMail', privateRouteValidator, controller.sendMail);
 

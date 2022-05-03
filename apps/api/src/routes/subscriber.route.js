@@ -10,6 +10,8 @@ const controller = require('./../controllers/subscriber.controller');
 const validator = require('./../validators/subscriber.validator');
 
 router.post('/', requestValidator(validator.rootPayload), controller.create);
-router.get('/', controller.getAll);
+
+// ADMIN
+router.get('/', permissionValidator(USER_ROLES.ADMIN), controller.getAll);
 
 module.exports = router;

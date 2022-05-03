@@ -22,10 +22,11 @@ module.exports = {
   AUTHOR: 'author',
   DISCOUNT: 'discount',
   GIFT_CARD: 'gift_card',
-  REFRESH_TOKEN: 'refresh_token',
+  ACCESS_TOKEN: 'access_token',
   SUBSCRIBER: 'subscriber',
   SUBSCRIPTION_PLANS: 'subscription_plan',
   SUBSCRIPTION_HISTORY: 'subscription_history',
   STORE_DEALS: 'store_deals',
   PRODUCT_SETS: 'product_sets',
+  FAVORITES: 'favorites',
 };

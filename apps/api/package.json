@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node .",
+    "start": "nodemon index",
     "start:stag": "npm run build:stag && npm run stop:stag && docker-compose -f docker-compose-stag.yml up -d && docker ps -a && npm run prune",
     "build:stag": "sudo chown -R $(whoami):$(id -gn) data/ && docker-compose -f docker-compose-stag.yml build",
     "stop:stag": "docker-compose -f docker-compose-stag.yml down",

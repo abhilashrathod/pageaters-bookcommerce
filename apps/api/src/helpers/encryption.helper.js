@@ -1,25 +1,27 @@
-const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { v4 } = require('uuid');
 
 const algorithm = 'aes-256-cbc';
 const { ENCRYPTION_KEY } = require('./../appConfig');
 const { models } = require('../constants');
+const { USER_ROLES } = require('../constants/enums');
 
-const RefreshToken = mongoose.model(models.REFRESH_TOKEN);
-
-module.exports.generateJwtToken = (account) => {
-  // create a jwt token containing the account id that expires in 15 minutes
-  const dataToEncrypt = {
+module.exports.generateJwtToken = (account, ipAddress) => {
+  // create a jwt token containing the info that expires in 7 days
+  // in case of admin it's 30 days
+  const data = {
     userId: account.id,
-    createdAt: Date.now(),
     role: account.role,
-    motive: 'AUTH',
     email: account.email,
+    createdAt: Date.now(),
+    motive: 'AUTH',
+    createdByIp: ipAddress,
   };
-  return jwt.sign(dataToEncrypt, ENCRYPTION_KEY, { expiresIn: '15m' });
+  return {
+    token: jwt.sign(data, ENCRYPTION_KEY, { expiresIn: account.role === USER_ROLES.ADMIN ? '30d' : '7d' }),
+    payload: data,
+  };
 };
 
 module.exports.generateRefreshToken = (account, ipAddress) => {

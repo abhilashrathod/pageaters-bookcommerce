@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const axios = require('axios');
 const colors = require('colors');
-const { sumBy } = require('lodash');
+const { sumBy, get } = require('lodash');
 const { DELHIVERY } = require('../appConfig');
 
 const { models, enums } = require('../constants');
@@ -41,21 +41,17 @@ module.exports.calculateTotalWeight = async function(products, bundles) {
   return new Promise(async (resolve, reject) => {
     try {
       let finalProductsWeight = sumBy(products, (obj) => (obj.product.weight * obj.quantity));
-      let finalBundleWeight = 0;
+      let finalBundleWeight = sumBy(bundles, (obj) => (obj.bundle.weight * obj.quantity));
 
-      for (let bundleItem of bundles) {
-        const bundleWeight = sumBy(bundleItem.bundledBooks, (obj) => obj.weight);
-        finalBundleWeight = finalBundleWeight + (bundleWeight * bundleItem * bundleItem.quantity);
-      }
+      const totalWeight = Number(finalProductsWeight) + Number(finalBundleWeight);
 
-      resolve(finalProductsWeight + finalBundleWeight)
+      resolve(totalWeight);
     } catch (e) {
-      console.log(colors.red("ERROR"), JSON.stringify(e));
+      console.log(colors.red('ERROR'), JSON.stringify(e));
       resolve(0);
     }
-  })
+  });
 };
-
 
 module.exports.calculateShipping = async function(isFree, totalWeight, deliveryCode) {
   return new Promise(async (resolve, reject) => {
@@ -78,7 +74,7 @@ module.exports.calculateShipping = async function(isFree, totalWeight, deliveryC
       };
 
       axios(config)
-        .then(function (response) {
+        .then(function(response) {
           const charges = response.data[0];
 
           const payload = {
@@ -89,13 +85,54 @@ module.exports.calculateShipping = async function(isFree, totalWeight, deliveryC
 
           resolve(payload);
         })
-        .catch(function (error) {
-          console.log(colors.red("ERROR"), error);
+        .catch(function(error) {
+          console.log(colors.red('ERROR'), error);
           resolve(0);
         });
     } catch (e) {
-      console.log( colors.red("ERROR"), JSON.stringify(e));
+      console.log(colors.red('ERROR'), JSON.stringify(e));
       resolve(0);
     }
   });
+};
+
+module.exports.orderPaymentInfo = function(payment) {
+  let payload;
+
+  switch (payment.method) {
+    case enums.PAYMENT_METHODS.CARD:
+      payload = {
+        method: enums.PAYMENT_METHODS.CARD,
+        name: get(payment, 'card.name', ''),
+        last4: get(payment, 'card.last4', ''),
+        network: get(payment, 'card.network', ''),
+      };
+      return payload;
+
+    case enums.PAYMENT_METHODS.NET_BAKING:
+      payload = {
+        method: enums.PAYMENT_METHODS.NET_BAKING,
+        bank: get(payment, 'bank', ''),
+      };
+      return payload;
+
+
+    case enums.PAYMENT_METHODS.UPI:
+      payload = {
+        method: enums.PAYMENT_METHODS.UPI,
+        upi_id: get(payment, 'vpa', ''),
+      };
+      return payload;
+
+    case enums.PAYMENT_METHODS.EMI:
+      payload = {
+        method: enums.PAYMENT_METHODS.EMI,
+        name: get(payment, 'emi.issuer', ''),
+        last4: get(payment, 'emi.rate', ''),
+        network: get(payment, 'emi.duration', ''),
+      };
+      return payload;
+    default:
+      return payload;
+  }
 };

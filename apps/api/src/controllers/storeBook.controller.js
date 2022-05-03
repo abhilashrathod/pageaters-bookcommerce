@@ -24,7 +24,7 @@ module.exports.getAll = async (req, res) => {
       page,
       limit,
       sort: {
-        [sortBy]: Number(sortOrder),
+        [sortBy]: sortOrder,
       },
       select: `title bookId ISBN author inventory poster price weight popularity editorsPick currentDiscount bestSeller`,
       populate: {
@@ -45,7 +45,7 @@ module.exports.create = async (req, res) => {
   try {
     let { title, tagline, author, description, tags, language, pages, readingLevel, version, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, bestSeller, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
 
-    let bookId = `BK-${generateRandomNumber()}`;
+    let bookId = `BK-${generateRandomNumber(10)}`;
     const payload = {
       bookId,
       title, tagline, author, description, tags,
@@ -125,6 +125,10 @@ module.exports.search = async (req, res) => {
     let { q } = req.allParams();
     const booksIndex = req.app.booksIndex;
 
+    if (!q) {
+      return res.ok({ message: 'BOOK_SEARCH_SUCCESS', data: [] });
+    }
+
     const populateOptions = {
       path: 'author',
       select: 'name',
@@ -160,7 +164,7 @@ module.exports.getById = async (req, res) => {
       select: `_id title bookId ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller`,
     }, {
       path: 'relatedBundles',
-      select: '_id bundleId title poster price',
+      select: 'bundleId _id title bundledBooks poster currentDiscount priority price membersPrice',
     }, {
       path: 'categories',
       select: '_id categoryId title',
@@ -197,7 +201,7 @@ module.exports.getByUniqueId = async (req, res) => {
       select: `_id title bookId ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller`,
     }, {
       path: 'relatedBundles',
-      select: '_id bundleId title description poster price',
+      select: 'bundleId _id title bundledBooks poster currentDiscount priority price membersPrice',
     }, {
       path: 'categories',
       select: '_id categoryId title',

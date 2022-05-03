@@ -19,7 +19,7 @@ module.exports.getAll = async (req, res) => {
     const options = {
       page,
       limit,
-      select: `bundleId _id title bundledBooks poster currentDiscount price membersPrice`,
+      select: `bundleId _id title bundledBooks poster currentDiscount priority price membersPrice`,
       sort: {
         [sortBy]: sortOrder,
       },
@@ -37,7 +37,7 @@ module.exports.create = async (req, res) => {
   try {
     let { title, description, tags, poster, popularity, priority, currentDiscount, bundledBooks, relatedBundles, relatedCollections, weight, price, membersPrice } = req.allParams();
 
-    let bundleId = `BL-${generateRandomNumber()}`;
+    let bundleId = `BL-${generateRandomNumber(10)}`;
 
     const payload = {
       bundleId,
@@ -74,7 +74,20 @@ module.exports.update = async (req, res) => {
       return res.error('BUNDLE_NOT_EXIST');
     }
 
-    const payload = { title, description, tags, poster, popularity, priority, relatedBundles, bundledBooks, relatedCollections, currentDiscount, price, membersPrice };
+    const payload = {
+      title,
+      description,
+      tags,
+      poster,
+      popularity,
+      priority,
+      relatedBundles,
+      bundledBooks,
+      relatedCollections,
+      currentDiscount,
+      price,
+      membersPrice,
+    };
 
     const bundleRes = await Bundles.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
 
@@ -121,7 +134,7 @@ module.exports.getById = async (req, res) => {
       },
     }, {
       path: 'relatedBundles',
-      select: '_id bundleId title poster price',
+      select: 'bundleId _id title bundledBooks poster currentDiscount priority price membersPrice',
     }];
 
     const bundles = await Bundles.findOne({ _id: id, isDeleted: false }).populate(populateOptions);
@@ -152,12 +165,17 @@ module.exports.getByUniqueId = async (req, res) => {
       },
     }, {
       path: 'relatedBundles',
-      select: '_id bundleId title poster price',
+      select: 'bundleId _id title bundledBooks poster currentDiscount priority price membersPrice',
     }];
 
-    const bundle = await Bundles.findOne({ bundleId: id, isDeleted: false }).populate(populateOptions);
+    let bundle = await Bundles.findOne({ bundleId: id, isDeleted: false }).populate(populateOptions);
 
     if (bundle) {
+
+      bundle = bundle.toObject();
+      const outOfStockBooks = bundle.bundledBooks.filter(x => x.inventory <= 0);
+      bundle.inventory = outOfStockBooks.length > 0 ? 0 : 1;
+
       return res.ok({ message: 'BUNDLE_LIST_SUCCESS', data: bundle });
     } else {
       return res.error('BUNDLE_NOT_EXIST');

@@ -2,27 +2,42 @@ const mongoose = require('mongoose');
 const moment = require('moment');
 const path = require('path');
 const Razorpay = require('razorpay');
-const colors = require('colors');
+const { get } = require('lodash');
 
-const { HOST, PROJECT_ROOT, TWILIO, RAZOR_PAY } = require('./../appConfig');
+const { HOST, PROJECT_ROOT, TWILIO, RAZOR_PAY, ENVIRONMENT } = require('./../appConfig');
 const { models, enums } = require('../constants');
 
-const { encrypt, decrypt, generateJwtToken, generateRefreshToken } = require('../helpers/encryption.helper');
-const { writeFile } = require('./../helpers/utils.helper');
+const { encrypt, decrypt, generateJwtToken } = require('../helpers/encryption.helper');
+const { writeFile, generateRandomNumber } = require('./../helpers/utils.helper');
 const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const User = mongoose.model(models.USER);
-const RefreshTokens = mongoose.model(models.REFRESH_TOKEN);
+const AccessTokens = mongoose.model(models.ACCESS_TOKEN);
 const Cart = mongoose.model(models.CART);
+const Favorites = mongoose.model(models.FAVORITES);
 
 const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
 const razorPayInstance = new Razorpay({ key_id: RAZOR_PAY.USER_ID, key_secret: RAZOR_PAY.PASSWORD });
 
+const REFRESH_TOKEN_OPTIONS = {
+  httpOnly: true,
+  expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
+};
+
+const ACCESS_TOKEN_OPTIONS = {
+  httpOnly: true,
+  expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
+};
+
+const CART_COOKIE_OPTIONS = {
+  httpOnly: true,
+};
+
 module.exports.register = async (req, res) => {
   try {
-    let { email, password, fullName } = req.allParams();
+    let { email, password } = req.allParams();
     const ipAddress = req.ip;
-    const cart = req.cookies.cart;
+    let razorPayCustomer;
 
     const isEmailAvailable = await User.isEmailAvailable(email);
 
@@ -30,45 +45,52 @@ module.exports.register = async (req, res) => {
       return res.error('USER_ALREADY_REGISTERED');
     }
 
-    const user = await User.create({ fullName, email, role: enums.USER_ROLES.USER });
-    const razorPayCustomer = await razorPayInstance.customers.create({ name: fullName, email, contact: '', notes: {} });
+    const user = await User.create({ email, role: enums.USER_ROLES.USER });
+
+    if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
+      razorPayCustomer = await razorPayInstance.customers.create({ fullName: '', email, contact: '', notes: {} });
+    }
 
     await user.setPassword(password);
-    const token = await user.generateVerifyEmailToken();
+    const verifyToken = await user.generateVerifyEmailToken();
 
-    user.razorPayCustId = razorPayCustomer.id;
-    user.verifyEmailToken = token;
+    if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
+      user.razorPayCustId = razorPayCustomer.id;
+    }
+    user.verifyEmailToken = verifyToken;
     user.lastVerifyEmailSentOn = new Date().toISOString();
 
     user.save();
 
     const newUserCart = await Cart.create({ user: user._id });
+    await Favorites.create({ userId: user._id });
 
-    const jwtToken = generateJwtToken(user);
-    const refreshToken = generateRefreshToken(user, ipAddress);
+    const { payload, token } = generateJwtToken(user, ipAddress);
+    // const refreshToken = generateRefreshToken(user, ipAddress);
 
-    await RefreshTokens.create(refreshToken);
-    const profile = await User.getProfile(user._id); // TODO: Improvement could be made
+    await AccessTokens.create({ ...payload, token });
+    // const profile = await User.getProfile(user._id); // TODO: Improvement could be made
 
     sendMailQueue.add({
       emailModule: 'REGISTRATION',
       to: user.email,
-      subject: 'Welcome to Pageaters!',
+      subject: 'Pageaters Account - Greetings from Pageaters!',
       data: {
-        FULL_NAME: fullName,
-        VERIFICATION_TOKEN: token
+        FULL_NAME: returnAddressName('', user.email),
+        LINK: `${HOST}/auth/verify?token=${verifyToken}&email=${encodeURIComponent(user.email)}`,
       },
     });
 
     // create a refresh token cookie that will also expires in 7 days
-    const cookieOptions = {
-      httpOnly: true,
-      expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
-    };
-    res.cookie('refreshToken', refreshToken.token, cookieOptions);
-    res.cookie('cart', newUserCart._id, { httpOnly: true });
+    // res.cookie(enums.TOKEN_ID.REFRESH_TOKEN_COOKIE, refreshToken.token, REFRESH_TOKEN_OPTIONS);
 
-    return res.ok({ message: 'REGISTRATION_SUCCESS', data: { profile, token: jwtToken } });
+    // create an access token cookie that will also expires in 7 days
+    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
+
+    // Attach cart cookie for shopping cart
+    res.cookie(enums.TOKEN_ID.CART_COOKIE, newUserCart._id, CART_COOKIE_OPTIONS);
+
+    return res.ok({ message: 'REGISTRATION_SUCCESS', data: {} });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -78,7 +100,6 @@ module.exports.login = async (req, res) => {
   try {
     const { email, password } = req.allParams();
     const ipAddress = req.ip;
-    const cartCookie = req.cookies.cart;
 
     let user = await User.findOne({ email, status: enums.USER_STATUS.ACTIVE });
 
@@ -91,36 +112,32 @@ module.exports.login = async (req, res) => {
     }
 
     // update last login to latest
-    user.lastLoginAt = new Date();
+    user.lastLoginAt = new Date().toISOString();
     user.save();
 
-    // generate necessary tokens
-    const jwtToken = generateJwtToken(user);
-    const refreshToken = generateRefreshToken(user, ipAddress);
-    await RefreshTokens.create(refreshToken);
+    // generate necessary token
+    const { token, payload } = generateJwtToken(user, ipAddress);
+    // const refreshToken = generateRefreshToken(user, ipAddress);
+    await AccessTokens.create({ ...payload, token });
 
     // get user profile
     user = await User.getProfile(user._id);
     const cartRes = await Cart.findOne({ user: user._id });
 
-    if (cartCookie) {
-      const previousCartRes = await Cart.findOne({ user: user._id });
-    }
-
-
     // create a refresh token cookie that will also expires in 7 days
-    const cookieOptions = {
-      httpOnly: true,
-      expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
-    };
-    res.cookie('refreshToken', refreshToken.token, cookieOptions);
-    if (cartRes) res.cookie('cart', cartRes._id, { httpOnly: true });
+    // res.cookie(enums.TOKEN_ID.REFRESH_TOKEN_COOKIE, refreshToken.token, REFRESH_TOKEN_OPTIONS);
+
+    // create an access token cookie that will also expires in 7 days
+    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
+
+    // Attach cart cookie for shopping cart
+    res.cookie(enums.TOKEN_ID.CART_COOKIE, cartRes ? cartRes._id : '', CART_COOKIE_OPTIONS);
 
     if (!user.emailVerified) {
-      return res.ok({ message: 'EMAIL_VERIFICATION_PENDING', data: { user, token: jwtToken } });
+      return res.ok({ message: 'EMAIL_VERIFICATION_PENDING', data: user });
     }
 
-    return res.ok({ message: 'LOGIN_SUCCESS', data: { user, token: jwtToken } });
+    return res.ok({ message: 'LOGIN_SUCCESS', data: user });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -128,46 +145,7 @@ module.exports.login = async (req, res) => {
 
 module.exports.refreshToken = async (req, res) => {
   try {
-    const token = req.cookies.refreshToken;
-    const ipAddress = req.ip;
-
-    if (!token) {
-      return res.ok();
-    }
-
-    const refreshToken = await RefreshTokens.findOne({ token });
-
-    if (!refreshToken || !refreshToken.isActive) {
-      res.cookie('refreshToken', '', {httpOnly: true, expires: 0});
-      return res.unauthorized('INVALID_TOKEN');
-    }
-    const { account } = refreshToken;
-
-    // replace old refresh token with a new one and save
-    const newRefreshToken = generateRefreshToken(account, ipAddress);
-
-    refreshToken.token = newRefreshToken.token;
-    await refreshToken.save();
-
-    const userRes = await User.findOne({ _id: account }).select('email role');
-
-    // generate new jwt
-    const dataToEncrypt = {
-      id: account,
-      role: userRes.role,
-      email: userRes.email,
-    };
-    const jwtToken = generateJwtToken(dataToEncrypt);
-
-    // create a refresh token cookie that will also expires in 7 days
-    const cookieOptions = {
-      httpOnly: true,
-      expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
-    };
-    res.cookie('refreshToken', newRefreshToken.token, cookieOptions);
-
-    return res.ok({ message: 'TOKEN_UPDATED', data: { token: jwtToken } });
-
+    console.info('in progress');
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -175,32 +153,34 @@ module.exports.refreshToken = async (req, res) => {
 
 module.exports.revokeToken = async (req, res) => {
   try {
-    const token = req.cookies.refreshToken;
+    const token = req.cookies[enums.TOKEN_ID.ACCESS_TOKEN_COOKIE];
     const ipAddress = req.ip;
+    const userId = get(req, 'user.userId', '');
 
     if (!token) {
       return res.unauthorized('INVALID_TOKEN');
     }
 
     // users can revoke their own tokens and admins can revoke any tokens
-    if (!req.user.ownsToken(token) && req.user.role !== enums.USER_ROLES.ADMIN) {
+    const accessToken = await AccessTokens.findOne({ token, userId });
+    if (!accessToken) {
       return res.unauthorized('TOKEN_UNMATCHED');
     }
 
-    const refreshToken = await RefreshTokens.findOne({ token });
-
     // revoke token and save
-    refreshToken.revoked = Date.now();
-    refreshToken.revokedByIp = ipAddress;
-    await refreshToken.save();
+    accessToken.revoked = Date.now();
+    accessToken.revokedByIp = ipAddress;
+    await accessToken.save();
 
     // revoke refresh token & cart cookie
     const cookieOptions = {
       httpOnly: true,
       expires: 0,
     };
-    res.cookie('refreshToken', '', cookieOptions);
-    res.cookie('cart', '', cookieOptions);
+
+    // res.cookie(enums.TOKEN_ID.REFRESH_TOKEN_COOKIE, '', cookieOptions);
+    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, '', cookieOptions);
+    res.cookie(enums.TOKEN_ID.CART_COOKIE, '', cookieOptions);
 
     return res.ok({ message: 'TOKEN_REVOKED', data: {} });
   } catch (e) {
@@ -230,7 +210,8 @@ module.exports.logout = async (req, res) => {
 
 module.exports.adminRegister = async (req, res) => {
   try {
-    let { email, password, fullName, role } = req.allParams();
+    let { email, password } = req.allParams();
+    const ipAddress = req.ip;
 
     const isEmailAvailable = await User.isEmailAvailable(email);
 
@@ -238,17 +219,24 @@ module.exports.adminRegister = async (req, res) => {
       return res.error('EMAIL_UNAVAILABLE');
     }
 
-    const user = await User.create({ email, fullName, role });
+    const user = await User.create({
+      email,
+      fullName: 'Pageaters Admin',
+      role: enums.USER_ROLES.ADMIN,
+      emailVerified: true,
+      contactVerified: true,
+    });
 
     await user.setPassword(password);
 
-    // const token = await user.generateVerifyEmailToken();
+    const { payload, token } = generateJwtToken(user, ipAddress);
 
-    const token = user.generateAuthToken(user._id, user.email, user.role);
+    await AccessTokens.create({ ...payload, token });
 
-    const profile = await User.getProfile(user._id); // TODO: Improvement could be made
+    // create an access token cookie that will also expires in 30 days
+    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
 
-    return res.ok({ message: 'REGISTRATION_SUCCESS', data: { profile, token } });
+    return res.ok({ message: 'REGISTRATION_SUCCESS', data: {} });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -256,7 +244,7 @@ module.exports.adminRegister = async (req, res) => {
 
 module.exports.updateProfile = async (req, res) => {
   try {
-    const { fullName, telephone } = req.allParams();
+    const { fullName, contactNo } = req.allParams();
     let { user } = req;
 
     const fieldsToUpdate = {};
@@ -265,16 +253,11 @@ module.exports.updateProfile = async (req, res) => {
       fieldsToUpdate.fullName = fullName;
     }
 
-    if (telephone) {
-      fieldsToUpdate.telephone = telephone;
-    }
+    await User.findOneAndUpdate({ _id: user.userId }, { $set: { ...fieldsToUpdate } });
 
-    // update user
-    await User.findByIdAndUpdate(user._id, fieldsToUpdate);
+    user = await User.getProfile(user.userId);
 
-    user = await User.getProfile(user._id);
-
-    return res.ok({ message: 'PROFILE_UPDATED', data: { user } });
+    return res.ok({ message: 'PROFILE_UPDATED', data: user });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -283,9 +266,9 @@ module.exports.updateProfile = async (req, res) => {
 module.exports.updatePassword = async (req, res) => {
   try {
     let { password, newPassword, confirmPassword } = req.allParams();
-    let { user } = req;
+    const userId = get(req, 'user.userId', '');
 
-    user = await User.findById(user._id);
+    const user = await User.findById(userId);
 
     if (!user.isPasswordValid(password)) {
       return res.error('INVALID_PASSWORD');
@@ -307,7 +290,7 @@ module.exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.allParams();
 
-    const user = await User.findOne({ email, status: 'ACTIVE', isDeleted: false });
+    const user = await User.findOne({ email, isDeleted: false });
 
     if (!user) {
       return res.error('NO_USER_FOUND_FOR_THIS_EMAIL');
@@ -317,7 +300,7 @@ module.exports.forgotPassword = async (req, res) => {
       user.lastForgotPasswordSentOn &&
       user.lastForgotPasswordSentOn >=
       moment()
-        .subtract(30, 'm')
+        .subtract(3, 'm')
         .toDate()
         .toISOString();
 
@@ -330,8 +313,47 @@ module.exports.forgotPassword = async (req, res) => {
     sendMailQueue.add({
       emailModule: 'FORGOT_PASSWORD',
       to: user.email,
+      subject: 'Pageaters Account - Reset Password Requested',
       data: {
-        LINK: `${HOST}/auth/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`,
+        FULL_NAME: returnAddressName(user.fullName, user.email),
+        LINK: `${HOST}/auth/reset?token=${token}&email=${encodeURIComponent(user.email)}`,
+      },
+    });
+
+    return res.ok('FORGOT_PASSWORD_MAIL_SENT');
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.resendForgetPasswordEmail = async (req, res) => {
+  try {
+    const { email } = req.allParams();
+
+    const user = await User.findOne({ email, isDeleted: false });
+
+    if (!user) {
+      return res.error('NO_USER_FOUND_FOR_THIS_EMAIL');
+    }
+
+    const currentTime = moment().subtract(1, 'm').toDate().toISOString();
+
+    const limitExceeded = user.lastForgotPasswordSentOn && user.lastForgotPasswordSentOn >= currentTime;
+
+    if (limitExceeded) {
+      return res.error('FORGOT_PASSWORD_LIMIT_EXCEEDED');
+    }
+
+    user.lastForgotPasswordSentOn = new Date().toISOString();
+    await user.save();
+
+    sendMailQueue.add({
+      emailModule: 'FORGOT_PASSWORD',
+      to: user.email,
+      subject: 'Pageaters Account - Reset Password Requested',
+      data: {
+        FULL_NAME: returnAddressName(user.fullName, user.email),
+        LINK: `${HOST}/auth/reset?token=${user.forgotPasswordToken}&email=${encodeURIComponent(user.email)}`,
       },
     });
 
@@ -352,6 +374,156 @@ module.exports.verifyEmail = async (req, res) => {
     }
 
     return res.ok('EMAIL_VERIFIED');
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.allParams();
+
+    const user = await User.findOne({ email, isDeleted: false });
+
+    if (!user) {
+      return res.error('NO_USER_FOUND_FOR_THIS_EMAIL');
+    }
+
+    const limitExceeded =
+      user.lastverifyEmailSentOn &&
+      user.lastverifyEmailSentOn >=
+      moment()
+        .subtract(1, 'm')
+        .toDate()
+        .toISOString();
+
+    if (limitExceeded) {
+      return res.error('VERIFY_EMAIL_LIMIT_EXCEEDED');
+    }
+
+    const token = await user.generateVerifyEmailToken();
+
+    sendMailQueue.add({
+      emailModule: 'REGISTRATION',
+      to: user.email,
+      subject: 'Pageaters Account - Greetings from Pageaters!',
+      data: {
+        FULL_NAME: returnAddressName('', user.email),
+        LINK: `${HOST}/auth/verify?token=${token}&email=${encodeURIComponent(user.email)}`,
+      },
+    });
+
+    return res.ok();
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.sendContactVerification = async (req, res) => {
+  try {
+    let { contactNo } = req.allParams();
+    const verificationCode = generateRandomNumber(6);
+
+    const userId = get(req, 'user.userId', '');
+
+    const loggedInUser = await User.findOne({ _id: userId });
+
+    // if (loggedInUser.contactVerified) {
+    //   return res.error('CONTACT_VERIFICATION_EXIST');
+    // }
+
+    loggedInUser.lastMessageSentOn = new Date().toISOString();
+    loggedInUser.contactOtp = verificationCode;
+    loggedInUser.contactNo = contactNo;
+    loggedInUser.save();
+
+    let message = {
+      body: textMessage(loggedInUser.fullName, loggedInUser.email, verificationCode),
+      from: TWILIO.PHONE,
+      to: `+91${contactNo}`,
+    };
+
+    await twilioClient.messages.create(message);
+
+    return res.ok({ message: 'CONTACT_VERIFICATION_INITIATED', data: {} });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.resendContactVerification = async (req, res) => {
+  try {
+    const userId = get(req, 'user.userId', '');
+
+    const user = await User.findOne({ _id: userId });
+
+    // if (user.contactVerified) {
+    //   return res.error('CONTACT_VERIFICATION_EXIST');
+    // }
+
+    if (!user.contactOtp) {
+      return res.error('CONTACT_VERIFICATION_NOT_EXIST');
+    }
+
+    const limitExceeded =
+      user.lastMessageSentOn &&
+      user.lastMessageSentOn >=
+      moment()
+        .subtract(1, 'm')
+        .toDate()
+        .toISOString();
+
+    if (limitExceeded) {
+      return res.error('RESEND_OTP_LIMIT_EXCEEDED');
+    }
+
+    user.lastMessageSentOn = new Date().toISOString();
+    user.save();
+
+    let message = {
+      body: textMessage(user.fullName, user.email, user.contactOtp),
+      from: TWILIO.PHONE,
+      to: `+91${user.contactOtp}`,
+    };
+
+    await twilioClient.messages.create(message);
+
+    return res.ok('CONTACT_VERIFICATION_INITIATED');
+
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.verifyContact = async (req, res) => {
+  try {
+    const { otp } = req.allParams();
+
+    const userId = get(req, 'user.userId', '');
+
+    const user = await User.findOne({ _id: userId });
+
+    // if (user.contactVerified) {
+    //   return res.error('CONTACT_VERIFICATION_EXIST');
+    // }
+
+    if (!user.contactOtp) {
+      return res.error('CONTACT_VERIFICATION_NOT_EXIST');
+    }
+
+    if (user.contactOtp !== otp) {
+      return res.error('OTP_VERIFICATION_FAILED');
+    }
+
+    if (user.contactOtp === otp) {
+      user.contactVerified = true;
+      user.lastMessageSentOn = '';
+      user.contactOtp = '';
+      user.save();
+      return res.ok('OTP_VERIFICATION_SUCCESS');
+    }
+
+    return res.error('OTP_VERIFICATION_FAILED');
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -416,44 +588,6 @@ module.exports.deleteAccount = async (req, res) => {
     await user.save();
 
     return res.ok('ACCOUNT_DELETED');
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-module.exports.resendVerificationEmail = async (req, res) => {
-  try {
-    const { email } = req.allParams();
-
-    const user = await User.findOne({ email, isDeleted: false });
-
-    if (!user) {
-      return res.error('NO_USER_FOUND_FOR_THIS_EMAIL');
-    }
-
-    const limitExceeded =
-      user.lastverifyEmailSentOn &&
-      user.lastverifyEmailSentOn >=
-      moment()
-        .subtract(30, 'm')
-        .toDate()
-        .toISOString();
-
-    if (limitExceeded) {
-      return res.error('VERIFY_EMAIL_LIMIT_EXCEEDED');
-    }
-
-    const token = await user.generateVerifyEmailToken();
-
-    sendMailQueue.add({
-      emailModule: 'REGISTRATION',
-      to: user.email,
-      data: {
-        LINK: `${HOST}/auth/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`,
-      },
-    });
-
-    return res.ok();
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -552,7 +686,7 @@ module.exports.sms = async (req, res) => {
 
     // const razorPayCustomer = await razorPayInstance.customers.create(payload);
 
-    // const success = await twilioClient.messages.create(payload);
+    const success = await twilioClient.messages.create(payload);
 
     // {
     //   "id": "cust_IIHBr2RHTMWmuc",
@@ -594,3 +728,11 @@ module.exports.sms = async (req, res) => {
     return res.internalServerError(e);
   }
 };
+
+function textMessage(name, email, code) {
+  return `Hi ${name ? name : email.split('@')[0]}, Pageaters verification code: ${code}`;
+}
+
+function returnAddressName(name, email) {
+  return `${name ? name : email.split('@')[0]}`;
+}
