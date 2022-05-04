@@ -10,6 +10,7 @@ import PageWrapper from "../../components/elements/PageWrapper";
 import {AUTH_COOKIE, PRIMARY_COLOR, SM} from "../../core/_variables";
 import cookie from "js-cookie";
 import useSWR from "swr";
+import Head from "next/head";
 
 interface Props {
 }
@@ -71,6 +72,10 @@ const Account: React.FC<Props> = () => {
   }
 
   return (
+      <>
+      <Head>
+        <title>Account | Pageaters</title>
+      </Head>
       <PageWrapper>
         <div className="custom-container">
           <div className="row">
@@ -105,6 +110,7 @@ const Account: React.FC<Props> = () => {
           </div>
         </section>
       </PageWrapper>
+      </>
   )
 };
 

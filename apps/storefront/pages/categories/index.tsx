@@ -37,11 +37,10 @@ const Categories: React.FC<Props> = () => {
       <>
         <Head>
           <title>{PAGE_META.title}</title>
-          <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
-          <meta name="og:site_name" content="pageaters.com"/>
-          <meta name="og:type" content="website"/>
-          <meta name="twitter:card" content="summary"/>
-          <meta name="twitter:site" content="@pageaters"/>
+          <meta name="description" content={PAGE_META.description}/>
+          <meta itemProp="name" content={PAGE_META.title}/>
+          <meta itemProp="description" content={PAGE_META.description}/>
+          <meta itemProp="image" content={PAGE_META.imageUrl}/>
           <meta name="og:title" content={PAGE_META.title}/>
           <meta name="og:description" content={PAGE_META.description}/>
           <meta name="og:url" content={PAGE_META.url}/>
@@ -49,7 +48,6 @@ const Categories: React.FC<Props> = () => {
           <meta name="twitter:title" content={PAGE_META.title}/>
           <meta name="twitter:description" content={PAGE_META.description}/>
           <meta name="twitter:image" content={PAGE_META.imageUrl}/>
-          <meta name="fb:pages" content="Pageaters-101873422124838"/>
           <meta name="description" content={PAGE_META.description}/>
           <meta name="image" content={PAGE_META.imageUrl}/>
         </Head>

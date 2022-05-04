@@ -18,6 +18,7 @@ import {AUTH_COOKIE} from "../../core/_variables";
 import {IBook} from "../../schemas/book";
 
 import graphic from "../../public/illustrations/wishlist.svg";
+import Head from "next/head";
 
 const BREADCRUMBS_ITEMS = [
   {title: 'Home', href: '/'},
@@ -72,6 +73,10 @@ const Wishlist: React.FC<Props> = () => {
   }
 
   return (
+      <>
+      <Head>
+        <title>Orders | Pageaters</title>
+      </Head>
       <PageWrapper>
         <div className="custom-container">
           <div className="row">
@@ -122,6 +127,7 @@ const Wishlist: React.FC<Props> = () => {
           </div>
         </section>
       </PageWrapper>
+      </>
   )
 };
 

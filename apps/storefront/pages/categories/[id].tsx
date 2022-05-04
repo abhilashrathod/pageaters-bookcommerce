@@ -100,10 +100,11 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
       <>
         <Head>
           <title>{categoryDetails?.title} | Pageaters</title>
-          <meta name="og:site_name" content="pageaters.com"/>
-          <meta name="og:type" content="website"/>
-          <meta name="twitter:card" content="summary"/>
-          <meta name="twitter:site" content="@pageaters"/>
+          <meta name="description" content={categoryDetails?.description}/>
+          <meta itemProp="name" content={`${categoryDetails?.title} | Pageaters`}/>
+          <meta itemProp="description" content={categoryDetails?.description}/>
+          <meta itemProp="image" content={`${BUCKETS_ORIGINS.CATEGORIES}/${categoryDetails.thumbnail}`}/>
+
           <meta name="og:title" content={`${categoryDetails?.title} | Pageaters`}/>
           <meta name="og:description" content={categoryDetails?.description}/>
           <meta name="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL}/categories/${categoryDetails.categoryId}`}/>
@@ -111,10 +112,8 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
           <meta name="twitter:title" content={`${categoryDetails.title} | Pageaters`}/>
           <meta name="twitter:description" content={categoryDetails.description}/>
           <meta name="twitter:image" content={`${BUCKETS_ORIGINS.CATEGORIES}/${categoryDetails.thumbnail}`}/>
-          <meta name="fb:pages" content="Pageaters-101873422124838"/>
           <meta name="description" content={categoryDetails.description}/>
           <meta name="image" content={`${BUCKETS_ORIGINS.CATEGORIES}/${categoryDetails.thumbnail}`}/>
-          <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
         </Head>
         <PageWrapper>
           <div className="custom-container">

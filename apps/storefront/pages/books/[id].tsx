@@ -438,16 +438,13 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
       <>
         <Head>
           <title>{`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}</title>
+          <meta name="description" content={book.description}/>
+          <meta itemProp="name" content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
+          <meta itemProp="description" content={book.description}/>
+          <meta itemProp="image" content={`${renderImageSize(300, 450)}`}/>
 
-          <meta name="og:site_name" content="pageaters.com"/>
-          <meta name="og:type" content="website"/>
-          <meta name="twitter:card" content="summary"/>
-          <meta name="twitter:site" content="@pageaters"/>
-
-          <meta name="og:title"
-                content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
-          <meta name="twitter:title"
-                content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
+          <meta name="og:title" content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
+          <meta name="twitter:title" content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
 
           <meta name="image" content={`${renderImageSize(300, 450)}`}/>
           <meta name="og:image" content={`${renderImageSize(300, 450)}`}/>
@@ -458,9 +455,6 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
           <meta name="description" content={book.description}/>
 
           <meta name="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL}/books/${book.bookId}`}/>
-
-          <meta name="fb:pages" content="Pageaters-101873422124838"/>
-          <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
 
           <script
               type="application/ld+json"

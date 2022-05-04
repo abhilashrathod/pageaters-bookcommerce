@@ -21,6 +21,7 @@ import {AUTH_COOKIE, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 import {IAddress} from "../../schemas/address";
 
 import graphic from "../../public/illustrations/delivery-address.svg";
+import Head from "next/head";
 
 const BREADCRUMBS_ITEMS = [
   {title: 'Home', href: '/'},
@@ -166,6 +167,10 @@ const Addresses: React.FC<Props> = () => {
   const addresses = get(data, 'data', null);
 
   return (
+      <>
+      <Head>
+        <title>User Addresses | Pageaters</title>
+      </Head>
       <PageWrapper>
         <div className="custom-container">
           <div className="row">
@@ -234,6 +239,7 @@ const Addresses: React.FC<Props> = () => {
                             onCancel={handleOnCancel}
                             onSave={handleOnSave}/>
       </PageWrapper>
+      </>
   )
 };
 

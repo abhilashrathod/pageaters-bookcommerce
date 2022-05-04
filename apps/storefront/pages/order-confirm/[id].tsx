@@ -1,14 +1,14 @@
-import React, {useEffect} from 'react';
+import React from 'react';
+import styled from "styled-components";
 import {useRouter} from "next/router";
 import {random} from 'lodash';
+import {Center} from "@mantine/core";
+import Head from "next/head";
 
-import PageHeadings from "../../components/elements/PageHeadings";
 import PageWrapper from "../../components/elements/PageWrapper";
 import AppButton, {ButtonVariants} from "../../components/form-controls/Button";
 
 import graphic from '../../public/illustrations/order-confirm.svg'
-import styled from "styled-components";
-import {Center} from "@mantine/core";
 
 interface Props {
 }
@@ -43,15 +43,18 @@ const OrderConfirm: React.FC<Props> = () => {
 
   return (
       <>
+        <Head>
+          <title>Order Confirmed | Pageaters</title>
+        </Head>
         <PageWrapper>
           <section>
-            <div  className="custom-container">
+            <div className="custom-container">
               <Center>
-              <IllustrationImage
-                  alt="order-confirmation"
-                  src={graphic.src}
-                  width={'400px'}
-                  height={'400px'}/>
+                <IllustrationImage
+                    alt="order-confirmation"
+                    src={graphic.src}
+                    width={'400px'}
+                    height={'400px'}/>
               </Center>
             </div>
           </section>
@@ -60,10 +63,11 @@ const OrderConfirm: React.FC<Props> = () => {
               <div className="row">
                 <div className="col">
                   <Center style={{flexDirection: 'column'}}>
-                  <h1 style={{marginBottom: '1rem', textAlign: 'center'}} className={'display-1'}>{randomTitles()}</h1>
-                  <h6>Your Order No: {router.query.id}</h6>
-                  <p>Track order status and information in orders page</p>
-                  <AppButton variant={ButtonVariants.Accent} onClick={navigateToOrders}>View Orders</AppButton>
+                    <h1 style={{marginBottom: '1rem', textAlign: 'center'}}
+                        className={'display-1'}>{randomTitles()}</h1>
+                    <h6>Your Order No: {router.query.id}</h6>
+                    <p>Track order status and information in orders page</p>
+                    <AppButton variant={ButtonVariants.Accent} onClick={navigateToOrders}>View Orders</AppButton>
                   </Center>
                 </div>
               </div>

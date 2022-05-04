@@ -1,13 +1,14 @@
 import React, {useEffect, useState} from 'react';
-import styled from 'styled-components';
-
-import PageWrapper from "../../components/elements/PageWrapper";
+import Head from "next/head";
 import {useNotifications} from "@mantine/notifications";
 import {useRouter} from "next/router";
 import {parseUrl} from "query-string";
 import axios from "axios";
+
+import PageWrapper from "../../components/elements/PageWrapper";
 import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
-import Head from "next/head";
+
+import useAuth from "../../hooks/useAuth";
 
 interface Props {
 }
@@ -15,6 +16,8 @@ interface Props {
 const VerifyAccount: React.FC<Props> = () => {
   const notif = useNotifications();
   const router = useRouter();
+  const auth = useAuth();
+
   const [success, setSuccess] = useState(true);
 
   const [email, setEmail] = useState(() => {
@@ -35,9 +38,17 @@ const VerifyAccount: React.FC<Props> = () => {
 
   function checkValid() {
     if (!token || !email) {
-      router.replace('/auth/login');
+      transferUser();
     } else {
       doVerify()
+    }
+  }
+
+  function transferUser() {
+    if (auth) {
+      router.replace('/account');
+    } else {
+      router.replace('/auth/login');
     }
   }
 

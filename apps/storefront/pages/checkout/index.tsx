@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
 import useSWR from "swr";
+import Head from "next/head";
 import cookie from "js-cookie";
 import {useRouter} from "next/router";
 import axios from "axios";
@@ -211,6 +212,10 @@ const Checkout: React.FC<Props> = () => {
     );
 
   return (
+      <>
+      <Head>
+        <title>Checkout | Pageaters</title>
+      </Head>
       <PageWrapper>
         <div className="custom-container">
           <div className="row">
@@ -294,6 +299,7 @@ const Checkout: React.FC<Props> = () => {
               : <OrderLoading/>
         }
       </PageWrapper>
+      </>
   )
 };
 

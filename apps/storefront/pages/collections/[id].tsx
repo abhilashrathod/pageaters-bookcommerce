@@ -133,22 +133,25 @@ const ViewCollection: NextPage<Props> = ({collectionInfo}: InferGetStaticPropsTy
   return (
       <>
         <Head>
-          <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
           <title>{collectionInfo?.title} | Pageaters</title>
-          <meta name="og:site_name" content="pageaters.com"/>
-          <meta name="og:type" content="website"/>
-          <meta name="twitter:card" content="summary"/>
-          <meta name="twitter:site" content="@pageaters"/>
+          <meta name="description" content={collectionInfo?.description}/>
+          <meta itemProp="name" content={`${collectionInfo?.title} | Pageaters`}/>
+          <meta itemProp="description" content={collectionInfo?.description}/>
+          <meta itemProp="image" content={`${BUCKETS_ORIGINS.COLLECTIONS}/${collectionInfo.poster}`}/>
+
+
+          <meta name="title" content={`${collectionInfo?.title} | Pageaters`} />
+          <meta name="description" content={`${collectionInfo?.description}`}/>
+          <meta name="image" content={`${BUCKETS_ORIGINS.COLLECTIONS}/${collectionInfo.poster}`}/>
+
           <meta name="og:title" content={`${collectionInfo?.title} | Pageaters`}/>
           <meta name="og:description" content={collectionInfo?.description}/>
           <meta name="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL}/categories/${collectionInfo.categoryId}`}/>
           <meta name="og:image" content={`${BUCKETS_ORIGINS.COLLECTIONS}/${collectionInfo.poster}`}/>
+
           <meta name="twitter:title" content={`${collectionInfo.title} | Pageaters`}/>
           <meta name="twitter:description" content={collectionInfo.description}/>
           <meta name="twitter:image" content={`${BUCKETS_ORIGINS.COLLECTIONS}/${collectionInfo.poster}`}/>
-          <meta name="fb:pages" content="Pageaters-101873422124838"/>
-          <meta name="description" content={collectionInfo.description}/>
-          <meta name="image" content={`${BUCKETS_ORIGINS.COLLECTIONS}/${collectionInfo.poster}`}/>
         </Head>
 
         <CollectionBanner>

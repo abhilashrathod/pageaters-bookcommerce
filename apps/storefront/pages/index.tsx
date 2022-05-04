@@ -1,5 +1,6 @@
 import React from "react";
 import {NextPage} from 'next'
+import Head from "next/head";
 import useSWR from "swr";
 import {Skeleton} from "@mantine/core";
 
@@ -231,6 +232,21 @@ const BundlesSection = () => {
 const Home: NextPage = (props: any) => {
   return (
       <>
+        <Head>
+          <title>Pageaters: Online shopping site for Buying, Selling or Renting Books in India</title>
+          <meta name="title" content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
+          <meta name="description" content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books."/>
+
+          <meta property="og:title" content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
+          <meta property="og:description" content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books. "/>
+          <meta property="og:image" content="https://res.cloudinary.com/pageaters/image/upload/v1624257111/pageaters-poster_ohufa0.png"/>
+          <meta property="og:url" content="http://pageaters.com/"/>
+
+          <meta property="twitter:url" content="http://pageaters.com"/>
+          <meta property="twitter:title" content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
+          <meta property="twitter:description" content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books. "/>
+          <meta property="twitter:image" content="https://res.cloudinary.com/pageaters/image/upload/v1624257111/pageaters-poster_ohufa0.png"/>
+        </Head>
         <section className={'mb-25'}>
           <HeroBanner banner={props.heroBanner}/>
         </section>

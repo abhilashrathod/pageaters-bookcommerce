@@ -235,10 +235,10 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
       <>
         <Head>
           <title>{`Buy ${bundleDetails.title} Online at Best Prices in India | Pageaters`}</title>
-          <meta name="og:site_name" content="pageaters.com"/>
-          <meta name="og:type" content="website"/>
-          <meta name="twitter:card" content="summary"/>
-          <meta name="twitter:site" content="@pageaters"/>
+          <meta name="description" content={bundleDetails?.description}/>
+          <meta itemProp="name" content={`Buy ${bundleDetails.title} Online at Best Prices in India | Pageaters`}/>
+          <meta itemProp="description" content={bundleDetails?.description}/>
+          <meta itemProp="image" content={`${renderImageSize(450, 450)}`}/>
 
           <meta name="og:title" content={`Buy ${bundleDetails.title} Online at Best Prices in India | Pageaters`}/>
           <meta name="twitter:title" content={`Buy ${bundleDetails.title} Online at Best Prices in India | Pageaters`}/>
@@ -252,9 +252,6 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
           <meta name="description" content={bundleDetails.description}/>
 
           <meta name="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL}/bundles/${bundleDetails.bundleId}`}/>
-
-          <meta name="fb:pages" content="Pageaters-101873422124838"/>
-          <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
 
           <script
               type="application/ld+json"

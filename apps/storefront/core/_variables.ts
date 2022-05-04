@@ -15,6 +15,16 @@ export const SECONDARY_COLOR = '#FFFFFF';
 
 export const LIGHT_COLOR = '#868686';
 
+/**
+ *
+ * SEO
+ * ***********/
+
+export const SEO_SETTINGS = {
+  TWITTER_SITE: '@pageaters',
+  TWITTER_CREATOR: '@pageaters',
+  OPEN_GRAPH_SITE_NAME: 'pageaters.com',
+};
 
 /***
  *

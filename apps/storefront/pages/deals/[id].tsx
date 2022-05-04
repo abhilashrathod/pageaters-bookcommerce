@@ -60,12 +60,11 @@ const ViewDeal: NextPage<Props> = ({dealInfo}: InferGetStaticPropsType<typeof ge
   return (
       <>
         <Head>
-          <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
           <title>{dealInfo?.title} | Pageaters</title>
-          <meta name="og:site_name" content="pageaters.com"/>
-          <meta name="og:type" content="website"/>
-          <meta name="twitter:card" content="summary"/>
-          <meta name="twitter:site" content="@pageaters"/>
+          <meta name="description" content={dealInfo.description}/>
+          <meta itemProp="name" content={`${dealInfo?.title} | Pageaters`}/>
+          <meta itemProp="description" content={dealInfo.description}/>
+          <meta itemProp="image" content={`${BUCKETS_ORIGINS.ASSETS}/${dealInfo.thumbnail}`}/>
           <meta name="og:title" content={`${dealInfo?.title} | Pageaters`}/>
           <meta name="og:description" content={dealInfo?.description}/>
           <meta name="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL}/categories/${dealInfo.categoryId}`}/>
@@ -73,7 +72,6 @@ const ViewDeal: NextPage<Props> = ({dealInfo}: InferGetStaticPropsType<typeof ge
           <meta name="twitter:title" content={`${dealInfo.title} | Pageaters`}/>
           <meta name="twitter:description" content={dealInfo.description}/>
           <meta name="twitter:image" content={`${BUCKETS_ORIGINS.ASSETS}/${dealInfo.thumbnail}`}/>
-          <meta name="fb:pages" content="Pageaters-101873422124838"/>
           <meta name="description" content={dealInfo.description}/>
           <meta name="image" content={`${BUCKETS_ORIGINS.ASSETS}/${dealInfo.thumbnail}`}/>
         </Head>

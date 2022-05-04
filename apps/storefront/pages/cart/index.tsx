@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import useSWR, {mutate} from "swr";
+import Head from "next/head";
 import styled from "styled-components";
 import cookie from "js-cookie";
 import axios from "axios";
@@ -158,6 +159,10 @@ const Cart: React.FC<Props> = () => {
   const bundles = get(data, 'data.bundles', []);
 
   return (
+      <>
+      <Head>
+        <title>Cart | Pageaters</title>
+      </Head>
       <PageWrapper>
         <div className="custom-container">
           <div className="row">
@@ -226,6 +231,7 @@ const Cart: React.FC<Props> = () => {
         }
 
       </PageWrapper>
+      </>
   )
 };
 

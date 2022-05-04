@@ -25,6 +25,7 @@ import {IAddress} from "../../schemas/address";
 
 import emptyAddress from '../../public/illustrations/delivery-address.svg';
 import emptyCart from '../../public/illustrations/empty-cart.svg'
+import Head from "next/head";
 
 
 interface Props {
@@ -229,6 +230,9 @@ const AddressSelect: React.FC<Props> = () => {
 
   return (
       <>
+        <Head>
+          <title>Address Selection | Pageaters</title>
+        </Head>
         <PageWrapper>
           <div className="custom-container">
             <div className="row">
