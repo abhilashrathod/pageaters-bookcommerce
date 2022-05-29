@@ -328,9 +328,13 @@ function FeedbackModal({type, open, books, bundles, onClose, onSubmit}: Feedback
                       label: {color: PRIMARY_COLOR, fontSize: '1rem', fontWeight: 'normal', marginBottom: '0'},
                     }}
                     required>
-                  {
-                    RETURN_REASONS.map((i, j) => <Radio key={j} value={i}>{i}</Radio>)
-                  }
+                  <Radio value="Incorrect product" label="Incorrect product" />
+                  <Radio value="No longer needed" label="No longer needed" />
+                  <Radio value="Did not meet my expectations" label="Did not meet my expectations" />
+                  <Radio value="Quality is not upto the mark" label="Quality is not upto the mark" />
+                  <Radio value="It was damaged or defective" label="It was damaged or defective" />
+                  <Radio value="Not delivered on time" label="Not delivered on time" />
+                  <Radio value="Found a better deal elsewhere" label="Found a better deal elsewhere" />
                 </RadioGroup>
               </InputWrapper>
               <InputWrapper>
@@ -389,7 +393,7 @@ const ShipmentAction = ({shipment}: ShipmentActionProps) => {
 
 const CancelAction = ({orderId}: CancelActionProps) => {
   const notif = useNotifications();
-  const router = useRouter();
+
   const [open, setOpen] = useState(false);
 
 
@@ -402,13 +406,8 @@ const CancelAction = ({orderId}: CancelActionProps) => {
       bundles: [],
     },
 
-    // @ts-ignore
-    validationRules: {
-      reason: (value: string) => value !== '',
-    },
-
-    errorMessages: {
-      reason: 'Please select a reason for cancellation',
+    validate: {
+      reason: (value: string) => value === '' ? 'Please select a reason for cancellation' : null,
     },
   });
 
@@ -446,9 +445,9 @@ const CancelAction = ({orderId}: CancelActionProps) => {
           Cancel Order
         </AppIconButton>
 
-        <Modal opened={open} size={'lg'} centered onClose={closeModal} title="Cancel Order">
+        <Modal opened={open} size={'lg'} centered onClose={() => closeModal()} title="Cancel Order">
           <h6>{`Our Sincere Apology, if we could not meet your expectations. Please let us know why you're cancelling your order`}</h6>
-          <p>
+          <div>
             <form onSubmit={form.onSubmit(handleSubmit)}>
               <InputWrapper>
                 <RadioGroup
@@ -462,9 +461,15 @@ const CancelAction = ({orderId}: CancelActionProps) => {
                       label: {color: PRIMARY_COLOR, fontSize: '1rem', fontWeight: 'normal', marginBottom: '0'},
                     }}
                     required>
-                  {
-                    CANCELLATION_REASONS.map((i, j) => <Radio key={j} value={i}>{i}</Radio>)
-                  }
+                  <Radio value="No longer needed" label="No longer needed" />
+                  <Radio value="I've changed my mind" label="I've changed my mind" />
+                  <Radio value="Being delivered to wrong address" label="Being delivered to wrong address" />
+                  <Radio value="It was an impulse purchase" label="It was an impulse purchase" />
+                  <Radio value="Delivery date keeps changing" label="Delivery date keeps changing" />
+                  <Radio value="Found a better deal elsewhere" label="Found a better deal elsewhere" />
+                  <Radio value="Heard bad reviews after ordering the product" label="Heard bad reviews after ordering the product" />
+                  <Radio value="Not available to receive the package. Travelling or moving" label="Not available to receive the package. Travelling or moving" />
+                  <Radio value="Bad customer care service or representative" label="Bad customer care service or representative" />
                 </RadioGroup>
               </InputWrapper>
               <InputWrapper>
@@ -477,7 +482,7 @@ const CancelAction = ({orderId}: CancelActionProps) => {
               </InputWrapper>
               <SubmitButton type={'submit'}>Submit and Cancel Order</SubmitButton>
             </form>
-          </p>
+          </div>
         </Modal>
       </>
   )
@@ -494,7 +499,6 @@ const ReturnAction = ({orderId, type, books, bundles}: ReturnActionProps) => {
       books: values.books.filter((x: any) => x.active).map((x: any) => x.value),
       bundles: values.bundles.filter((x: any) => x.active).map((x: any) => x.value),
     };
-    let url = '';
 
     try {
       await axios.post(`/orders/return/${orderId}`, payload, {withCredentials: true});
@@ -523,7 +527,7 @@ const ReturnAction = ({orderId, type, books, bundles}: ReturnActionProps) => {
 
   return (
       <>
-        <AppButton variant={ButtonVariants.Secondary} styles={{width: '48%', marginRight: '2%'}} onClick={openModal}>
+        <AppButton variant={ButtonVariants.Secondary} styles={{width: '48%', marginRight: '2%', marginBottom: '1rem'}} onClick={openModal}>
           {startCase(type) + ' Request'}
         </AppButton>
 
@@ -617,6 +621,10 @@ const OrderDetails: React.FC<Props> = () => {
 
   function track(trackingId: string) {
     window.open(TRACKING_LINK(trackingId));
+  }
+
+  function navigateToContact() {
+    router.push('/contact');
   }
 
   const order: IOrder = get(data, 'data', null);
@@ -713,10 +721,6 @@ const OrderDetails: React.FC<Props> = () => {
                       <ShipmentAction shipment={order.shipmentTrackingId}/>
                     }
                     {
-                      (order.orderStatus === ORDER_STAGES.PAID || order.orderStatus === ORDER_STAGES.SHIPPED) &&
-                      <CancelAction orderId={order.orderId}/>
-                    }
-                    {
                       order.orderStatus === ORDER_STAGES.FULFILLED && (
                           <>
                             <AppButton variant={ButtonVariants.Accent} size={ButtonSizes.Large}
@@ -745,17 +749,13 @@ const OrderDetails: React.FC<Props> = () => {
                           </AppButton>
                       )
                     }
+                    <AppButton variant={ButtonVariants.Secondary} onClick={navigateToContact}
+                               styles={{width: '100%', marginBottom: '0.5rem'}}>
+                      {'Contact Us'}
+                    </AppButton>
                     {
-                      (order.orderStatus === ORDER_STAGES.REFUNDED
-                          || order.orderStatus === ORDER_STAGES.CANCELLED
-                          || order.orderStatus === ORDER_STAGES.RETURNED
-                          || order.orderStatus === ORDER_STAGES.REPLACEMENT_IN_PROGRESS
-                          || order.orderStatus === ORDER_STAGES.RETURNED_IN_PROGRESS) && (
-                          <AppButton variant={ButtonVariants.Secondary} onClick={() => console.log('1')}
-                                     styles={{width: '100%', marginBottom: '0.5rem'}}>
-                            {'Contact Us'}
-                          </AppButton>
-                      )
+                      (order.orderStatus === ORDER_STAGES.PAID || order.orderStatus === ORDER_STAGES.SHIPPED) &&
+                      <CancelAction orderId={order.orderId}/>
                     }
                   </OrderCard>
                   <OrderCard>
