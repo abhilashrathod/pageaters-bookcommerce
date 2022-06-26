@@ -1,14 +1,13 @@
 {
-  "name": "nodejs-express-boilerplate",
+  "name": "pageaters-node",
   "version": "1.0.0",
+  "types": "module",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start": "nodemon index",
-    "start:stag": "npm run build:stag && npm run stop:stag && docker-compose -f docker-compose-stag.yml up -d && docker ps -a && npm run prune",
-    "build:stag": "sudo chown -R $(whoami):$(id -gn) data/ && docker-compose -f docker-compose-stag.yml build",
-    "stop:stag": "docker-compose -f docker-compose-stag.yml down",
-    "prune": "docker system prune --volumes -f"
+    "start:prod": "cross-env NODE_ENV=production node index",
+    "start:stage": "cross-env NODE_ENV=statging node index"
   },
   "keywords": [],
   "author": "",
@@ -22,12 +21,14 @@
     "better-queue": "^3.8.10",
     "better-queue-sql": "^1.0.3",
     "body-parser": "^1.19.0",
+    "cheerio": "^1.0.0-rc.10",
     "colors": "^1.4.0",
     "compression": "^1.7.4",
     "config": "^3.3.0",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
+    "csv": "^6.0.5",
     "ejs": "^3.1.6",
     "express": "^4.17.1",
     "express-jwt": "^6.0.0",
@@ -47,6 +48,7 @@
     "mongoose-paginate-v2": "^1.4.2",
     "morgan": "^1.9.1",
     "multer": "^1.4.2",
+    "pretty": "^2.0.0",
     "random-base64-string": "^1.0.1",
     "razorpay": "^2.0.7",
     "rmdir-recursive": "0.0.1",
@@ -55,7 +57,9 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "eslint": "^6.8.0",
-    "prettier": "^1.19.1"
+    "prettier": "^1.19.1",
+    "string-strip-html": "^9.1.12"
   }
 }

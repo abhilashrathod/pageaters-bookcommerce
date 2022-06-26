@@ -11,3 +11,6 @@ output.log
 
 # File Uploads
 resources/
+
+# for web scrapping
+seedData/
