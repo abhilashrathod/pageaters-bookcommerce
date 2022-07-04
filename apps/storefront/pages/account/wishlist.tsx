@@ -19,6 +19,7 @@ import {IBook} from "../../schemas/book";
 
 import graphic from "../../public/illustrations/wishlist.svg";
 import Head from "next/head";
+import {addToCart} from "../../core/_analytics";
 
 const BREADCRUMBS_ITEMS = [
   {title: 'Home', href: '/'},
@@ -50,15 +51,17 @@ const Wishlist: React.FC<Props> = () => {
     }
   }
 
-  async function handleAddCart(id: string) {
+  async function handleAddCart(book: IBook) {
     try {
-      await axios.post(`/cart/add`, {quantity: 1, product: id}, {withCredentials: true});
-      await axios.delete(`/favorites/${id}`, {withCredentials: true});
+      await axios.post(`/cart/add`, {quantity: 1, product: book._id}, {withCredentials: true});
+      await axios.delete(`/favorites/${book._id}`, {withCredentials: true});
 
       notif.showNotification({message: 'Book added to the cart', color: 'green', autoClose: 3000});
 
       updateWishlist();
       updateCart();
+
+      addToCart(book, 1, 'wish_list', 'Wish-List'); // analytics event
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
@@ -115,7 +118,8 @@ const Wishlist: React.FC<Props> = () => {
                         wishlist.map((item: IBook) => {
                           return (
                               <div key={item._id} className="col-xxl-3 col-xl-3 col-lg-4 col-md-6 col-12">
-                                <WishlistActionCard book={item} onItemAddCart={handleAddCart}
+                                <WishlistActionCard book={item}
+                                                    onItemAddCart={handleAddCart}
                                                     onItemDelete={handleDelete}/>
                               </div>
                           )

@@ -2,8 +2,10 @@ import React from "react";
 import {GetStaticPaths, GetStaticProps, InferGetStaticPropsType, NextPage} from "next";
 import axios from "axios";
 import styled from "styled-components";
+import KebabCase from 'lodash/kebabCase'
 import Head from "next/head";
 import {useRouter} from "next/router";
+import { useKeenSlider } from 'keen-slider/react';
 
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import EmptySectionMessage from "../../components/elements/FailedToLoad";
@@ -18,6 +20,7 @@ import {BUCKETS_ORIGINS, LG, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../..
 
 import {CategoryTitleSpace, SectionTitle} from "../../components/carousels/Categories";
 import {getCollectionImage} from "../../core/_imageRendererHelper";
+
 
 const BREADCRUMBS_ITEMS = (activeItem: any) => [
   {title: 'Home', href: '/'},
@@ -77,15 +80,17 @@ const CollectionTitle = styled.h1`
   position: relative;
   letter-spacing: -3px;
   text-shadow: 3px 4px 7px rgba(81,67,21,0.8);
+  font-size: 3.714rem;
+  line-height: 4rem;
   
   @media screen and (max-width: ${MD - 1}px) {
-    font-size: 4rem;
+    font-size: 3rem;
     line-height: 4rem;
     letter-spacing: -1px;
   }
 
   @media screen and (max-width: ${SM - 1}px) {
-    font-size: 2.5rem;
+    font-size: 2rem;
     line-height: 2.5rem;
     letter-spacing: -1px;
   }  
@@ -106,6 +111,7 @@ const Tag = styled.span`
   position: relative;
   color: ${PRIMARY_COLOR};
   font-size: 0.825rem;
+  font-weight: 600;
   margin-bottom: 0.5rem;
   background-color: ${SECONDARY_COLOR};
 
@@ -113,7 +119,7 @@ const Tag = styled.span`
 
   zoom: 1;
   line-height: 1;
-  padding: 0.75rem 1.25rem;
+  padding: 0.5rem 1rem;
   margin-left: 0.5rem;
 
   &:first-child {
@@ -123,6 +129,21 @@ const Tag = styled.span`
 
 const ViewCollection: NextPage<Props> = ({collectionInfo}: InferGetStaticPropsType<typeof getStaticProps>) => {
   const router = useRouter();
+  const [refCallback] = useKeenSlider({
+    mode: "free",
+    breakpoints: {
+      '(min-width: 992px)': {
+        slides: { origin: "auto", perView: 7.25, spacing: 12 },
+      },
+      '(max-width: 768px)': {
+        slides: { origin: "auto", perView: 4.25, spacing: 12 },
+      },
+      '(max-width: 576px)': {
+        slides: { origin: "auto", perView: 2.25, spacing: 12 },
+      },
+    },
+
+  });
 
   if (router.isFallback) return <EmptySectionMessage title={'Loading...'}/>;
 
@@ -159,7 +180,7 @@ const ViewCollection: NextPage<Props> = ({collectionInfo}: InferGetStaticPropsTy
             <source media={`(max-width: ${SM - 1}px)`} type="image/jpeg" srcSet={renderImageSize(768, 512)} height={512} width={768}/>
             <source media={`(max-width: ${MD - 1}px)`} type="image/jpeg" srcSet={renderImageSize(1024, 682)} height={682} width={1024}/>
             <source media={`(max-width: ${LG - 1}px)`} type="image/jpeg" srcSet={renderImageSize(1600, 1066)} height={1066} width={1600}/>
-            <CollectionCoverImage src={renderImageSize(1920, 1280)} alt={collectionInfo.title} width={1920} height={1280}/>
+            <CollectionCoverImage src={renderImageSize(1920, 720)} alt={collectionInfo.title} width={1920} height={720}/>
           </picture>
           <CollectionTitleSpace>
             <CollectionTitle>{collectionInfo?.title}</CollectionTitle>
@@ -217,7 +238,7 @@ const ViewCollection: NextPage<Props> = ({collectionInfo}: InferGetStaticPropsTy
                 collectionInfo.books.map((book: IBook) => {
                   return (
                       <div key={book.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                        <ProductCardLandScape book={book}/>
+                        <ProductCardLandScape book={book} analytics={{listName: `${collectionInfo?.title} Collection`, listId: `${KebabCase(collectionInfo?.title)}-books`}}/>
                       </div>
                   )
                 })

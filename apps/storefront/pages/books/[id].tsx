@@ -27,7 +27,7 @@ import {
   AUTH_COOKIE,
   LIGHT_COLOR,
   LIGHTER_PRIMARY_COLOR,
-  LIGHTEST_PRIMARY_COLOR,
+  LIGHTEST_PRIMARY_COLOR, PRIMARY_COLOR,
   PRIMARY_DANGER,
   PRIMARY_SUCCESS,
   SECONDARY_COLOR,
@@ -42,6 +42,7 @@ import {ICollection} from "../../schemas/collection";
 import {ICategory} from "../../schemas/category";
 
 import useAuth from "../../hooks/useAuth";
+import {addToCart, addToWishList} from "../../core/_analytics";
 
 
 const BREADCRUMBS_ITEMS = (activeItem: any) => [
@@ -90,9 +91,12 @@ const Tag = styled.li`
   display: inline-flex;
   border-radius: 1.5rem;
   position: relative;
-  color: ${SECONDARY_COLOR};
+  color: ${PRIMARY_COLOR};
+  border: 1px solid #eee;
   font-size: 0.825rem;
-  background-color: ${ACCENT_COLOR};
+  background-color: ${SECONDARY_COLOR};
+  box-shadow: rgb(0 0 0 / 18%) 0 2px 4px 0;
+  font-weight:600;
   text-decoration: none;
   zoom: 1;
   line-height: 1;
@@ -106,10 +110,23 @@ const Tag = styled.li`
 `;
 
 const ProductInfo = styled.div``;
+
+const ProductDetailsWrapper = styled.div`
+  margin-left: 1rem;
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    margin-left: 0;
+  }
+`;
+
 const ProductTitle = styled.h1`
   font-size: 2rem;
   letter-spacing: 0;
   margin-bottom: 0;
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const ProductDescription = styled.div`
@@ -128,6 +145,10 @@ const ProductPricing = styled.div`
   font-weight: 600;
   font-size: 2rem;
   margin-bottom: 1.25rem;
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const Crossed = styled.span`
@@ -143,7 +164,7 @@ const AddToCartSpace = styled.div`
 
 const ProductButton = styled.button`
   font-size: 1.5rem;
-  line-height: 1.5rem;
+  line-height: 1.536rem;
   background-color: ${ACCENT_COLOR};
   color: ${SECONDARY_COLOR};
   letter-spacing: -1px;
@@ -160,6 +181,7 @@ const ProductButton = styled.button`
   
   @media screen and (max-width: ${SM - 1}px) {
     margin-left: 0.5rem;
+    letter-spacing: -0.5px;
     font-size: 1.2rem;
     padding: 0.825rem 2rem;
     line-height: 1.2rem;
@@ -323,7 +345,7 @@ const ProductSpecification = ({icon, prop, value}: SpecProps) => {
   )
 };
 
-const AddToCart = ({product}: any) => {
+const AddToCart = (props: any) => {
   const isLoggedIn = cookie.get(AUTH_COOKIE);
 
   const [quantity, setQuantity] = useState(1);
@@ -334,7 +356,8 @@ const AddToCart = ({product}: any) => {
       return notif.showNotification({message: 'Please login to continue shopping', color: 'orange', autoClose: 5000});
     }
     try {
-      await axios.post(`/cart/add`, {quantity, product}, {withCredentials: true});
+      await axios.post(`/cart/add`, {quantity, product: props.product._id}, {withCredentials: true});
+      addToCart(props.product, quantity, 'product_details', 'Product Details'); // analytics event
       notif.showNotification({message: 'Book Added to Cart', color: 'green', autoClose: 3000});
       updateCart();
     } catch (e: any) {
@@ -360,8 +383,13 @@ const AddToCart = ({product}: any) => {
 
 const NotifyMe = ({product}: any) => {
   const notif = useNotifications();
+  const isLoggedIn = cookie.get(AUTH_COOKIE);
 
   async function handleNotify() {
+    if (!isLoggedIn) {
+      return notif.showNotification({message: 'Please login to continue', color: 'orange', autoClose: 5000});
+    }
+
     try {
       await axios.post(`/stock-alerts`, {product}, {withCredentials: true});
       notif.showNotification({message: 'We will notify you when it is back', color: 'green', autoClose: 3000});
@@ -378,11 +406,12 @@ const NotifyMe = ({product}: any) => {
   )
 };
 
-const BookWishlist = ({product}: any) => {
+const BookWishlist = (props: any) => {
   const auth = useAuth();
   const notif = useNotifications();
+  const {product} = props;
 
-  const {data} = useSWR({url: auth ? `/favorites/${product}` : null, withCredentials: true});
+  const {data} = useSWR({url: auth ? `/favorites/${product._id}` : null, withCredentials: true});
 
   async function toggleWishlist() {
     if (data?.data) {
@@ -394,9 +423,11 @@ const BookWishlist = ({product}: any) => {
 
   async function addToWishlist() {
     try {
-      await axios.post(`/favorites`, {product}, {withCredentials: true});
+      await axios.post(`/favorites`, {product: product._id}, {withCredentials: true});
       notif.showNotification({message: 'Book Added to Wishlist', color: 'green', autoClose: 3000});
-      mutate({url: `/favorites/${product}`, withCredentials: true});
+
+      addToWishList(product, 1, 'product_details', 'Product Details');
+      mutate({url: `/favorites/${product._id}`, withCredentials: true});
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
@@ -404,9 +435,9 @@ const BookWishlist = ({product}: any) => {
 
   async function removeFromWishlist() {
     try {
-      await axios.delete(`/favorites/${product}`, {withCredentials: true});
+      await axios.delete(`/favorites/${product._id}`, {withCredentials: true});
       notif.showNotification({message: 'Book Removed from Wishlist', color: 'green', autoClose: 3000});
-      mutate({url: `/favorites/${product}`, withCredentials: true});
+      mutate({url: `/favorites/${product._id}`, withCredentials: true});
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
@@ -424,8 +455,6 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
   const auth = useAuth();
   const clipboard = useClipboard({timeout: 500});
 
-  if (router.isFallback) return <PageWrapper><EmptySectionMessage title={'Loading...'}/></PageWrapper>;
-
   function renderImageSize(w: number, h: number) {
     return getProductImage(book.poster, {height: h, width: w, fit: 'cover'});
   }
@@ -434,17 +463,22 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
     clipboard.copy(`${process.env.NEXT_PUBLIC_SITE_URL}/books/${book.bookId}`);
   }
 
+  if (router.isFallback) return <PageWrapper><EmptySectionMessage title={'Loading...'}/></PageWrapper>;
+
   return (
       <>
         <Head>
           <title>{`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}</title>
           <meta name="description" content={book.description}/>
-          <meta itemProp="name" content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
+          <meta itemProp="name"
+                content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
           <meta itemProp="description" content={book.description}/>
           <meta itemProp="image" content={`${renderImageSize(300, 450)}`}/>
 
-          <meta name="og:title" content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
-          <meta name="twitter:title" content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
+          <meta name="og:title"
+                content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
+          <meta name="twitter:title"
+                content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
 
           <meta name="image" content={`${renderImageSize(300, 450)}`}/>
           <meta name="og:image" content={`${renderImageSize(300, 450)}`}/>
@@ -483,7 +517,7 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
           />
         </Head>
         <PageWrapper>
-          <div className="container">
+          <div className="custom-container">
             <div className="row">
               <div className="col">
                 <Breadcrumbs items={BREADCRUMBS_ITEMS({title: book.title})}/>
@@ -491,7 +525,7 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
             </div>
           </div>
           <section className={'py-25'}>
-            <div className="container">
+            <div className="custom-container">
               <div className="row">
                 <div className="col-xxl-4 col-xl-4 col-12">
                   <ProductCoverSpace>
@@ -505,16 +539,17 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                     </TagsList>
                   </TagsSpace>
                   <SuggestionButtons>
-                    {auth && <BookWishlist product={book._id}/>}
+                    {auth && <BookWishlist product={book}/>}
                     <AppIconButton variant={clipboard.copied ? ButtonVariants.Accent : ButtonVariants.Secondary}
                                    onClick={share}>
-                      <Icon icon={'bx:share-alt'} width={18} height={18}/>&nbsp;{clipboard.copied ? 'Link Copied' : 'Share'}
+                      <Icon icon={'bx:share-alt'} width={18}
+                            height={18}/>&nbsp;{clipboard.copied ? 'Link Copied' : 'Share'}
                     </AppIconButton>
                   </SuggestionButtons>
                 </div>
 
                 <div className="col-xxl-8 col-xl-8 col-12">
-                  <div>
+                  <ProductDetailsWrapper>
                     <ProductTitle>
                       {book.title} {book.tagline && `(${book.tagline})`}
                     </ProductTitle>
@@ -534,8 +569,8 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                                styles={{
                                  control: {boxShadow: 'none', fontSize: '1rem', color: LIGHTEST_PRIMARY_COLOR}
                                }}
-                               showLabel="[Read more]"
-                               hideLabel="[Read Less]">
+                               showLabel="Read More"
+                               hideLabel="Read Less">
                         <p>{book.description}</p>
                       </Spoiler>
                     </ProductDescription>
@@ -555,7 +590,7 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                     <AddToCartSpace>
                       {
                         book.inventory > 0
-                            ? <AddToCart product={book._id}/>
+                            ? <AddToCart product={book}/>
                             : <NotifyMe product={book._id}/>
                       }
                     </AddToCartSpace>
@@ -594,7 +629,7 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                         })
                       }
                     </div>
-                  </div>
+                  </ProductDetailsWrapper>
                 </div>
               </div>
             </div>
@@ -611,7 +646,7 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                 <div className="col-xxl-3 col-xl-3 col-6">
                   <ProductSpecification
                       value={book.version}
-                      prop={'Version'}
+                      prop={'Edition'}
                       icon={'iconoir:remove-page'}/>
                 </div>
                 <div className="col-xxl-3 col-xl-3 col-6">
@@ -672,7 +707,7 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                           book.relatedBooks.map((book: IBook) => {
                             return (
                                 <div key={book.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                                  <ProductCardLandScape book={book}/>
+                                  <ProductCardLandScape book={book} analytics={{listName: 'Related Products', listId: 'related_products'}}/>
                                 </div>
                             )
                           })
@@ -767,7 +802,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       book: data
-    }
+    },
+    revalidate: 1000, // value in seconds | ~ 16 mins
   }
 };
 

@@ -19,7 +19,7 @@ const SectionTitleSpace = styled.div`
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 2rem;
+  font-size: 1.5rem;
   letter-spacing: normal;
 `;
 

@@ -629,8 +629,8 @@ const OrderDetails: React.FC<Props> = () => {
 
   const order: IOrder = get(data, 'data', null);
 
+  if (error) return <PageWrapper><EmptySectionMessage title={error.message}/></PageWrapper>;
   if (!order) return <PageWrapper><EmptySectionMessage title={'Loading Order Info...'}/></PageWrapper>;
-  if (error) return <PageWrapper><EmptySectionMessage title={'Error Loading Order Information'}/></PageWrapper>;
 
   return (
       <>

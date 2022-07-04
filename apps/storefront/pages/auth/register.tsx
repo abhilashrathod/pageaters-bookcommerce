@@ -16,6 +16,7 @@ import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-cont
 
 import {getAssetImage} from "../../core/_imageRendererHelper";
 import {ACCENT_COLOR, AUTH_COOKIE, LG, LIGHTER_PRIMARY_COLOR, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
+import {signUp} from "../../core/_analytics";
 
 
 interface Props {
@@ -298,6 +299,9 @@ const ContactForm = ({onStepChange, onSubmit, onVerifySubmit, onResend}: any) =>
                               label={'Contact No'}
                               type={'tel'}
                               {...contactForm.getInputProps('contactNo')}/>
+                <p>
+                  *Required for orders and important account notifications.
+                </p>
                 <LoginButton type="submit">Save</LoginButton>
                 <p style={{marginBottom: '1.25rem', textAlign: 'center'}}>
                   <AppButton variant={ButtonVariants.Secondary} size={ButtonSizes.Small}
@@ -349,6 +353,8 @@ const Register: React.FC<Props> = () => {
       cookie.set(AUTH_COOKIE, `${+new Date()}`);
       setStep(1);
       updateUser();
+
+      signUp(); // for analytics
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
@@ -422,71 +428,72 @@ const Register: React.FC<Props> = () => {
 
   return (
       <>
-      <Head>
-        <title>Sign Up | Pageaters</title>
-      </Head>
-      <RegisterPage>
-        <div className="container-fluid g-0">
-          <div className="row g-0">
-            <div
-                className="order-last order-lg-first order-xl-first order-xxl-first col-12 col-lg-6 col-xl-5 col-xxl-5">
-              <ContentSpace>
-                <ContentTitles>
-                  <h1 className="display-1">
-                    Let&#39;s Get You Started
-                  </h1>
-                  <h6 style={{color: LIGHTER_PRIMARY_COLOR}}>Register to shop, it&#39;s quick and easy</h6>
-                </ContentTitles>
+        <Head>
+          <title>Sign Up | Pageaters</title>
+        </Head>
+        <RegisterPage>
+          <div className="container-fluid g-0">
+            <div className="row g-0">
+              <div
+                  className="order-last order-lg-first order-xl-first order-xxl-first col-12 col-lg-6 col-xl-5 col-xxl-5">
+                <ContentSpace>
+                  <ContentTitles>
+                    <h1 className="display-1">
+                      Let&#39;s Get You Started
+                    </h1>
+                    <h6 style={{color: LIGHTER_PRIMARY_COLOR}}>Register to shop, it&#39;s quick and easy</h6>
+                  </ContentTitles>
 
-                <Stepper style={{margin: '0 0 2rem 0'}} color={'orange'} size={'lg'} active={step}>
-                  <Stepper.Step icon={<Icon icon={'ic:twotone-mark-email-read'} width={24} height={24}/>}/>
-                  <Stepper.Step icon={<Icon icon={'ic:twotone-person-add-alt'} width={24} height={24}/>}/>
-                  <Stepper.Step icon={<Icon icon={'ic:twotone-perm-phone-msg'} width={24} height={24}/>}/>
-                </Stepper>
+                  <Stepper style={{margin: '0 0 2rem 0'}} color={'orange'} size={'lg'} active={step}>
+                    <Stepper.Step icon={<Icon icon={'ic:twotone-mark-email-read'} width={24} height={24}/>}/>
+                    <Stepper.Step icon={<Icon icon={'ic:twotone-person-add-alt'} width={24} height={24}/>}/>
+                    <Stepper.Step icon={<Icon icon={'ic:twotone-perm-phone-msg'} width={24} height={24}/>}/>
+                  </Stepper>
 
-                <h6>{returnCurrentStepTitle()}</h6>
+                  <h6>{returnCurrentStepTitle()}</h6>
 
-                {
-                  step === 0 &&
-                  <RegistrationForm
-                      onStepChange={handleStepChange}
-                      onSubmit={handleRegisterSubmit}/>
-                }
-                {
-                  step === 1 &&
-                  <PersonalInfoForm
-                      onStepChange={handleStepChange}
-                      onSubmit={handlePersonalInfoSubmit}/>
-                }
-                {
-                  step === 2 &&
-                  <ContactForm
-                      onStepChange={handleStepChange}
-                      onSubmit={handleContactSubmit}
-                      onVerifySubmit={handleVerifySubmit}
-                      onResend={handleResend}/>
-                }
-              </ContentSpace>
-            </div>
-            <div className="order-first order-lg-last order-xl-last order-xxl-last col-12 col-lg-6 col-xl-7 col-xxl-7">
-              <HeroSpace>
-                <picture style={{width: '100%'}}>
-                  <source media={`(max-width: ${SM - 1}px)`} type="image/jpeg"
-                          srcSet={renderImageSize('login-reading-lady.jpg', 375, 450)} height={450} width={375}/>
-                  <source media={`(max-width: ${MD - 1}px)`} type="image/jpeg"
-                          srcSet={renderImageSize('login-reading-lady.jpg', 768, 600)} height={768} width={600}/>
-                  <source media={`(max-width: ${LG - 1}px)`} type="image/jpeg"
-                          srcSet={renderImageSize('login-reading-lady.jpg', 1024, 800)} height={800} width={1024}/>
-                  <HeroImage src={renderImageSize('login-reading-lady.jpg', 1920, 1280)} alt="registration-banner"/>
-                </picture>
-              </HeroSpace>
-              <GradientSpace>
-                <h1 className={'display-1'} style={{color: SECONDARY_COLOR}}>Let&#39;s Get You Started</h1>
-              </GradientSpace>
+                  {
+                    step === 0 &&
+                    <RegistrationForm
+                        onStepChange={handleStepChange}
+                        onSubmit={handleRegisterSubmit}/>
+                  }
+                  {
+                    step === 1 &&
+                    <PersonalInfoForm
+                        onStepChange={handleStepChange}
+                        onSubmit={handlePersonalInfoSubmit}/>
+                  }
+                  {
+                    step === 2 &&
+                    <ContactForm
+                        onStepChange={handleStepChange}
+                        onSubmit={handleContactSubmit}
+                        onVerifySubmit={handleVerifySubmit}
+                        onResend={handleResend}/>
+                  }
+                </ContentSpace>
+              </div>
+              <div
+                  className="order-first order-lg-last order-xl-last order-xxl-last col-12 col-lg-6 col-xl-7 col-xxl-7">
+                <HeroSpace>
+                  <picture style={{width: '100%'}}>
+                    <source media={`(max-width: ${SM - 1}px)`} type="image/jpeg"
+                            srcSet={renderImageSize('login-reading-lady.jpg', 375, 450)} height={450} width={375}/>
+                    <source media={`(max-width: ${MD - 1}px)`} type="image/jpeg"
+                            srcSet={renderImageSize('login-reading-lady.jpg', 768, 600)} height={768} width={600}/>
+                    <source media={`(max-width: ${LG - 1}px)`} type="image/jpeg"
+                            srcSet={renderImageSize('login-reading-lady.jpg', 1024, 800)} height={800} width={1024}/>
+                    <HeroImage src={renderImageSize('login-reading-lady.jpg', 1920, 1280)} alt="registration-banner"/>
+                  </picture>
+                </HeroSpace>
+                <GradientSpace>
+                  <h1 className={'display-1'} style={{color: SECONDARY_COLOR}}>Let&#39;s Get You Started</h1>
+                </GradientSpace>
+              </div>
             </div>
           </div>
-        </div>
-      </RegisterPage>
+        </RegisterPage>
       </>
   )
 };

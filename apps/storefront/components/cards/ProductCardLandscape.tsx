@@ -4,19 +4,26 @@ import styled from 'styled-components'
 import Badges from "../elements/Badge";
 
 import {IBook} from "../../schemas/book";
-import {ACCENT_COLOR, LIGHT_COLOR, PRIMARY_COLOR, PRIMARY_SUCCESS, SECONDARY_COLOR} from "../../core/_variables";
+import {LIGHT_COLOR, PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variables";
 import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
 import {getProductImage} from "../../core/_imageRendererHelper";
 import {useRouter} from "next/router";
 
+import {viewItem} from "../../core/_analytics";
+
 interface Props {
   book: IBook;
+  analytics?: {
+    listId: string;
+    listName: string;
+  }
 }
 
-const WrapperDiv = styled.div`
+const WrapperDiv = styled.a`
   margin-bottom: 1rem;
   position: relative;
-  cursor: pointer;  
+  display: block;
+  cursor: pointer;
 `;
 
 const CardCover = styled.div`
@@ -48,6 +55,7 @@ const CardTags = styled.div`
   line-height: 18px;
   align-items: center;
   display: inline-flex;
+  margin-bottom: 0.25rem;
 `;
 
 const CardSubTitle = styled.div`
@@ -82,7 +90,7 @@ const Crossed = styled.span`
     color: ${LIGHT_COLOR};
 `;
 
-const ProductCardLandScape: React.FC<Props> = ({book}) => {
+const ProductCardLandScape: React.FC<Props> = ({book, analytics}) => {
   const router = useRouter();
 
   function renderImageSize(w: number, h: number) {
@@ -90,12 +98,14 @@ const ProductCardLandScape: React.FC<Props> = ({book}) => {
   }
 
   function handleNavigation() {
+    // @ts-ignore // analytics tracking
+    viewItem([book], analytics.listId, analytics.listName);
     router.push(`/books/${book.bookId}`);
   }
 
   return (
       <>
-        <WrapperDiv onClick={handleNavigation}>
+        <WrapperDiv target={'_blank'} onClick={handleNavigation}>
           <CartDiscount>{book?.currentDiscount}% Off</CartDiscount>
           <CardCover>
             <CardImage src={renderImageSize(247, 375)} alt={book?.title} loading="lazy" height={375} width={247}/>
@@ -107,7 +117,7 @@ const ProductCardLandScape: React.FC<Props> = ({book}) => {
               {book.bestSeller && <Badges text={book.bestSeller ? 'Best Seller' : ''} color={'primary'}/>}
             </CardTags>
             <CardTitle>
-              {book.title}
+              {book.title} by {book?.author?.name}
             </CardTitle>
             <CardSubTitle>
               {

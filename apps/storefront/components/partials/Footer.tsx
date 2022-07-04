@@ -8,7 +8,7 @@ import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 import logo from '../../public/images/horizontal-logo.png';
 
-import {FOOTER_NAVIGATION, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
+import {FOOTER_NAVIGATION, HORIZONTAL_LOGO, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 
 
 interface Props {
@@ -32,8 +32,11 @@ const MainFooterAddress = styled.div`
     margin-right: 1rem;
   }
 `;
-const MainFooterLogo = styled.div`
-  margin-bottom: 2rem;
+const MainFooterLogoSpace = styled.div``;
+
+const MainFooterLogo = styled.img`
+  width: 200px;
+  height: auto;
 `;
 
 const ContactTitle = styled.h6`
@@ -48,7 +51,7 @@ const FooterNavigation = styled.ul`
   padding-left: 0;
   
   @media screen and (min-width: ${SM - 1}px) {      
-    flex: 2 0;
+    flex: 1 0;
   }
 `;
 
@@ -110,15 +113,16 @@ const AppFooter: React.FC<Props> = () => {
             <div className="col">
               <MainFooter>
                 <MainFooterAddress>
-                  <MainFooterLogo>
-                    <Image src={logo} width={200} height={50} alt="pageaters-logo"/>
-                  </MainFooterLogo>
-
+                  <MainFooterLogoSpace>
+                    <MainFooterLogo src={HORIZONTAL_LOGO} alt={'pageaters-main-logo'} width={200} />
+                  </MainFooterLogoSpace>
+                </MainFooterAddress>
+                <MainFooterAddress>
                   <ContactTitle>Contact</ContactTitle>
 
                   <address>
                     Unit 1, Demo Logistics Park, Sector 1,<br/>
-                    Gandhinagar, GJ - 382016 <br/>
+                    Gandhinagar, Gujarat - 382016 <br/>
                     (Active Hours: Monday to Saturday, 11AM to 7PM) <br/>
                     <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}} size={ButtonSizes.Small} onClick={() => handleContact( 'mailto:support@demo.pageaters.com')}>Mail Us</AppButton>
                     <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}}  size={ButtonSizes.Small} onClick={() => handleContact( 'tel:+91-9000000000')}>Call Us</AppButton>

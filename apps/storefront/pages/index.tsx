@@ -20,6 +20,8 @@ import {IDeal} from "../schemas/deal";
 import {IBook} from "../schemas/book";
 import {ICollection} from "../schemas/collection";
 import {IBundle} from "../schemas/bundle";
+import CollectionsCarousel from "../components/carousels/Collections";
+import PageWrapper from "../components/elements/PageWrapper";
 
 
 const DealsSection = () => {
@@ -77,7 +79,7 @@ const BestSellers = () => {
             data
                 ? data?.data?.docs.map((item: IBook) => (
                     <div key={item.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                      <ProductCardLandScape book={item}/>
+                      <ProductCardLandScape book={item} analytics={{listName: 'Most Discounted', listId: 'most-discounted'}}/>
                     </div>
                 ))
                 : [0, 0, 0, 0, 0, 0].map((item: any, index) => (
@@ -111,7 +113,7 @@ const NewArrivals = () => {
             data
                 ? data?.data?.docs.map((item: IBook) => (
                     <div key={item.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                      <ProductCardLandScape book={item}/>
+                      <ProductCardLandScape book={item} analytics={{listName: 'New Arrivals', listId: 'new-arrivals'}}/>
                     </div>
                 ))
                 : [0, 0, 0, 0, 0, 0].map((item: any, index) => (
@@ -145,47 +147,12 @@ const MostPopular = () => {
             data
                 ? data?.data?.docs.map((item: IBook) => (
                     <div key={item.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                      <ProductCardLandScape book={item}/>
+                      <ProductCardLandScape book={item} analytics={{listName: 'Most Popular', listId: 'most-popular'}}/>
                     </div>
                 ))
                 : [0, 0, 0, 0, 0, 0].map((item: any, index) => (
                     <div key={index} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
                       <Skeleton height={320} radius="lg"/>
-                    </div>
-                ))
-          }
-        </div>
-      </div>
-  )
-};
-
-const CollectionsSection = () => {
-  const {data, error} = useSWR({
-    url: `/collections`,
-    args: {page: 1, limit: 3, sortBy: 'priority', sortOrder: 'asc'}
-  });
-
-  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
-
-  return (
-      <div className="custom-container">
-        <div className="row">
-          <div className="col">
-            <SectionHeading sectionTitle={'Spotlight Collections'}
-                            navigateButtonProps={{buttonText: 'View All', buttonNavigationUrl: '/collections'}}/>
-          </div>
-        </div>
-        <div className="row">
-          {
-            data
-                ? data?.data?.docs.map((item: ICollection) => (
-                    <div key={item.collectionId} className="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6 col-12">
-                      <CollectionCardSmall collection={item}/>
-                    </div>
-                ))
-                : [0, 0, 0].map((item: any, index) => (
-                    <div key={index} className="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6 col-12">
-                      <Skeleton height={350} radius="lg"/>
                     </div>
                 ))
           }
@@ -247,66 +214,70 @@ const Home: NextPage = (props: any) => {
           <meta property="twitter:description" content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books. "/>
           <meta property="twitter:image" content="https://res.cloudinary.com/pageaters/image/upload/v1624257111/pageaters-poster_ohufa0.png"/>
         </Head>
-        <section className={'mb-25'}>
-          <HeroBanner banner={props.heroBanner}/>
-        </section>
+        <PageWrapper>
+          <section className={'mb-25'}>
+            <HeroBanner banner={props.heroBanner}/>
+          </section>
 
-        <section className={'mb-25'}>
-          <Categories/>
-        </section>
+          <section className={'mb-25'}>
+            <Categories/>
+          </section>
 
-        <section className={'mb-25'}>
-          <BestSellers/>
-        </section>
+          <section className={'mb-25'}>
+            <BestSellers/>
+          </section>
 
-        <section className={'mb-25'}>
-          <DealsSection/>
-        </section>
-        {/*
-        <section className="py-25 mb-25">
-          <div className="custom-container">
-            <div className="row">
-              <div className="col">
-                <h1 className="display-1">Programs to Help You</h1>
-                <h1 className="jumbo-1">
-                  Earn from Pageaters
-                </h1>
-              </div>
+          <section className={'mb-25'}>
+            <DealsSection/>
+          </section>
+
+          {/*
+          <section className="py-25 mb-25">
+            <div className="custom-container">
               <div className="row">
-                {
-                  props.banners.map((item: IBanner, index: number) => (
-                      <div key={index} className="col">
-                        <LandscapeBanner banner={item}/>
-                      </div>
-                  ))
-                }
+                <div className="col">
+                  <h1 className="display-1">Programs to Help You</h1>
+                  <h1 className="jumbo-1">
+                    Earn from Pageaters
+                  </h1>
+                </div>
+                <div className="row">
+                  {
+                    props.banners.map((item: IBanner, index: number) => (
+                        <div key={index} className="col">
+                          <LandscapeBanner banner={item}/>
+                        </div>
+                    ))
+                  }
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-        */}
-        <section className={'mb-25'}>
-          <BundlesSection/>
-        </section>
+          </section>
+          */}
 
-        <section className={'mb-25'}>
-          <MostPopular/>
-        </section>
+          <section className={'mb-25'}>
+            <BundlesSection/>
+          </section>
 
-        <section className={'mb-25'}>
-          <CollectionsSection/>
-        </section>
+          <section className={'mb-25'}>
+            <MostPopular/>
+          </section>
 
-        <section className="py-25 mb-25">
-          <GiantFullBleedBanner banner={{
-            title: 'Explore Membership Benefits',
-            poster: 'medium-shot-happy-brunette-woman-with-book-min_wu681i.jpg'
-          }}/>
-        </section>
+          <section className={'mb-25'}>
+            <CollectionsCarousel />
+          </section>
 
-        <section className={'mb-25'}>
-          <NewArrivals/>
-        </section>
+          <section className="py-25 mb-25">
+            <GiantFullBleedBanner banner={{
+              title: 'Explore Membership Benefits',
+              poster: 'medium-shot-happy-brunette-woman-with-book-min_wu681i.jpg'
+            }}/>
+          </section>
+
+          <section className={'mb-25'}>
+            <NewArrivals/>
+          </section>
+        </PageWrapper>
       </>
   )
 };

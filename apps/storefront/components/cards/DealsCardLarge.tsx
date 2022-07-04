@@ -53,7 +53,7 @@ const CardContent = styled.div`
 
 const CardTitle = styled.h4`
   line-height: 2.286rem;
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-bottom: 0;
   color: ${SECONDARY_COLOR};
 `;

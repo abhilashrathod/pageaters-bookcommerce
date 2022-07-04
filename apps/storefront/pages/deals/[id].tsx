@@ -3,6 +3,7 @@ import {GetStaticPaths, GetStaticProps, InferGetStaticPropsType, NextPage} from 
 import axios from "axios";
 import styled from "styled-components";
 import Head from "next/head";
+import KebabCase from 'lodash/kebabCase'
 import {useRouter} from "next/router";
 
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
@@ -107,7 +108,7 @@ const ViewDeal: NextPage<Props> = ({dealInfo}: InferGetStaticPropsType<typeof ge
                             return (
                                 <div key={productItem.product.bookId}
                                      className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                                  <ProductCardLandScape book={productItem.product}/>
+                                  <ProductCardLandScape book={productItem.product} analytics={{listName: `Deal ${dealInfo?.title}`, listId: `${KebabCase(dealInfo?.title)}-deal-books`}} />
                                 </div>
                             )
                           })

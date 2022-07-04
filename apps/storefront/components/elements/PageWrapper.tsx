@@ -6,12 +6,12 @@ interface Props {
 }
 
 const Page = styled.section`
-  margin: 5rem 0;
+  margin: 4.5rem 0;
   min-height: 80vh;
   height: auto;
 
   @media screen and (max-width: ${SM - 1}px) {      
-    margin-top: 4.5rem 2rem;
+    margin-top: 4.25rem;
   }
 `;
 

@@ -3,10 +3,11 @@ import {GetStaticPaths, GetStaticProps, InferGetStaticPropsType, NextPage} from 
 import axios from "axios";
 import {parseUrl, stringifyUrl} from 'query-string';
 import Head from "next/head";
+import {Pagination, Skeleton} from "@mantine/core";
 import {useRouter} from "next/router";
 import useSWR from "swr";
+import {kebabCase} from 'lodash';
 
-import {Pagination, Skeleton} from "@mantine/core";
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
@@ -136,7 +137,7 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
                         data?.data?.docs.map((item: IBook) => {
                           return (
                               <div key={item.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                                <ProductCardLandScape book={item}/>
+                                <ProductCardLandScape book={item} analytics={{listId: `${kebabCase(categoryDetails?.title)}-books-category`, listName: `${categoryDetails?.title} List`}}/>
                               </div>
                           )
                         })

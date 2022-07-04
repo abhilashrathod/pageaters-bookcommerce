@@ -4,6 +4,7 @@ import axios from "axios";
 import {mutate} from "swr";
 import Head from "next/head";
 import {useRouter} from "next/router";
+import KebabCase from 'lodash/kebabCase'
 import {useNotifications} from "@mantine/notifications";
 import {Spoiler} from '@mantine/core';
 import {Icon} from "@iconify/react";
@@ -34,6 +35,7 @@ import {IBook} from "../../schemas/book";
 import {ICollection} from "../../schemas/collection";
 import cookie from "js-cookie";
 import AppButton, {ButtonVariants} from "../../components/form-controls/Button";
+import {addToCart} from "../../core/_analytics";
 
 const BREADCRUMBS_ITEMS = (activeItem: any) => [
   {title: 'Home', href: '/'},
@@ -83,9 +85,12 @@ const Tag = styled.li`
   display: inline-flex;
   border-radius: 1.5rem;
   position: relative;
-  color: ${SECONDARY_COLOR};
+  color: ${PRIMARY_COLOR};
+  border: 1px solid #eee;
   font-size: 0.825rem;
-  background-color: ${ACCENT_COLOR};
+  background-color: ${SECONDARY_COLOR};
+  box-shadow: rgb(0 0 0 / 18%) 0 2px 4px 0;
+  font-weight:600;
   text-decoration: none;
   zoom: 1;
   line-height: 1;
@@ -103,6 +108,10 @@ const ProductInfo = styled.div``;
 const ProductTitle = styled.h1`
   font-size: 2rem;
   letter-spacing: 0;
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const ProductDescription = styled.div`
@@ -119,7 +128,11 @@ const ProductSavings = styled.div`
 const ProductPricing = styled.div`
   font-weight: 600;
   font-size: 2rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.25rem;  
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const Crossed = styled.span`
@@ -156,7 +169,7 @@ const AddToCartSpace = styled.div`
 
 const AddToCartButton = styled.button`
   font-size: 1.5rem;
-  line-height: 1.5rem;
+  line-height: 1.536rem;
   background-color: ${ACCENT_COLOR};
   color: ${SECONDARY_COLOR};
   letter-spacing: -1px;
@@ -164,6 +177,13 @@ const AddToCartButton = styled.button`
   border-radius: 0.5rem;
   font-weight: normal;
   box-shadow: 0 2px 10px 0 rgb(0 0 0 / 16%);
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    font-size: 1.2rem;
+    padding: 0.825rem 2rem;
+    line-height: 1.2rem;
+    letter-spacing: -0.5px;
+  }
 `;
 
 const SiteFeatures = styled.div``;
@@ -222,6 +242,7 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
       await axios.post(`/cart/add/bundle`, {bundle: bundleDetails._id}, {withCredentials: true});
       notif.showNotification({message: 'Bundle Added to Cart', color: 'green', autoClose: 3000});
       updateCart();
+      addToCart(bundleDetails, 1, 'bundle_details', 'Bundle Details');
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
@@ -373,7 +394,7 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
                     bundleDetails.bundledBooks.map((book: IBook) => {
                       return (
                           <div key={book.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                            <ProductCardLandScape book={book}/>
+                            <ProductCardLandScape book={book} analytics={{listName: `${bundleDetails.title} Bundle Books`, listId: `${KebabCase(bundleDetails.title)}-bundle-list`}}/>
                           </div>
                       )
                     })

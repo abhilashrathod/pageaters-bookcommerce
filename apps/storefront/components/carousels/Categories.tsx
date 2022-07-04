@@ -21,7 +21,7 @@ export const CategoryTitleSpace = styled.div`
 `;
 
 export const SectionTitle = styled.h3`
-  font-size: 2rem;
+  font-size: 1.5rem;
   letter-spacing: normal;
 `;
 
@@ -47,7 +47,7 @@ const Categories: React.FC<Props> = () => {
   const carouselContainer = useRef(null);
   const router = useRouter();
 
-  const [params, setParams] = useState({page: 1, limit: 25});
+  const [params, setParams] = useState({page: 1, limit: 25, sortBy: 'priority', sortOrder: 'asc'});
 
   const {data, error} = useSWR({url: `/categories`, args: params});
 

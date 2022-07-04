@@ -26,6 +26,7 @@ import {IAddress} from "../../schemas/address";
 import emptyAddress from '../../public/illustrations/delivery-address.svg';
 import emptyCart from '../../public/illustrations/empty-cart.svg'
 import Head from "next/head";
+import {addShippingInfo} from "../../core/_analytics";
 
 
 interface Props {
@@ -183,6 +184,8 @@ const AddressSelect: React.FC<Props> = () => {
       });
       router.push('/checkout');
       mutate({key: `/orders/retrieve`, withCredentials: true});
+
+      addShippingInfo(cart, 'cart', 'Cart'); // for analytics
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
@@ -216,16 +219,17 @@ const AddressSelect: React.FC<Props> = () => {
 
   if (error)
     return (
-      <PageWrapper>
-        <FailedToLoad title={'Error Loading Addresses..'}/>
-      </PageWrapper>
-  );
+        <PageWrapper>
+          <FailedToLoad title={'Error Loading Addresses..'}/>
+        </PageWrapper>
+    );
 
   if (books.length === 0 && bundles.length === 0)
     return (
-      <PageWrapper>
-        <EmptyMessageWithGraphic title={'Cart is empty'} illustration={emptyCart} illustrationHeight={'300px'} illustrationWidth={'300px'}/>
-      </PageWrapper>
+        <PageWrapper>
+          <EmptyMessageWithGraphic title={'Cart is empty'} illustration={emptyCart} illustrationHeight={'300px'}
+                                   illustrationWidth={'300px'}/>
+        </PageWrapper>
     );
 
   return (

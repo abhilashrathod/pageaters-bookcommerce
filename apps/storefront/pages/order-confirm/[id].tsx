@@ -18,10 +18,9 @@ const GREETINGS = [
   `You're a hero! Thanks for your order`,
   `Thanks for Supporting Local Business!`,
   `Great news! We’ve got your order`,
-  `Order Received, we're on it. Thanks for stopping by.`,
+  `Order Received,! We're on it.`,
   `We're your new bookish friends. Thanks for the order!`,
-  `Hey Pageater, your order is received!`,
-  ``
+  `Hey Pageater, your order is received!`
 ];
 
 const IllustrationImage = styled.img`

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import useSWR, {mutate} from "swr";
 import Head from "next/head";
 import styled from "styled-components";
@@ -22,6 +22,7 @@ import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-cont
 import {AUTH_COOKIE, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 
 import graphic from '../../public/illustrations/empty-cart.svg';
+import {beginCheckout, removeFromCart, viewCart} from "../../core/_analytics";
 
 const BREADCRUMBS_ITEMS = [
   {title: 'Home', href: '/'},
@@ -111,7 +112,15 @@ const Cart: React.FC<Props> = () => {
 
   const {data, error} = useSWR({url: auth ? `/cart/retrieve` : null, withCredentials: true});
 
+  useEffect(() => {
+    const mainCart = get(data, 'data', null);
+    if (mainCart) {
+      viewCart(mainCart, 'cart', 'Cart'); // for analytics
+    }
+  }, [data]);
+
   function transferToAddress() {
+    beginCheckout(cart, 'cart', 'Cart'); // for analytics
     router.push(`/address-select`);
   }
 
@@ -121,6 +130,12 @@ const Cart: React.FC<Props> = () => {
       notif.showNotification({message: 'Book Removed from Cart', color: 'green', autoClose: 3000});
 
       updateCart();
+
+      // find book from list and send for analytics
+      const index = books.findIndex((x: any) => x.product._id === id);
+      const book = books[index];
+
+      removeFromCart(book, index, 'cart', 'Cart'); // for analytics
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
@@ -193,7 +208,9 @@ const Cart: React.FC<Props> = () => {
                                     books.map((item: any) => {
                                       return (
                                           <ProductListItem key={item._id}>
-                                            <ProductItem book={item} viewOnly={false} onDelete={handleOnDelete}
+                                            <ProductItem book={item}
+                                                         viewOnly={false}
+                                                         onDelete={handleOnDelete}
                                                          onQuantityChange={handleQuantityChange}/>
                                           </ProductListItem>
                                       )
@@ -203,7 +220,9 @@ const Cart: React.FC<Props> = () => {
                                     bundles.map((item: any) => {
                                       return (
                                           <ProductListItem key={item._id}>
-                                            <BundleItem viewOnly={false} onDelete={handleOnBundleDelete} cartBundle={item}/>
+                                            <BundleItem viewOnly={false}
+                                                        onDelete={handleOnBundleDelete}
+                                                        cartBundle={item}/>
                                           </ProductListItem>
                                       )
                                     })

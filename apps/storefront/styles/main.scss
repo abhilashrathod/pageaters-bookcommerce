@@ -7,6 +7,9 @@
 @import "skeleton";
 @import "nprogress";
 
+/* SLIDER */
+@import '../node_modules/keen-slider/keen-slider.min.css';
+
 .categories-list-container {
   margin: 0 auto;
   flex-wrap: nowrap;

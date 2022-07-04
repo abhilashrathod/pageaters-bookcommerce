@@ -10,7 +10,7 @@ import {LIGHT_COLOR} from "../../core/_variables";
 interface Props {
   book: IBook;
   onItemDelete: (id: string) => void;
-  onItemAddCart: (id: string) => void;
+  onItemAddCart: (book: IBook) => void;
 }
 
 const WishlistWrapper = styled.div`
@@ -92,7 +92,7 @@ const WishlistActionCard: React.FC<Props> = ({book, onItemAddCart, onItemDelete}
                   </CardSubTitle>
                 </div>
                 <div>
-                  <AppButton onClick={() => onItemAddCart(book._id)} variant={ButtonVariants.Accent} size={ButtonSizes.Small} styles={{marginRight: '1rem'}}>
+                  <AppButton onClick={() => onItemAddCart(book)} variant={ButtonVariants.Accent} size={ButtonSizes.Small} styles={{marginRight: '1rem'}}>
                     Add to Cart
                   </AppButton>
                   <AppButton onClick={() => onItemDelete(book._id)} variant={ButtonVariants.Secondary} size={ButtonSizes.Small}>

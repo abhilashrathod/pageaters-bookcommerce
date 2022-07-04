@@ -22,6 +22,7 @@ import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-cont
 import {AUTH_COOKIE, LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 
 import emptyCart from "../../public/illustrations/empty-cart.svg";
+import {completePurchase} from "../../core/_analytics";
 
 interface Props {
 }
@@ -173,6 +174,7 @@ const Checkout: React.FC<Props> = () => {
       },
       handler: (response: any) => {
         router.replace(`/order-confirm/${orderData.orderId}`);
+        completePurchase(cart, order, 'order', 'Order'); // for analytics
       },
     };
 

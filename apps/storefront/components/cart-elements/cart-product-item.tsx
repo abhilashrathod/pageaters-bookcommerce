@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {Icon} from "@iconify/react";
 
 import AppIconButton from "../form-controls/IconButton";
@@ -45,12 +45,15 @@ const ProductItem = ({book, viewOnly, onDelete, onQuantityChange}: Props) => {
   function handleQuantityChange(e: any) {
     // @ts-ignore
     onQuantityChange({quantity: e.target.value, product: book.product._id});
-    setQuantity(Number(e.target.value));
   }
 
   function viewProductDetails() {
     router.push(`/books/${book.product.bookId}`);
   }
+
+  useEffect(() => {
+    setQuantity(book.quantity);
+  }, [book.quantity]);
 
   return (
       <CartItem>

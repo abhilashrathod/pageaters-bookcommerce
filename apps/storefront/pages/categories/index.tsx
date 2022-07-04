@@ -29,7 +29,7 @@ const BREADCRUMBS_ITEMS = [
 const Categories: React.FC<Props> = () => {
   const router = useRouter();
 
-  const {data, error} = useSWR({url: `/categories`, args: {page: 1, limit: 25}});
+  const {data, error} = useSWR({url: `/categories`, args: {page: 1, limit: 25, sortBy: 'priority', sortOrder: 'asc'}});
 
   if (error) return <div>failed to load</div>;
 

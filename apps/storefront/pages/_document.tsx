@@ -1,11 +1,8 @@
-import Document, { DocumentContext } from 'next/document';
-import {createGetInitialProps} from '@mantine/next';
+import Document, {DocumentContext} from 'next/document';
 import {ServerStyleSheet} from "styled-components";
 
-const getInitialProps = createGetInitialProps();
-
 export default class _Document extends Document {
-  // static getInitialProps = getInitialProps;
+
   static async getInitialProps(ctx: DocumentContext) {
     const sheet = new ServerStyleSheet();
     const originalRenderPage = ctx.renderPage;

@@ -18,6 +18,7 @@ import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-cont
 import {ACCENT_COLOR, AUTH_COOKIE, LG, LIGHTER_PRIMARY_COLOR, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
 
 import {getAssetImage} from "../../core/_imageRendererHelper";
+import {signIn} from "../../core/_analytics";
 
 interface Props {
 }
@@ -170,9 +171,10 @@ const Login: React.FC<Props> = () => {
 
           setTimeout(() => {
             if (redirect) return router.replace(`${redirect}`);
-
             router.push('/');
           }, 500);
+
+          signIn(); // for analytics
         })
         .catch((err) => {
           notif.showNotification({message: err.message, color: 'red', autoClose: 3000});

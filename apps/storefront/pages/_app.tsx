@@ -1,11 +1,15 @@
-import React from "react";
+import React, {useEffect} from "react";
 import axios from "axios";
-import {AppProps} from 'next/app'
-import Router from "next/router";
+import {AppProps} from 'next/app';
+import Head from "next/head";
+import Script from "next/script";
+import Router, {useRouter} from "next/router";
 import nProgress from "nprogress";
 import {Middleware, SWRConfig, SWRHook} from 'swr'
 import {MantineProvider} from "@mantine/core";
 import {NotificationsProvider} from '@mantine/notifications';
+
+import * as gtag from '../core/_analytics';
 
 import '../styles/main.scss'
 import '../core/_service';
@@ -13,7 +17,6 @@ import '../core/_service';
 import AppHeader from "../components/partials/Header";
 import AppFooter from "../components/partials/Footer";
 import AppMobileMenu from "../components/partials/MobileMenu";
-import Head from "next/head";
 
 Router.events.on("routeChangeStart", nProgress.start);
 Router.events.on("routeChangeError", nProgress.done);
@@ -37,6 +40,25 @@ const fetcher = (configuration: any) => {
 /* ENG OF SWR GLOBAL FUNCTION */
 
 function MyApp({Component, pageProps}: AppProps) {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!!process.env.NEXT_PUBLIC_PRODUCTION) {
+      // @ts-ignore // not tracking in development. Neat, hah!
+      window[`ga-disable-${gtag.GA_TRACKING_ID}`] = true;
+    }
+
+    const handleRouteChange = (url: string) => {
+      gtag.pageview(url)
+    };
+    router.events.on('routeChangeComplete', handleRouteChange);
+    router.events.on('hashChangeComplete', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+      router.events.off('hashChangeComplete', handleRouteChange);
+    };
+  }, [router.events]);
+
   return (
       <>
         <Head>
@@ -69,6 +91,41 @@ function MyApp({Component, pageProps}: AppProps) {
             </NotificationsProvider>
           </MantineProvider>
         </SWRConfig>
+
+        <Script
+            strategy="afterInteractive"
+            src={`https://www.googletagmanager.com/gtag/js?id=${gtag.GA_TRACKING_ID}`}
+        />
+        <noscript><img height="1" width="1" style={{display: 'none'}} src="https://www.facebook.com/tr?id=243894680471127&ev=PageView&noscript=1"/></noscript>
+        <Script
+            id="gtag-init"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${gtag.GA_TRACKING_ID}', {
+              page_path: window.location.pathname
+            });
+          `,
+          }}
+        />
+        <Script strategy={'afterInteractive'} dangerouslySetInnerHTML={{
+          __html: `
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '243894680471127');
+            fbq('track', 'PageView');
+          `
+        }}>
+        </Script>
       </>
   )
 }

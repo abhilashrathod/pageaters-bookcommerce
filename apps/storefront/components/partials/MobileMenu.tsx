@@ -8,6 +8,7 @@ import {AUTH_COOKIE, MD} from "../../core/_variables";
 import {useRouter} from "next/router";
 import useSWR from "swr";
 import cookie from "js-cookie";
+import axios from "axios";
 
 interface Props {
 }
@@ -58,12 +59,26 @@ const AppMobileMenu: React.FC<Props> = () => {
   const router = useRouter();
   const isLoggedIn = cookie.get(AUTH_COOKIE);
 
-  const {data: person} = useSWR({url: isLoggedIn ? `/auth/me` : null, withCredentials: true});
+  const {data: userRes} = useSWR({url: isLoggedIn ? `/auth/me` : null, withCredentials: true});
   const {data: cart} = useSWR({url: isLoggedIn ? `/cart/retrieve` : null, withCredentials: true});
 
   function navigateToUrl(url: string) {
     router.push(url);
   }
+
+  async function logout() {
+    try {
+      await axios.post(`/auth/logout`, {}, {withCredentials: true});
+      cookie.remove(AUTH_COOKIE);
+
+      router.replace('/');
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const person = get(userRes, 'data', null);
+  const cartLength = get(cart, 'data.products', []).length + get(cart, 'data.bundles', []).length;
 
   return (
       <>
@@ -77,57 +92,54 @@ const AppMobileMenu: React.FC<Props> = () => {
                 </LinkItem>
               </Link>
             </MobileMenuListItem>
-            {
-              isLoggedIn && (
-                  <MobileMenuListItem>
-                    <Link href={'/account/wishlist'}>
-                      <LinkItem>
-                        <Icon icon={'bx:bx-heart'} width={30} height={30}/>
-                        <LinkName>Wishlist</LinkName>
-                      </LinkItem>
-                    </Link>
-                  </MobileMenuListItem>
-              )
-            }
-            {
-              isLoggedIn && (
-                  <MobileMenuListItem>
-                    <Link href={'/account/orders'}>
-                      <LinkItem>
-                        <Icon icon={'ph:shopping-bag-bold'} width={30} height={30}/>
-                        <LinkName>Orders</LinkName>
-                      </LinkItem>
-                    </Link>
-                  </MobileMenuListItem>
-              )
-            }
-
             <MobileMenuListItem>
               <Link href={'/cart'}>
                 <LinkItem>
-                  <Badge style={{position: 'absolute', top: '-10px', right: '-20px', padding: '0 8px'}} variant="filled" color="orange">
-                    {get(cart, 'data.products', []).length + get(cart, 'data.bundles', []).length}
-                  </Badge>
+                  {
+                    cartLength > 0 && (
+                        <Badge style={{position: 'absolute', top: '-10px', right: '-20px', padding: '0 8px'}} variant="filled"
+                               color="orange">
+                          {cartLength}
+                        </Badge>
+                    )
+                  }
                   <Icon icon={'bx:bx-cart'} width={30} height={30}/>
                   <LinkName>Cart</LinkName>
                 </LinkItem>
               </Link>
             </MobileMenuListItem>
+            {
+              isLoggedIn && (
+                  <MobileMenuListItem>
+                    <Menu withArrow placement={'center'} control={<LinkItem><Icon icon={'bx:bx-user-circle'} width={30} height={30}/><LinkName>Account</LinkName></LinkItem>}>
+                      <Menu.Label>Hello, {person?.fullName ? person?.fullName : 'Reader'}!</Menu.Label>
+                      <Menu.Item onClick={() => navigateToUrl('/account/orders')} icon={<Icon icon={'ph:shopping-bag-bold'} width={20} height={20}/>}>Orders</Menu.Item>
+                      <Menu.Item onClick={() => navigateToUrl('/account/wishlist')} icon={<Icon icon={'bx:bx-heart'} width={20} height={20}/>}>Wishlist</Menu.Item>
+                      <Menu.Item onClick={() => navigateToUrl('/account')} icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
+                      <Menu.Item onClick={logout} icon={<Icon icon={'bx:log-out'} width={20} height={20}/>}>Logout</Menu.Item>
+                    </Menu>
+                  </MobileMenuListItem>
+              )
+            }
+            {
+              !isLoggedIn && (
+                  <MobileMenuListItem>
+                    <Link href={'/auth/login'}>
+                      <LinkItem>
+                        <Icon icon={'bx:bx-user-circle'} width={30} height={30}/>
+                        <LinkName>Sign In</LinkName>
+                      </LinkItem>
+                    </Link>
+                  </MobileMenuListItem>
+              )
+            }
             <MobileMenuListItem>
-              <Menu withArrow placement={'end'} control={<LinkItem><Icon icon={'bx:grid-alt'} width={30}
-                                                                         height={30}/><LinkName>Store</LinkName></LinkItem>}>
+              <Menu withArrow placement={'end'} control={<LinkItem><Icon icon={'bx:grid-alt'} width={30} height={30}/><LinkName>Store</LinkName></LinkItem>}>
                 <Menu.Label>Explore Store</Menu.Label>
-                <Menu.Item onClick={() => navigateToUrl('/deals')}
-                           icon={<Icon icon={'ic:twotone-discount'} width={20} height={20}/>}>Deals &
-                  Discounts</Menu.Item>
-                <Menu.Item onClick={() => navigateToUrl('/categories')}
-                           icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
-                <Menu.Item onClick={() => navigateToUrl('/collections')}
-                           icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20}
-                                       height={20}/>}>Collections</Menu.Item>
-                <Menu.Item onClick={() => navigateToUrl('/bundles')}
-                           icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
-
+                <Menu.Item onClick={() => navigateToUrl('/deals')} icon={<Icon icon={'ic:twotone-discount'} width={20} height={20}/>}>Deals & Discounts</Menu.Item>
+                <Menu.Item onClick={() => navigateToUrl('/categories')} icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
+                <Menu.Item onClick={() => navigateToUrl('/collections')} icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20} height={20}/>}>Collections</Menu.Item>
+                <Menu.Item onClick={() => navigateToUrl('/bundles')} icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
                 <Divider/>
                 <Menu.Label>Help</Menu.Label>
                 <Menu.Item onClick={() => navigateToUrl('/contact')}>Contact</Menu.Item>
