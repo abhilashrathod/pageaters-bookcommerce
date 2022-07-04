@@ -111,7 +111,9 @@ function MyApp({Component, pageProps}: AppProps) {
           `,
           }}
         />
-        <Script strategy={'afterInteractive'} dangerouslySetInnerHTML={{
+        <Script strategy={'afterInteractive'}
+                id="fpixel-init"
+                dangerouslySetInnerHTML={{
           __html: `
             !function(f,b,e,v,n,t,s)
             {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
