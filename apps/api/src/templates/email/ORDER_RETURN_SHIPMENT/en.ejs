@@ -1,0 +1,808 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html lang="en">
+<head>
+
+    <!--[if gte mso 15]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:AllowPNG/>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+    </xml>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Order Request | Pageaters</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xz/fonts@1/serve/metropolis.min.css"/>
+
+    <!-- Order confirmation email template for Shopify -->
+    <style type="text/css" data-premailer="ignore">
+        /* What it does: Remove spaces around the email design added by some email clients. */
+        /* Beware: It can remove the padding / Margin and add a background color to the compose a reply window. */
+        html,
+        body {
+            Margin: 0 auto !important;
+            padding: 0 !important;
+
+            width: 100% !important;
+            height: 100% !important;
+            font-family: "Metropolis", Helvetica, Arial, sans-serif;
+        }
+
+        /* What it does: Stops email clients resizing small text. */
+        * {
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        h1, h2, h3, h4, h5, h6, p {
+            font-weight: normal;
+        }
+
+        /* What it does: Forces Outlook.com to display emails full width. */
+        .ExternalClass {
+            width: 100%;
+        }
+
+        /* What is does: Centers email on Android 4.4 */
+        div[style*="Margin: 16px 0"] {
+            Margin: 0 !important;
+        }
+
+        /* What it does: Stops Outlook from adding extra spacing to tables. */
+        table,
+        th {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+
+        /* What it does: Fixes Outlook.com line height. */
+        .ExternalClass,
+        .ExternalClass * {
+            line-height: 100% !important;
+        }
+
+        /* What it does: Fixes webkit padding issue. Fix for Yahoo mail table alignment bug. Applies table-layout to the first 2 tables then removes for anything nested deeper. */
+        table {
+            border-spacing: 0 !important;
+            border-collapse: collapse !important;
+            border: none;
+            Margin: 0 auto;
+        }
+
+        div[style*="Margin: 16px 0"] {
+            Margin: 0 !important;
+        }
+
+        /* What it does: Uses a better rendering method when resizing images in IE. */
+        img {
+            -ms-interpolation-mode: bicubic;
+        }
+
+        /* What it does: Overrides styles added when Yahoo's auto-senses a link. */
+        .yshortcuts a {
+            border-bottom: none !important;
+        }
+
+        /* What it does: Overrides blue, underlined link auto-detected by iOS Mail. */
+        /* Create a class for every link style needed; this template needs only one for the link in the footer. */
+        /* What it does: A work-around for email clients meddling in triggered links. */
+        *[x-apple-data-detectors],
+            /* iOS */
+        .x-gmail-data-detectors,
+            /* Gmail */
+        .x-gmail-data-detectors *,
+        .aBn {
+            border-bottom: none !important;
+            cursor: default !important;
+            color: inherit !important;
+            text-decoration: none !important;
+            font-size: inherit !important;
+            font-family: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
+        }
+
+        /* What it does: Prevents Gmail from displaying an download button on large, non-linked images. */
+        .a6S {
+            display: none !important;
+            opacity: 0.01 !important;
+        }
+
+        /* If the above doesn't work, add a .g-img class to any image in question. */
+        img.g-img + div {
+            display: none !important;
+        }
+
+        /* What it does: Prevents underlining the button text in Windows 10 */
+        a,
+        a:link,
+        a:visited {
+            color: #0c0c09;
+            text-decoration: none !important;
+        }
+
+        .header a {
+            color: #a7a7a7;
+            text-decoration: none;
+            text-underline: none;
+        }
+
+        .main a {
+            color: #0c0c09;
+            text-decoration: none;
+            text-underline: none;
+            word-wrap: break-word;
+        }
+
+        .main .section.customer_and_shipping_address a,
+        .main .section.shipping_address_and_fulfillment_details a {
+            color: #222222;
+            text-decoration: none;
+            text-underline: none;
+            word-wrap: break-word;
+        }
+
+        .footer a {
+            color: #222222;
+            text-transform: none;
+            text-decoration: none;
+            text-underline: none;
+        }
+
+        /* What it does: Overrides styles added images. */
+        img {
+            border: none !important;
+            outline: none !important;
+            text-decoration: none !important;
+        }
+
+        td.menu_bar_1 a:hover,
+        td.menu_bar_6 a:hover {
+            color: #0c0c09 !important;
+        }
+
+        th.related_product_wrapper.first {
+            border-right: 11px solid #ffffff;
+            padding-right: 5px;
+        }
+
+        th.related_product_wrapper.last {
+            border-left: 11px solid #ffffff;
+            padding-left: 5px;
+        }
+    </style>
+
+    <!--[if (mso)|(mso 16)]>
+    <style type="text/css" data-premailer="ignore">
+        a {
+            text-decoration: none;
+        }
+    </style>
+    <![endif]-->
+
+    <!--[if gte mso 9]>
+    <style>
+        li {
+            text-indent: -1em; /* Normalise space between bullets and text */
+        }
+    </style>
+    <![endif]-->
+
+
+    <!--<![endif]-->
+    <style type="text/css" data-premailer="ignore">
+        /* Media Queries */
+        /* What it does: Removes right gutter in Gmail iOS app */
+        @media only screen and (min-device-width: 375px) and (max-device-width: 413px) {
+            /* iPhone 6 and 6+ */
+            .container {
+                min-width: 375px !important;
+            }
+        }
+
+        /* Main media query for responsive styles */
+        @media only screen and (max-width: 480px) {
+            /* What it does: Overrides email-container's desktop width and forces it into a 100% fluid width. */
+            .email-container {
+                width: 100% !important;
+                min-width: 100% !important;
+            }
+
+            .section > th {
+                padding: 11px 22px 11px 22px !important;
+            }
+
+            .section.divider > th {
+                padding: 22px 22px !important;
+            }
+
+            .main .section:first-child > th,
+            .main .section:first-child > td {
+                padding-top: 22px !important;
+            }
+
+            .main .section:last-child > th,
+            .main .section:last-child > td {
+                padding-bottom: 33px !important;
+            }
+
+            .section.recommended_products > th,
+            .section.discount > th {
+                padding: 22px 22px !important;
+            }
+
+            /* What it does: Forces images to resize to the width of their container. */
+            img.fluid,
+            img.fluid-centered {
+                width: 100% !important;
+                min-width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                Margin: auto !important;
+                box-sizing: border-box;
+            }
+
+            /* and center justify these ones. */
+            img.fluid-centered {
+                Margin: auto !important;
+            }
+
+            /* What it does: Forces table cells into full-width rows. */
+            th.stack-column,
+            th.stack-column-left,
+            th.stack-column-center,
+            th.related_product_wrapper,
+            .column_1_of_2,
+            .column_2_of_2 {
+                display: block !important;
+                width: 100% !important;
+                min-width: 100% !important;
+                direction: ltr !important;
+                box-sizing: border-box;
+            }
+
+            /* and left justify these ones. */
+            th.stack-column-left {
+                text-align: left !important;
+            }
+
+            /* and center justify these ones. */
+            th.stack-column-center,
+            th.related_product_wrapper {
+                text-align: center !important;
+                border-right: none !important;
+                border-left: none !important;
+            }
+
+            .column_button,
+            .column_button > table,
+            .column_button > table th {
+                width: 100% !important;
+                text-align: center !important;
+                Margin: 0 !important;
+            }
+
+            .column_1_of_2 {
+                padding-bottom: 22px !important;
+            }
+
+            .column_1_of_2 th {
+                padding-right: 0 !important;
+            }
+
+            .column_2_of_2 th {
+                padding-left: 0 !important;
+            }
+
+            .column_text_after_button {
+                padding: 0 11px !important;
+            }
+
+            /* Adjust product images */
+            th.table-stack {
+                padding: 0 !important;
+            }
+
+            th.product-image-wrapper {
+                padding: 22px 0 11px 0 !important;
+            }
+
+            img.product-image {
+                width: 240px !important;
+                max-width: 240px !important;
+            }
+
+            tr.row-border-bottom th.product-image-wrapper {
+                border-bottom: none !important;
+            }
+
+            th.related_product_wrapper.first,
+            th.related_product_wrapper.last {
+                padding-right: 0 !important;
+                padding-left: 0 !important;
+            }
+
+            .text_banner th.banner_container {
+                padding: 11px !important;
+            }
+
+            .mobile_app_download .column_1_of_2 .image_container {
+                padding-bottom: 0 !important;
+            }
+
+            .mobile_app_download .column_2_of_2 .image_container {
+                padding-top: 0 !important;
+            }
+        }
+    </style>
+    <style type="text/css" data-premailer="ignore">
+        /* Custom Media Queries */
+        @media only screen and (max-width: 480px) {
+            .section > th {
+                padding: 11px 22px !important;
+            }
+
+            .section.discount > th,
+            .section.divider > th,
+            .section.recommended_products > th,
+            .column_unsubscribe {
+                padding-right: 22px !important;
+                padding-left: 22px !important;
+            }
+
+            .column_logo,
+            .column_1_of_2,
+            .column_2_of_2 {
+                display: block !important;
+                width: 100% !important;
+                min-width: 100% !important;
+                direction: ltr !important;
+                box-sizing: border-box !important;
+                text-align: center !important;
+            }
+
+            th.column_1_of_2 th,
+            th.column_2_of_2 th,
+            th.column_1_of_2 th *,
+            th.column_2_of_2 th * {
+                text-align: left !important;
+            }
+
+            .column_1_of_2.column_order_number,
+            .column_2_of_2.column_date {
+                display: table-cell !important;
+                width: 50% !important;
+                min-width: 50% !important;
+                direction: initial !important;
+                box-sizing: content-box !important;
+                text-align: initial !important;
+            }
+
+            .subtitle.title,
+            .subtitle.related_products_title,
+            .subtitle.discount_title {
+                text-align: center !important;
+            }
+
+            table.button {
+                width: 100% !important;
+            }
+
+            th.order-table-title {
+                text-align: center !important;
+            }
+
+            th.column_text_after_button {
+                padding-right: 22px !important;
+                padding-left: 22px !important;
+            }
+
+            .column_products th {
+                vertical-align: top !important;
+            }
+        }
+    </style>
+</head>
+<body class="body" id="body" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" bgcolor="#f8f8f8" style="-webkit-text-size-adjust: none; -ms-text-size-adjust: none; margin: 0; padding: 0;">
+<!--[if !mso 9]>
+<!-->
+<div style="display: none; overflow: hidden; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; mso-hide: all;">
+    Return request. Happy reading!
+</div>
+
+<!--<![endif]-->
+
+<!-- BEGIN: CONTAINER -->
+<table class="container container_full" cellpadding="0" cellspacing="0" border="0" width="100%"
+       style="border-collapse: collapse; min-width: 100%;" role="presentation" bgcolor="#fff">
+    <tbody>
+    <tr>
+        <th valign="top" style="mso-line-height-rule: exactly;">
+            <center style="width: 100%;">
+                <table border="0" width="600" cellpadding="0" cellspacing="0" align="center"
+                       style="width: 600px; min-width: 600px; max-width: 600px; margin: auto;" class="email-container"
+                       role="presentation">
+                    <tbody>
+                    <tr>
+                        <th valign="top" style="mso-line-height-rule: exactly;">
+
+                            <!-- BEGIN : SECTION : HEADER -->
+                            <table class="section_wrapper header" data-id="header" id="section-header" border="0"
+                                   width="100%" cellpadding="0" cellspacing="0" align="center"
+                                   style="min-width: 100%; border-bottom: 1px solid #ccc;" role="presentation">
+                                <tr>
+                                    <td class="section_wrapper_th"
+                                        style="mso-line-height-rule: exactly; padding-top: 22px; padding-bottom: 22px;">
+                                        <table border="0" width="100%" cellpadding="0" cellspacing="0" align="center"
+                                               style="min-width: 100%;" role="presentation">
+                                            <tr>
+                                                <th class="column_logo"
+                                                    style="mso-line-height-rule: exactly; padding-top: 0; padding-bottom: 0;"
+                                                    align="center">
+
+                                                    <!-- Logo : BEGIN -->
+                                                    <a href="https://pageaters.com?utm_campaign=order-confirmation-email&utm_medium=email&utm_content=logo&utm_term=link&utm_source=OrderlyEmails"
+                                                       target="_blank"
+                                                       style="color: #a7a7a7; text-decoration: none !important; text-underline: none;">
+                                                        <img src="https://res.cloudinary.com/pageaters/image/upload/v1650978952/horizontal-logo_i7ding.png"
+                                                             class="logo " width="192" border="0"
+                                                             style="width: 192px; height: auto !important; display: block; text-align: center; margin: auto;">
+                                                    </a>
+
+                                                    <!-- Logo : END -->
+                                                </th>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- END : SECTION : HEADER -->
+
+                            <!-- BEGIN : SECTION : MAIN -->
+                            <table class="section_wrapper main" data-id="main" id="section-main" border="0" width="100%"
+                                   cellpadding="0" cellspacing="0" align="center" style="min-width: 100%;"
+                                   role="presentation" bgcolor="#ffffff">
+                                <tr>
+                                    <td class="section_wrapper_th" style="mso-line-height-rule: exactly;"
+                                        bgcolor="#ffffff">
+                                        <table border="0" width="100%" cellpadding="0" cellspacing="0" align="center"
+                                               style="min-width: 100%;" id="mixContainer" role="presentation">
+
+                                            <!-- BEGIN SECTION: Heading -->
+                                            <tr id="section-3499733" class="section heading">
+                                                <th style="mso-line-height-rule: exactly; padding: 33px 44px 11px;"
+                                                    bgcolor="#ffffff">
+                                                    <table cellspacing="0" cellpadding="0" border="0" width="100%"
+                                                           role="presentation">
+                                                        <tr>
+                                                            <th style="mso-line-height-rule: exactly;" bgcolor="#ffffff"
+                                                                valign="top">
+                                                                <h1 data-key="3499733_heading" style=" font-size: 28px; line-height: 36px;  color: #222222; text-transform: none; margin: 0; font-weight: 400;">
+                                                                    <%= REQUEST_TYPE %> Aligned
+                                                                </h1>
+                                                            </th>
+                                                        </tr>
+                                                    </table>
+                                                </th>
+                                            </tr>
+
+                                            <!-- END SECTION: Heading -->
+
+                                            <!-- BEGIN SECTION: Order Number And Date -->
+                                            <tr id="section-3499739" class="section order_number_and_date">
+                                                <th style="mso-line-height-rule: exactly; padding: 11px 44px;"
+                                                    bgcolor="#ffffff">
+                                                    <h2 style=" color: #1a1a1a; font-size: 16px; line-height: 22px; font-weight: 400; text-transform: none; margin: 0;"
+                                                        align="left">
+                                                        <span data-key="3499739_order_number">ORDER</span>
+                                                        #<%= ORDER_ID %>
+                                                    </h2>
+                                                    <p class="muted"
+                                                       style="mso-line-height-rule: exactly;  font-size: 14px; line-height: 22px; font-weight: 400; text-transform: none; color: #222; margin: 0;"
+                                                       align="left">
+                                                        Order Date: <%= ORDER_DATE %>
+                                                    </p>
+                                                </th>
+                                            </tr>
+
+                                            <!-- END SECTION: Order Number And Date -->
+
+                                            <!-- BEGIN SECTION: Introduction -->
+                                            <tr id="section-3499735" class="section introduction">
+                                                <th style="mso-line-height-rule: exactly; padding: 11px 44px;"
+                                                    bgcolor="#ffffff">
+                                                    <p style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222; margin: 0 0 11px;"
+                                                       align="left">
+                                    <span data-key="3499735_greeting_text"
+                                          style="text-align: left;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222;">
+                                            Hi
+                                    </span>
+                                                        <%= FULL_NAME %>,</p> <span data-key="3499735_introduction_text"
+                                                                                    class="text"
+                                                                                    style="text-align: left;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222;">
+                                        <p style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222; margin: 11px 0 0;"
+                                           align="left"></p>
+                                        <p style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222; margin: 11px 0 0;"
+                                           align="left">
+                                           Your <%= REQUEST_TYPE %> has been accepted by us and <%= REQUEST_TYPE %> shipment has been aligned. Please make the package ready for pickup.
+                                        </p>
+                                                        <% if(REQUEST_TYPE === 'return') { %>
+                                                            <p>After we receive the package and verify the contents, we shall issue the refund of your order. You would get separate email regarding your refund progress.</p>
+                                                        <% } %>
+                                                        <% if(REQUEST_TYPE === 'replacement') { %>
+                                                            <p>After we receive the package, we will dispatch new set of fresh books as the replacement.</p>
+                                                        <% } %>
+                                                        <p>
+                                            Thank you!
+                                        </p>
+                                      </span>
+                                                </th>
+                                            </tr>
+
+                                            <!-- END SECTION: Introduction -->
+
+                                            <!-- BEGIN SECTION: Customer And Shipping Address -->
+                                            <tr id="section-3499740" class="section customer_and_shipping_address">
+
+                                                <!-- BEGIN : 2 COLUMNS : BILL_TO -->
+                                                <th style="mso-line-height-rule: exactly; padding: 11px 44px;"
+                                                    bgcolor="#ffffff">
+                                                    <table border="0" width="100%" cellpadding="0" cellspacing="0"
+                                                           align="center" style="min-width: 100%;" role="presentation">
+                                                        <tr>
+
+                                                            <!-- BEGIN : Column 1 of 2 : BILL_TO -->
+                                                            <th width="50%" class="column_1_of_2 column_bill_to "
+                                                                style="mso-line-height-rule: exactly;" align="left"
+                                                                bgcolor="#ffffff" valign="top">
+                                                                <table align="center" border="0" width="100%"
+                                                                       cellpadding="0" cellspacing="0"
+                                                                       style="min-width: 100%;" role="presentation">
+                                                                    <tr>
+                                                                        <th style="mso-line-height-rule: exactly; padding-right: 5%;"
+                                                                            align="left" bgcolor="#ffffff" valign="top">
+                                                                            <h3 data-key="3499740_ship_to"
+                                                                                style=" color: #1a1a1a; font-size: 16px; line-height: 22px; font-weight: 700;  text-transform: none; margin: 0;"
+                                                                                align="left">Pickup Address</h3>
+                                                                        </th>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th class="shipping_address "
+                                                                            style="mso-line-height-rule: exactly; padding-right: 5%;"
+                                                                            align="left" bgcolor="#ffffff" valign="top">
+                                                                            <p style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222; margin: 0;"
+                                                                               align="left">
+                                                                                From, <%= ADDRESS.fullName %>
+                                                                                <br><%= ADDRESS.addressLine1 %>
+                                                                                <br><%= ADDRESS.addressLine2 %>
+                                                                                <br><%= ADDRESS.city %>
+                                                                                , <%= ADDRESS.state %>
+                                                                                - <%= ADDRESS.pinCode %>
+                                                                                <br><%= ADDRESS.country %>
+                                                                                <br> <span data-key="3499740_tel"
+                                                                                           style="text-align: left;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222;">Mobile.</span>
+                                                                                <span style="color: inherit !important; text-decoration: none !important; text-align: left;  font-size: 16px; line-height: 22px;  text-transform: none;"><%= ADDRESS.contactNo %></span>
+                                                                                <br> <span data-key="3499740_tel"
+                                                                                           style="text-align: left;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222;">Email.</span>
+                                                                                <span style="color: inherit !important; text-decoration: none !important; text-align: left;  font-size: 16px; line-height: 22px;  text-transform: none;"><%= ADDRESS.email %></span>
+                                                                            </p>
+                                                                        </th>
+                                                                    </tr>
+                                                                </table>
+                                                            </th>
+
+                                                            <!-- END : Column 1 of 2 : BILL_TO -->
+                                                        </tr>
+                                                    </table>
+                                                </th>
+
+                                                <!-- END : 2 COLUMNS : SHIP_TO -->
+                                            </tr>
+
+                                            <!-- END SECTION: Customer And Shipping Address -->
+
+                                            <!-- BEGIN SECTION: Divider -->
+                                            <tr id="section-3500216" class="section divider">
+                                                <th style="mso-line-height-rule: exactly; padding: 22px 8%;"
+                                                    bgcolor="#ffffff">
+                                                    <table cellspacing="0" cellpadding="0" border="0" width="100%"
+                                                           role="presentation">
+                                                        <tr>
+                                                            <th style="mso-line-height-rule: exactly; border-top-width: 1px; border-top-color: #eeeeee; border-top-style: solid;"
+                                                                bgcolor="#ffffff" valign="top"></th>
+                                                        </tr>
+                                                    </table>
+                                                </th>
+                                            </tr>
+
+                                            <!-- END SECTION: Divider -->
+
+                                            <!-- BEGIN SECTION: Order Status Button -->
+                                            <tr id="section-3499736" class="section order_status_button">
+                                                <th style="mso-line-height-rule: exactly; padding: 11px 44px;"
+                                                    bgcolor="#ffffff">
+                                                    <table cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <th class="sides column_text_before_button"
+                                                                data-key="3499736_text_before_button"
+                                                                style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222; padding-bottom: 11px;"
+                                                                align="left" bgcolor="#ffffff" valign="top">
+                                                                <p style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222; margin: 0;"
+                                                                   align="left">You can follow the status of your order
+                                                                    by clicking the button below:
+                                                                    <br style="text-align: left;">
+                                                                </p>
+                                                            </th>
+                                                        </tr>
+
+                                                        <!-- Button : BEGIN -->
+                                                        <tr>
+                                                            <th class="sides column_button button5"
+                                                                style="mso-line-height-rule: exactly; margin: 0; padding: 11px 0;"
+                                                                align="center" bgcolor="#ffffff" valign="top">
+                                                                <table cellspacing="0" cellpadding="0" border="0"
+                                                                       class="button" role="presentation"
+                                                                       style="text-align: left; margin: 0 auto;"
+                                                                       bgcolor="transparent">
+                                                                    <tr>
+                                                                        <th class="button-inner"
+                                                                            style="mso-line-height-rule: exactly; border-radius: 1px;"
+                                                                            align="center" valign="top">
+                                                                            <a class="button-link"
+                                                                               href="https://pageaters.com/account/orders/<%= ORDER_ID %>"
+                                                                               target="_blank"
+                                                                               style="color: #ffffff !important; text-decoration: none !important; word-wrap: break-word; line-height: 20px;  font-size: 16px;  text-transform: none; text-align: center; display: block; background-color: #FF5F25; border-radius: 50px; padding: 15px 48px;">
+                                                <span style="line-height: 15px; color: #ffffff;  text-decoration: none; text-underline: none; letter-spacing: 0.5px;">
+                                                  <!--[if mso]>&nbsp;&nbsp;&nbsp;&nbsp;<![endif]-->
+                                                    <span data-key="3499736_text_on_button"
+                                                          style="line-height: 15px; color: #ffffff;  text-decoration: none; letter-spacing: 0.5px;">View Order Status</span>
+                                                    <!--[if
+                                                    mso]>&nbsp;&nbsp;&nbsp;&nbsp;<![endif]-->
+                                                </span>
+                                                                            </a>
+                                                                        </th>
+                                                                    </tr>
+                                                                </table>
+                                                            </th>
+                                                        </tr>
+
+                                                        <!-- Button : END -->
+                                                        <tr>
+                                                            <th class="sides column_text_after_button muted"
+                                                                data-key="3499736_text_after_button"
+                                                                style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px; font-weight: normal; text-transform: none; color: #ef5a30; padding: 0 44px;"
+                                                                align="center" bgcolor="#ffffff" valign="top">
+                                                                <p style="mso-line-height-rule: exactly;  font-size: 15px; line-height: 22px; font-weight: normal; text-transform: none; color: #ef5a30; margin: 0;"
+                                                                   align="center"><i style="text-align: center;">If you
+                                                                        need any help, don’t hesitate to reach out to us
+                                                                        at
+                                                                        support@demo.pageaters.com!</i>
+                                                                </p>
+                                                            </th>
+                                                        </tr>
+                                                    </table>
+                                                </th>
+                                            </tr>
+
+                                            <!-- END SECTION: Order Status Button -->
+
+                                            <!-- BEGIN SECTION: Divider -->
+                                            <tr id="section-3500364" class="section divider">
+                                                <th style="mso-line-height-rule: exactly; padding: 22px 8% 33px;"
+                                                    bgcolor="#ffffff">
+                                                    <table cellspacing="0" cellpadding="0" border="0" width="100%"
+                                                           role="presentation">
+                                                        <tr>
+                                                            <th style="mso-line-height-rule: exactly; border-top-width: 1px; border-top-color: #eeeeee; border-top-style: solid;"
+                                                                bgcolor="#ffffff" valign="top"></th>
+                                                        </tr>
+                                                    </table>
+                                                </th>
+                                            </tr>
+
+                                            <!-- END SECTION: Divider -->
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- END : SECTION : MAIN -->
+
+                            <!-- BEGIN : SECTION : FOOTER -->
+                            <table class="section_wrapper footer" data-id="footer" id="section-footer" border="0"
+                                   width="100%" cellpadding="0" cellspacing="0" align="center" style="min-width: 100%;"
+                                   role="presentation" bgcolor="#ffffff">
+                                <tr>
+                                    <td class="section_wrapper_th"
+                                        style="mso-line-height-rule: exactly; padding-top: 22px; padding-bottom: 22px;"
+                                        bgcolor="#ffffff">
+                                        <table border="0" width="100%" cellpadding="0" cellspacing="0" align="center"
+                                               style="min-width: 100%;" role="presentation">
+                                            <tr>
+                                                <th class="column_social" data-id="social"
+                                                    style="mso-line-height-rule: exactly;" bgcolor="#ffffff">
+                                                    <table border="0" width="100%" cellpadding="0" cellspacing="0"
+                                                           role="presentation">
+
+                                                        <!-- Store Address : BEGIN -->
+                                                        <tr>
+                                                            <th class="column_shop_social_icons " width="100%"
+                                                                style="mso-line-height-rule: exactly;"
+                                                                bgcolor="#ffffff"></th>
+                                                        </tr>
+                                                    </table>
+                                                </th>
+                                            </tr>
+                                            <tr>
+                                                <th data-id="store-info" style="mso-line-height-rule: exactly;"
+                                                    bgcolor="#ffffff">
+                                                    <table border="0" width="100%" cellpadding="0" cellspacing="0"
+                                                           role="presentation">
+
+                                                        <!-- Store Website : BEGIN -->
+                                                        <tr>
+                                                            <th class="column_shop_block1 " width="100%"
+                                                                style="mso-line-height-rule: exactly;  font-size: 14px; line-height: 22px;  color: #222222; text-transform: none; padding-bottom: 22px;"
+                                                                align="center" bgcolor="#ffffff">
+                                                                <a href="https://pageaters.com?utm_campaign=order-confirmation-email&utm_medium=email&utm_content=footer-website-link&utm_term=link&utm_source=OrderlyEmails"
+                                                                   target="_blank" data-key="section_shop_block1"
+                                                                   style="color: #222222; text-decoration: none !important; text-underline: none; font-size: 14px;  text-transform: none;"></a>
+                                                            </th>
+                                                        </tr>
+
+                                                        <!-- Store Website : END -->
+
+                                                        <!-- Store Address : BEGIN -->
+                                                        <tr>
+                                                            <th class="column_shop_block2 "
+                                                                data-key="section_shop_block2" width="100%"
+                                                                style="mso-line-height-rule: exactly;  font-size: 14px; line-height: 22px;  color: #222222; text-transform: none;"
+                                                                align="center" bgcolor="#ffffff">
+                                                                <p style="mso-line-height-rule: exactly;  font-size: 14px; line-height: 22px;  text-transform: none; color: #222222; margin: 0;"
+                                                                   align="center">Copyright © 2021-2022 Pageaters
+                                                                    Inc.</p>
+                                                                <p style="mso-line-height-rule: exactly;  font-size: 14px; line-height: 22px;  text-transform: none; color: #222222; margin: 11px 0 0;"
+                                                                   align="center">
+                                                                    <a href="https://pageaters.com/terms-and-conditions">Terms
+                                                                        of Service</a> and <a
+                                                                            href="https://pageaters.com/privacy-policy">Privacy
+                                                                        Policy</a>
+                                                                </p>
+
+                                                            </th>
+                                                        </tr>
+
+                                                    </table>
+                                                </th>
+                                            </tr>
+                                            <tr>
+                                                <th height="1" border="0"
+                                                    style="height: 1px; line-height: 1px; font-size: 1px; mso-line-height-rule: exactly; padding: 0;"
+                                                    bgcolor="#ffffff">
+                                                </th>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            <!-- END : SECTION : FOOTER -->
+                        </th>
+                    </tr>
+                    </tbody>
+                </table>
+            </center>
+        </th>
+    </tr>
+    </tbody>
+</table>
+
+<!-- END : CONTAINER -->
+</body>
+</html>

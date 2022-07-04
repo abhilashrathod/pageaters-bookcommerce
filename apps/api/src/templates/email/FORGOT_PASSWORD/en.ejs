@@ -202,15 +202,22 @@
         }
 
         p {
-            font-size: 18px;
-            line-height: 28px;
+            font-size: 16px;
+            line-height: 22px;
+        }
+
+        .border-bottom {
+            border-bottom: 1px solid #c1cfca;
         }
 
         .wrapper {
-            width: 472px;
             text-align: left;
             padding: 45px 64px 32px 64px;
             border-bottom: 1px solid #c1cfca;
+            width: 600px;
+            min-width: 600px;
+            max-width: 600px;
+            margin: auto;
         }
 
         .wrapper.lineless {
@@ -276,65 +283,10 @@
 </head>
 <body>
 <div class="wrapper">
-    <div class="mb-4">
-        <svg
-                data-name="Layer 1"
-                width="64px"
-                height="64px"
-                xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
-                viewBox="0 0 252.61 266.37"
-        >
-            <defs>
-                <linearGradient
-                        id="a"
-                        x1="137.54"
-                        y1="259.36"
-                        x2="392.65"
-                        y2="259.36"
-                        gradientTransform="rotate(.75 162.65 -361.656)"
-                        gradientUnits="userSpaceOnUse"
-                >
-                    <stop offset="0" stop-color="#ff512f"/>
-                    <stop offset="1" stop-color="#f09819"/>
-                </linearGradient>
-                <linearGradient
-                        id="b"
-                        x1="320.88"
-                        y1="132.29"
-                        x2="325.5"
-                        y2="132.29"
-                        xlink:href="#a"
-                />
-                <linearGradient
-                        id="c"
-                        x1="324.3"
-                        y1="121.87"
-                        x2="330.85"
-                        y2="121.87"
-                        xlink:href="#a"
-                />
-            </defs>
-            <path
-                    d="M332.42 157.25a27.76 27.76 0 01-32.31-4.62 27.92 27.92 0 01-49.91-18.38l-119.55 30.36 46.44 182.81 89.54 39.64 116.63-29.63z"
-                    transform="translate(-130.65 -120.7)"
-                    fill="url(#a)"
-            />
-            <path
-                    d="M101.18 202.88l-54.7 24 85.34 37.64 4.1 1.83z"
-                    fill="#ef5214"
-            />
-            <path
-                    d="M317.28 136.58a2.31 2.31 0 10-2.81-1.67 2.3 2.3 0 002.81 1.67z"
-                    transform="translate(-130.65 -120.7)"
-                    fill="url(#b)"
-            />
-            <path
-                    d="M322 127.15a3.28 3.28 0 10-4-2.37 3.29 3.29 0 004 2.37z"
-                    transform="translate(-130.65 -120.7)"
-                    fill="url(#c)"
-            />
-        </svg>
+    <div class="mb-4 pb-4 border-bottom">
+        <img src="https://res.cloudinary.com/pageaters/image/upload/v1650978952/horizontal-logo_i7ding.png" width="192"
+             border="0"
+             style="width: 192px; height: auto !important; display: block; text-align: center; margin: auto;"/>
     </div>
     <h1 class="header pt-2 pb-8">
         Forgotten your Password?
@@ -343,7 +295,7 @@
         Hi <%= FULL_NAME %>,
     </p>
     <p class="pb-2">
-      We’ve received a request to reset your password.
+        We’ve received a request to reset your password.
     </p>
     <p class="pb-8">
         If you didn’t make the request, just ignore this message. Otherwise, you can reset your password.

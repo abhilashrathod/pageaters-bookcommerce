@@ -4,10 +4,11 @@ const Razorpay = require('razorpay');
 const moment = require('moment');
 
 const { models, enums } = require('../constants');
-const { RAZOR_PAY, RAZOR_PAY_WEBHOOKS } = require('../appConfig');
+const { RAZOR_PAY, RAZOR_PAY_WEBHOOKS, TWILIO } = require('../appConfig');
 const { calculateTotal } = require('../helpers/cart.helper');
-const { calculateShipping, calculateTotalWeight, orderPaymentInfo } = require('../helpers/order.helper');
+const { calculateShipping, calculateTotalWeight, orderPaymentInfo, textMessage, returnProductImage, returnBundleImage } = require('../helpers/order.helper');
 const { getId, generateRandomNumber } = require('../helpers/utils.helper');
+const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const Address = mongoose.model(models.ADDRESS);
 const User = mongoose.model(models.USER);
@@ -17,6 +18,7 @@ const Book = mongoose.model(models.STORE_BOOK);
 const Bundle = mongoose.model(models.BUNDLE);
 
 const razorPayInstance = new Razorpay({ key_id: RAZOR_PAY.USER_ID, key_secret: RAZOR_PAY.PASSWORD });
+const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
 
 const populateOptions = [{
   path: 'products.product',
@@ -253,7 +255,8 @@ module.exports.verifyAndConfirm = async (req, res) => {
       const orderRes = await Order.findOne({
         orderStatus: enums.ORDER_STAGES.CREATED,
         razorOrderId: orderId,
-      }).populate(populateOptions);
+      }).populate(orderPopulateOptions);
+
       if (orderRes) {
         orderRes.orderHistory.push({
           title: enums.ORDER_STAGES.PAID,
@@ -267,8 +270,6 @@ module.exports.verifyAndConfirm = async (req, res) => {
         await orderRes.save();
 
         const userRes = await User.findOne({ _id: orderRes.userId });
-        userRes.currentOrder = null;
-        await userRes.save();
 
         // deduct inventory
         for (let book of orderRes.products) {
@@ -307,6 +308,37 @@ module.exports.verifyAndConfirm = async (req, res) => {
           },
         }, { new: true });
 
+        // send SMS
+        if (userRes.contactNo) {
+          let message = {
+            body: textMessage(userRes.fullName, userRes.email, orderRes.orderId),
+            from: TWILIO.PHONE,
+            to: `+91${userRes.contactNo}`,
+          };
+
+          await twilioClient.messages.create(message);
+        }
+
+        const emailBody = {
+          emailModule: 'ORDER_CONFIRMATION',
+          to: userRes.email,
+          subject: `Order Confirmation #${orderRes.orderId} - Pageaters`,
+          data: {
+            ORDER_ID: orderRes.orderId,
+            ORDER_DATE: moment(orderRes.orderDate).format('DD MMM YYYY'),
+            FULL_NAME: userRes.fullName ? userRes.fullName: 'Reader',
+            PRODUCTS: returnProducts(orderRes.products),
+            BUNDLES: returnBundles(orderRes.bundles),
+            SUBTOTAL: orderRes.subTotal,
+            SHIPPING: orderRes.shipping,
+            TOTAL: orderRes.total,
+            ADDRESS: orderRes.deliveryAddress,
+          }
+        };
+
+        // send confirmation email
+        sendMailQueue.add(emailBody);
+
         return res.json({ status: 'ok' });
       } else {
         return res.json({ status: 'ok' }); // do nothing but send success to webhook
@@ -328,10 +360,10 @@ module.exports.getByUniqueId = async (req, res) => {
       .select(`orderId orderDate deliveryAddress shipmentTrackingId orderHistory payment orderStatus subTotal products bundles shipping total`)
       .populate(orderPopulateOptions);
 
-    orderRes = orderRes.toObject();
-    orderRes.payment = orderPaymentInfo(orderRes.payment);
-
     if (orderRes) {
+      orderRes = orderRes.toObject();
+      orderRes.payment = orderPaymentInfo(orderRes.payment);
+
       return res.ok({ message: 'ORDER_LIST_SUCCESS', data: orderRes });
     }
 
@@ -461,7 +493,13 @@ module.exports.ship = async (req, res) => {
   try {
     let { orderId, shipmentTrackingId } = req.allParams();
 
-    const orderRes = await Order.findOne({ _id: orderId, orderStatus: enums.ORDER_STAGES.PAID });
+    const populateOptions = [{
+      path: 'userId',
+      select: 'fullName email contactNo',
+    }, {
+      path: 'deliveryAddress',
+    }];
+    const orderRes = await Order.findOne({ _id: orderId, orderStatus: enums.ORDER_STAGES.PAID }).populate(populateOptions);
 
     if (!orderRes) {
       return res.error('ORDER_INFO_ATTEMPT_FAILED');
@@ -477,7 +515,22 @@ module.exports.ship = async (req, res) => {
 
     await orderRes.save();
 
-    // TODO: send email about this!
+    const emailBody = {
+      emailModule: 'ORDER_SHIPPED',
+      to: orderRes.userId.email,
+      subject: `Order #${orderRes.orderId} is Shipped - Pageaters`,
+      data: {
+        ORDER_ID: orderRes.orderId,
+        ORDER_DATE: moment(orderRes.orderDate).format('DD MMM YYYY'),
+        FULL_NAME: orderRes.userId.fullName ? orderRes.userId.fullName: 'Reader',
+        SUBTOTAL: orderRes.subTotal,
+        SHIPPING: orderRes.shipping,
+        TOTAL: orderRes.total,
+        ADDRESS: orderRes.deliveryAddress,
+      }
+    };
+
+    sendMailQueue.add(emailBody);
 
     return res.ok({ message: 'ORDER_UPDATE_SUCCESS', data: orderRes });
   } catch (e) {
@@ -488,8 +541,14 @@ module.exports.ship = async (req, res) => {
 module.exports.completeShipment = async (req, res) => {
   try {
     let { id } = req.allParams();
+    const populateOptions = [{
+      path: 'userId',
+      select: 'fullName email contactNo',
+    }, {
+      path: 'deliveryAddress',
+    }];
 
-    const orderRes = await Order.findOne({ _id: id, orderStatus: enums.ORDER_STAGES.SHIPPED });
+    const orderRes = await Order.findOne({ _id: id, orderStatus: enums.ORDER_STAGES.SHIPPED }).populate(populateOptions);
 
     if (!orderRes) {
       return res.error('ORDER_INFO_ATTEMPT_FAILED');
@@ -504,7 +563,23 @@ module.exports.completeShipment = async (req, res) => {
 
     await orderRes.save();
 
-    // TODO: send email about this!
+    const emailBody = {
+      emailModule: 'ORDER_DELIVERED',
+      to: orderRes.userId.email,
+      subject: `Your Order #${orderRes.orderId} Is Delivered! - Pageaters`,
+      data: {
+        ORDER_ID: orderRes.orderId,
+        ORDER_DATE: moment(orderRes.orderDate).format('DD MMM YYYY'),
+        FULL_NAME: orderRes.userId.fullName ? orderRes.userId.fullName: 'Reader',
+        SUBTOTAL: orderRes.subTotal,
+        SHIPPING: orderRes.shipping,
+        TOTAL: orderRes.total,
+        ADDRESS: orderRes.deliveryAddress,
+      }
+    };
+
+    sendMailQueue.add(emailBody);
+
     // TODO: In mail ask for review and delivery experience
 
     return res.ok({ message: 'ORDER_UPDATE_SUCCESS', data: orderRes });
@@ -516,11 +591,18 @@ module.exports.completeShipment = async (req, res) => {
 module.exports.returnRequest = async (req, res) => {
   try {
     let { uniqueId, type, comments, reason, books, bundles } = req.allParams();
+    const populateOptions = [{
+      path: 'userId',
+      select: 'fullName email contactNo',
+    }, {
+      path: 'deliveryAddress',
+    }];
 
     const userId = get(req, 'user.userId', '');
     const period = 7;
 
-    let orderRes = await Order.findOne({ orderId: uniqueId, userId, orderStatus: enums.ORDER_STAGES.FULFILLED });
+    let orderRes = await Order.findOne({ orderId: uniqueId, userId, orderStatus: enums.ORDER_STAGES.FULFILLED }).populate(populateOptions);
+
     if (!orderRes) {
       return res.error('ORDER_INFO_ATTEMPT_FAILED');
     }
@@ -548,18 +630,36 @@ module.exports.returnRequest = async (req, res) => {
         log.time = new Date().toISOString();
         orderRes.orderStatus = enums.ORDER_STAGES.RETURNED;
       }
+
       if (type === enums.ORDER_REQUEST_TYPES.REPLACE) {
         orderRes.orderStatus = enums.ORDER_STAGES.REPLACEMENT;
         log.title = enums.ORDER_STAGES.REPLACEMENT;
         log.description = 'Replacement request is received. A new set of books will be dispatched from our side and pickup will be arranged soon';
         log.time = new Date().toISOString();
       }
+
       orderRes.orderHistory.push(log);
       orderRes.requests.push(requestInfo);
 
       await orderRes.save();
 
-      // TODO: send email about this!
+      const emailBody = {
+        emailModule: 'ORDER_REQUESTS',
+        to: orderRes.userId.email,
+        subject: `${capitalizeFirstLetter(type)} Request is Raised for Order #${orderRes.orderId} - Pageaters`,
+        data: {
+          REQUEST_TYPE: capitalizeFirstLetter(type),
+          REQUEST_DATE: moment(orderRes.orderDate).format('DD MMM YYYY'),
+          ORDER_ID: orderRes.orderId,
+          ORDER_DATE: moment(orderRes.orderDate).format('DD MMM YYYY'),
+          FULL_NAME: orderRes.userId.fullName ? orderRes.userId.fullName: 'Reader',
+          SUBTOTAL: orderRes.subTotal,
+          SHIPPING: orderRes.shipping,
+          TOTAL: orderRes.total,
+          ADDRESS: orderRes.deliveryAddress,
+        }
+      };
+      sendMailQueue.add(emailBody);
 
       return res.ok({ message: 'ORDER_RETURN_SUCCESS', data: {} });
     }
@@ -627,13 +727,19 @@ module.exports.cancelRequest = async (req, res) => {
 module.exports.alignReturnShipment = async (req, res) => {
   try {
     let { id, requestId, shipment } = req.allParams();
+    const populateOptions = [{
+      path: 'userId',
+      select: 'fullName email contactNo',
+    }, {
+      path: 'deliveryAddress',
+    }];
 
     const q = {
       $or: [{ orderStatus: enums.ORDER_STAGES.RETURNED }, { orderStatus: enums.ORDER_STAGES.REPLACEMENT }],
       _id: id,
     };
 
-    let orderRes = await Order.findOne(q);
+    let orderRes = await Order.findOne(q).populate(populateOptions);
     if (!orderRes) {
       return res.error('ORDER_INFO_ATTEMPT_FAILED');
     }
@@ -641,12 +747,14 @@ module.exports.alignReturnShipment = async (req, res) => {
     const orderStatus = orderRes.orderStatus;
     const log = {};
     let newOrderStatus = '';
+    let type = '';
 
     if (orderStatus === enums.ORDER_STAGES.RETURNED) {
       newOrderStatus = enums.ORDER_STAGES.RETURNED_IN_PROGRESS;
       log.title = enums.ORDER_STAGES.RETURNED_IN_PROGRESS;
       log.description = 'Return has been processed and reverse shipment is aligned';
       log.time = new Date().toISOString();
+      type = 'return';
     }
 
     if (orderStatus === enums.ORDER_STAGES.REPLACEMENT) {
@@ -654,6 +762,7 @@ module.exports.alignReturnShipment = async (req, res) => {
       log.title = enums.ORDER_STAGES.REPLACEMENT_IN_PROGRESS;
       log.description = 'Replacement has been processed and shipment of new books has been created. They will be with you soon.';
       log.time = new Date().toISOString();
+      type = 'replacement';
     }
 
     const query = { _id: id, 'requests._id': getId(requestId) };
@@ -672,7 +781,24 @@ module.exports.alignReturnShipment = async (req, res) => {
 
     await Order.findOneAndUpdate(query, update, options);
 
-    // TODO: send email about this!
+    const emailBody = {
+      emailModule: 'ORDER_RETURN_SHIPMENT',
+      to: orderRes.userId.email,
+      subject: `${capitalizeFirstLetter(type)} is Aligned for Order #${orderRes.orderId} - Pageaters`,
+      data: {
+        REQUEST_TYPE: capitalizeFirstLetter(type),
+        REQUEST_DATE: moment(orderRes.orderDate).format('DD MMM YYYY'),
+        ORDER_ID: orderRes.orderId,
+        ORDER_DATE: moment(orderRes.orderDate).format('DD MMM YYYY'),
+        FULL_NAME: orderRes.userId.fullName ? orderRes.userId.fullName: 'Reader',
+        SUBTOTAL: orderRes.subTotal,
+        SHIPPING: orderRes.shipping,
+        TOTAL: orderRes.total,
+        ADDRESS: orderRes.deliveryAddress,
+      }
+    };
+    sendMailQueue.add(emailBody);
+
     return res.ok({ message: 'ORDER_UPDATE_SUCCESS', data: {} });
   } catch (e) {
     return res.internalServerError(e);
@@ -793,3 +919,24 @@ module.exports.completeRefund = async (req, res) => {
     return res.internalServerError(e);
   }
 };
+
+
+function returnProducts(products) {
+  for (let productItem of products) {
+    productItem.product.poster = returnProductImage(productItem.product.poster);
+  }
+
+  return products;
+}
+
+function returnBundles(bundles) {
+  for (let bundleItem of bundles) {
+    bundleItem.bundle.poster = returnBundleImage(bundleItem.bundle.poster);
+  }
+
+  return bundles;
+}
+
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}

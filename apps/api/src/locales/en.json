@@ -188,5 +188,7 @@
 	"PRODUCT_SET_SEARCH_SUCCESS": "Product Set Search Successful",
 	"PRODUCT_SET_DELETE_SUCCESS": "Product Set Deleted Successfully",
 	"INVALID_FAVORITE_TYPE": "Type is not allowed",
-	"success": "success"
+	"success": "success",
+	"Invalid Record Length: columns length is 3, got 5 on line 3": "Invalid Record Length: columns length is 3, got 5 on line 3",
+	"MAIL_SENT": "MAIL_SENT"
 }

@@ -8,7 +8,7 @@ const controller = require('./../controllers/author.controller');
 
 router.get('/', controller.getAll);
 router.get('/unique/:id', controller.getByUniqueId);
-router.get('/search/:q', controller.search);
+router.get('/search', controller.search);
 
 // ADMIN
 router.get('/:id', permissionValidator(USER_ROLES.ADMIN), controller.getById);

@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 const axios = require('axios');
+const Buffer = require('buffer');
 const colors = require('colors');
 const { sumBy, get } = require('lodash');
-const { DELHIVERY } = require('../appConfig');
+const { DELHIVERY, AWS } = require('../appConfig');
 
 const { models, enums } = require('../constants');
 const Book = mongoose.model(models.STORE_BOOK);
@@ -136,3 +137,52 @@ module.exports.orderPaymentInfo = function(payment) {
       return payload;
   }
 };
+
+module.exports.textMessage = function(name, email, orderId) {
+  return `Hi ${name ? name : email.split('@')[0]}, Your order#${orderId} has been confirmed! Track your order progress in Account > Orders section. Happy Reading! -- Team Pageaters.`;
+};
+
+module.exports.returnAddressName = function(name, email) {
+  return `${name ? name : email.split('@')[0]}`;
+};
+
+module.exports.returnProductImage = function(name) {
+  const imageRequest = JSON.stringify({
+    bucket: enums.BUCKETS.BOOK,
+    key: name,
+    edits: {
+      resize: {
+        height: 110,
+        width: 75,
+        fit: 'cover',
+      }
+    }
+  });
+
+  return `${AWS.CLOUDFRONT_ACCESS_POINT}/${universalBtoa(imageRequest)}`;
+};
+
+module.exports.returnBundleImage = function(name) {
+  const imageRequest = JSON.stringify({
+    bucket: enums.BUCKETS.BUNDLES,
+    key: name,
+    edits: {
+      resize: {
+        height: 75,
+        width: 75,
+        fit: 'cover',
+      }
+    }
+  });
+
+  return `${AWS.CLOUDFRONT_ACCESS_POINT}/${universalBtoa(imageRequest)}`;
+};
+
+function universalBtoa(str) {
+  try {
+    return btoa(str);
+  } catch (err) {
+    return Buffer.from(str).toString('base64');
+  }
+}
+
