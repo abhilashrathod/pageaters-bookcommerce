@@ -30,25 +30,27 @@ class SendMailQueue {
 
     if (emailModule) {
       let emailTemplate;
+
+      console.log("data", data);
+
       ejs
-        .renderFile(path.join(PROJECT_ROOT, 'src', 'templates', 'email', emailModule, `${language}.ejs`), { ...data })
-        .then(async (result) => {
-          emailTemplate = result;
-          const message = {
-            to,
-            subject,
-            emailModule,
-            body: emailTemplate,
-          };
+        .renderFile(path.join(PROJECT_ROOT, 'src', 'templates', 'email', emailModule, `${language}.ejs`), { ...data }, async (err, res) => {
+          if (err) {
+            console.log(JSON.stringify("err > > > >", err));
+            cb(err);
+          } else {
+            emailTemplate = res;
+            const message = {
+              to,
+              subject,
+              emailModule,
+              body: emailTemplate,
+            };
 
-          await sendMail(message);
-
+            await sendMail(message);
+          }
           cb();
         })
-        .catch(err => {
-          console.log(JSON.stringify("err > > > >", err));
-          cb(err);
-        });
     } else {
       const mail = { to, subject, body };
 

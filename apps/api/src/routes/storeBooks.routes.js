@@ -17,5 +17,7 @@ router.post('/', permissionValidator(USER_ROLES.ADMIN), controller.create);
 router.put('/:id', permissionValidator(USER_ROLES.ADMIN), controller.update);
 router.delete('/:id', permissionValidator(USER_ROLES.ADMIN), controller.destroy);
 
+router.post('/bulk/create', controller.bulkCreate);
+
 module.exports = router;
 

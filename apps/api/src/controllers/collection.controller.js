@@ -22,6 +22,7 @@ module.exports.getAll = async (req, res) => {
       sort: {
         [sortBy]: sortOrder,
       },
+      select: `title collectionId tags poster priority popularity books`,
       populate: {
         path: 'books',
         select: 'title poster',

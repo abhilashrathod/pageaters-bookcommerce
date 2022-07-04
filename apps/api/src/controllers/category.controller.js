@@ -3,6 +3,7 @@ const { generateRandomNumber, getId } = require('../helpers/utils.helper');
 const { models } = require('../constants');
 
 const Category = mongoose.model(models.CATEGORY);
+const Collection = mongoose.model(models.COLLECTION);
 const Book = mongoose.model(models.STORE_BOOK);
 
 module.exports.getAll = async (req, res) => {
@@ -10,7 +11,7 @@ module.exports.getAll = async (req, res) => {
     let { page, limit, sortBy, sortOrder } = req.allParams();
 
     const query = { isDeleted: false };
-    const allowedSortingFields = ['title', 'createdAt', 'popularity', 'currentDiscount', 'price'];
+    const allowedSortingFields = ['title', 'createdAt', 'popularity', 'priority', 'currentDiscount', 'price'];
 
     if (sortBy && !allowedSortingFields.includes(sortBy)) {
       return res.error('SORTING_NOT_ALLOWED');
@@ -139,10 +140,13 @@ module.exports.getAllProducts = async (req, res) => {
       page,
       limit,
       select: `title bookId ISBN author poster price popularity editorsPick currentDiscount bestSeller`,
-      populate: {
+      populate: [{
         path: 'author',
-        select: 'name intro avatar',
-      },
+        select: 'name avatar',
+      }, {
+        path: 'categories',
+        select: '_id categoryId title'
+      }],
     };
 
     if (sortBy && sortOrder) {
@@ -152,6 +156,41 @@ module.exports.getAllProducts = async (req, res) => {
     }
 
     const booksRes = await Book.paginate(query, options);
+
+    return res.ok({ message: 'BOOK_LIST_SUCCESS', data: booksRes });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.getAllCollections = async (req, res) => {
+  try {
+    let { id, page, limit, sortBy, sortOrder } = req.allParams();
+
+    const query = { isDeleted: false, categories: id };
+    const allowedSortingFields = ['priority', 'popularity'];
+
+    if (sortBy && !allowedSortingFields.includes(sortBy)) {
+      return res.error('SORTING_NOT_ALLOWED');
+    }
+
+    const options = {
+      page,
+      limit,
+      select: `title collectionId tags poster priority popularity books`,
+      populate: {
+        path: 'books',
+        select: 'title poster',
+      },
+    };
+
+    if (sortBy && sortOrder) {
+      options.sort = {
+        [sortBy]: [sortOrder],
+      };
+    }
+
+    const booksRes = await Collection.paginate(query, options);
 
     return res.ok({ message: 'BOOK_LIST_SUCCESS', data: booksRes });
   } catch (e) {

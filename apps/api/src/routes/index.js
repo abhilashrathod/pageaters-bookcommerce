@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
 
 router.use('/admin', require('./admin.routes'));
 
-// router.use('/public', require('./public.routes'));
+router.use('/public', require('./public.routes'));
 // router.use('/private', require('./private.routes'));
 // router.use('/books', require('./book.routes'));
 // router.use('/subscription-plan', require('./subscriptionPlan.routes'));

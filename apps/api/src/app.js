@@ -101,20 +101,18 @@ this.app.use(`/resources`, express.static(path.join(PROJECT_ROOT, 'resources')))
 this.app.use(multer().any());
 
 // rate limiting
-// const apiLimiter = rateLimit({
-//   windowMs: 60 * 1000, // 1 minute will have "max" 75 API request
-//   max: 150,
-//   message: 'LIMIT REACHED: Too many requests were created from this IP. Please try again after an hour. Please contact support in such case if you were not responsible',
-// });
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute will have "max" 75 API request
+  max: 150,
+  message: 'LIMIT REACHED: Too many requests were created from this IP. Please try again after an hour. Please contact support in such case if you were not responsible',
+});
 
 // slow down before threshold
-// const speedLimiter = slowDown({
-//   windowMs: 60 * 1000, // 1 minute
-//   delayAfter: 125,
-//   delayMs: 500,
-// });
-
-// apiLimiter, speedLimiter,
+const speedLimiter = slowDown({
+  windowMs: 60 * 1000, // 1 minute
+  delayAfter: 125,
+  delayMs: 500,
+});
 
 // load routes
 const router = require('./routes');
