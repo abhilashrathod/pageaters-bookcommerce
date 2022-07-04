@@ -97,6 +97,10 @@ module.exports.getById = async (req, res) => {
       populate: {
         path: 'products.product',
         select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller',
+        populate: {
+          path: 'products.product.author',
+          select: 'name'
+        }
       },
     }, {
       path: 'categories',

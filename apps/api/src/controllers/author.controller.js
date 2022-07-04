@@ -10,14 +10,22 @@ const Books = mongoose.model(models.STORE_BOOK);
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit } = req.allParams();
+    let { page, limit, sortBy, sortOrder } = req.allParams();
 
     const query = {isDeleted: false};
+    const allowedSortingFields = ['name', 'createdAt', 'popularity', 'priority'];
+
+    if (sortBy && !allowedSortingFields.includes(sortBy)) {
+      return res.error('SORTING_NOT_ALLOWED');
+    }
 
     const options = {
       page,
       limit,
       select: `name books popularity isDeleted deletedAt`,
+      sort: {
+        [sortBy]: sortOrder,
+      },
     };
 
     const author = await Author.paginate(query, options);

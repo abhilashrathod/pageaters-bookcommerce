@@ -435,6 +435,7 @@ module.exports.sendContactVerification = async (req, res) => {
     loggedInUser.lastMessageSentOn = new Date().toISOString();
     loggedInUser.contactOtp = verificationCode;
     loggedInUser.contactNo = contactNo;
+    loggedInUser.contactVerified = false;
     loggedInUser.save();
 
     let message = {
@@ -519,7 +520,7 @@ module.exports.verifyContact = async (req, res) => {
       user.contactVerified = true;
       user.lastMessageSentOn = '';
       user.contactOtp = '';
-      user.save();
+      await user.save();
       return res.ok('OTP_VERIFICATION_SUCCESS');
     }
 
