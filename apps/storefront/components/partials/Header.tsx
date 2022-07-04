@@ -211,6 +211,7 @@ const AppHeader: React.FC<Props> = () => {
   function handleSearchSelection(e: any) {
     router.push(`/books/${e.id}`);
     setSearch('');
+    handleToggleSearch();
   }
 
   function navigateToUrl(url: string) {
