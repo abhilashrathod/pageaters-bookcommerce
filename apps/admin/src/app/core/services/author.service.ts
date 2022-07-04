@@ -27,8 +27,10 @@ export class AuthorService {
   }
 
   searchAuthors(title): Observable<any> {
-    const url = `${environment.BASE_PATH}/authors/search/${title}`;
-    return this._http.get(url)
+    const url = `${environment.BASE_PATH}/authors/search`;
+    let params = new HttpParams();
+    params = params.append('q', title);
+    return this._http.get(url, {params})
       .pipe(
         map((dt: IResponse) => dt.data),
         catchError((err) => this.handleError(err))

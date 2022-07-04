@@ -13,7 +13,7 @@ export const READING_LEVELS = ['Beginner', 'Intermediate', 'Advance'];
 
 export const PRICING_PERCENTAGES = {
   NON_MEMBER_RENT: 50,
-  MEMBER_PRICE: 80,
+  MEMBER_PRICE: 75,
   MEMBER_RENT: 0,
 };
 

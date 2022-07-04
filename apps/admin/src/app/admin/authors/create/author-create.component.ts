@@ -22,6 +22,11 @@ export class AuthorCreateComponent implements OnInit {
 
   books = [];
   searchBooksCtrl = new FormControl();
+  filters = {
+    limit: 25,
+    page: 1,
+  };
+
   dropdownSettings = {
     text: 'Select books for this Author',
     singleSelection: false,
@@ -43,11 +48,25 @@ export class AuthorCreateComponent implements OnInit {
   ngOnInit(): void {
     this.buildForm();
     this.getBooks();
-    this.searchBooks();
+
+    this.searchBooksCtrl
+      .valueChanges
+      .pipe(
+        debounceTime(500),
+      )
+      .subscribe(res => {
+        if (res) {
+          this.searchBooks(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getBooks();
+        }
+      });
   }
 
   getBooks(): void {
-    this.booksService.getAllBooks({page: 1, limit: 10})
+    this.booksService.getAllBooks(this.filters)
       .subscribe(res => {
         this.books = res.docs;
       }, error => {
@@ -64,15 +83,9 @@ export class AuthorCreateComponent implements OnInit {
     });
   }
 
-  searchBooks(): void {
-    this.searchBooksCtrl
-      .valueChanges
-      .pipe(
-        debounceTime(750),
-      )
-      .subscribe(res => {
-
-      });
+  searchBooks(q): void {
+    this.booksService.searchBooks(q)
+      .subscribe(res => this.books = res);
   }
 
   previewImage(event): void {

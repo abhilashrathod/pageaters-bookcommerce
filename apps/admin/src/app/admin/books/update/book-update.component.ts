@@ -1,5 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
+import {Location} from '@angular/common';
 import {get} from 'lodash';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {ActivatedRoute, Router} from '@angular/router';
@@ -96,6 +97,7 @@ export class BookUpdateComponent implements OnInit {
               private collectionService: CollectionService,
               private router: Router,
               private route: ActivatedRoute,
+              private location: Location,
               private booksService: BooksService,
               private filesService: FilesService) {
   }
@@ -372,17 +374,16 @@ export class BookUpdateComponent implements OnInit {
       ...this.shippingFormGroup.value,
       ...this.pricingFormGroup.value,
       ...this.relatedInfoFormGroup.value,
-      author: author[0]._id,
+      author: (author.length && author[0]) ? author[0]._id : null,
       relatedBooks: relatedBooks.map(x => x._id),
       relatedCollections: relatedCollections.map(x => x._id),
       relatedBundles: relatedBundles.map(x => x._id),
       categories: categories.map(x => x._id),
-      poster: this.book.poster.split('/').pop(),
+      poster: this.book.poster ? this.book.poster.split('/').pop() : '',
     };
-
     const book$ = this.booksService.update(this.book._id, payload);
     book$.subscribe(res => {
-      this.router.navigate(['/', 'admin', 'books']);
+      this.location.back();
       this.snackBar.open('Book Info Updated', 'OKAY', {duration: 5000});
     }, error => {
       this.snackBar.open(error.message, 'OKAY', {duration: 5000});

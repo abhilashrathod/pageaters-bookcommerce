@@ -22,6 +22,11 @@ export class AuthorUpdateComponent implements OnInit {
   books = [];
   author;
   searchBooksCtrl = new FormControl();
+  filters = {
+    limit: 25,
+    page: 1,
+  };
+
   dropdownSettings = {
     text: 'Select books for this Author',
     singleSelection: false,
@@ -57,7 +62,6 @@ export class AuthorUpdateComponent implements OnInit {
       this.author = res;
       this.author.avatar = `${BUCKETS.AUTHORS}/${this.author.avatar}`;
       this.getBooks();
-      this.searchBooks();
       this.buildForm(res);
       this.isReady = true;
     }, err => {
@@ -66,12 +70,17 @@ export class AuthorUpdateComponent implements OnInit {
   }
 
   getBooks(): void {
-    this.booksService.getAllBooks({page: 1, limit: 10})
+    this.booksService.getAllBooks(this.filters)
       .subscribe(res => {
         this.books = res.docs;
       }, error => {
         this.snackBar.open(error.message, 'OKAY', {duration: 5000});
       });
+  }
+
+  searchBooks(q): void {
+    this.booksService.searchBooks(q)
+      .subscribe(res => this.books = res);
   }
 
   buildForm(data): void {
@@ -81,16 +90,20 @@ export class AuthorUpdateComponent implements OnInit {
       avatar: [get(data, 'avatar', '')],
       books: [get(data, 'books', [])],
     });
-  }
 
-  searchBooks(): void {
     this.searchBooksCtrl
       .valueChanges
       .pipe(
-        debounceTime(750),
+        debounceTime(500),
       )
       .subscribe(res => {
-
+        if (res) {
+          this.searchBooks(res);
+        } else {
+          this.filters.limit = 25;
+          this.filters.page = 1;
+          this.getBooks();
+        }
       });
   }
 

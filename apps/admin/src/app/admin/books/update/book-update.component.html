@@ -14,8 +14,8 @@
                   <div *ngIf="!book.poster" class="image-upload-thumbnail" (click)="profileImage.click()">Book Cover
                   </div>
                   <div *ngIf="book.poster" class="thumbnail-container">
-                  <img class="pointer img-fluid img-thumbnail w-50" [src]="book.poster"
-                       (click)="profileImage.click()"/>
+                    <img class="pointer img-fluid img-thumbnail w-50" [src]="book.poster"
+                         (click)="profileImage.click()"/>
                   </div>
                   <input #profileImage class="d-none" type="file" (change)="previewImage($event)">
                 </div>
@@ -169,25 +169,25 @@
               <div class="col-3">
                 <mat-form-field class="w-100">
                   <mat-label>Price</mat-label>
-                  <input matInput formControlName="price" readonly>
+                  <input matInput formControlName="price" (blur)="calculateAmounts()">
                 </mat-form-field>
               </div>
               <div class="col-3">
                 <mat-form-field class="w-100">
                   <mat-label>Rent Amount</mat-label>
-                  <input matInput formControlName="rentPrice" readonly>
+                  <input matInput formControlName="rentPrice">
                 </mat-form-field>
               </div>
               <div class="col-3">
                 <mat-form-field class="w-100">
                   <mat-label>Member's Price</mat-label>
-                  <input matInput formControlName="membersPrice" readonly>
+                  <input matInput formControlName="membersPrice">
                 </mat-form-field>
               </div>
               <div class="col-3">
                 <mat-form-field class="w-100">
                   <mat-label>Member's Rent Amount</mat-label>
-                  <input matInput formControlName="membersRentPrice" readonly>
+                  <input matInput formControlName="membersRentPrice">
                 </mat-form-field>
               </div>
             </div>
@@ -378,7 +378,7 @@
     <mat-icon>arrow_back</mat-icon>
   </button>
 
-  <button mat-fab color="primary" (click)="onSubmit()" >
+  <button mat-fab color="primary" (click)="onSubmit()">
     <mat-icon>check</mat-icon>
   </button>
 </div>

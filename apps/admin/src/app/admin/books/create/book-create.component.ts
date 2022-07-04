@@ -1,4 +1,5 @@
 import {Component, OnInit} from '@angular/core';
+import {Location} from '@angular/common';
 import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {Router} from '@angular/router';
@@ -99,6 +100,7 @@ export class BookCreateComponent implements OnInit {
               private bundleService: BundleService,
               private categoryService: CategoryService,
               private authorService: AuthorService,
+              private location: Location,
               private collectionService: CollectionService,
               private router: Router,
               private snackBar: MatSnackBar) {
@@ -369,7 +371,7 @@ export class BookCreateComponent implements OnInit {
     };
     const book$ = this.booksService.create(payload);
     book$.subscribe(res => {
-      this.router.navigate(['/', 'admin', 'books']);
+      this.location.back();
       this.snackBar.open('New Book Added', 'OKAY', {duration: 5000});
     }, error => {
       this.snackBar.open(error.message, 'OKAY', {duration: 5000});

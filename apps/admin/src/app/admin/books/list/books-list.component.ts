@@ -46,6 +46,21 @@ export class BooksListComponent implements OnInit {
       cell: (element) => `${element.inventory}`,
     },
     {
+      header: 'MRP',
+      columnDef: 'price',
+      cell: (element) => `${element.price}`,
+    },
+    {
+      header: 'Current Discount',
+      columnDef: 'discount',
+      cell: (element) => `${element.currentDiscount}`,
+    },
+    {
+      header: 'View Details',
+      columnDef: 'view',
+      cell: (element) => [...this.viewResourceUrl, element._id],
+    },
+    {
       header: 'Action',
       columnDef: 'action',
       cell: (element) => [...this.editResourceUrl, element._id],

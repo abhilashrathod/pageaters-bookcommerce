@@ -27,6 +27,11 @@ export class CollectionListComponent implements OnInit {
       cell: (el) => `${el.title}`,
     },
     {
+      header: 'Priority',
+      columnDef: 'priority',
+      cell: (el) => `${el.priority}`,
+    },
+    {
       header: 'Tags',
       columnDef: 'tags',
       cell: (el) => `${el.tags.join(', ')}`,

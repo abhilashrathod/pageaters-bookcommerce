@@ -29,8 +29,10 @@ export class SharedService {
   }
 
   search(url, query): Observable<any> {
-    url = `${environment.BASE_PATH}${url}/${query}`;
-    return this.httpClient.get(url)
+    url = `${environment.BASE_PATH}${url}`;
+    let params = new HttpParams();
+    params = params.append('q', query);
+    return this.httpClient.get(url, {params})
       .pipe(
         map((res: IResponse) => res.data),
         catchError(err => this.handleError(err))

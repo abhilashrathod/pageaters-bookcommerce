@@ -12,6 +12,7 @@ import {FormControl} from '@angular/forms';
 import {AppConfirmService} from '../app-confirm/app-confirm.service';
 import {AppLoaderService} from '../app-loader/app-loader.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import {ActivatedRoute, Router} from '@angular/router';
 
 
 @Component({
@@ -44,7 +45,7 @@ export class EntityTableComponent implements OnInit, AfterViewInit {
 
   dataSource = new MatTableDataSource();
   public filterObject = {
-    limit: 10,
+    limit: 25,
     page: 1,
     sortBy: 'createdAt',
     sortOrder: -1,
@@ -55,13 +56,25 @@ export class EntityTableComponent implements OnInit, AfterViewInit {
 
   constructor(private sharedService: SharedService,
               private loading: AppLoaderService,
+              private router: Router,
+              private activatedRoute: ActivatedRoute,
               private snack: MatSnackBar,
-              private confirm: AppConfirmService,) {
+              private confirm: AppConfirmService) {
 
   }
 
   ngOnInit(): void {
+    const params$ = this.activatedRoute.queryParams;
     this.displayedColumns = this.columns.map(c => c.columnDef);
+    params$.subscribe((queryParams) => {
+      if (queryParams.page) {
+        this.filterObject.page = queryParams.page;
+      }
+      if (queryParams.limit) {
+        this.filterObject.limit = queryParams.limit;
+      }
+    });
+
     this.search
       .valueChanges
       .pipe(
@@ -74,6 +87,7 @@ export class EntityTableComponent implements OnInit, AfterViewInit {
           this.ngAfterViewInit();
         }
       });
+
   }
 
   ngAfterViewInit(): void {
@@ -85,6 +99,12 @@ export class EntityTableComponent implements OnInit, AfterViewInit {
         }),
         map((responseData: IPaginationResponse) => {
           this.total = responseData.totalDocs;
+          this.router.navigate([], {
+            relativeTo: this.activatedRoute,
+            queryParams: this.filterObject,
+            replaceUrl: true,
+            queryParamsHandling: 'merge'
+          });
           return responseData.docs;
         }),
         catchError((err) => of([]))
