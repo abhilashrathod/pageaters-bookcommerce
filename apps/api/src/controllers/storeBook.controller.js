@@ -1,8 +1,13 @@
 const mongoose = require('mongoose');
+const csv = require('csv');
+const fs = require('fs');
 const { toArray } = require('lodash');
-const colors = require('colors');
+
 const { generateRandomNumber, getId, arrayDifference } = require('../helpers/utils.helper');
+const { scrapeData } = require('../helpers/scrapping.helpers');
+
 const { models } = require('../constants');
+const {PROJECT_ROOT} = require('../appConfig');
 
 const Book = mongoose.model(models.STORE_BOOK);
 const Category = mongoose.model(models.CATEGORY);
@@ -27,10 +32,13 @@ module.exports.getAll = async (req, res) => {
         [sortBy]: sortOrder,
       },
       select: `title bookId ISBN author inventory poster price weight popularity editorsPick currentDiscount bestSeller`,
-      populate: {
+      populate: [{
         path: 'author',
         select: 'name intro avatar',
-      },
+      }, {
+        path: 'categories',
+        select: '_id categoryId title'
+      }],
     };
 
     const books = await Book.paginate(query, options);
@@ -199,6 +207,13 @@ module.exports.getByUniqueId = async (req, res) => {
     }, {
       path: 'relatedBooks',
       select: `_id title bookId ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller`,
+      populate: [{
+        path: 'author',
+        select: '_id name',
+      }, {
+        path: 'categories',
+        select: '_id categoryId title'
+      }]
     }, {
       path: 'relatedBundles',
       select: 'bundleId _id title bundledBooks poster currentDiscount priority price membersPrice',
@@ -245,3 +260,24 @@ module.exports.destroy = async (req, res) => {
   }
 };
 
+// FOR DEV PURPOSES ONLY
+module.exports.bulkCreate = async (req, res) => {
+  try {
+    const parser = csv.parse({columns: true},async function(err, records) {
+      if (!err) {
+        for (const record of records) {
+          const payload = await scrapeData(record.title, record.tagLine, record.pageUrl);
+          await Book.create(payload);
+        }
+
+        return res.ok();
+      }
+
+      return res.error(err);
+    });
+    fs.createReadStream(PROJECT_ROOT + `\\seedData\\products.csv`).pipe(parser);
+
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
