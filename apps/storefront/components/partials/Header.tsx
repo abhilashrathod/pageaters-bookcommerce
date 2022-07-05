@@ -211,6 +211,11 @@ const AppHeader: React.FC<Props> = () => {
   function handleSearchSelection(e: any) {
     router.push(`/books/${e.id}`);
     setSearch('');
+  }
+
+  function handleSearchSelectionMobile(e: any) {
+    router.push(`/books/${e.id}`);
+    setSearch('');
     handleToggleSearch();
   }
 
@@ -256,11 +261,11 @@ const AppHeader: React.FC<Props> = () => {
                         onClose={handleToggleSearch}
                     >
                       <Autocomplete
-                          placeholder="What are you reading next?"
+                          placeholder="Search by Book Title..."
                           radius="xl"
                           size="sm"
                           value={search}
-                          onItemSubmit={handleSearchSelection}
+                          onItemSubmit={handleSearchSelectionMobile}
                           onChange={setSearch}
                           style={{width: '100%'}}
                           itemComponent={AutoCompleteItem}
@@ -269,7 +274,7 @@ const AppHeader: React.FC<Props> = () => {
                       />
                     </Drawer>
                     <Autocomplete
-                        placeholder="What are you reading next?"
+                        placeholder="Search by Book Title..."
                         radius="xl"
                         size="sm"
                         value={search}
