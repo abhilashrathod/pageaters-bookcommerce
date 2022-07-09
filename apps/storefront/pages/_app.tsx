@@ -43,10 +43,12 @@ function MyApp({Component, pageProps}: AppProps) {
   const router = useRouter();
 
   useEffect(() => {
-    // if (!!process.env.NEXT_PUBLIC_PRODUCTION) {
-    //   // @ts-ignore // not tracking in development. Neat, hah!
-    //   window[`ga-disable-${gtag.GA_TRACKING_ID}`] = true;
-    // }
+    // @ts-ignore
+    const isProd = JSON.parse(process.env.NEXT_PUBLIC_PRODUCTION);
+    if (!isProd) {
+      // @ts-ignore
+      window[`ga-disable-${gtag.GA_TRACKING_ID}`] = true;
+    }
 
     const handleRouteChange = (url: string) => {
       gtag.pageview(url)
