@@ -1,15 +1,11 @@
 import React from 'react';
 import styled from 'styled-components';
-import {Icon} from "@iconify/react";
+
 import {MD} from "../../core/_variables";
-import {useRouter} from "next/router";
 
 interface Props {
   sectionTitle: string,
-  navigateButtonProps?: {
-    buttonText: string;
-    buttonNavigationUrl: string;
-  }
+  sectionExtras?: any;
 }
 
 const SectionTitleSpace = styled.div`
@@ -19,19 +15,10 @@ const SectionTitleSpace = styled.div`
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 1.5rem;
+  font-size: 1.571rem;
+  line-height: 1.857rem;
   letter-spacing: normal;
-`;
-
-const IconButton = styled.button`
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-  border-radius: 0.2rem;
-  box-shadow: none;
-  border: none;
-  background: none;
-  display: flex;
-  align-items: center;
+  margin-bottom: 1rem;
 `;
 
 export const SectionNavigators = styled.div`
@@ -42,13 +29,7 @@ export const SectionNavigators = styled.div`
   }
 `;
 
-const SectionHeading: React.FC<Props> = ({sectionTitle, navigateButtonProps}) => {
-  const router = useRouter();
-
-  function handleNavigation() {
-    // @ts-ignore
-    router.push(navigateButtonProps?.buttonNavigationUrl);
-  }
+const SectionHeading: React.FC<Props> = ({sectionTitle, sectionExtras}) => {
   return (
       <>
         <SectionTitleSpace>
@@ -57,13 +38,7 @@ const SectionHeading: React.FC<Props> = ({sectionTitle, navigateButtonProps}) =>
           </SectionTitle>
 
           {
-            navigateButtonProps && (
-                <SectionNavigators>
-                  <IconButton onClick={handleNavigation}>
-                    <span style={{paddingTop: '2px'}}>{navigateButtonProps?.buttonText}</span> <Icon icon={'bx:bx-chevron-right'} height={28} width={28}/>
-                  </IconButton>
-                </SectionNavigators>
-            )
+            sectionExtras && sectionExtras()
           }
         </SectionTitleSpace>
       </>

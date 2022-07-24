@@ -7,7 +7,7 @@ import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 import {getCollectionImage, getProductImage} from "../../core/_imageRendererHelper";
 
 import {ICollection} from "../../schemas/collection";
-import {SECONDARY_COLOR} from "../../core/_variables";
+import {MD, SECONDARY_COLOR, SM} from "../../core/_variables";
 
 interface Props {
   collection: ICollection;
@@ -17,6 +17,7 @@ const MainCardWrapper = styled.div`
   margin-bottom: 1rem;
   border-radius: 1rem;
   position: relative;
+  cursor: pointer;
   
    &:after {
     content: "";
@@ -39,7 +40,15 @@ const CardImage = styled.img`
   width: 100%;
   max-width: 100%;
   height: 345px;
-  object-fit: cover;  
+  object-fit: cover;
+  
+  @media screen and (max-width: ${MD - 1}px) {
+   height: 250px; 
+  }
+  
+  @media screen and (max-width: ${SM - 1}px) {
+   height: 200px; 
+  }
 `;
 
 const CardContent = styled.div`
@@ -54,13 +63,24 @@ const CardContent = styled.div`
   word-break: break-word;
   flex-direction: column;
   padding: 2rem 0;
+  
+  @media screen and (max-width: ${MD - 1}px) {
+   left: 1.5rem;
+   padding: 1.5rem 0;
+  }
 `;
 
 const CardTitle = styled.h4`
   display: flex;
   align-items: center;
   font-size: 1.6rem;
+  line-height: 1.886rem;
   color: ${SECONDARY_COLOR};
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    font-size: 1.457rem;
+    line-height: 1.743rem;
+  }
 `;
 
 const CardTextSpace = styled.div``;
@@ -68,7 +88,7 @@ const CardLearnMore = styled.div``;
 
 const AvatarList = styled.div`
   display: flex;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 `;
 
 const AvatarListItem = styled.div`
@@ -95,6 +115,11 @@ const AvatarStyles = `
   justify-content: center;
   object-fit: cover;
   object-position: top center;
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    height: 2rem;
+    width: 2rem;
+  }
 `;
 
 const AvatarImage = styled.img`${AvatarStyles}`;
@@ -125,9 +150,9 @@ const CollectionCardSmall: React.FC<Props> = ({collection}) => {
   }
 
   return (
-      <MainCardWrapper>
+      <MainCardWrapper onClick={handleNavigation}>
         <CardCoverSpace>
-          <CardImage src={renderImageSize(517, 345)} loading={'lazy'} alt={collection.title} height={345} width={517}/>
+          <CardImage src={renderImageSize(517, 345)} loading={'lazy'} alt={collection.title} />
         </CardCoverSpace>
         <CardContent>
           <CardTextSpace>
@@ -161,9 +186,6 @@ const CollectionCardSmall: React.FC<Props> = ({collection}) => {
                 )
               }
             </AvatarList>
-            <AppButton onClick={handleNavigation} variant={ButtonVariants.Secondary} size={ButtonSizes.Small}>
-              View
-            </AppButton>
           </CardLearnMore>
         </CardContent>
       </MainCardWrapper>

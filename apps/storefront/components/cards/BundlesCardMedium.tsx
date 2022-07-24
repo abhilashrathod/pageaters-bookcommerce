@@ -12,7 +12,6 @@ interface Props {
 }
 
 const WrapperDiv = styled.div`
-  margin-bottom: 1rem;
   border-radius: 1rem;
   cursor: pointer;  
 `;
@@ -32,12 +31,7 @@ const CardImage = styled.img`
   
   @media screen and (max-width: ${MD - 1}px) {      
     width: 100%;
-    height: 330px;
-  }
-    
-  @media screen and (max-width: ${SM - 1}px) {      
-    width: 100%;
-    height: 170px;
+    height: 290px;
   }`
 ;
 

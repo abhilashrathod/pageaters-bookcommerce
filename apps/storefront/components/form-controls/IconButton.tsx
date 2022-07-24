@@ -16,7 +16,7 @@ interface Props {
   disabled?: boolean;
   styles?: React.CSSProperties;
   type?: 'button' | 'submit';
-  onClick: () => void;
+  onClick: (e?: any) => void;
 }
 
 const handleColor = (color: string) => {
@@ -58,7 +58,7 @@ const MainButton = styled.button`
 
 const AppIconButton: React.FC<Props> = ({variant, size, styles, type, disabled, onClick, children}) => {
   const handleClick = (e: any) => {
-    onClick();
+    onClick(e);
   };
 
   return (

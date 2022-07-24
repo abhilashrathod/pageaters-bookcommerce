@@ -82,17 +82,15 @@ const CategoryLandscapeCard: React.FC<Props> = ({category}) => {
   }
 
   return (
-      <>
-        <CategoryItem onClick={navigateToDetails}>
-          <CategoryImageArea>
-            <CategoryImage src={renderImageSize(84, 84)} loading={"lazy"} width={84} height={84} alt={category.title}/>
-          </CategoryImageArea>
-          <CategoryContentArea>
-            <CategoryTitle>{category.title}</CategoryTitle>
-            <CategoryDescription>{category.numberOfBooks} Books</CategoryDescription>
-          </CategoryContentArea>
-        </CategoryItem>
-      </>
+      <CategoryItem onClick={navigateToDetails}>
+        <CategoryImageArea>
+          <CategoryImage src={renderImageSize(84, 84)} loading={"lazy"} width={84} height={84} alt={category.title}/>
+        </CategoryImageArea>
+        <CategoryContentArea>
+          <CategoryTitle>{category.title}</CategoryTitle>
+          <CategoryDescription>{category.numberOfBooks} Books</CategoryDescription>
+        </CategoryContentArea>
+      </CategoryItem>
   )
 };
 

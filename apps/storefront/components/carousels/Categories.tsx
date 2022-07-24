@@ -1,15 +1,19 @@
-import React, {useRef, useState} from 'react';
-import useSWR from 'swr'
+import React, {useState} from 'react';
+import useSWR from 'swr';
+import {get} from 'lodash';
 import {useRouter} from "next/router";
+import {useKeenSlider} from "keen-slider/react";
 import styled from "styled-components";
-import {Icon} from "@iconify/react";
-import {ScrollArea, Skeleton} from '@mantine/core';
+import {Skeleton} from '@mantine/core';
 
-import CategoryLandscapeCard from "../cards/CategoryLandscapeCard";
 import EmptySectionMessage from "../elements/FailedToLoad";
+import CategoryPortraitCard from "../cards/CategoryPortraitCard";
 
 import {MD} from "../../core/_variables";
 import {ICategory} from "../../schemas/category";
+import {Icon} from "@iconify/react";
+import AppIconButton from "../form-controls/IconButton";
+import {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 interface Props {
 }
@@ -21,17 +25,10 @@ export const CategoryTitleSpace = styled.div`
 `;
 
 export const SectionTitle = styled.h3`
-  font-size: 1.5rem;
+  font-size: 1.571rem;
+  line-height: 1.857rem;
   letter-spacing: normal;
-`;
-
-const IconButton = styled.button`
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-  border-radius: 0.2rem;
-  box-shadow: none;
-  border: none;
-  background: none;
+  margin-bottom: 1rem;
 `;
 
 const CategoryNavigators = styled.div`
@@ -44,24 +41,37 @@ const CategoryNavigators = styled.div`
 
 
 const Categories: React.FC<Props> = () => {
-  const carouselContainer = useRef(null);
-  const router = useRouter();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [loaded, setLoaded] = useState(false);
 
-  const [params, setParams] = useState({page: 1, limit: 25, sortBy: 'priority', sortOrder: 'asc'});
+  const {data, error} = useSWR({url: `/categories`, args: {page: 1, limit: 25, sortBy: 'priority', sortOrder: 'asc'}});
 
-  const {data, error} = useSWR({url: `/categories`, args: params});
-
-  function scrollRight() {
-    // @ts-ignore
-    carouselContainer.current.scrollTo({left: (carouselContainer.current.scrollLeft + 500), behavior: 'smooth'});
-  }
-
-  function scrollLeft() {
-    // @ts-ignore
-    carouselContainer.current.scrollTo({left: (carouselContainer.current.scrollLeft - 500), behavior: 'smooth'});
-  }
+  const [refCallback, instanceRef] = useKeenSlider({
+    mode: "free",
+    breakpoints: {
+      '(min-width: 993px)': {
+        slides: {origin: "auto", perView: 8.25, spacing: 12},
+      },
+      '(max-width: 992px)': {
+        slides: {origin: "auto", perView: 6.25, spacing: 12},
+      },
+      '(max-width: 768px)': {
+        slides: {origin: "auto", perView: 5.25, spacing: 12},
+      },
+      '(max-width: 576px)': {
+        slides: {origin: "auto", perView: 3.25, spacing: 12},
+      },
+    },
+    slideChanged(slider) {
+      setCurrentSlide(slider.track.details.rel)
+    },
+    created() {
+      setLoaded(true)
+    },
+  });
 
   if (error) return <EmptySectionMessage title={'Failed to Load Categories...'}/>;
+
   if (!data) return (
       <div className="custom-container">
         <div className="row">
@@ -79,9 +89,15 @@ const Categories: React.FC<Props> = () => {
       </div>
   );
 
-  function navigateToCategories() {
-    router.push(`/categories`);
+  function handlePrev(e: any) {
+    e.stopPropagation() || instanceRef.current?.prev()
   }
+
+  function handleNext(e: any) {
+    e.stopPropagation() || instanceRef.current?.next()
+  }
+
+  const categories = get(data, 'data.docs', []);
 
   return (
       <>
@@ -90,29 +106,31 @@ const Categories: React.FC<Props> = () => {
             <div className="col">
               <CategoryTitleSpace>
                 <SectionTitle>
-                  Categories ({data.data.docs.length})
+                  Categories
                 </SectionTitle>
 
                 <CategoryNavigators>
-                  <IconButton onClick={scrollLeft}>
-                    <Icon icon="bx:bx-chevron-left-circle" height={24} width={24}/>
-                  </IconButton>
-                  <IconButton onClick={scrollRight}>
-                    <Icon icon="bx:bx-chevron-right-circle" height={24} width={24}/>
-                  </IconButton>
+                  <AppIconButton variant={ButtonVariants.Default} size={ButtonSizes.Small} styles={{padding: 0}} onClick={handlePrev}>
+                    <Icon icon="fluent:chevron-circle-left-20-regular" height={28} width={28}/>
+                  </AppIconButton>
+                  <AppIconButton variant={ButtonVariants.Default} size={ButtonSizes.Small} styles={{padding: 0}} onClick={handleNext}>
+                    <Icon icon="fluent:chevron-circle-right-20-regular" height={28} width={28}/>
+                  </AppIconButton>
                 </CategoryNavigators>
               </CategoryTitleSpace>
             </div>
           </div>
-          <ScrollArea viewportRef={carouselContainer}>
-            <div className="row categories-list-container">
-              {data.data.docs.map((category: ICategory) => (
-                  <div key={category._id} className="col-xxl-2 col-xl-2 col-lg-3 col-md-3 col-4">
-                    <CategoryLandscapeCard category={category}/>
-                  </div>
-              ))}
+          <div className="row">
+            <div className="col">
+              <div ref={refCallback} className="keen-slider">
+                {categories.map((category: ICategory) => (
+                    <div className="keen-slider__slide" key={category._id}>
+                      <CategoryPortraitCard category={category}/>
+                    </div>
+                ))}
+              </div>
             </div>
-          </ScrollArea>
+          </div>
         </div>
       </>
   )

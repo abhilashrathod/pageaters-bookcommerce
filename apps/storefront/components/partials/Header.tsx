@@ -30,7 +30,7 @@ const AppHeaderSpace = styled.header`
   
   top: 0;
   left: 0;
-  z-index: 9;
+  z-index: 19;
   
   box-shadow: 0px 0px 6px 0px rgba(0, 0, 0, 0.2);
   background: ${SECONDARY_COLOR};

@@ -20,7 +20,6 @@ interface Props {
 }
 
 const WrapperDiv = styled.a`
-  margin-bottom: 1rem;
   position: relative;
   display: block;
   cursor: pointer;
@@ -117,7 +116,7 @@ const ProductCardLandScape: React.FC<Props> = ({book, analytics}) => {
               {book.bestSeller && <Badges text={book.bestSeller ? 'Best Seller' : ''} color={'primary'}/>}
             </CardTags>
             <CardTitle>
-              {book.title} by {book?.author?.name}
+              {book.title}
             </CardTitle>
             <CardSubTitle>
               {

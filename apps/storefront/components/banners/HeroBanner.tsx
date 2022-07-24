@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import AppButton from "../form-controls/Button";
 
-import {LG, MD, SM} from "../../core/_variables";
+import {LG, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
 import {IBanner} from "../../schemas/banner";
 import {useRouter} from "next/router";
 import {getAssetImage} from "../../core/_imageRendererHelper";
@@ -59,7 +59,7 @@ const HeroTitle = styled.h2`
   font-size: 3.714rem;
   line-height: 4rem;
   letter-spacing: -2px;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   text-shadow: 3px 4px 7px rgba(81,67,21,0.8);
   
  @media screen and (max-width: ${MD - 1}px) {      
@@ -73,6 +73,10 @@ const HeroTitle = styled.h2`
     line-height: 2.5rem;
     letter-spacing: -1px;
   }
+`;
+
+const HeroSubTitle = styled.p`
+  color: ${SECONDARY_COLOR};
 `;
 
 const HeroBanner: React.FC<Props> = ({banner}) => {
@@ -95,6 +99,7 @@ const HeroBanner: React.FC<Props> = ({banner}) => {
             <div className="col-xxl-4 col-lg-6 col-12">
               <HeroTitleSection>
                 <HeroTitle>{banner.title}</HeroTitle>
+                <HeroSubTitle>Novels • Literature • Self-Help</HeroSubTitle>
                 <div>
                   <AppButton variant={'secondary'} onClick={handleNavigation}>
                     {loggedIn ? 'Explore' : 'Get Started'}
