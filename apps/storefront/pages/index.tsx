@@ -1,200 +1,35 @@
 import React from "react";
 import {NextPage} from 'next'
 import Head from "next/head";
-import useSWR from "swr";
-import {Skeleton} from "@mantine/core";
+import styled from "styled-components";
 
 import HeroBanner from "../components/banners/HeroBanner";
 import Categories from "../components/carousels/Categories";
-import GiantFullBleedBanner from "../components/banners/GiantFullBleedBanner";
-import DealsCardLarge from "../components/cards/DealsCardLarge";
-import SectionHeading from "../components/elements/SectionHeading";
-import ProductCardLandScape from "../components/cards/ProductCardLandscape";
-import LandscapeBanner from "../components/banners/LandscapeBanner";
-import CollectionCardSmall from "../components/cards/CollectionCardSmall";
-import BundlesCardMedium from "../components/cards/BundlesCardMedium";
-import EmptySectionMessage from "../components/elements/FailedToLoad";
-
-import {IBanner} from "../schemas/banner";
-import {IDeal} from "../schemas/deal";
-import {IBook} from "../schemas/book";
-import {ICollection} from "../schemas/collection";
-import {IBundle} from "../schemas/bundle";
 import CollectionsCarousel from "../components/carousels/Collections";
 import PageWrapper from "../components/elements/PageWrapper";
+import ProductSets from "../components/carousels/ProductSets";
+import FeaturedCategory from "../components/featured/FeaturedCategory";
+import Bundles from "../components/carousels/Bundles";
+import FeaturedDeals from "../components/featured/FeaturedDeals";
+import GiantSquareBanner from "../components/banners/GiantSquareBanner";
 
+import {MD, SM} from "../core/_variables";
 
-const DealsSection = () => {
-  const {data, error} = useSWR({
-    url: `/deals`,
-    args: {page: 1, limit: 3, sortBy: 'priority', sortOrder: 'asc'}
-  });
-
-  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
-
-  return (
-      <div className="custom-container">
-        <div className="row">
-          <div className="col">
-            <SectionHeading sectionTitle={'Best Deals'}
-                            navigateButtonProps={{buttonText: 'View All', buttonNavigationUrl: '/deals'}}/>
-          </div>
-        </div>
-        <div className="row">
-          {
-            data
-                ? data?.data?.docs.map((item: IDeal) => (
-                    <div key={item.dealId} className="col-xxl-4 col-xl-4 col-lg-6 col-sm-6 col-12">
-                      <DealsCardLarge deal={item}/>
-                    </div>
-                ))
-                : [0, 0, 0].map((item: any, index) => (
-                    <div key={index} className="col-xxl-4 col-xl-4 col-lg-6 col-sm-6 col-12">
-                      <Skeleton height={520} radius="lg"/>
-                    </div>
-                ))
-          }
-        </div>
-      </div>
-  )
-};
-
-const BestSellers = () => {
-  const {data, error} = useSWR({
-    url: `/store-books`,
-    args: {page: 1, limit: 6, sortBy: 'currentDiscount', sortOrder: 'desc'}
-  });
-
-  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
-
-  return (
-      <div className="custom-container">
-        <div className="row">
-          <div className="col">
-            <SectionHeading sectionTitle={'Most Discounted'}/>
-          </div>
-        </div>
-        <div className="row">
-          {
-            data
-                ? data?.data?.docs.map((item: IBook) => (
-                    <div key={item.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                      <ProductCardLandScape book={item} analytics={{listName: 'Most Discounted', listId: 'most-discounted'}}/>
-                    </div>
-                ))
-                : [0, 0, 0, 0, 0, 0].map((item: any, index) => (
-                    <div key={index} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                      <Skeleton height={320} radius="lg"/>
-                    </div>
-                ))
-          }
-        </div>
-      </div>
-  )
-};
-
-const NewArrivals = () => {
-  const {data, error} = useSWR({
-    url: `/store-books`,
-    args: {page: 1, limit: 6, sortBy: 'createdAt', sortOrder: 'desc'}
-  });
-
-  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
-
-  return (
-      <div className="custom-container">
-        <div className="row">
-          <div className="col">
-            <SectionHeading sectionTitle={'New Arrivals!'}/>
-          </div>
-        </div>
-        <div className="row">
-          {
-            data
-                ? data?.data?.docs.map((item: IBook) => (
-                    <div key={item.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                      <ProductCardLandScape book={item} analytics={{listName: 'New Arrivals', listId: 'new-arrivals'}}/>
-                    </div>
-                ))
-                : [0, 0, 0, 0, 0, 0].map((item: any, index) => (
-                    <div key={index} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                      <Skeleton height={320} radius="lg"/>
-                    </div>
-                ))
-          }
-        </div>
-      </div>
-  )
-};
-
-const MostPopular = () => {
-  const {data, error} = useSWR({
-    url: `/store-books`,
-    args: {page: 1, limit: 6, sortBy: 'popularity', sortOrder: 'desc'}
-  });
-
-  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
-
-  return (
-      <div className="custom-container">
-        <div className="row">
-          <div className="col">
-            <SectionHeading sectionTitle={'Most Popular'}/>
-          </div>
-        </div>
-        <div className="row">
-          {
-            data
-                ? data?.data?.docs.map((item: IBook) => (
-                    <div key={item.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                      <ProductCardLandScape book={item} analytics={{listName: 'Most Popular', listId: 'most-popular'}}/>
-                    </div>
-                ))
-                : [0, 0, 0, 0, 0, 0].map((item: any, index) => (
-                    <div key={index} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                      <Skeleton height={320} radius="lg"/>
-                    </div>
-                ))
-          }
-        </div>
-      </div>
-  )
-};
-
-const BundlesSection = () => {
-  const {data, error} = useSWR({
-    url: `/bundles`,
-    args: {page: 1, limit: 4, sortBy: 'priority', sortOrder: 'asc'}
-  });
-
-  if (error) return <EmptySectionMessage title={'Failed to load data...'}/>;
-
-  return (
-      <div className="custom-container">
-        <div className="row">
-          <div className="col">
-            <SectionHeading sectionTitle={'Spectacular Bundles'}
-                            navigateButtonProps={{buttonText: 'View All', buttonNavigationUrl: '/bundles'}}/>
-          </div>
-        </div>
-        <div className="row">
-          {
-            data
-                ? data?.data?.docs.map((item: IBundle) => (
-                    <div key={item.bundleId} className="col-lg-3 col-6">
-                      <BundlesCardMedium bundle={item}/>
-                    </div>
-                ))
-                : [0, 0, 0, 0].map((item: any, index) => (
-                    <div key={index} className="col-lg-3 col-6">
-                      <Skeleton height={385} radius="lg"/>
-                    </div>
-                ))
-          }
-        </div>
-      </div>
-  )
-};
+const FeaturedCategorySection = styled.section`
+  background: #f2f2f2;
+  padding: 5rem 0;
+  margin: 5rem 0;
+  
+  @media screen and (max-width: ${MD - 1}px) {
+    padding: 3.75rem 0;
+    margin: 3.75rem 0;
+  }
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    padding: 2.5rem 0;
+    margin: 2.5rem 0;
+  }
+`;
 
 const Home: NextPage = (props: any) => {
   return (
@@ -202,17 +37,24 @@ const Home: NextPage = (props: any) => {
         <Head>
           <title>Pageaters: Online shopping site for Buying, Selling or Renting Books in India</title>
           <meta name="title" content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
-          <meta name="description" content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books."/>
+          <meta name="description"
+                content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books."/>
 
-          <meta property="og:title" content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
-          <meta property="og:description" content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books. "/>
-          <meta property="og:image" content="https://res.cloudinary.com/pageaters/image/upload/v1624257111/pageaters-poster_ohufa0.png"/>
+          <meta property="og:title"
+                content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
+          <meta property="og:description"
+                content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books. "/>
+          <meta property="og:image"
+                content="https://res.cloudinary.com/pageaters/image/upload/v1624257111/pageaters-poster_ohufa0.png"/>
           <meta property="og:url" content="http://pageaters.com/"/>
 
           <meta property="twitter:url" content="http://pageaters.com"/>
-          <meta property="twitter:title" content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
-          <meta property="twitter:description" content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books. "/>
-          <meta property="twitter:image" content="https://res.cloudinary.com/pageaters/image/upload/v1624257111/pageaters-poster_ohufa0.png"/>
+          <meta property="twitter:title"
+                content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
+          <meta property="twitter:description"
+                content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books. "/>
+          <meta property="twitter:image"
+                content="https://res.cloudinary.com/pageaters/image/upload/v1624257111/pageaters-poster_ohufa0.png"/>
         </Head>
         <PageWrapper>
           <section className={'mb-25'}>
@@ -223,12 +65,16 @@ const Home: NextPage = (props: any) => {
             <Categories/>
           </section>
 
+          <FeaturedCategorySection>
+            <FeaturedCategory/>
+          </FeaturedCategorySection>
+
           <section className={'mb-25'}>
-            <BestSellers/>
+            <ProductSets title={'New Arrivals'} url={`/product-sets/slug/new-arrivals-xUnVs1`}/>
           </section>
 
           <section className={'mb-25'}>
-            <DealsSection/>
+            <FeaturedDeals/>
           </section>
 
           {/*
@@ -256,26 +102,30 @@ const Home: NextPage = (props: any) => {
           */}
 
           <section className={'mb-25'}>
-            <BundlesSection/>
+            <Bundles title={'Spectecular Bundles'} url={`/bundles?page=1&limit=8&sortBy=priority&sortOrder=asc`}/>
           </section>
 
           <section className={'mb-25'}>
-            <MostPopular/>
+            <ProductSets title={'Most Discounted'} url={`/product-sets/slug/most-discounted-cyLclz`}/>
           </section>
 
           <section className={'mb-25'}>
-            <CollectionsCarousel />
+            <CollectionsCarousel title={'Spotlight Collections'} url={`/collections?page=1&limit=6&sortBy=priority&sortOrder=asc`}/>
           </section>
 
-          <section className="py-25 mb-25">
-            <GiantFullBleedBanner banner={{
+          <section className="mb-25">
+            {/*<GiantFullBleedBanner banner={{*/}
+            {/*  title: 'Explore Membership Benefits',*/}
+            {/*  poster: 'medium-shot-happy-brunette-woman-with-book-min_wu681i.jpg'*/}
+            {/*}}/>*/}
+            <GiantSquareBanner banner={{
               title: 'Explore Membership Benefits',
-              poster: 'medium-shot-happy-brunette-woman-with-book-min_wu681i.jpg'
+              poster: 'Membership-graphic.png'
             }}/>
           </section>
 
           <section className={'mb-25'}>
-            <NewArrivals/>
+            <ProductSets title={'Best Sellers'} url={`/product-sets/slug/trending-books-boQMVB`}/>
           </section>
         </PageWrapper>
       </>
