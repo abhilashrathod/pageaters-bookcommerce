@@ -42,7 +42,7 @@ const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
     return {
       page: Number(query.page) || 1,
       limit: 12,
-      sortBy: query.sortBy || 'createdAt',
+      sortBy: query.sortBy || 'publicationYear',
       sortOrder: query.sortOrder || 'desc'
     };
   });

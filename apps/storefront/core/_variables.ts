@@ -100,7 +100,7 @@ export const BUCKETS = {
  */
 
 export const CATEGORY_SORT_OPTIONS = [
-  {label: 'New Arrivals', value: 'createdAt|desc'},
+  {label: 'New Arrivals', value: 'publicationYear|desc'},
   {label: 'Popularity', value: 'popularity|desc'},
   {label: 'Discounts', value: 'currentDiscount|desc'},
   {label: 'Price: High to Low', value: 'price|desc'},
