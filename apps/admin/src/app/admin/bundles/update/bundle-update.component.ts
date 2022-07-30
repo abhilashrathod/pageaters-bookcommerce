@@ -6,6 +6,7 @@ import {debounceTime} from 'rxjs/operators';
 import {get, sumBy} from 'lodash';
 import {MatChipInputEvent} from '@angular/material/chips';
 
+import {CategoryService} from '../../../core/services/category.service';
 import {BundleService} from '../../../core/services/bundle.service';
 import {BooksService} from '../../../core/services/books.service';
 import {FilesService} from '../../../core/services/files.service';
@@ -40,10 +41,12 @@ export class BundleUpdateComponent implements OnInit {
   books = [];
   bundles = [];
   collections = [];
+  categories = [];
 
   searchBooksCtrl = new FormControl();
   searchCollectionsCtrl = new FormControl();
   searchBundlesCtrl = new FormControl();
+  searchCategoriesCtrl = new FormControl();
 
   booksDropdownSettings = {
     text: 'Books in Bundle',
@@ -63,12 +66,19 @@ export class BundleUpdateComponent implements OnInit {
     ...this.DROPDOWN_OPTIONS,
   };
 
+  categoryDropdownSettings = {
+    text: 'Categories',
+    searchPlaceholderText: 'Search Books...',
+    ...this.DROPDOWN_OPTIONS,
+  };
+
 
   constructor(private formBuilder: FormBuilder,
               private snackBar: MatSnackBar,
               private router: Router,
               private route: ActivatedRoute,
               private bundleService: BundleService,
+              private categoryService: CategoryService,
               private collectionService: CollectionService,
               private booksService: BooksService,
               private filesService: FilesService) {
@@ -103,6 +113,7 @@ export class BundleUpdateComponent implements OnInit {
     this.getBooks();
     this.getBundles();
     this.getCollections();
+    this.getCategories();
   }
 
   getBooks(): void {
@@ -113,6 +124,16 @@ export class BundleUpdateComponent implements OnInit {
   searchBooks(q): void {
     this.booksService.searchBooks(q)
       .subscribe(res => this.books = res);
+  }
+
+  getCategories(): void {
+    this.categoryService.getAllCategories(this.filters)
+      .subscribe(res => this.categories = res.docs);
+  }
+
+  searchCategories(q): void {
+    this.categoryService.searchCategories(q)
+      .subscribe(res => this.categories = res);
   }
 
   getBundles(): void {
@@ -147,6 +168,20 @@ export class BundleUpdateComponent implements OnInit {
           this.searchBooks(text);
         } else {
           this.getBooks();
+        }
+      });
+
+    /* CATEGORIES */
+    this.searchCategoriesCtrl
+      .valueChanges
+      .pipe(
+        debounceTime(750),
+      )
+      .subscribe((text) => {
+        if (text) {
+          this.searchCategories(text);
+        } else {
+          this.getCategories();
         }
       });
 
@@ -186,6 +221,7 @@ export class BundleUpdateComponent implements OnInit {
       description: [get(data, 'description', '')],
       tags: [get(data, 'tags', [])],
       bundledBooks: [get(data, 'bundledBooks', [])],
+      categories: [get(data, 'categories', [])],
       relatedBundles: [get(data, 'relatedBundles', [])],
       relatedCollections: [get(data, 'relatedCollections', [])],
       price: [get(data, 'price', 0)],
@@ -264,14 +300,15 @@ export class BundleUpdateComponent implements OnInit {
   }
 
   onSubmit(): void {
-    const {bundledBooks, relatedCollections, relatedBundles, ...rest} = this.bundleFormGroup.value;
+    const {bundledBooks, categories, relatedCollections, relatedBundles, ...rest} = this.bundleFormGroup.value;
     const payload = {
       ...this.bundle,
       ...rest,
       bundledBooks: bundledBooks.map(x => x._id),
       relatedCollections: relatedCollections.map(x => x._id),
+      categories: categories.map(x => x._id),
       relatedBundles: relatedBundles.map(x => x._id),
-      poster: this.bundle.poster.split('/').pop(),
+      poster : this.bundle.poster ? this.bundle.poster.split('/').pop() : '',
     };
 
     const bundle$ = this.bundleService.update(this.bundle._id, payload);

@@ -10,6 +10,7 @@ import {BooksService} from '../../../core/services/books.service';
 import {FilesService} from '../../../core/services/files.service';
 import {BundleService} from '../../../core/services/bundle.service';
 import {CollectionService} from '../../../core/services/collection.service';
+import {CategoryService} from '../../../core/services/category.service';
 
 import {BUCKETS, FILE_UPLOAD_MODULES, returnPercentageValue} from '../../../core/helpers/constants';
 
@@ -30,10 +31,12 @@ export class BundleCreateComponent implements OnInit {
   books = [];
   bundles = [];
   collections = [];
+  categories = [];
 
   searchBooksCtrl = new FormControl();
   searchCollectionsCtrl = new FormControl();
   searchBundlesCtrl = new FormControl();
+  searchCategoriesCtrl = new FormControl();
 
   DROPDOWN_OPTIONS = {
     enableSearchFilter: true,
@@ -61,11 +64,18 @@ export class BundleCreateComponent implements OnInit {
     ...this.DROPDOWN_OPTIONS,
   };
 
+  categoryDropdownSettings = {
+    text: 'Categories',
+    searchPlaceholderText: 'Search Categories...',
+    ...this.DROPDOWN_OPTIONS,
+  };
+
 
   constructor(private formBuilder: FormBuilder,
               private snackBar: MatSnackBar,
               private router: Router,
               private bundleService: BundleService,
+              private categoryService: CategoryService,
               private collectionService: CollectionService,
               private booksService: BooksService,
               private filesService: FilesService) {
@@ -85,6 +95,7 @@ export class BundleCreateComponent implements OnInit {
     this.getBooks();
     this.getBundles();
     this.getCollections();
+    this.getCategories();
   }
 
   getBooks(): void {
@@ -117,6 +128,16 @@ export class BundleCreateComponent implements OnInit {
       .subscribe(res => this.collections = res);
   }
 
+  getCategories(): void {
+    this.categoryService.getAllCategories(this.filters)
+      .subscribe(res => this.categories = res.docs);
+  }
+
+  searchCategories(q): void {
+    this.categoryService.searchCategories(q)
+      .subscribe(res => this.categories = res);
+  }
+
   search(): void {
     /* BOOKS */
     this.searchBooksCtrl
@@ -146,6 +167,7 @@ export class BundleCreateComponent implements OnInit {
         }
       });
 
+    /* BUNDLES */
     this.searchBundlesCtrl.valueChanges
       .pipe(
         debounceTime(500),
@@ -159,6 +181,20 @@ export class BundleCreateComponent implements OnInit {
           this.getBundles();
         }
       });
+
+    /* CATEGORIES */
+    this.searchCategoriesCtrl
+      .valueChanges
+      .pipe(
+        debounceTime(750),
+      )
+      .subscribe((text) => {
+        if (text) {
+          this.searchCategories(text);
+        } else {
+          this.getCategories();
+        }
+      });
   }
 
 
@@ -168,6 +204,7 @@ export class BundleCreateComponent implements OnInit {
       description: [''],
       tags: [[]],
       bundledBooks: [[]],
+      categories: [[]],
       relatedCollections: [[]],
       relatedBundles: [[]],
       currentDiscount: [0],
@@ -260,13 +297,14 @@ export class BundleCreateComponent implements OnInit {
   }
 
   onSubmit(): void {
-    const {bundledBooks, relatedCollections, relatedBundles, ...rest} = this.bundleFormGroup.value;
+    const {bundledBooks, relatedCollections, categories, relatedBundles, ...rest} = this.bundleFormGroup.value;
     const payload = {
       ...rest,
       bundledBooks: bundledBooks.map(x => x._id),
       relatedCollections: relatedCollections.map(x => x._id),
+      categories: categories.map(x => x._id),
       relatedBundles: relatedBundles.map(x => x._id),
-      poster: this.poster.split('/').pop(),
+      poster: this.poster ? this.poster.split('/').pop() : '',
     };
 
     const bundle$ = this.bundleService.create(payload);
