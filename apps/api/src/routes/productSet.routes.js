@@ -8,6 +8,7 @@ const permissionValidator = require('./../middlewares/permissionVerification.mid
 
 router.get('/', permissionValidator(USER_ROLES.ADMIN), controller.getAll);
 router.get('/unique/:id', controller.getByUniqueId);
+router.get('/slug/:slug', controller.getBySlug);
 
 // ADMIN
 router.get('/:id', permissionValidator(USER_ROLES.ADMIN), controller.getById);
