@@ -44,6 +44,7 @@
 </mat-table>
 <mat-paginator #paginator
                [length]="total"
+               [pageIndex]="filterObject.page - 1"
                [pageSize]="filterObject.limit"
                [pageSizeOptions]="[5, 10, 25, 100]"
                (page)="onPageChange($event)">

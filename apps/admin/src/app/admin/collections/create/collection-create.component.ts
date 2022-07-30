@@ -67,7 +67,7 @@ export class CollectionCreateComponent implements OnInit {
 
   categoryDropdownSettings = {
     text: 'Related Categories',
-    searchPlaceholderText: 'Search Books...',
+    searchPlaceholderText: 'Search Categories...',
     ...this.DROPDOWN_OPTIONS,
   };
 

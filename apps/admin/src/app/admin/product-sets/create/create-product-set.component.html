@@ -82,7 +82,7 @@
       </mat-card>
     </div>
     <div class="col-9">
-      <div class="list-group" [sortablejs]="selectedBooks">
+      <div class="list-group" style="max-height: 80vh; overflow: scroll" [sortablejs]="selectedBooks">
         <div class="list-group-item list-group-item-action c-handle" *ngFor="let book of selectedBooks; let i = index;">
           <div class="d-flex w-100 justify-content-between">
             <h5 class="mb-1">by {{book.author.name}}</h5>
