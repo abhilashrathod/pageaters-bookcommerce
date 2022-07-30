@@ -67,7 +67,7 @@ module.exports.create = async (req, res) => {
       price, rentPrice, membersPrice, membersRentPrice,
     };
 
-    const book = await Book.create(payload);
+    const bookRes = await Book.create(payload);
 
     // add book into category count
     for (let category of categories) {
@@ -79,11 +79,25 @@ module.exports.create = async (req, res) => {
     // add book into author's book catalog
     if (author) {
       const authorRes = await Author.findOne({ _id: author, isDeleted: false });
-      authorRes.books.push(book._id);
+      authorRes.books.push(bookRes._id);
       await authorRes.save();
     }
 
-    return res.ok({ message: 'BOOK_CREATE_SUCCESS', data: book });
+    // add related data
+    for (let bookItem of relatedBooks) {
+      let iBookRes = await Book.findOne({_id : bookItem}).select('title relatedBooks');
+
+      if (iBookRes) {
+        iBookRes = iBookRes.toObject();
+
+        const isThere = iBookRes.relatedBooks.find((bookId) => bookId.toString() === bookRes._id.toString());
+        if (!isThere) {
+          await Book.findOneAndUpdate({ _id: bookItem }, { $addToSet: { relatedBooks: bookRes._id }});
+        }
+      }
+    }
+
+    return res.ok({ message: 'BOOK_CREATE_SUCCESS', data: bookRes });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -118,6 +132,20 @@ module.exports.update = async (req, res) => {
       const categoryRes = await Category.findOne({ _id: category, isDeleted: false });
       categoryRes.numberOfBooks = Number(categoryRes.numberOfBooks) + 1;
       categoryRes.save();
+    }
+
+    // add related data
+    for (let bookItem of relatedBooks) {
+      let iBookRes = await Book.findOne({_id : bookItem}).select('title relatedBooks');
+
+      if (iBookRes) {
+        iBookRes = iBookRes.toObject();
+
+        const isThere = iBookRes.relatedBooks.find((bookId) => bookId.toString() === book._id.toString());
+        if (!isThere) {
+          await Book.findOneAndUpdate({ _id: bookItem }, { $addToSet: { relatedBooks: book._id }});
+        }
+      }
     }
 
     const bookRes = await Book.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
