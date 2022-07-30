@@ -234,6 +234,10 @@ export class BookCreateComponent implements OnInit {
       });
   }
 
+  goBack(): void {
+    this.location.back();
+  }
+
   getSupportData(): void {
     this.getBooks();
     this.getCategories();

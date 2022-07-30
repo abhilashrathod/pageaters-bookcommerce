@@ -245,6 +245,10 @@ export class BookUpdateComponent implements OnInit {
     this.isReady = true;
   }
 
+  goBack(): void {
+    this.location.back();
+  }
+
   getSupportData(): void {
     this.getBooks();
     this.getCategories();
