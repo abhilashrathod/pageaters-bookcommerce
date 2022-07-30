@@ -8,7 +8,7 @@ const StoreDeal = mongoose.model(models.STORE_DEALS);
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit, sortBy, sortOrder } = req.allParams();
+    let { page, limit, sortBy, sortOrder, offset } = req.allParams();
 
     const query = { isActive: true };
     const allowedSortingFields = ['title', 'createdAt', 'priority'];
@@ -20,6 +20,7 @@ module.exports.getAll = async (req, res) => {
     const options = {
       page,
       limit,
+      offset,
       sort: {
         [sortBy]: sortOrder,
       },
