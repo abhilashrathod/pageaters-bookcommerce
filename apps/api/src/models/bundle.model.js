@@ -16,6 +16,7 @@ const schema = new Schema({
     weight: { type: Number, default: 0 },
 
     bundledBooks: [{ type: Schema.Types.ObjectId, ref: models.STORE_BOOK }],
+    categories: [{ type: Schema.Types.ObjectId, ref: models.CATEGORY }],
 
     popularity: { type: Number, default: 0 },
     priority: { type: Number, default: 0 },
