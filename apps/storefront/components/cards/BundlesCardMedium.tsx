@@ -32,7 +32,13 @@ const CardImage = styled.img`
   @media screen and (max-width: ${MD - 1}px) {      
     width: 100%;
     height: 290px;
-  }`
+  }
+  
+  @media screen and (max-width: ${SM - 1}px) {      
+    width: 100%;
+    height: 170px;
+  }
+  `
 ;
 
 const CardContent = styled.div`
