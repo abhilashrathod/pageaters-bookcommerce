@@ -7,6 +7,7 @@ const schema = new Schema({
     bookId: { type: String, default: '' },
     title: { type: String, default: '' },
     tagline: { type: String, default: '' },
+    eyebrow: { type: String, default: '' },
     author: { type: Schema.Types.ObjectId, ref: models.AUTHOR },
     description: { type: String, default: '' },
     tags: [{ type: String, default: '' }],
@@ -16,7 +17,7 @@ const schema = new Schema({
     readingLevel: { type: String, enum: Object.values(enums.READING_LEVEL), default: enums.READING_LEVEL.BEGINNER },
     version: { type: String, enum: Object.values(enums.BOOK_VERSIONS) },
 
-    dimensions: { type: String, default: 0 },
+    dimensions: { type: String, default: '' },
     weight: { type: Number, default: 0 },
 
     ISBN: { type: String, default: '' },
@@ -25,6 +26,7 @@ const schema = new Schema({
 
     editorsPick: { type: Boolean, default: false },
     bestSeller: { type: Boolean, default: false },
+    newRelease: { type: Boolean, default: false },
 
     poster: { type: String, default: '' },
 

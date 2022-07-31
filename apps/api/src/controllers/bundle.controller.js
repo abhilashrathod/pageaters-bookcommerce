@@ -7,9 +7,14 @@ const Bundles = mongoose.model(models.BUNDLE);
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit, sortBy, sortOrder } = req.allParams();
+    let { page, limit, sortBy, sortOrder, category } = req.allParams();
 
     const query = { isDeleted: false };
+
+    if (category) {
+      query.categories = category;
+    }
+
     const allowedSortingFields = ['title', 'createdAt', 'popularity', 'priority', 'currentDiscount', 'price'];
 
     if (sortBy && !allowedSortingFields.includes(sortBy)) {
@@ -35,7 +40,7 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    let { title, description, tags, poster, popularity, priority, currentDiscount, bundledBooks, relatedBundles, relatedCollections, weight, price, membersPrice } = req.allParams();
+    let { title, description, tags, poster, popularity, priority, currentDiscount, bundledBooks, categories, relatedBundles, relatedCollections, weight, price, membersPrice } = req.allParams();
 
     let bundleId = `BL-${generateRandomNumber(10)}`;
 
@@ -47,6 +52,7 @@ module.exports.create = async (req, res) => {
       poster,
       currentDiscount,
       bundledBooks,
+      categories,
       relatedBundles,
       relatedCollections,
       price,
@@ -66,7 +72,7 @@ module.exports.create = async (req, res) => {
 
 module.exports.update = async (req, res) => {
   try {
-    let { id, title, description, tags, poster, popularity, priority, relatedBundles, bundledBooks, relatedCollections, currentDiscount, price, membersPrice } = req.allParams();
+    let { id, title, description, tags, poster, popularity, priority, relatedBundles, bundledBooks, categories, relatedCollections, currentDiscount, price, membersPrice } = req.allParams();
 
     const bundle = await Bundles.findOne({ _id: id, isDeleted: false });
 
@@ -81,6 +87,7 @@ module.exports.update = async (req, res) => {
       poster,
       popularity,
       priority,
+      categories,
       relatedBundles,
       bundledBooks,
       relatedCollections,
@@ -124,7 +131,7 @@ module.exports.getById = async (req, res) => {
 
     const populateOptions = [{
       path: 'bundledBooks',
-      select: `title bookId ISBN author poster price popularity editorsPick inventory currentDiscount bestSeller`,
+      select: `title bookId ISBN author poster price popularity editorsPick inventory newRelease currentDiscount bestSeller`,
     }, {
       path: 'relatedCollections',
       select: 'collectionId title tags poster books',
@@ -135,6 +142,9 @@ module.exports.getById = async (req, res) => {
     }, {
       path: 'relatedBundles',
       select: 'bundleId _id title bundledBooks poster currentDiscount priority price membersPrice',
+    }, {
+      path: 'categories',
+      select: 'title poster',
     }];
 
     const bundles = await Bundles.findOne({ _id: id, isDeleted: false }).populate(populateOptions);
@@ -155,7 +165,7 @@ module.exports.getByUniqueId = async (req, res) => {
 
     const populateOptions = [{
       path: 'bundledBooks',
-      select: `title bookId ISBN author poster price popularity editorsPick inventory currentDiscount bestSeller`,
+      select: `title bookId ISBN author poster price popularity editorsPick inventory newRelease currentDiscount bestSeller`,
     }, {
       path: 'relatedCollections',
       select: 'collectionId title tags poster books',
@@ -166,6 +176,9 @@ module.exports.getByUniqueId = async (req, res) => {
     }, {
       path: 'relatedBundles',
       select: 'bundleId _id title bundledBooks poster currentDiscount priority price membersPrice',
+    }, {
+      path: 'categories',
+      select: 'title poster',
     }];
 
     let bundle = await Bundles.findOne({ bundleId: id, isDeleted: false }).populate(populateOptions);

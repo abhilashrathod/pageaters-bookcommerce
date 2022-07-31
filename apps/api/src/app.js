@@ -125,7 +125,7 @@ this.app.use('/', express.static(path.join(PROJECT_ROOT, 'public')));
 this.app.use('/public', express.static(path.join(PROJECT_ROOT, 'public')));
 
 // for re-indexing
-this.app.use('/re-index', (req, res) => {
+this.app.get('/re-index', (req, res) => {
   runIndexing(this.app);
 
   return res.send({

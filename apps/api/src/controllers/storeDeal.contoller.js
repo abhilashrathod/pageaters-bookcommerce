@@ -8,10 +8,14 @@ const StoreDeal = mongoose.model(models.STORE_DEALS);
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit, sortBy, sortOrder } = req.allParams();
+    let { page, limit, sortBy, sortOrder, offset, category } = req.allParams();
 
     const query = { isActive: true };
     const allowedSortingFields = ['title', 'createdAt', 'priority'];
+
+    if (category) {
+      query.categories = category;
+    }
 
     if (sortBy && !allowedSortingFields.includes(sortBy)) {
       return res.error('SORTING_NOT_ALLOWED');
@@ -20,6 +24,7 @@ module.exports.getAll = async (req, res) => {
     const options = {
       page,
       limit,
+      offset,
       sort: {
         [sortBy]: sortOrder,
       },
@@ -96,7 +101,7 @@ module.exports.getById = async (req, res) => {
       path: 'productSets.set',
       populate: {
         path: 'products.product',
-        select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller',
+        select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount newRelease bestSeller',
         populate: {
           path: 'products.product.author',
           select: 'name'
@@ -133,7 +138,7 @@ module.exports.getByUniqueId = async (req, res) => {
       path: 'productSets.set',
       populate: {
         path: 'products.product',
-        select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller',
+        select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount newRelease bestSeller',
       },
     }, {
       path: 'categories',

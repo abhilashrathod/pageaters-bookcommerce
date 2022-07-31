@@ -40,12 +40,12 @@ module.exports.scrapeData = async (title, tagline, url) => {
         properties.dimensions = attr.split('cm')[0].trim();
       }
 
-      // if (attr.length <= 6 && (attr.toLowerCase().includes('g') || attr.toLowerCase().includes('kg'))) {
-      //   let plop = Number(attr.split('g')[0].trim());
-      //   if (isNumber(plop)) {
-      //     properties.weight = plop;
-      //   }
-      // }
+      if (attr.length <= 6 && (attr.toLowerCase().includes('g') || attr.toLowerCase().includes('kg'))) {
+        let plop = Number(attr.split('g')[0].trim());
+        if (isNumber(plop)) {
+          properties.weight = plop;
+        }
+      }
 
       if (attr.toLowerCase().includes('978-')) {
         properties.ISBN = attr.split('g')[0].trim();

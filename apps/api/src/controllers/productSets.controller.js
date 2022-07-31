@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { kebabCase, sortBy, isArray } = require('lodash');
+const { kebabCase, sortBy, isArray, map } = require('lodash');
 const { generateRandomString, generateRandomNumber, getId } = require('../helpers/utils.helper');
 
 const { models } = require('../constants');
@@ -87,9 +87,15 @@ module.exports.getById = async (req, res) => {
   try {
     let { id } = req.allParams();
 
+    if (!id) return res.ok();
+
     const populateOptions = [{
       path: 'products.product',
-      select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller',
+      select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount newRelease bestSeller',
+      populate: {
+        path: 'author',
+        select: 'name avatar',
+      },
     }, {
       path: 'categories',
       select: 'categoryId _id title numberOfBooks thumbnail',
@@ -113,9 +119,15 @@ module.exports.getByUniqueId = async (req, res) => {
   try {
     let { id } = req.allParams();
 
+    if (!id) return res.ok();
+
     const populateOptions = [{
       path: 'products.product',
-      select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller',
+      select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount newRelease bestSeller',
+      populate: {
+        path: 'author',
+        select: 'name avatar',
+      },
     }, {
       path: 'categories',
       select: 'categoryId _id title numberOfBooks thumbnail',
@@ -127,6 +139,42 @@ module.exports.getByUniqueId = async (req, res) => {
     if (productSetRes) {
       productSetRes = productSetRes.toObject();
       productSetRes.products = sortBy(productSetRes.products, (item) => item.priority);
+      return res.ok({ message: 'PRODUCT_SET_LIST_SUCCESS', data: productSetRes });
+    } else {
+      return res.error('PRODUCT_SET_NOT_EXIST');
+    }
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.getBySlug = async (req, res) => {
+  try {
+    let { slug } = req.allParams();
+
+    if (!slug) return res.ok();
+
+    const populateOptions = [{
+      path: 'products.product',
+      select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount newRelease bestSeller',
+      populate: {
+        path: 'author',
+        select: 'name avatar',
+      },
+    }, {
+      path: 'categories',
+      select: 'categoryId _id title numberOfBooks thumbnail',
+    }];
+
+    let productSetRes = await ProductSets.findOne({ slug, isActive: true }).populate(populateOptions);
+
+    const sortFun = (item) => item.priority;
+    const mapFun = (item) => item.product;
+
+
+    if (productSetRes) {
+      productSetRes = productSetRes.toObject();
+      productSetRes.products = map(sortBy(productSetRes.products, sortFun), mapFun);
       return res.ok({ message: 'PRODUCT_SET_LIST_SUCCESS', data: productSetRes });
     } else {
       return res.error('PRODUCT_SET_NOT_EXIST');

@@ -31,7 +31,7 @@ module.exports.getAll = async (req, res) => {
       sort: {
         [sortBy]: sortOrder,
       },
-      select: `title bookId ISBN author inventory poster price weight popularity editorsPick currentDiscount bestSeller`,
+      select: `title bookId ISBN author inventory poster price weight popularity editorsPick newRelease currentDiscount bestSeller`,
       populate: [{
         path: 'author',
         select: 'name intro avatar',
@@ -51,23 +51,23 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    let { title, tagline, author, description, tags, language, pages, readingLevel, version, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, bestSeller, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
+    let { title, tagline, eyebrow, author, description, tags, language, pages, readingLevel, version, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
 
     let bookId = `BK-${generateRandomNumber(10)}`;
     const payload = {
       bookId,
-      title, tagline, author, description, tags,
+      title, tagline, eyebrow, author, description, tags,
       language, pages, version, readingLevel,
       dimensions, weight,
       categories, relatedCollections, relatedBooks, relatedBundles,
       ISBN, publicationYear, publisher,
-      editorsPick, bestSeller,
+      editorsPick, bestSeller, newRelease,
       poster,
       wholeSalePriceHistory, inventory, currentDiscount,
       price, rentPrice, membersPrice, membersRentPrice,
     };
 
-    const book = await Book.create(payload);
+    const bookRes = await Book.create(payload);
 
     // add book into category count
     for (let category of categories) {
@@ -79,11 +79,25 @@ module.exports.create = async (req, res) => {
     // add book into author's book catalog
     if (author) {
       const authorRes = await Author.findOne({ _id: author, isDeleted: false });
-      authorRes.books.push(book._id);
+      authorRes.books.push(bookRes._id);
       await authorRes.save();
     }
 
-    return res.ok({ message: 'BOOK_CREATE_SUCCESS', data: book });
+    // add related data
+    for (let bookItem of relatedBooks) {
+      let iBookRes = await Book.findOne({_id : bookItem}).select('title relatedBooks');
+
+      if (iBookRes) {
+        iBookRes = iBookRes.toObject();
+
+        const isThere = iBookRes.relatedBooks.find((bookId) => bookId.toString() === bookRes._id.toString());
+        if (!isThere) {
+          await Book.findOneAndUpdate({ _id: bookItem }, { $addToSet: { relatedBooks: bookRes._id }});
+        }
+      }
+    }
+
+    return res.ok({ message: 'BOOK_CREATE_SUCCESS', data: bookRes });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -91,7 +105,7 @@ module.exports.create = async (req, res) => {
 
 module.exports.update = async (req, res) => {
   try {
-    let { id, title, tagline, description, tags, language, pages, readingLevel, version, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, bestSeller, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedCollections, relatedBundles, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
+    let { id, title, tagline, eyebrow, description, tags, language, pages, readingLevel, version, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedCollections, relatedBundles, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
 
     const book = await Book.findOne({ _id: id, isDeleted: false });
 
@@ -100,12 +114,12 @@ module.exports.update = async (req, res) => {
     }
 
     const payload = {
-      title, tagline, description, tags,
+      title, tagline, eyebrow, description, tags,
       language, pages, version, readingLevel,
       dimensions, weight,
       categories, relatedCollections, relatedBooks, relatedBundles,
       ISBN, publicationYear, publisher,
-      editorsPick, bestSeller,
+      editorsPick, bestSeller, newRelease,
       poster,
       wholeSalePriceHistory, inventory, currentDiscount,
       price, rentPrice, membersPrice, membersRentPrice,
@@ -118,6 +132,20 @@ module.exports.update = async (req, res) => {
       const categoryRes = await Category.findOne({ _id: category, isDeleted: false });
       categoryRes.numberOfBooks = Number(categoryRes.numberOfBooks) + 1;
       categoryRes.save();
+    }
+
+    // add related data
+    for (let bookItem of relatedBooks) {
+      let iBookRes = await Book.findOne({_id : bookItem}).select('title relatedBooks');
+
+      if (iBookRes) {
+        iBookRes = iBookRes.toObject();
+
+        const isThere = iBookRes.relatedBooks.find((bookId) => bookId.toString() === book._id.toString());
+        if (!isThere) {
+          await Book.findOneAndUpdate({ _id: bookItem }, { $addToSet: { relatedBooks: book._id }});
+        }
+      }
     }
 
     const bookRes = await Book.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
@@ -150,7 +178,7 @@ module.exports.search = async (req, res) => {
     const query = { _id: { $in: lunrIdArray }, isDeleted: false };
 
     const books = await Book.find(query)
-      .select('title ISBN bookId author poster weight price popularity inventory editorsPick currentDiscount bestSeller')
+      .select('title ISBN bookId author poster weight price popularity inventory editorsPick newRelease currentDiscount bestSeller')
       .limit(10)
       .populate(populateOptions);
 
@@ -169,7 +197,7 @@ module.exports.getById = async (req, res) => {
       select: '_id authorId name avatar',
     }, {
       path: 'relatedBooks',
-      select: `_id title bookId ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller`,
+      select: `_id title bookId ISBN author inventory poster price popularity editorsPick newRelease currentDiscount bestSeller`,
     }, {
       path: 'relatedBundles',
       select: 'bundleId _id title bundledBooks poster currentDiscount priority price membersPrice',
@@ -206,7 +234,7 @@ module.exports.getByUniqueId = async (req, res) => {
       select: '_id authorId name avatar',
     }, {
       path: 'relatedBooks',
-      select: `_id title bookId ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller`,
+      select: `_id title bookId ISBN author inventory poster price popularity editorsPick newRelease currentDiscount bestSeller`,
       populate: [{
         path: 'author',
         select: '_id name',

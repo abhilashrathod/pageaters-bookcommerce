@@ -7,9 +7,14 @@ const Collection = mongoose.model(models.COLLECTION);
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit, sortBy, sortOrder } = req.allParams();
+    let { page, limit, sortBy, sortOrder, category } = req.allParams();
 
     const query = { isDeleted: false };
+
+    if (category) {
+      query.relatedCategories = category;
+    }
+
     const allowedSortingFields = ['title', 'createdAt', 'popularity', 'priority'];
 
     if (sortBy && !allowedSortingFields.includes(sortBy)) {
@@ -25,7 +30,14 @@ module.exports.getAll = async (req, res) => {
       select: `title collectionId tags poster priority popularity books`,
       populate: {
         path: 'books',
-        select: 'title poster',
+        select: 'title bookId ISBN author inventory poster price weight popularity newRelease editorsPick currentDiscount bestSeller',
+        populate: [{
+          path: 'author',
+          select: 'name intro avatar',
+        }, {
+          path: 'categories',
+          select: '_id categoryId title'
+        }],
       },
     };
 
@@ -113,7 +125,7 @@ module.exports.getById = async (req, res) => {
 
     const populateOptions = [{
       path: 'books',
-      select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller',
+      select: 'bookId title ISBN author inventory poster price popularity newRelease editorsPick currentDiscount bestSeller',
     }, {
       path: 'relatedCategories',
       select: 'categoryId _id title numberOfBooks thumbnail',
@@ -147,7 +159,7 @@ module.exports.getByUniqueId = async (req, res) => {
 
     const populateOptions = [{
       path: 'books',
-      select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller',
+      select: 'bookId title ISBN author inventory poster price popularity newRelease editorsPick currentDiscount bestSeller',
     }, {
       path: 'relatedCategories',
       select: `categoryId _id title numberOfBooks thumbnail`,

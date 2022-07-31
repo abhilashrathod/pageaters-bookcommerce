@@ -125,12 +125,47 @@ module.exports.getByUniqueId = async (req, res) => {
   }
 };
 
+module.exports.getOverviewProducts = async (req, res) => {
+  try {
+    let { id, page, limit, sortOrder } = req.allParams();
+
+    const query = { isDeleted: false, categories: id };
+
+    const options = {
+      page,
+      limit,
+      select: `title bookId ISBN author poster price popularity editorsPick currentDiscount newRelease bestSeller`,
+      populate: [{
+        path: 'author',
+        select: 'name avatar',
+      }, {
+        path: 'categories',
+        select: '_id categoryId title'
+      }],
+    };
+
+    const trendingRes = await Book.paginate(query, Object.assign(options, {sort: {popularity: sortOrder}}));
+    const arrivalsRes = await Book.paginate(query, Object.assign(options, {sort: {publicationYear: sortOrder}}));
+    const discountedRes = await Book.paginate(query, Object.assign(options, {sort: {currentDiscount: sortOrder}}));
+
+    const response = {
+      trending: trendingRes.docs,
+      newArrivals: arrivalsRes.docs,
+      mostDiscounted: discountedRes.docs,
+    };
+
+    return res.ok({ message: 'BOOK_LIST_SUCCESS', data: response });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
 module.exports.getAllProducts = async (req, res) => {
   try {
     let { id, page, limit, sortBy, sortOrder } = req.allParams();
 
     const query = { isDeleted: false, categories: id };
-    const allowedSortingFields = ['title', 'createdAt', 'popularity', 'currentDiscount', 'price'];
+    const allowedSortingFields = ['title', 'createdAt', 'publicationYear', 'popularity', 'currentDiscount', 'price'];
 
     if (sortBy && !allowedSortingFields.includes(sortBy)) {
       return res.error('SORTING_NOT_ALLOWED');
@@ -139,7 +174,7 @@ module.exports.getAllProducts = async (req, res) => {
     const options = {
       page,
       limit,
-      select: `title bookId ISBN author poster price popularity editorsPick currentDiscount bestSeller`,
+      select: `title bookId ISBN author poster price popularity editorsPick currentDiscount newRelease bestSeller`,
       populate: [{
         path: 'author',
         select: 'name avatar',

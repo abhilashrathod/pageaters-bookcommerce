@@ -8,6 +8,7 @@ const controller = require('./../controllers/category.controller');
 
 router.get('/', controller.getAll);
 router.get('/:id/products', controller.getAllProducts);
+router.get('/:id/overview', controller.getOverviewProducts);
 router.get('/unique/:id', controller.getByUniqueId);
 router.get('/search/:q', controller.search);
 
