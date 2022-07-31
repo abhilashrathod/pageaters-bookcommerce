@@ -27,7 +27,8 @@ import {
   AUTH_COOKIE,
   LIGHT_COLOR,
   LIGHTER_PRIMARY_COLOR,
-  LIGHTEST_PRIMARY_COLOR, PRIMARY_COLOR,
+  LIGHTEST_PRIMARY_COLOR,
+  PRIMARY_COLOR,
   PRIMARY_DANGER,
   PRIMARY_SUCCESS,
   SECONDARY_COLOR,
@@ -117,6 +118,17 @@ const ProductDetailsWrapper = styled.div`
   @media screen and (max-width: ${SM - 1}px) {
     margin-left: 0;
   }
+`;
+
+const Eyebrow = styled.span`
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: ${PRIMARY_COLOR};
+  font-weight: 600;
+  line-height: 1.125rem;
+  margin-bottom: 0.438rem;
+  display: block;
+  font-size: 0.75rem;
 `;
 
 const ProductTitle = styled.h1`
@@ -218,7 +230,7 @@ const SuggestionButtons = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
 `;
 
 const ProductAuthor = styled.div`
@@ -550,6 +562,7 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
 
                 <div className="col-xxl-8 col-xl-8 col-12">
                   <ProductDetailsWrapper>
+                    {book.eyebrow && <Eyebrow>{book.eyebrow}</Eyebrow>}
                     <ProductTitle>
                       {book.title} {book.tagline && `(${book.tagline})`}
                     </ProductTitle>
@@ -560,8 +573,12 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                       </h6>
                     </ProductAuthor>
                     <ProductBadges>
-                      {book.editorsPick && <Badges text={book.editorsPick ? 'Editor\'s Pick' : ''} color={'accent'}/>}
-                      {book.bestSeller && <Badges text={book.bestSeller ? 'Best Seller' : ''} color={'primary'}/>}
+                      {book.newRelease &&
+                      <Badges text={book.newRelease ? 'New Release' : ''} color={ButtonVariants.SecondaryAccent}/>}
+                      {book.editorsPick &&
+                      <Badges text={book.editorsPick ? 'Editor\'s Pick' : ''} color={ButtonVariants.Accent}/>}
+                      {book.bestSeller &&
+                      <Badges text={book.bestSeller ? 'Best Seller' : ''} color={ButtonVariants.Default}/>}
                     </ProductBadges>
 
                     <ProductDescription>
@@ -707,7 +724,10 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                           book.relatedBooks.map((book: IBook) => {
                             return (
                                 <div key={book.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
-                                  <ProductCardLandScape book={book} analytics={{listName: 'Related Products', listId: 'related_products'}}/>
+                                  <ProductCardLandScape book={book} analytics={{
+                                    listName: 'Related Products',
+                                    listId: 'related_products'
+                                  }}/>
                                 </div>
                             )
                           })
