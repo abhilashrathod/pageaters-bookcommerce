@@ -124,6 +124,7 @@ export class BookCreateComponent implements OnInit {
     this.primaryFormGroup = this.formBuilder.group({
       title: [''],
       tagline: [''],
+      eyebrow: [''],
       author: ['', Validators.required],
       description: [''],
       tags: [[]],
@@ -139,6 +140,7 @@ export class BookCreateComponent implements OnInit {
 
       bestSeller: [false],
       editorsPick: [false],
+      newRelease: [false],
     });
     this.shippingFormGroup = this.formBuilder.group({
       dimensions: [''],

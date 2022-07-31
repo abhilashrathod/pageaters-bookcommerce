@@ -132,6 +132,7 @@ export class BookUpdateComponent implements OnInit {
     this.primaryFormGroup = this.formBuilder.group({
       title: [get(data, 'title', '')],
       tagline: [get(data, 'tagline', '')],
+      eyebrow: [get(data, 'eyebrow', '')],
       author: [data?.author ? [data.author] : []],
       description: [get(data, 'description', '')],
       tags: [get(data, 'tags', [])],
@@ -147,6 +148,7 @@ export class BookUpdateComponent implements OnInit {
 
       bestSeller: [get(data, 'bestSeller', false)],
       editorsPick: [get(data, 'editorsPick', false)],
+      newRelease: [get(data, 'newRelease', false)],
     });
 
     this.shippingFormGroup = this.formBuilder.group({

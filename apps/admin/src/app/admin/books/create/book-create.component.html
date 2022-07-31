@@ -32,24 +32,33 @@
               </div>
               <div class="col-7">
                 <div class="row">
-                  <div class="col-6">
+                  <div class="col-8">
                     <mat-form-field class="w-100">
                       <mat-label>Title</mat-label>
                       <input matInput formControlName="title">
                     </mat-form-field>
                   </div>
-                  <div class="col-6">
+                  <div class="col-4">
                     <mat-form-field class="w-100">
                       <mat-label>ISBN</mat-label>
                       <input matInput formControlName="ISBN">
                     </mat-form-field>
                   </div>
                 </div>
-
-                <mat-form-field class="w-100">
-                  <mat-label>Tag line</mat-label>
-                  <input matInput formControlName="tagline">
-                </mat-form-field>
+                <div class="row">
+                  <div class="col-7">
+                    <mat-form-field class="w-100">
+                      <mat-label>Tag line</mat-label>
+                      <input matInput formControlName="tagline">
+                    </mat-form-field>
+                  </div>
+                  <div class="col-5">
+                    <mat-form-field class="w-100">
+                      <mat-label>Eyebrow Content</mat-label>
+                      <input matInput formControlName="eyebrow">
+                    </mat-form-field>
+                  </div>
+                </div>
 
                 <div class="mb-3">
                   <angular2-multiselect [data]="authors" formControlName="author"
@@ -140,11 +149,14 @@
                 </mat-form-field>
 
                 <div class="row mt-3 mb-3">
-                  <div class="col-6">
+                  <div class="col-4">
                     <mat-slide-toggle formControlName="editorsPick">Editor's Pick</mat-slide-toggle>
                   </div>
-                  <div class="col-6">
+                  <div class="col-4">
                     <mat-slide-toggle formControlName="bestSeller">Best Seller</mat-slide-toggle>
+                  </div>
+                  <div class="col-4">
+                    <mat-slide-toggle formControlName="newRelease">Is New Release</mat-slide-toggle>
                   </div>
                 </div>
 
