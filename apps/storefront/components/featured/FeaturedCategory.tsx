@@ -15,6 +15,7 @@ import {IProductItem} from "../../schemas/product-set";
 import SectionHeading from "../elements/SectionHeading";
 import EmptySectionMessage from "../elements/FailedToLoad";
 import {useRouter} from "next/router";
+import {IBook} from "../../schemas/book";
 
 interface Props {
 }
@@ -109,7 +110,7 @@ const LoadingCard = () => (
 );
 
 const FeaturedCategory: React.FC<Props> = () => {
-  const {data: categoryRes, error: categoryErr} = useSWR({url: `/categories/unique/${'CA-6968796038'}`});
+  const {data: categoryRes, error: categoryErr} = useSWR({url: `/categories/unique/${'CA-5609114898'}`});
   const {data: storeDealRes, error: storeDealErr} = useSWR({url: `/deals/unique/${'DE-6009406967'}`});
   const {data: productRes, error: productErr} = useSWR({url: `/product-sets/slug/featured-category-set-gqgACP`});
 
@@ -129,8 +130,9 @@ const FeaturedCategory: React.FC<Props> = () => {
   }
 
   const ProductsList = () => {
-    return products.map((item: IProductItem) =>
-        <ProductCardLandScape key={item.product._id} book={item.product}
+    return products.map((item: IBook) =>
+        <ProductCardLandScape key={item._id}
+                              book={item}
                               analytics={{
                                 listId: 'featured-category-products',
                                 listName: 'Featured Category Products'
