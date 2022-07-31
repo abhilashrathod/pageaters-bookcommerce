@@ -142,7 +142,6 @@ const ViewCollection: NextPage<Props> = ({collectionInfo}: InferGetStaticPropsTy
         slides: { origin: "auto", perView: 2.25, spacing: 12 },
       },
     },
-
   });
 
   if (router.isFallback) return <EmptySectionMessage title={'Loading...'}/>;
@@ -298,6 +297,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   const promise$ = await axios.get(`/collections/unique/${id}`);
   const {data} = await promise$.data;
+
+  if (!data) {
+    return {
+      notFound: true,
+    }
+  }
 
   return {
     props: {

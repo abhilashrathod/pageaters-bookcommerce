@@ -105,7 +105,7 @@ const Deals: React.FC<Props> = () => {
                           {
                             data?.data?.docs.map((deal: IDeal) => {
                               return (
-                                  <div key={deal.dealId} className="col-xxl-4 col-xl-4 col-lg-6 col-sm-6col-12">
+                                  <div key={deal.dealId} className="col-xxl-4 col-xl-4 col-lg-6 col-sm-6 col-12">
                                     <DealsCardLarge deal={deal}/>
                                   </div>
                               )
