@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from "next/link";
+import {get} from 'lodash';
 
 interface BreadcrumbItem {
   href: string;
@@ -23,7 +24,7 @@ const Breadcrumbs: React.FC<Props> = ({items}) => {
                         aria-current="page">
                       {
                         item.isActive
-                            ? <span>{item.title.length > 15 ? item.title.slice(0, 15) + '...' : item.title}</span>
+                            ? <span>{get(item, 'title', '').length > 15 ? get(item, 'title', '').slice(0, 15) + '...' : get(item, 'title', '')}</span>
                             : <Link href={item.href}><a>{item.title}</a></Link>
 
                       }
@@ -31,7 +32,6 @@ const Breadcrumbs: React.FC<Props> = ({items}) => {
                 )
               })
             }
-
           </ol>
         </div>
       </>
