@@ -8,6 +8,7 @@ export interface IBook {
   title: string;
   ISBN?: string;
   tagline?: string;
+  eyebrow?: string;
   description?: string;
   bookId: string;
   poster: string;
@@ -19,6 +20,7 @@ export interface IBook {
   popularity?: number;
   editorsPick: boolean;
   bestSeller: boolean;
+  newRelease: boolean;
   language?: string;
   version?: string;
   pages?: number;
