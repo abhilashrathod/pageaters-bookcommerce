@@ -8,10 +8,14 @@ const StoreDeal = mongoose.model(models.STORE_DEALS);
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit, sortBy, sortOrder, offset } = req.allParams();
+    let { page, limit, sortBy, sortOrder, offset, category } = req.allParams();
 
     const query = { isActive: true };
     const allowedSortingFields = ['title', 'createdAt', 'priority'];
+
+    if (category) {
+      query.categories = category;
+    }
 
     if (sortBy && !allowedSortingFields.includes(sortBy)) {
       return res.error('SORTING_NOT_ALLOWED');
