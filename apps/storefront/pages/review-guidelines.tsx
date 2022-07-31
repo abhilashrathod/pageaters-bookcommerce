@@ -57,7 +57,7 @@ const ServerError: React.FC<Props> = () => {
                   • Abuse or encourage abuse of the Post Reporting System <br/>
                   • Post personally identifiable information (i.e. name, address, email, phone number, etc.) <br/>
                   • Bump threads <br/>
-                  • Derail a thread's topic <br/>
+                  • Derail a thread&apos;s topic <br/>
                   • Post links to phishing sites <br/>
                   • Post spam (i.e. +1, 10char, rickrolls) or Re-post Closed, Modified, Deleted Content <br/>
                   • Repetitively post in the incorrect forum (example: trade requests belong in trading forum) <br/>
@@ -75,15 +75,15 @@ const ServerError: React.FC<Props> = () => {
                 • Racism, discrimination <br/>
                 • Abusive language, including swearing <br/>
                 • Drugs and alcohol <br/>
-                • Religious, political, and other "prone to huge arguments" threads <br/>
+                • Religious, political, and other &ldquo;prone to huge arguments&rdquo; threads <br/>
                 • No Backseat Moderating <br/>
                 </p>
                 <p>
-                  Let the moderators do the moderating. Backseat moderating is when people who are not moderators try to enforce the forum rules. If you see a person breaking the rules, take advantage of the "Report" button or simply ignore the offensive post(s), thread, or review.
+                  Let the moderators do the moderating. Backseat moderating is when people who are not moderators try to enforce the forum rules. If you see a person breaking the rules, take advantage of the &ldquo;Report&rdquo; button or simply ignore the offensive post(s), thread, or review.
                 </p>
 
                 <h6>Report Posts to Moderators</h6>
-                <p>Should you observe a fellow Community member breaking these rules please report the post or item by clicking the "Report" button located on every item, post, and review.</p>
+                <p>Should you observe a fellow Community member breaking these rules please report the post or item by clicking the &ldquo;Report&rdquo; button located on every item, post, and review.</p>
 
                 <h6>Repeated Offenders</h6>
                 <p>Repeated offenders of the above rules and guidelines will be banned from the Pageaters Community. Any moderator has the ability to ban a user for violating the rules at their discretion.</p>
