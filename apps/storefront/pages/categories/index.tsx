@@ -71,7 +71,7 @@ const Categories: React.FC<Props> = () => {
                   data
                       ? data?.data?.docs.map((category: ICategory) => {
                         return (
-                            <div key={category.categoryId} className="col-xxl-3 col-lg-4 col-md-4 col-6">
+                            <div key={category.categoryId} className="col-xxl-3 col-lg-4 col-md-4 col-12">
                               <CategoryCardLarge category={category}/>
                             </div>
                         )
