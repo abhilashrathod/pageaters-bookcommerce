@@ -297,7 +297,7 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
           />
         </Head>
         <PageWrapper>
-          <div className="container">
+          <div className="custom-container">
             <div className="row">
               <div className="col">
                 <Breadcrumbs items={BREADCRUMBS_ITEMS({title: bundleDetails?.title})}/>
@@ -305,7 +305,7 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
             </div>
           </div>
           <section className={'py-25'}>
-            <div className="container">
+            <div className="custom-container">
               <div className="row">
                 <div className="col-xxl-4 col-xl-4 col-12">
                   <ProductCoverSpace>
