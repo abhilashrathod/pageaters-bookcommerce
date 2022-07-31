@@ -8,15 +8,16 @@ import {useRouter} from "next/router";
 import useSWR from "swr";
 import {kebabCase} from 'lodash';
 
-import Breadcrumbs from "../../components/elements/Breadcrumbs";
-import PageWrapper from "../../components/elements/PageWrapper";
-import PageHeadings from "../../components/elements/PageHeadings";
-import ProductCardLandScape from "../../components/cards/ProductCardLandscape";
-import EmptySectionMessage from "../../components/elements/FailedToLoad";
+import Breadcrumbs from "../../../components/elements/Breadcrumbs";
+import PageWrapper from "../../../components/elements/PageWrapper";
+import PageHeadings from "../../../components/elements/PageHeadings";
+import ProductCardLandScape from "../../../components/cards/ProductCardLandscape";
+import EmptySectionMessage from "../../../components/elements/FailedToLoad";
 
-import {ICategory} from "../../schemas/category";
-import {IBook} from "../../schemas/book";
-import {BUCKETS_ORIGINS, CATEGORY_SORT_OPTIONS} from "../../core/_variables";
+import {ICategory} from "../../../schemas/category";
+import {IBook} from "../../../schemas/book";
+
+import {BUCKETS_ORIGINS, CATEGORY_SORT_OPTIONS} from "../../../core/_variables";
 
 const BREADCRUMBS_ITEMS = (activeItem: any) => [
   {title: 'Home', href: '/'},
@@ -34,7 +35,7 @@ const FILTER_OPTIONS = {
   defaultFilter: CATEGORY_SORT_OPTIONS[0],
 };
 
-const CategoryDetails: NextPage<Props> = ({categoryDetails}: InferGetStaticPropsType<typeof getStaticProps>) => {
+const CategoryCatalog: NextPage<Props> = ({categoryDetails}: InferGetStaticPropsType<typeof getStaticProps>) => {
   const router = useRouter();
 
   const [params, setParams] = useState(() => {
@@ -207,5 +208,5 @@ export const getStaticProps: GetStaticProps = async (context) => {
   }
 };
 
-export default CategoryDetails;
+export default CategoryCatalog;
 
