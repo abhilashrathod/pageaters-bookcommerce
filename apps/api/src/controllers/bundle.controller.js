@@ -131,7 +131,7 @@ module.exports.getById = async (req, res) => {
 
     const populateOptions = [{
       path: 'bundledBooks',
-      select: `title bookId ISBN author poster price popularity editorsPick inventory currentDiscount bestSeller`,
+      select: `title bookId ISBN author poster price popularity editorsPick inventory newRelease currentDiscount bestSeller`,
     }, {
       path: 'relatedCollections',
       select: 'collectionId title tags poster books',
@@ -165,7 +165,7 @@ module.exports.getByUniqueId = async (req, res) => {
 
     const populateOptions = [{
       path: 'bundledBooks',
-      select: `title bookId ISBN author poster price popularity editorsPick inventory currentDiscount bestSeller`,
+      select: `title bookId ISBN author poster price popularity editorsPick inventory newRelease currentDiscount bestSeller`,
     }, {
       path: 'relatedCollections',
       select: 'collectionId title tags poster books',

@@ -30,7 +30,7 @@ module.exports.getAll = async (req, res) => {
       select: `title collectionId tags poster priority popularity books`,
       populate: {
         path: 'books',
-        select: 'title bookId ISBN author inventory poster price weight popularity editorsPick currentDiscount bestSeller',
+        select: 'title bookId ISBN author inventory poster price weight popularity newRelease editorsPick currentDiscount bestSeller',
         populate: [{
           path: 'author',
           select: 'name intro avatar',
@@ -125,7 +125,7 @@ module.exports.getById = async (req, res) => {
 
     const populateOptions = [{
       path: 'books',
-      select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller',
+      select: 'bookId title ISBN author inventory poster price popularity newRelease editorsPick currentDiscount bestSeller',
     }, {
       path: 'relatedCategories',
       select: 'categoryId _id title numberOfBooks thumbnail',
@@ -159,7 +159,7 @@ module.exports.getByUniqueId = async (req, res) => {
 
     const populateOptions = [{
       path: 'books',
-      select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller',
+      select: 'bookId title ISBN author inventory poster price popularity newRelease editorsPick currentDiscount bestSeller',
     }, {
       path: 'relatedCategories',
       select: `categoryId _id title numberOfBooks thumbnail`,

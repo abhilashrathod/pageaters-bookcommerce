@@ -97,7 +97,7 @@ module.exports.getById = async (req, res) => {
       path: 'productSets.set',
       populate: {
         path: 'products.product',
-        select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller',
+        select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount newRelease bestSeller',
         populate: {
           path: 'products.product.author',
           select: 'name'
@@ -134,7 +134,7 @@ module.exports.getByUniqueId = async (req, res) => {
       path: 'productSets.set',
       populate: {
         path: 'products.product',
-        select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount bestSeller',
+        select: 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount newRelease bestSeller',
       },
     }, {
       path: 'categories',
