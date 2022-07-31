@@ -17,8 +17,8 @@ import {MD} from "../../core/_variables";
 import {ICollection} from "../../schemas/collection";
 
 interface Props {
-  url: string;
   title: string;
+  collections: Array<ICollection>;
 }
 
 const Navigators = styled.div`
@@ -33,9 +33,7 @@ const NavigationWrapper = styled.div`
   position: relative;
 `;
 
-const CollectionsCarousel: React.FC<Props> = ({url, title}) => {
-  const {data, error} = useSWR({url});
-
+const CollectionsCarousel: React.FC<Props> = ({title, collections}) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
@@ -85,9 +83,7 @@ const CollectionsCarousel: React.FC<Props> = ({url, title}) => {
       </Navigators>
   );
 
-  if (error) return <EmptySectionMessage title={'Failed to load Collections list...'}/>;
-
-  const collections = get(data, 'data.docs', []);
+  // if (error) return <EmptySectionMessage title={'Failed to load Collections list...'}/>;
 
   return (
       <div className="custom-container">
@@ -98,7 +94,7 @@ const CollectionsCarousel: React.FC<Props> = ({url, title}) => {
         </div>
 
         {
-          collections.length === 0
+          collections?.length === 0
               ? <div className="row">
                 {
                   range(1, 4).map((item, index) => {

@@ -13,7 +13,6 @@ import {MD} from "../../core/_variables";
 
 import {ICollection} from "../../schemas/collection";
 import {IBook} from "../../schemas/book";
-import EmptySectionMessage from "../elements/FailedToLoad";
 
 interface Props {
   collection: ICollection;
@@ -65,10 +64,12 @@ const CollectionGallery: React.FC<Props> = ({collection}) => {
 
   const SectionExtras = () => (
       <Navigators>
-        <AppIconButton variant={ButtonVariants.Default} size={ButtonSizes.Small} styles={{padding: 0}} onClick={handlePrev}>
+        <AppIconButton variant={ButtonVariants.Default} size={ButtonSizes.Small} styles={{padding: 0}}
+                       onClick={handlePrev}>
           <Icon icon="fluent:chevron-circle-left-20-regular" height={28} width={28}/>
         </AppIconButton>
-        <AppIconButton variant={ButtonVariants.Default} size={ButtonSizes.Small} styles={{padding: 0}} onClick={handleNext}>
+        <AppIconButton variant={ButtonVariants.Default} size={ButtonSizes.Small} styles={{padding: 0}}
+                       onClick={handleNext}>
           <Icon icon="fluent:chevron-circle-right-20-regular" height={28} width={28}/>
         </AppIconButton>
       </Navigators>
@@ -86,7 +87,7 @@ const CollectionGallery: React.FC<Props> = ({collection}) => {
             <div className="col">
               <div ref={refCallback} className="keen-slider">
                 {
-                  collection.books.map((book: IBook) => {
+                  collection?.books.map((book: IBook) => {
                     return (
                         <div className="keen-slider__slide" key={book._id}>
                           <ProductCardLandScape book={book} analytics={{

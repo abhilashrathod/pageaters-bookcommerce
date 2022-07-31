@@ -1,42 +1,44 @@
 import React, {useState} from 'react';
 import {useKeenSlider} from "keen-slider/react";
-import useSWR from "swr";
-import {get, kebabCase} from 'lodash';
+import {kebabCase} from 'lodash';
 import {Skeleton} from "@mantine/core";
 import styled from "styled-components";
 import {Icon} from "@iconify/react";
 
 import ProductCardLandScape from "../cards/ProductCardLandscape";
 import SectionHeading from "../elements/SectionHeading";
-
-import {IProductItem} from "../../schemas/product-set";
 import AppIconButton from "../form-controls/IconButton";
 import {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 import {MD} from "../../core/_variables";
+
+import {IBook} from "../../schemas/book";
 import EmptySectionMessage from "../elements/FailedToLoad";
 
 interface Props {
-  url: string;
   title: string;
+  products: Array<IBook>;
 }
 
 const Navigators = styled.div`
   display: none;
   
   @media screen and (min-width: ${MD - 1}px) {      
-    display: block;      
+    display: block;
   }
 `;
 
-const ProductSets: React.FC<Props> = ({url, title}) => {
-  const {data, error} = useSWR({url});
+const ProductSets: React.FC<Props> = ({title, products}) => {
+  // const {data, error} = useSWR({url});
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
   const [refCallback, instanceRef] = useKeenSlider({
     mode: "free",
+    slides: {
+      spacing: 10,
+    },
     breakpoints: {
       '(min-width: 993px)': {
         slides: {origin: "auto", perView: 7.5, spacing: 12},
@@ -59,8 +61,6 @@ const ProductSets: React.FC<Props> = ({url, title}) => {
     },
   });
 
-  const products = get(data, 'data.products', []);
-
   function handlePrev(e: any) {
     e.stopPropagation() || instanceRef.current?.prev()
   }
@@ -82,8 +82,6 @@ const ProductSets: React.FC<Props> = ({url, title}) => {
       </Navigators>
   );
 
-  if (error) return <EmptySectionMessage title={'Failed to load Books list...'}/>;
-
   return (
       <>
         <div className="custom-container">
@@ -93,7 +91,7 @@ const ProductSets: React.FC<Props> = ({url, title}) => {
             </div>
           </div>
           {
-            products.length === 0
+            products?.length === 0
                 ? <div className="row">
                   {
                     [0, 0, 0, 0, 0, 0].map((item, index) => {
@@ -111,10 +109,10 @@ const ProductSets: React.FC<Props> = ({url, title}) => {
                   <div className="col">
                     <div ref={refCallback} className="keen-slider">
                       {
-                        products.map((book: IProductItem) => {
+                        products.map((book: IBook) => {
                           return (
                               <div className="keen-slider__slide" key={book._id}>
-                                <ProductCardLandScape book={book.product}
+                                <ProductCardLandScape book={book}
                                                       analytics={{listId: kebabCase(title), listName: title}}/>
                               </div>
                           )

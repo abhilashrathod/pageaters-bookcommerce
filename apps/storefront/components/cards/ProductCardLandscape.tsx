@@ -10,6 +10,7 @@ import {getProductImage} from "../../core/_imageRendererHelper";
 import {useRouter} from "next/router";
 
 import {viewItem} from "../../core/_analytics";
+import {ButtonVariants} from "../form-controls/Button";
 
 interface Props {
   book: IBook;
@@ -112,6 +113,7 @@ const ProductCardLandScape: React.FC<Props> = ({book, analytics}) => {
 
           <CardContent>
             <CardTags>
+              {book.newRelease && <Badges text={book.newRelease ? 'New Release' : ''} color={ButtonVariants.SecondaryAccent}/>}
               {book.editorsPick && <Badges text={book.editorsPick ? 'Editor\'s Pick' : ''} color={'accent'}/>}
               {book.bestSeller && <Badges text={book.bestSeller ? 'Best Seller' : ''} color={'primary'}/>}
             </CardTags>

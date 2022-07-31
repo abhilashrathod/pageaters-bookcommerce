@@ -1,10 +1,12 @@
 import React from 'react';
 import styled from "styled-components";
 import {useRouter} from "next/router";
+import {useViewportSize} from "@mantine/hooks";
 
-import {LG, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
+import {LG, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 import {ICategory} from "../../schemas/category";
 import {getCategoryImage} from "../../core/_imageRendererHelper";
+
 
 interface Props {
   category: ICategory;
@@ -12,12 +14,17 @@ interface Props {
 
 const CategoryItem = styled.div`
   position: relative;
+  border-radius: 1rem;  
+  width: 100%;  
+  margin-bottom: 2rem;
+  cursor: pointer;
+`;
+
+const CategoryImage = styled.img`
   border-radius: 1rem;
   background-size: cover;
   width: 100%;
   height: 400px;
-  margin-bottom: 2rem;
-  cursor: pointer;
   
   @media screen and (max-width: ${LG - 1}px) {      
     height: 300px; 
@@ -28,7 +35,7 @@ const CategoryItem = styled.div`
   }
   
   @media screen and (max-width: ${SM - 1}px) {      
-    height: 200px;
+    height: 180px;
   }
 `;
 
@@ -50,7 +57,7 @@ const CategoryTitleArea = styled.div`
 
   @media screen and (max-width: ${SM - 1}px) {      
     height: 30%;
-  } 
+  }
 `;
 
 const CategoryTitle = styled.h4`
@@ -81,6 +88,7 @@ const CategoryTitle = styled.h4`
 
 const CategoryCardLarge: React.FC<Props> = ({category}) => {
   const router = useRouter();
+  const {width} = useViewportSize();
 
   function renderImageSize(w: number, h: number) {
     return getCategoryImage(category.thumbnail, {height: h, width: w, fit: 'cover'});
@@ -92,7 +100,9 @@ const CategoryCardLarge: React.FC<Props> = ({category}) => {
 
   return (
       <>
-        <CategoryItem style={{backgroundImage: `url(${renderImageSize(400, 400)})`}} onClick={handleRedirection}>
+        <CategoryItem onClick={handleRedirection}>
+          <CategoryImage src={(width <= MD - 1) ? renderImageSize(400, 180) : renderImageSize(400, 400)}>
+          </CategoryImage>
           <CategoryTitleArea>
             <CategoryTitle>
               {category.title}

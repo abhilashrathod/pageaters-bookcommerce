@@ -112,6 +112,8 @@ const AvatarStyles = `
   display: flex;
   height: 3rem;
   width: 3rem;
+  font-size: 0.825rem;
+  line-height: 1.125rem;
   justify-content: center;
   object-fit: cover;
   object-position: top center;
