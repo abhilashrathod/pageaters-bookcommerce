@@ -2,10 +2,12 @@ import React from 'react';
 import styled from 'styled-components'
 
 import {
-  ACCENT_COLOR, LIGHTER_PRIMARY_COLOR,
+  ACCENT_COLOR,
+  LIGHTER_PRIMARY_COLOR,
   LIGHTEST_PRIMARY_COLOR,
   PRIMARY_COLOR,
   PRIMARY_DANGER,
+  SECONDARY_ACCENT_COLOR,
   SECONDARY_COLOR
 } from "../../core/_variables";
 
@@ -21,6 +23,7 @@ interface Props {
 export enum ButtonVariants {
   Default = 'default',
   Accent = 'accent',
+  SecondaryAccent = 'secondary-accent',
   Secondary = 'secondary',
   Danger = 'danger',
   LightPrimary = 'light-primary',
@@ -47,6 +50,8 @@ const handleBackgroundColor = (color: string) => {
       return SECONDARY_COLOR;
     case ButtonVariants.Accent:
       return ACCENT_COLOR;
+    case ButtonVariants.SecondaryAccent:
+      return SECONDARY_ACCENT_COLOR;
     case ButtonVariants.Danger:
       return PRIMARY_DANGER;
     case ButtonVariants.LightPrimary:
@@ -108,13 +113,12 @@ const MainButton = styled.button`
 
 const AppButton: React.FC<Props> = ({variant, size, styles, type, disabled, onClick, children}) => {
 
-  const handleClick = (e: any) => {
-    onClick();
-  };
+  const handleClick = (e: any) => onClick();
 
   return (
       <>
-        <MainButton style={styles} disabled={disabled} type={type || 'button'} theme={{variant, size, disabled}} onClick={handleClick}>
+        <MainButton style={styles} disabled={disabled} type={type || 'button'} theme={{variant, size, disabled}}
+                    onClick={handleClick}>
           {children}
         </MainButton>
       </>
