@@ -1,6 +1,8 @@
 import React from "react";
 import {NextPage} from 'next'
 import Head from "next/head";
+import useSWR from "swr";
+import {get} from 'lodash';
 import styled from "styled-components";
 
 import HeroBanner from "../components/banners/HeroBanner";
@@ -32,6 +34,18 @@ const FeaturedCategorySection = styled.section`
 `;
 
 const Home: NextPage = (props: any) => {
+  const {data: newArrivalRes, error: newArrivalErr} = useSWR({url: `/product-sets/slug/new-arrivals-xUnVs1`});
+  const {data: mostDiscountedRes, error: mostDiscountedErr} = useSWR({url: `/product-sets/slug/most-discounted-cyLclz`});
+  const {data: popularRes, error: popularErr} = useSWR({url: `/product-sets/slug/trending-books-boQMVB`});
+  const {data: bundlesRes, error: bundlesErr} = useSWR({url: `/bundles?page=1&limit=8&sortBy=priority&sortOrder=asc`});
+  const {data: collectionsRes, error: collectionsErr} = useSWR({url: `/collections?page=1&limit=6&sortBy=priority&sortOrder=asc`});
+
+  const newArrivals = get(newArrivalRes, 'data.products', []);
+  const mostDiscounted = get(mostDiscountedRes, 'data.products', []);
+  const mostPopular = get(popularRes, 'data.products', []);
+  const bundles = get(bundlesRes, 'data.docs', []);
+  const collections = get(collectionsRes, 'data.docs', []);
+
   return (
       <>
         <Head>
@@ -70,7 +84,7 @@ const Home: NextPage = (props: any) => {
           </FeaturedCategorySection>
 
           <section className={'mb-25'}>
-            <ProductSets title={'New Arrivals'} url={`/product-sets/slug/new-arrivals-xUnVs1`}/>
+            <ProductSets title={'New Arrivals'} products={newArrivals}/>
           </section>
 
           <section className={'mb-25'}>
@@ -102,15 +116,15 @@ const Home: NextPage = (props: any) => {
           */}
 
           <section className={'mb-25'}>
-            <Bundles title={'Spectecular Bundles'} url={`/bundles?page=1&limit=8&sortBy=priority&sortOrder=asc`}/>
+            <Bundles title={'Spectecular Bundles'} bundles={bundles}/>
           </section>
 
           <section className={'mb-25'}>
-            <ProductSets title={'Most Discounted'} url={`/product-sets/slug/most-discounted-cyLclz`}/>
+            <ProductSets title={'Most Discounted'} products={mostDiscounted}/>
           </section>
 
           <section className={'mb-25'}>
-            <CollectionsCarousel title={'Spotlight Collections'} url={`/collections?page=1&limit=6&sortBy=priority&sortOrder=asc`}/>
+            <CollectionsCarousel title={'Spotlight Collections'} collections={collections}/>
           </section>
 
           <section className="mb-25">
@@ -125,7 +139,7 @@ const Home: NextPage = (props: any) => {
           </section>
 
           <section className={'mb-25'}>
-            <ProductSets title={'Best Sellers'} url={`/product-sets/slug/trending-books-boQMVB`}/>
+            <ProductSets title={'Best Sellers'} products={mostPopular}/>
           </section>
         </PageWrapper>
       </>
