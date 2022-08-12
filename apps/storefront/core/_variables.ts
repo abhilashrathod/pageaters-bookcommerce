@@ -239,6 +239,7 @@ export const SIDE_NAVIGATION = [
 export const ORDER_STAGES = {
   ATTEMPTED: 'attempted',
   CREATED: 'created',
+  CONFIRMED: 'confirmed',
   PAID: 'paid',
   SHIPPED: 'shipped',
   FULFILLED: 'fulfilled',
@@ -268,6 +269,7 @@ export const PAYMENT_METHODS = {
   WALLET: 'wallet',
   EMI: 'emi',
   UPI: 'upi',
+  COD: 'cod',
 };
 
 export const CANCELLATION_REASONS = [

@@ -247,6 +247,11 @@ function returnPaymentBreakdown(payment: any) {
         <PaymentListItem>UPI ID: {payment.upi_id}</PaymentListItem>
       </>);
 
+    case PAYMENT_METHODS.COD:
+      return (<>
+        <PaymentListItem>Via: {'Cash on Delivery'}</PaymentListItem>
+      </>);
+
     default:
       return (
           <>
@@ -754,7 +759,7 @@ const OrderDetails: React.FC<Props> = () => {
                       {'Contact Us'}
                     </AppButton>
                     {
-                      (order.orderStatus === ORDER_STAGES.PAID || order.orderStatus === ORDER_STAGES.SHIPPED) &&
+                      (order.orderStatus === ORDER_STAGES.PAID || order.orderStatus === ORDER_STAGES.SHIPPED || order.orderStatus === ORDER_STAGES.CONFIRMED) &&
                       <CancelAction orderId={order.orderId}/>
                     }
                   </OrderCard>

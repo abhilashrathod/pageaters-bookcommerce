@@ -1,5 +1,5 @@
-import React, {useEffect} from 'react';
-import useSWR from "swr";
+import React, {useEffect, useState} from 'react';
+import useSWR, {mutate} from "swr";
 import Head from "next/head";
 import cookie from "js-cookie";
 import {useRouter} from "next/router";
@@ -7,7 +7,7 @@ import axios from "axios";
 import {get} from 'lodash';
 import styled from "styled-components";
 import {useNotifications} from "@mantine/notifications";
-import {Skeleton} from "@mantine/core";
+import {Accordion, Loader, AccordionItem, Radio, RadioGroup, Skeleton, Textarea} from "@mantine/core";
 
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
@@ -18,11 +18,13 @@ import EmptySectionMessage from "../../components/elements/FailedToLoad";
 import ProductItem from "../../components/cart-elements/cart-product-item";
 import BundleItem from "../../components/cart-elements/cart-bundle-item";
 import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
+import {InputWrapper} from "../../components/form-controls/AppTextInput";
 
 import {AUTH_COOKIE, LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 
 import emptyCart from "../../public/illustrations/empty-cart.svg";
 import {completePurchase} from "../../core/_analytics";
+import PageLoader from "../../components/elements/PageLoading";
 
 interface Props {
 }
@@ -135,6 +137,10 @@ const Checkout: React.FC<Props> = () => {
   const {data: userRes} = useSWR({url: isLoggedIn ? `/auth/me` : null, withCredentials: true});
   const {data: cartRes} = useSWR({url: isLoggedIn ? `/cart/retrieve` : null, withCredentials: true});
 
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [deliveryInstructions, setDeliveryInstructions] = useState('');
+  const [opened, setOpened] = useState(false);
+
   useEffect(() => {
     initializeRazorpay();
   }, []);
@@ -149,11 +155,24 @@ const Checkout: React.FC<Props> = () => {
 
   async function createOrder() {
     try {
-      const response$ = await axios.post(`/orders/create`, {}, {withCredentials: true});
+      setOpened(true);
+      const response$ = await axios.post(`/orders/create`, {
+        method: paymentMethod,
+        instructions: deliveryInstructions
+      }, {withCredentials: true});
       const {data, message} = await response$.data;
       notif.showNotification({message: message, color: 'green', autoClose: 5000});
 
-      handleOrderConfirm(data);
+      if (paymentMethod === 'online') {
+        handleOrderConfirm(data);
+      }
+
+      if (paymentMethod === 'cod') {
+        setOpened(false);
+        router.replace(`/order-confirm/${data.orderId}`);
+        completePurchase(cart, order, 'order', 'Order');
+      }
+
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
@@ -174,6 +193,7 @@ const Checkout: React.FC<Props> = () => {
       },
       handler: (response: any) => {
         router.replace(`/order-confirm/${orderData.orderId}`);
+        setOpened(false);
         completePurchase(cart, order, 'order', 'Order'); // for analytics
       },
     };
@@ -199,6 +219,14 @@ const Checkout: React.FC<Props> = () => {
     });
   }
 
+  function handleChangePaymentMethod(e: string) {
+    setPaymentMethod(e);
+  }
+
+  function handleChangeDeliveryInst(e: any) {
+    setDeliveryInstructions(e.currentTarget.value)
+  }
+
   if (error)
     return (
         <PageWrapper>
@@ -209,98 +237,125 @@ const Checkout: React.FC<Props> = () => {
   if (books.length === 0 && bundles.length === 0)
     return (
         <PageWrapper>
-          <EmptyMessageWithGraphic title={'Cart is empty'} illustration={emptyCart} illustrationHeight={'300px'} illustrationWidth={'300px'}/>
+          <EmptyMessageWithGraphic title={'Cart is empty'} illustration={emptyCart} illustrationHeight={'300px'}
+                                   illustrationWidth={'300px'}/>
         </PageWrapper>
     );
 
   return (
       <>
-      <Head>
-        <title>Checkout | Pageaters</title>
-      </Head>
-      <PageWrapper>
-        <div className="custom-container">
-          <div className="row">
-            <div className="col">
-              <Breadcrumbs items={BREADCRUMBS_ITEMS}/>
+        <Head>
+          <title>Checkout | Pageaters</title>
+        </Head>
+        <PageLoader visible={opened}>
+          <Loader color="orange" size="xl"/>
+          <h3>Processing your order</h3>
+          <p>Please don't close or refresh the window</p>
+        </PageLoader>
+        <PageWrapper>
+          <div className="custom-container">
+            <div className="row">
+              <div className="col">
+                <Breadcrumbs items={BREADCRUMBS_ITEMS}/>
+              </div>
             </div>
           </div>
-        </div>
-        <section>
-          <PageHeadings title={'Checkout'}/>
-        </section>
-        {
-          order
-              ? <section>
-                <div className="custom-container">
-                  <div className="row">
-                    <div className="col-xl-8 col-md-8 col-12">
-                      <OrderSpace>
-                        {
-                          address && (
-                              <AddressContent>
-                                <h6>Delivery Address</h6>
-                                <AddressTitle>
-                                  {address.fullName} ({address.type.toLowerCase()})
-                                  | <AddressContactInfo>{address.contactNo}</AddressContactInfo> | <AddressContactInfo>{address.email}</AddressContactInfo>
-                                </AddressTitle>
-                                <AddressDetails>
-                                  {address.addressLine1 + ', '} {address.addressLine2 + ', '} {address.landmark} {address.city + ', '} {address.state + ' - '} {address.pinCode}
-                                </AddressDetails>
-                              </AddressContent>
-                          )
-                        }
-                      </OrderSpace>
-                      <OrderSpace>
-                        <CartItemsContent>
-                          <h6>Products</h6>
-
-                          <ProductList>
-                            {
-                              books.map((item: any) => {
-                                return (
-                                    <ProductListItem key={item._id}>
-                                      <ProductItem book={item} viewOnly={true}/>
-                                    </ProductListItem>
+          <section>
+            <PageHeadings title={'Checkout'}/>
+          </section>
+          {
+            order
+                ? <section>
+                  <div className="custom-container">
+                    <div className="row">
+                      <div className="col-xl-8 col-md-8 col-12">
+                        <OrderSpace>
+                          <Accordion initialItem={2}>
+                            <AccordionItem title="Address" label="Address">
+                              {
+                                address && (
+                                    <AddressContent>
+                                      <h6>Delivery Address</h6>
+                                      <AddressTitle>
+                                        {address.fullName} ({address.type.toLowerCase()})
+                                        | <AddressContactInfo>{address.contactNo}</AddressContactInfo> | <AddressContactInfo>{address.email}</AddressContactInfo>
+                                      </AddressTitle>
+                                      <AddressDetails>
+                                        {address.addressLine1 + ', '} {address.addressLine2 + ', '} {address.landmark} {address.city + ', '} {address.state + ' - '} {address.pinCode}
+                                      </AddressDetails>
+                                    </AddressContent>
                                 )
-                              })
-                            }
-                            {
-                              bundles.map((item: any) => {
-                                return (
-                                    <ProductListItem key={item._id}>
-                                      <BundleItem viewOnly={true} cartBundle={item}/>
-                                    </ProductListItem>
-                                )
-                              })
-                            }
-                          </ProductList>
-                        </CartItemsContent>
-                      </OrderSpace>
-                    </div>
-                    <div className="col-xl-4 col-md-4 col-12">
-                      <div className="breakdown">
-                        <h5>Order Summary</h5>
+                              }
+                            </AccordionItem>
+                            <AccordionItem title="Products" label="Products">
+                              <CartItemsContent>
+                                <h6>Products</h6>
+                                <ProductList>
+                                  {
+                                    books.map((item: any) => {
+                                      return (
+                                          <ProductListItem key={item._id}>
+                                            <ProductItem book={item} viewOnly={true}/>
+                                          </ProductListItem>
+                                      )
+                                    })
+                                  }
+                                  {
+                                    bundles.map((item: any) => {
+                                      return (
+                                          <ProductListItem key={item._id}>
+                                            <BundleItem viewOnly={true} cartBundle={item}/>
+                                          </ProductListItem>
+                                      )
+                                    })
+                                  }
+                                </ProductList>
+                              </CartItemsContent>
+                            </AccordionItem>
+                            <AccordionItem title="Payment Method" label="Payment Method">
+                              <InputWrapper>
+                                <RadioGroup value={paymentMethod} onChange={handleChangePaymentMethod}
+                                            orientation="vertical" label="Please Select Preferred Payment Method" required>
+                                  <Radio value="online" label="Pay Online (Credit Cards, Debit Cards, Wallets, UPIs)"/>
+                                  <Radio value="cod" label="Cash on Delivery"/>
+                                </RadioGroup>
+                              </InputWrapper>
+                              <InputWrapper>
+                                <Textarea
+                                    placeholder="Preferences are used to plan your delivery. However, shipments can sometimes arrive early or later than planned."
+                                    value={deliveryInstructions}
+                                    onChange={handleChangeDeliveryInst}
+                                    label="Delivery Instructions (If any)"
+                                />
+                              </InputWrapper>
+                            </AccordionItem>
+                          </Accordion>
+                        </OrderSpace>
+                      </div>
+                      <div className="col-xl-4 col-md-4 col-12">
+                        <div className="breakdown">
+                          <h5>Order Summary</h5>
 
-                        {cart && (
-                            <>
-                              <CartBreakdown cart={cart} shippingCharges={order?.shipping} orderTotal={order?.total}/>
-                              <AppButton variant={ButtonVariants.Accent}
-                                         size={ButtonSizes.Large}
-                                         styles={{width: '100%', display: 'block'}}
-                                         onClick={createOrder}>
-                                Place Order
-                              </AppButton>
-                            </>
-                        )}
+                          {cart && (
+                              <>
+                                <CartBreakdown cart={cart} shippingCharges={order?.shipping} orderTotal={order?.total}/>
+                                <AppButton variant={ButtonVariants.Accent}
+                                           size={ButtonSizes.Large}
+                                           disabled={!paymentMethod}
+                                           styles={{width: '100%', display: 'block'}}
+                                           onClick={createOrder}>
+                                  {paymentMethod ? 'Place Order' : 'Please Select Payment Method'}
+                                </AppButton>
+                              </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </section>
-              : <OrderLoading/>
-        }
-      </PageWrapper>
+                </section>
+                : <OrderLoading/>
+          }
+        </PageWrapper>
       </>
   )
 };

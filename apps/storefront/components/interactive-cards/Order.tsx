@@ -20,6 +20,8 @@ const handleBackgroundColor = (color: string) => {
   switch (color) {
     case ORDER_STAGES.PAID:
       return '#2B580C';
+    case ORDER_STAGES.CONFIRMED:
+      return '#2B580C';
     case ORDER_STAGES.SHIPPED:
       return '#BB3B0E';
     case ORDER_STAGES.FULFILLED:
@@ -146,7 +148,7 @@ const OrderOverview = ({order}: OrderOverviewProps) => {
   return (
       <OrderWrapper>
         <OrderTitleSpace>
-          <OrderTitle>Order # {order.orderId}</OrderTitle>
+          <OrderTitle>Order #{order.orderId}</OrderTitle>
           <OrderStatus color={order.orderStatus}>{order.orderStatus}</OrderStatus>
         </OrderTitleSpace>
 

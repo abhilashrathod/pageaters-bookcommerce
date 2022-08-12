@@ -175,7 +175,7 @@ const AddressSelect: React.FC<Props> = () => {
         autoClose: false,
         disallowClose: true,
       });
-      await axios.post(`/orders/attempt`, {address: selectedAddress, instructions: ''}, {withCredentials: true});
+      await axios.post(`/orders/attempt`, {address: selectedAddress}, {withCredentials: true});
       notif.updateNotification('address-confirm', {
         color: 'green',
         title: 'Delivery address confirmed.',
@@ -188,6 +188,12 @@ const AddressSelect: React.FC<Props> = () => {
       addShippingInfo(cart, 'cart', 'Cart'); // for analytics
     } catch (e: any) {
       notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      notif.updateNotification('address-confirm', {
+        color: 'red',
+        title: '',
+        message: '',
+        autoClose: 1000,
+      });
     }
   }
 

@@ -52,7 +52,7 @@ const BREADCRUMBS_ITEMS = (activeItem: any) => [
 ];
 
 const SITE_FEATURES = [
-  {icon: 'carbon:delivery-truck', title: 'Free Delivery', description: 'On Orders Above INR 300'},
+  {icon: 'carbon:delivery-truck', title: 'Free Delivery', description: 'On Orders Above INR 499'},
   {icon: 'bi:award', title: 'Genuine Books', description: 'No Piracy. No First Copies.'},
   {
     icon: 'grommet-icons:insecure',
