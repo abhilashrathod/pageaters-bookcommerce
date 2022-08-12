@@ -1,4 +1,3 @@
-import {Loader} from "@mantine/core";
 import React from "react";
 import styled from "styled-components";
 
@@ -7,7 +6,7 @@ const LoadingBackdrop = styled.div`
   width: 100vw;
   height: 100vh;
   z-index: 21;
-  background-color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.9);
   display: flex;
   flex-direction: column;
   align-items: center;

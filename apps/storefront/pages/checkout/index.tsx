@@ -139,7 +139,7 @@ const Checkout: React.FC<Props> = () => {
 
   const [paymentMethod, setPaymentMethod] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
-  const [opened, setOpened] = useState(false);
+  const [opened, setOpened] = useState(true);
 
   useEffect(() => {
     initializeRazorpay();
@@ -249,8 +249,8 @@ const Checkout: React.FC<Props> = () => {
         </Head>
         <PageLoader visible={opened}>
           <Loader color="orange" size="xl"/>
-          <h3>Processing your order</h3>
-          <p>Please don&apos;t close or refresh the window</p>
+          <h3 style={{textAlign: "center"}}>Processing your order</h3>
+          <p style={{textAlign: "center"}}>Please don&apos;t close or refresh the window</p>
         </PageLoader>
         <PageWrapper>
           <div className="custom-container">
