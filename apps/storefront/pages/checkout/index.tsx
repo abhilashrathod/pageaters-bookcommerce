@@ -250,7 +250,7 @@ const Checkout: React.FC<Props> = () => {
         <PageLoader visible={opened}>
           <Loader color="orange" size="xl"/>
           <h3>Processing your order</h3>
-          <p>Please don't close or refresh the window</p>
+          <p>Please don&apos;t close or refresh the window</p>
         </PageLoader>
         <PageWrapper>
           <div className="custom-container">
