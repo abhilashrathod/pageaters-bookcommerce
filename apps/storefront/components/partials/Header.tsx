@@ -303,7 +303,7 @@ const AppHeader: React.FC<Props> = () => {
                                  icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
                       <Divider/>
                       <Menu.Label>Help</Menu.Label>
-                      <Menu.Item>Contact</Menu.Item>
+                      <Menu.Item onClick={() => navigateToUrl('/contact')}>Contact</Menu.Item>
                     </Menu>
                   </HamburgerSection>
                   <ProfileSection>
@@ -333,8 +333,7 @@ const AppHeader: React.FC<Props> = () => {
                   <CartSection>
                     {
                       cartCount > 0 && (
-                          <Badge style={{position: 'absolute', top: 0, right: 0, padding: '0 6px'}} variant="filled"
-                                 color="orange">
+                          <Badge style={{position: 'absolute', top: 0, right: 0, padding: '0 6px'}} variant="filled" color="orange">
                             {cartCount}
                           </Badge>
                       )
