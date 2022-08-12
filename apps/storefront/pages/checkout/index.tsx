@@ -139,7 +139,7 @@ const Checkout: React.FC<Props> = () => {
 
   const [paymentMethod, setPaymentMethod] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
-  const [opened, setOpened] = useState(true);
+  const [opened, setOpened] = useState(false);
 
   useEffect(() => {
     initializeRazorpay();
