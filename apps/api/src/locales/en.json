@@ -155,6 +155,7 @@
 	"ORDER_CANCEL_SUCCESS": "Order cancelled.",
 	"ORDER_RETURN_SUCCESS": "Return request raised successfully",
 	"ORDER_ADDRESS_SUCCESS": "Address Selection Success",
+	"INVALID_PAYMENT_METHOD": "Payment Method Invalid",
 	"SUBSCRIPTION_PLAN_ERROR": "Please select a plan",
 	"SUBSCRIPTION_LIST_SUCCESS": "Subscription list success",
 	"SUBSCRIPTION_NOT_EXIST": "Subscription doesn't exist",
@@ -190,5 +191,7 @@
 	"INVALID_FAVORITE_TYPE": "Type is not allowed",
 	"success": "success",
 	"Invalid Record Length: columns length is 3, got 5 on line 3": "Invalid Record Length: columns length is 3, got 5 on line 3",
-	"MAIL_SENT": "MAIL_SENT"
+	"MAIL_SENT": "MAIL_SENT",
+	"\"instructions\" is not allowed": "\"instructions\" is not allowed",
+	"\"uniqueId\" is not allowed": "\"uniqueId\" is not allowed"
 }

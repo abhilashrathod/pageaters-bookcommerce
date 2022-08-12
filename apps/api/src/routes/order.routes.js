@@ -13,7 +13,7 @@ router.get('/getByUniqueId/:uniqueId', permissionValidator(USER_ROLES.USER), con
 router.get('/list', permissionValidator(USER_ROLES.USER), controller.getAllByUser);
 
 router.post('/attempt', permissionValidator(USER_ROLES.USER), requestValidator(validator.orderAttempt), controller.attempt);
-router.post('/create', permissionValidator(USER_ROLES.USER), controller.create);
+router.post('/create', permissionValidator(USER_ROLES.USER), requestValidator(validator.orderCreate), controller.create);
 router.get('/retrieve', permissionValidator(USER_ROLES.USER), controller.retrieve);
 
 router.post('/return/:uniqueId', permissionValidator(USER_ROLES.USER), controller.returnRequest); // TODO: add payload validator

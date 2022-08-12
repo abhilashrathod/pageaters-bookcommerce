@@ -54,6 +54,29 @@ module.exports.calculateTotalWeight = async function(products, bundles) {
   });
 };
 
+module.exports.calculateConvenienceFees = async function(subtotal) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (subtotal < 500) {
+        resolve(30);
+      }
+
+      if (subtotal >= 500 && subtotal <= 999) {
+        resolve(40);
+      }
+
+      if (subtotal >= 1000) {
+        resolve(50);
+      }
+
+      resolve(0);
+    } catch (e) {
+      console.log(colors.red('ERROR'), JSON.stringify(e));
+      resolve(0);
+    }
+  });
+};
+
 module.exports.calculateShipping = async function(isFree, totalWeight, deliveryCode) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -131,6 +154,12 @@ module.exports.orderPaymentInfo = function(payment) {
         name: get(payment, 'emi.issuer', ''),
         last4: get(payment, 'emi.rate', ''),
         network: get(payment, 'emi.duration', ''),
+      };
+      return payload;
+
+    case enums.PAYMENT_METHODS.COD:
+      payload = {
+        method: enums.PAYMENT_METHODS.COD
       };
       return payload;
     default:
