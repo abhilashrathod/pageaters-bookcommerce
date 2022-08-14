@@ -44,10 +44,10 @@ const DealsCarousel: React.FC<Props> = ({title, deals}) => {
         slides: {origin: "auto", perView: 2.1, spacing: 12},
       },
       '(max-width: 768px)': {
-        slides: {origin: "auto", perView: 2.25, spacing: 12},
+        slides: {origin: "auto", perView: 2.1, spacing: 12},
       },
       '(max-width: 576px)': {
-        slides: {origin: "auto", perView: 1.25, spacing: 12},
+        slides: {origin: "auto", perView: 1.1, spacing: 12},
       },
     },
     slideChanged(slider) {

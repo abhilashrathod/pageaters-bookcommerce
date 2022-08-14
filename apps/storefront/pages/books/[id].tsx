@@ -795,7 +795,7 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
 export const getStaticPaths: GetStaticPaths = async (context) => {
   const promise$ = await axios.get(`/store-books`, {
     params: {
-      limit: 100,
+      limit: 12,
       page: 1,
       sortBy: 'priority',
       sortOrder: 'asc'

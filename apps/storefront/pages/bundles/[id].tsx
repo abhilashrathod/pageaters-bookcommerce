@@ -9,6 +9,7 @@ import {useNotifications} from "@mantine/notifications";
 import {Spoiler} from '@mantine/core';
 import {Icon} from "@iconify/react";
 import styled from "styled-components";
+import cookie from "js-cookie";
 
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageWrapper from "../../components/elements/PageWrapper";
@@ -21,7 +22,7 @@ import CollectionCardSmall from "../../components/cards/CollectionCardSmall";
 import {
   ACCENT_COLOR,
   AUTH_COOKIE,
-  LIGHT_COLOR, LIGHTEST_PRIMARY_COLOR,
+  LIGHT_COLOR,
   PRIMARY_COLOR, PRIMARY_DANGER,
   PRIMARY_SUCCESS,
   SECONDARY_COLOR,
@@ -33,8 +34,7 @@ import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
 import {IBundle} from "../../schemas/bundle";
 import {IBook} from "../../schemas/book";
 import {ICollection} from "../../schemas/collection";
-import cookie from "js-cookie";
-import AppButton, {ButtonVariants} from "../../components/form-controls/Button";
+
 import {addToCart} from "../../core/_analytics";
 
 const BREADCRUMBS_ITEMS = (activeItem: any) => [

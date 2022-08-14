@@ -191,52 +191,22 @@ const ViewCollection: NextPage<Props> = ({collectionInfo}: InferGetStaticPropsTy
           </CollectionTitleSpace>
         </CollectionBanner>
 
-        <div className="custom-container">
-          <div className="row">
-            <div className="col">
-              <div className={'py-25'}>
+        <section className="">
+          <div className="custom-container">
+            <div className="row">
+              <div className="col">
                 <Breadcrumbs items={BREADCRUMBS_ITEMS({title: collectionInfo?.title})}/>
               </div>
             </div>
           </div>
-        </div>
-
-        {
-          collectionInfo.relatedCategories.length > 0 && (
-              <section className="mb-25">
-                <div className="custom-container">
-                  <div className="row">
-                    <div className="col">
-                      <CategoryTitleSpace>
-                        <SectionTitle>
-                          Featured Categories
-                        </SectionTitle>
-                      </CategoryTitleSpace>
-                    </div>
-                  </div>
-                  <div className="row categories-list-container">
-                    {
-                      collectionInfo.relatedCategories.map((category: ICategory) => {
-                        return (
-                            <div key={category.categoryId} className="col-xxl-2 col-xl-2 col-lg-3 col-md-3 col-4">
-                              <CategoryLandscapeCard category={category}/>
-                            </div>
-                        )
-                      })
-                    }
-                  </div>
-                </div>
-              </section>
-          )
-        }
-
+        </section>
         <section className="mb-25">
           <div className="custom-container">
             <div className="row">
               {
                 collectionInfo.books.map((book: IBook) => {
                   return (
-                      <div key={book.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
+                      <div key={book.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6 mb-1">
                         <ProductCardLandScape book={book} analytics={{listName: `${collectionInfo?.title} Collection`, listId: `${KebabCase(collectionInfo?.title)}-books`}}/>
                       </div>
                   )

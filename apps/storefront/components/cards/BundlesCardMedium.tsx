@@ -24,20 +24,21 @@ const CardImage = styled.img`
   border-radius: 1rem;
   object-fit: cover;
   width: 385px;
-  height: 385px;
+  height: auto;
   -webkit-box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
   -moz-box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
   box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
+  aspect-ratio: 1/1;
   
-  @media screen and (max-width: ${MD - 1}px) {      
-    width: 100%;
-    height: 290px;
-  }
-  
-  @media screen and (max-width: ${SM - 1}px) {      
-    width: 100%;
-    height: 170px;
-  }
+  // @media screen and (max-width: ${MD - 1}px) {      
+  //   width: 100%;
+  //   height: 290px;
+  // }
+  //
+  // @media screen and (max-width: ${SM - 1}px) {
+  //   width: 100%;
+  //   height: 170px;
+  // }
   `
 ;
 
