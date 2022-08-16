@@ -4,6 +4,7 @@ const { generateRandomNumber, getId } = require('../helpers/utils.helper');
 const { models, enums } = require('../constants');
 
 const Collection = mongoose.model(models.COLLECTION);
+const Book = mongoose.model(models.STORE_BOOK);
 
 module.exports.getAll = async (req, res) => {
   try {
@@ -63,9 +64,37 @@ module.exports.create = async (req, res) => {
       priority, popularity,
     };
 
-    const collection = await Collection.create(payload);
+    const collectionRes = await Collection.create(payload);
 
-    return res.ok({ message: 'COLLECTION_CREATE_SUCCESS', data: collection });
+    // add this collection in related collection of the selected books
+    for (let bookItem of books) {
+      let iBookRes = await Book.findOne({_id : bookItem}).select('title relatedCollections');
+
+      if (iBookRes) {
+        iBookRes = iBookRes.toObject();
+
+        const isThere = iBookRes.relatedCollections.find((collectionId) => collectionId.toString() === collectionRes._id.toString());
+        if (!isThere) {
+          await Book.findOneAndUpdate({ _id: bookItem }, { $addToSet: { relatedCollections: collectionRes._id }});
+        }
+      }
+    }
+
+    // add this collection in related collection of the selected collections
+    for (let collectionItem of relatedCollections) {
+      let iCollectionRes = await Collection.findOne({_id : collectionItem}).select('title relatedCollections');
+
+      if (iCollectionRes) {
+        iCollectionRes = iCollectionRes.toObject();
+
+        const isThere = iCollectionRes.relatedCollections.find((collectionId) => collectionId.toString() === collectionRes._id.toString());
+        if (!isThere) {
+          await Collection.findOneAndUpdate({ _id: collectionItem }, { $addToSet: { relatedCollections: collectionRes._id }});
+        }
+      }
+    }
+
+    return res.ok({ message: 'COLLECTION_CREATE_SUCCESS', data: collectionRes });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -90,6 +119,34 @@ module.exports.update = async (req, res) => {
     };
 
     const collectionRes = await Collection.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
+
+    // add this collection in related collection of the selected books
+    for (let bookItem of books) {
+      let iBookRes = await Book.findOne({_id : bookItem}).select('title relatedCollections');
+
+      if (iBookRes) {
+        iBookRes = iBookRes.toObject();
+
+        const isThere = iBookRes.relatedCollections.find((collectionId) => collectionId.toString() === collectionRes._id.toString());
+        if (!isThere) {
+          await Book.findOneAndUpdate({ _id: bookItem }, { $addToSet: { relatedCollections: collectionRes._id }});
+        }
+      }
+    }
+
+    // add this collection in related collection of the selected collections
+    for (let collectionItem of relatedCollections) {
+      let iCollectionRes = await Collection.findOne({_id : collectionItem}).select('title relatedCollections');
+
+      if (iCollectionRes) {
+        iCollectionRes = iCollectionRes.toObject();
+
+        const isThere = iCollectionRes.relatedCollections.find((collectionId) => collectionId.toString() === collectionRes._id.toString());
+        if (!isThere) {
+          await Collection.findOneAndUpdate({ _id: collectionItem }, { $addToSet: { relatedCollections: collectionRes._id }});
+        }
+      }
+    }
 
     return res.ok({ message: 'COLLECTION_UPDATE_SUCCESS', data: collectionRes });
   } catch (e) {

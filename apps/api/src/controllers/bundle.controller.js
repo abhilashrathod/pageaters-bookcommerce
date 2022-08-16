@@ -3,6 +3,7 @@ const { generateRandomNumber, getId } = require('../helpers/utils.helper');
 const { models } = require('../constants');
 
 const Bundles = mongoose.model(models.BUNDLE);
+const Book = mongoose.model(models.STORE_BOOK);
 
 
 module.exports.getAll = async (req, res) => {
@@ -62,9 +63,23 @@ module.exports.create = async (req, res) => {
       membersPrice,
     };
 
-    const bundle = await Bundles.create(payload);
+    const bundleRes = await Bundles.create(payload);
 
-    return res.ok({ message: 'BUNDLE_CREATE_SUCCESS', data: bundle });
+    // add this bundle in related bundles of the selected books
+    for (let bookItem of bundledBooks) {
+      let iBookRes = await Book.findOne({_id : bookItem}).select('title relatedBundles');
+
+      if (iBookRes) {
+        iBookRes = iBookRes.toObject();
+
+        const isThere = iBookRes.relatedBundles.find((bundleId) => bundleId.toString() === bundleRes._id.toString());
+        if (!isThere) {
+          await Book.findOneAndUpdate({ _id: bookItem }, { $addToSet: { relatedBundles: bundleRes._id }});
+        }
+      }
+    }
+
+    return res.ok({ message: 'BUNDLE_CREATE_SUCCESS', data: bundleRes });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -97,6 +112,20 @@ module.exports.update = async (req, res) => {
     };
 
     const bundleRes = await Bundles.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
+
+    // add this bundle in related bundles of the selected books
+    for (let bookItem of bundledBooks) {
+      let iBookRes = await Book.findOne({_id : bookItem}).select('title relatedBundles');
+
+      if (iBookRes) {
+        iBookRes = iBookRes.toObject();
+
+        const isThere = iBookRes.relatedBundles.find((bundleId) => bundleId.toString() === bundleRes._id.toString());
+        if (!isThere) {
+          await Book.findOneAndUpdate({ _id: bookItem }, { $addToSet: { relatedBundles: bundleRes._id }});
+        }
+      }
+    }
 
     return res.ok({ message: 'BUNDLE_UPDATE_SUCCESS', data: bundleRes });
   } catch (e) {
