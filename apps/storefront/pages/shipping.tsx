@@ -95,9 +95,9 @@ const Shipping: NextPage = () => {
                   <h6>Are there any shipping charges applicable on my order?</h6>
                   <p>
                     We have standard shipping charges for most addresses. <br/>
-                    <strong>India shipping charges</strong> A variable charge is applied to all orders below Rs.299,
+                    <strong>India shipping charges</strong> A variable charge is applied to all orders of Rs.499 and below,
                     while there is
-                    free shipping for all orders above Rs.299
+                    free shipping for all orders for Rs.500 and above
                   </p>
                 </div>
               </div>
