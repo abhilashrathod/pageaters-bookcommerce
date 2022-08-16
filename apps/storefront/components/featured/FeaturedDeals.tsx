@@ -47,12 +47,24 @@ const ThirdTile = styled.div`
   }
 `;
 
-const PosterImg = styled.img`
+const BannerPosterImg = styled.img`
   width: 100%;
   height: 100%;
   border-radius: 1rem;
+  aspect-ratio: 2/1;
+  object-fit: cover;
   filter: drop-shadow(0px 4px 3px rgba(0, 0, 0, 0.20)) !important;
 `;
+
+const SquarePosterImg = styled.img`
+  width: 100%;
+  height: 100%;
+  border-radius: 1rem;
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  filter: drop-shadow(0px 4px 3px rgba(0, 0, 0, 0.20)) !important;
+`;
+
 
 const FeaturedDeals: React.FC<Props> = () => {
   const {data: storeDealRes, error: storeDealErr} = useSWR({
@@ -64,7 +76,7 @@ const FeaturedDeals: React.FC<Props> = () => {
   const discount = get(storeDealRes, 'data.docs', []);
 
   function renderImageSize(i: string, w: number, h: number) {
-    return getAssetImage(i, {height: h, width: w, fit: 'cover'});
+    return getAssetImage(i, {height: h, width: w});
   }
 
   function handleNavigation(id: string) {
@@ -85,15 +97,15 @@ const FeaturedDeals: React.FC<Props> = () => {
             <div className="col">
               <DealsWrapper>
                 <PrimaryTile onClick={() => handleNavigation(get(discount, '[0].dealId', ''))}>
-                  <PosterImg src={renderImageSize(get(discount, '[0].poster', ''), 1024, 400)} width={720} height={400}
+                  <BannerPosterImg src={renderImageSize(get(discount, '[0].poster', ''), 800, 400)} width={800} height={400}
                              loading={'lazy'}/>
                 </PrimaryTile>
                 <SecondTile onClick={() => handleNavigation(get(discount, '[1].dealId', ''))}>
-                  <PosterImg src={renderImageSize(get(discount, '[1].poster', ''), 500, 400)} width={500} height={400}
+                  <SquarePosterImg src={renderImageSize(get(discount, '[1].poster', ''), 400, 400)} width={400} height={400}
                              loading={'lazy'}/>
                 </SecondTile>
                 <ThirdTile onClick={() => handleNavigation(get(discount, '[2].dealId', ''))}>
-                  <PosterImg src={renderImageSize(get(discount, '[2].poster', ''), 500, 400)} width={500} height={400}
+                  <SquarePosterImg src={renderImageSize(get(discount, '[2].poster', ''), 400, 400)} width={400} height={400}
                              loading={'lazy'}/>
                 </ThirdTile>
               </DealsWrapper>
