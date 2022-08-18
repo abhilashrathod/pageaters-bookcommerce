@@ -444,7 +444,7 @@ module.exports.ship = async (req, res) => {
     }];
     const orderRes = await Order.findOne({
       _id: orderId,
-      orderStatus: enums.ORDER_STAGES.PAID,
+      $or: [{ orderStatus: enums.ORDER_STAGES.PAID }, { orderStatus: enums.ORDER_STAGES.CONFIRMED }],
     }).populate(populateOptions);
 
     if (!orderRes) {
