@@ -450,10 +450,10 @@ const MysteryBoxes: NextPage<Props> = () => {
                     <ProductNotes>
                       <Alert title="Things to Note" color="gray">
                         <p>
-                          • We save your preferences as a set of guidelines for better experience. It doesn't necessarily mean that you're going to get the exact books that you mentioned.
+                          • We save your preferences as a set of guidelines for better experience. It doesn&apos;t necessarily mean that you&apos;re going to get the exact books that you mentioned.
                         </p>
                         <p>
-                          • Mystery box would consist of pre-owned books that can range from almost new to readable. It would be made sure that your reading experience isn't compromised.
+                          • Mystery box would consist of pre-owned books that can range from almost new to readable. It would be made sure that your reading experience isn&apos;t compromised.
                         </p>
                       </Alert>
                     </ProductNotes>
@@ -479,7 +479,7 @@ const MysteryBoxes: NextPage<Props> = () => {
                           Mystery Box is one the best ways to discover new books, push yourself out of your comfirt zone
                           and read books which otherwise you would never read. When you buy our Mystery box you can
                           select whichever many books you want and provide preferences (which are optional). We would
-                          curate 5-15 books based on your taste, box them up and they would be on your way. It's like
+                          curate 5-15 books based on your taste, box them up and they would be on your way. It&apos;s like
                           going on a blind date but with books! 😄
                         </p>
                       </Accordion.Panel>
@@ -491,7 +491,7 @@ const MysteryBoxes: NextPage<Props> = () => {
                         <p>
                           The books which are selected as a part of mystery box are mostly pre-loved books ranging from
                           almost new to slightly used. We would make sure that you get the best possible quality of the
-                          books. We also make sure it's integrity and hand-check them before shipping them to you. Rest
+                          books. We also make sure it&apos;s integrity and hand-check them before shipping them to you. Rest
                           assured.
                         </p>
                       </Accordion.Panel>
@@ -501,8 +501,8 @@ const MysteryBoxes: NextPage<Props> = () => {
                       <Accordion.Control>Can I choose the books I want?</Accordion.Control>
                       <Accordion.Panel>
                         <p>
-                          Well, to be honest the whole point of mystery box is that you won't get to choose the books,
-                          however, in order to make sure that even if you're not picking your books you would atleast
+                          Well, to be honest the whole point of mystery box is that you won&apos;t get to choose the books,
+                          however, in order to make sure that even if you&apos;re not picking your books you would atleast
                           get books based on your preferences(which are optional) so that you atleast get the books you
                           might be interested in. We would include a healthy mix of best written and most loved books by
                           default. But, we would highly appreciate to include as much information as possible in those
@@ -522,10 +522,10 @@ const MysteryBoxes: NextPage<Props> = () => {
                     </Accordion.Item>
 
                     <Accordion.Item value="5">
-                      <Accordion.Control>Can I replace/return the books I've gotten?</Accordion.Control>
+                      <Accordion.Control>Can I replace/return the books I&apos;ve gotten?</Accordion.Control>
                       <Accordion.Panel>
                         <p>
-                          The mystery boxes by nature can't be replaced or returned. Unless, it's an exceptional case.
+                          The mystery boxes by nature can&apos;t be replaced or returned. Unless, it&apos;s an exceptional case.
                         </p>
                       </Accordion.Panel>
                     </Accordion.Item>
