@@ -127,16 +127,32 @@
                 <li *ngFor="let productItem of order.products" class="list-group-item d-flex justify-content-between align-items-start">
                   <div class="ms-2 me-auto">
                     <div class="fw-bold">{{productItem.product.title}}</div>
-                    MRP: {{productItem.price|currency:'INR'}}&nbsp;|&nbsp;Discount:{{productItem.discount | number}}&nbsp;|&nbsp;Weight: {{productItem.weight * productItem.quantity | number}} &nbsp;
+                    <p>MRP: {{productItem.price|currency:'INR'}}&nbsp;|&nbsp;Discount:{{productItem.discount | number}}&nbsp;|&nbsp;Weight: {{productItem.weight * productItem.quantity | number}}</p>
                   </div>
                   <span class="badge bg-primary rounded-pill">{{productItem.productTotal | currency:'INR'}} x {{productItem.quantity}}</span>
                 </li>
                 <li *ngFor="let bundleItem of order.bundles" class="list-group-item d-flex justify-content-between align-items-start">
                   <div class="ms-2 me-auto">
                     <div class="fw-bold">{{bundleItem.bundle.title}}</div>
-                    MRP: {{bundleItem.price|currency:'INR'}}&nbsp;|&nbsp;Discount:{{bundleItem.discount | number}}&nbsp;|&nbsp;Weight: {{bundleItem.weight * bundleItem.quantity | number}} &nbsp;
+                    <p>MRP: {{bundleItem.price|currency:'INR'}}&nbsp;|&nbsp;Discount:{{bundleItem.discount | number}}&nbsp;|&nbsp;Weight: {{bundleItem.weight * bundleItem.quantity | number}}</p>
                   </div>
                   <span class="badge bg-primary rounded-pill">{{bundleItem.total | currency:'INR'}} x {{bundleItem.quantity}}</span>
+                </li>
+                <li *ngFor="let mysteryBoxItem of order.boxes" class="list-group-item d-flex justify-content-between align-items-start">
+                  <div class="ms-2 me-auto">
+                    <div class="fw-bold">{{mysteryBoxItem.box.title}}</div>
+                    <p>
+                    MRP: {{mysteryBoxItem.price|currency:'INR'}}&nbsp;|&nbsp;Discount:{{mysteryBoxItem.discount | number}}&nbsp;|&nbsp;Weight: {{mysteryBoxItem.weight * mysteryBoxItem.quantity | number}}</p>
+
+                      <ul>
+                        <li><strong>Favorite Books:</strong> {{mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.favoriteBooks : 'n/a'}}</li>
+                        <li><strong>Books to Ignore:</strong> {{mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.ignoredBooks : 'n/a'}}</li>
+                        <li><strong>Favorite Authors:</strong> {{mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.preferredAuthors : 'n/a'}}</li>
+                        <li><strong>Favorite Genres:</strong> {{mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.preferredGenres : 'n/a'}}</li>
+                      </ul>
+
+                  </div>
+                  <span class="badge bg-primary rounded-pill">{{mysteryBoxItem.total | currency:'INR'}} x {{mysteryBoxItem.quantity}}</span>
                 </li>
               </ol>
             </mat-card-content>

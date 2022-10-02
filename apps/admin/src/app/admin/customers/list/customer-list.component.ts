@@ -21,6 +21,13 @@ export class CustomerListComponent implements OnInit {
     'create',
   ];
 
+  public viewResourceUrl: string[] = [
+    '/',
+    'admin',
+    'customers',
+    'view',
+  ];
+
   resourceColumns = [
     {
       header: 'Name',
@@ -31,6 +38,11 @@ export class CustomerListComponent implements OnInit {
       header: 'Email',
       columnDef: 'email',
       cell: (element) => `${element.email}`,
+    },
+    {
+      header: 'View Details',
+      columnDef: 'view',
+      cell: (element) => [...this.viewResourceUrl, element._id],
     },
     {
       header: 'Action',

@@ -48,7 +48,7 @@ export class OrderListComponent implements OnInit {
     {
       header: 'Products',
       columnDef: 'products',
-      cell: (element) => this.returnProductItems(element.products, element.bundles),
+      cell: (element) => this.returnProductItems(element.products, element.bundles, element.boxes),
     },
     {
       header: 'Customer',
@@ -67,7 +67,7 @@ export class OrderListComponent implements OnInit {
     },
   ];
 
-  public deleteBaseUrl = `/users`;
+  public deleteBaseUrl = `/orders`;
   public getAllBaseUrl = '/orders';
 
   constructor() {
@@ -76,9 +76,10 @@ export class OrderListComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  returnProductItems(products, bundles): string {
+  returnProductItems(products, bundles, boxes): string {
     const books = products.map((x) => x.product.title);
     const bundle = bundles.map((x) => x.bundle.title);
-    return `${books.join(`<br />`)} <br/> ${bundle.join(`<br />`)}`;
+    const box = boxes.map((x) => x.box.title);
+    return `${books.join(`<br />`)} <br/> ${bundle.join(`<br />`)} <br/> ${box.join(`<br />`)}`;
   }
 }

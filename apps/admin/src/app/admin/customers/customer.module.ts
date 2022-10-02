@@ -8,6 +8,7 @@ import {CustomerRoutingModule} from './customer-routing.module';
 import {CustomerListComponent} from './list/customer-list.component';
 import {CustomerCreateComponent} from './create/customer-create.component';
 import {CustomerUpdateComponent} from './update/customer-update.component';
+import {ViewCustomerComponent} from './view/view-customer.component';
 
 @NgModule({
   imports: [
@@ -21,6 +22,7 @@ import {CustomerUpdateComponent} from './update/customer-update.component';
     CustomerListComponent,
     CustomerCreateComponent,
     CustomerUpdateComponent,
+    ViewCustomerComponent,
   ],
   providers: [],
 })
