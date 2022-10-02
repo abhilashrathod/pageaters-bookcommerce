@@ -1,14 +1,15 @@
 import React, {useEffect, useState} from 'react';
-import styled from 'styled-components';
-import axios from "axios";
-import {mutate} from "swr";
-import cookie from 'js-cookie';
 import Link from "next/link";
 import Head from "next/head";
 import {useRouter} from "next/router";
+import styled from 'styled-components';
 import {Divider, Stepper} from "@mantine/core";
-import {useNotifications} from "@mantine/notifications";
-import {useForm, useInterval} from "@mantine/hooks";
+import {showNotification} from "@mantine/notifications";
+import {useInterval} from "@mantine/hooks";
+import {useForm} from "@mantine/form";
+import axios from "axios";
+import {mutate} from "swr";
+import cookie from 'js-cookie';
 import {Icon} from "@iconify/react";
 
 import AppTextInput from "../../components/form-controls/AppTextInput";
@@ -136,14 +137,9 @@ const RegistrationForm = ({onStepChange, onSubmit}: any) => {
       password: '',
     },
 
-    validationRules: {
-      email: (value) => value !== '',
-      password: (value) => value !== '',
-    },
-
-    errorMessages: {
-      email: 'Please enter valid email address',
-      password: 'Please enter password',
+    validate: {
+      email: (value) => value === '' ? 'Please enter valid email address' : null,
+      password: (value) => value === '' ? 'Please enter password' : null,
     },
   });
 
@@ -187,12 +183,8 @@ const PersonalInfoForm = ({onStepChange, onSubmit}: any) => {
       fullName: '',
     },
 
-    validationRules: {
-      fullName: (value) => value !== '',
-    },
-
-    errorMessages: {
-      fullName: 'Please provide your name',
+    validate: {
+      fullName: (value) => value === '' ? 'Please provide your name': null,
     },
   });
 
@@ -241,13 +233,10 @@ const ContactForm = ({onStepChange, onSubmit, onVerifySubmit, onResend}: any) =>
       contactNo: '',
     },
 
-    validationRules: {
-      contactNo: (value) => /^\d{10}$/.test(value)
+    validate: {
+      contactNo: (value) => /^\d{10}$/.test(value) ? null : 'Please provide valid contact without country code'
     },
 
-    errorMessages: {
-      contactNo: 'Please provide valid contact without country code',
-    },
   });
 
   const otpForm = useForm({
@@ -255,12 +244,8 @@ const ContactForm = ({onStepChange, onSubmit, onVerifySubmit, onResend}: any) =>
       otp: '',
     },
 
-    validationRules: {
-      otp: (value) => /^\d{6}$/.test(value)
-    },
-
-    errorMessages: {
-      otp: 'Please enter valid OTP code with 6 digits',
+    validate: {
+      otp: (value) => /^\d{6}$/.test(value) ? null : 'Please enter valid OTP code with 6 digits'
     },
   });
 
@@ -335,7 +320,6 @@ const ContactForm = ({onStepChange, onSubmit, onVerifySubmit, onResend}: any) =>
 
 const Register: React.FC<Props> = () => {
   const router = useRouter();
-  const notif = useNotifications();
   const [step, setStep] = useState(0);
 
   function renderImageSize(i: string, w: number, h: number) {
@@ -345,7 +329,7 @@ const Register: React.FC<Props> = () => {
   async function handleRegisterSubmit(values: any) {
     try {
       await axios.post(`/auth/register`, values, {withCredentials: true});
-      notif.showNotification({
+      showNotification({
         message: 'Welcome to Pageaters! Registration Successful',
         color: 'green',
         autoClose: 3000
@@ -356,54 +340,54 @@ const Register: React.FC<Props> = () => {
 
       signUp(); // for analytics
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
   async function handlePersonalInfoSubmit(values: any) {
     try {
       await axios.put(`/auth/me`, values, {withCredentials: true});
-      notif.showNotification({message: 'Profile Info Updated', color: 'green', autoClose: 3000});
+      showNotification({message: 'Profile Info Updated', color: 'green', autoClose: 3000});
       setStep(2);
       updateUser();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
   async function handleContactSubmit(values: any) {
     try {
       await axios.post(`/auth/contact/send`, values, {withCredentials: true});
-      notif.showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 5000});
+      showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 5000});
       updateUser();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
   async function handleVerifySubmit(values: any) {
     try {
       await axios.post(`/auth/contact/verify`, values, {withCredentials: true});
-      notif.showNotification({message: 'Verification Completed. Account verified!', color: 'green', autoClose: 3000});
+      showNotification({message: 'Verification Completed. Account verified!', color: 'green', autoClose: 3000});
       router.replace('/');
       updateUser();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
   async function handleResend(values: any) {
     try {
       await axios.post(`/auth/contact/resend`, values, {withCredentials: true});
-      notif.showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 3000});
+      showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 3000});
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
   function handleStepChange(val: any) {
     if (val === 3) {
-      notif.showNotification({message: 'Registration Completed! Happy Reading 😊', color: 'green', autoClose: 3000});
+      showNotification({message: 'Registration Completed! Happy Reading 😊', color: 'green', autoClose: 3000});
       return router.replace('/');
     }
     setStep(val);

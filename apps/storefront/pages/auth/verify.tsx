@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Head from "next/head";
-import {useNotifications} from "@mantine/notifications";
+import {showNotification} from "@mantine/notifications";
 import {useRouter} from "next/router";
 import {parseUrl} from "query-string";
 import axios from "axios";
@@ -14,7 +14,6 @@ interface Props {
 }
 
 const VerifyAccount: React.FC<Props> = () => {
-  const notif = useNotifications();
   const router = useRouter();
   const auth = useAuth();
 
@@ -55,14 +54,14 @@ const VerifyAccount: React.FC<Props> = () => {
   async function doVerify() {
     try {
       await axios.post(`/auth/verify-email`, {email, token});
-      notif.showNotification({
+      showNotification({
         message: 'Account Email Verification Success! Please proceed with login',
         color: 'green',
         autoClose: 5000
       });
       router.replace('/auth/login');
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
       setSuccess(false);
     }
   }
@@ -70,14 +69,14 @@ const VerifyAccount: React.FC<Props> = () => {
   async function handleResent() {
     try {
       await axios.post(`/auth/verify-email/resend`, {email});
-      notif.showNotification({
+      showNotification({
         message: 'New email has been sent for verification.',
         color: 'green',
         autoClose: 5000
       });
       router.replace('/auth/login');
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
       setSuccess(false);
     }
   }

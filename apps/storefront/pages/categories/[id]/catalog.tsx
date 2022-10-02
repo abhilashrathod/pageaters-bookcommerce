@@ -126,7 +126,7 @@ const CategoryCatalog: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
             </div>
           </div>
           <section>
-            <PageHeadings title={categoryDetails?.title} {...FILTER_OPTIONS} onFilterSelect={handleFilterSelection}/>
+            <PageHeadings title={categoryDetails?.title}/>
           </section>
 
           {
@@ -137,7 +137,7 @@ const CategoryCatalog: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
                       {
                         data?.data?.docs.map((item: IBook) => {
                           return (
-                              <div key={item.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6">
+                              <div key={item.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6 mb-1">
                                 <ProductCardLandScape book={item} analytics={{listId: `${kebabCase(categoryDetails?.title)}-books-category`, listName: `${categoryDetails?.title} List`}}/>
                               </div>
                           )

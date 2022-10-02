@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import React, {useEffect, useState} from "react";
 import {get, isString, sumBy} from "lodash";
-import {ICartBundle, ICartItem} from "../../schemas/cart";
+import {ICartBundle, ICartItem, ICartMysteryBox} from "../../schemas/cart";
 import {currencyFormat} from "../../core/_helpers";
 
 const BillItemList = styled.ul`
@@ -42,6 +42,7 @@ const CartBreakdown = ({cart, shippingCharges, orderTotal}: Props) => {
       let discountedAmount = 0;
       let productTotal = sumBy(cart.products, (book: ICartItem) => (book.price * book.quantity));
       let bundleTotal = sumBy(cart.bundles, (bundle: ICartBundle) => (bundle.bundle.price));
+      let mysteryBoxTotal = sumBy(cart.mysteryBoxes, (box: ICartMysteryBox) => (box.box.price));
 
 
       for (const cartItem of cart.products) {
@@ -52,8 +53,12 @@ const CartBreakdown = ({cart, shippingCharges, orderTotal}: Props) => {
         discountedAmount = discountedAmount + ((bundleItem.quantity * bundleItem.bundle.price) - bundleItem.total);
       }
 
+      for (const boxItem of cart.mysteryBoxes) {
+        discountedAmount = discountedAmount + ((boxItem.quantity * boxItem.box.price) - boxItem.total);
+      }
+
       setDiscountAmount(discountedAmount);
-      setRetailTotal(productTotal + bundleTotal);
+      setRetailTotal(productTotal + bundleTotal + mysteryBoxTotal);
       setToBePaid(cart.subTotal);
       setTotal(orderTotal);
     }

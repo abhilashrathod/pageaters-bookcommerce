@@ -6,7 +6,7 @@ import Head from "next/head";
 import {useRouter} from "next/router";
 import {Alert, Spoiler} from '@mantine/core';
 import {useClipboard} from "@mantine/hooks";
-import {useNotifications} from "@mantine/notifications";
+import {showNotification} from "@mantine/notifications";
 import {Icon} from "@iconify/react";
 import styled from "styled-components";
 import cookie from "js-cookie";
@@ -361,19 +361,18 @@ const AddToCart = (props: any) => {
   const isLoggedIn = cookie.get(AUTH_COOKIE);
 
   const [quantity, setQuantity] = useState(1);
-  const notif = useNotifications();
 
   async function handleAddCart() {
     if (!isLoggedIn) {
-      return notif.showNotification({message: 'Please login to continue shopping', color: 'orange', autoClose: 5000});
+      return showNotification({message: 'Please login/register to continue shopping', color: 'orange', autoClose: 5000});
     }
     try {
       await axios.post(`/cart/add`, {quantity, product: props.product._id}, {withCredentials: true});
       addToCart(props.product, quantity, 'product_details', 'Product Details'); // analytics event
-      notif.showNotification({message: 'Book Added to Cart', color: 'green', autoClose: 3000});
+      showNotification({message: 'Book Added to Cart', color: 'green', autoClose: 3000});
       updateCart();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
+      showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
   }
 
@@ -388,25 +387,24 @@ const AddToCart = (props: any) => {
           <option value={1}>1</option>
           <option value={2}>2</option>
         </QuantitySelection>
-        <ProductButton onClick={handleAddCart}>Add to Cart</ProductButton>
+        <ProductButton onClick={handleAddCart}>{props.product.preOrder ? 'Pre-order Now' : 'Add to Cart'}</ProductButton>
       </>
   )
 };
 
 const NotifyMe = ({product}: any) => {
-  const notif = useNotifications();
   const isLoggedIn = cookie.get(AUTH_COOKIE);
 
   async function handleNotify() {
     if (!isLoggedIn) {
-      return notif.showNotification({message: 'Please login to continue', color: 'orange', autoClose: 5000});
+      return showNotification({message: 'Please login to continue', color: 'orange', autoClose: 5000});
     }
 
     try {
       await axios.post(`/stock-alerts`, {product}, {withCredentials: true});
-      notif.showNotification({message: 'We will notify you when it is back', color: 'green', autoClose: 3000});
+      showNotification({message: 'We will notify you when it is back', color: 'green', autoClose: 3000});
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
+      showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
   }
 
@@ -420,7 +418,6 @@ const NotifyMe = ({product}: any) => {
 
 const BookWishlist = (props: any) => {
   const auth = useAuth();
-  const notif = useNotifications();
   const {product} = props;
 
   const {data} = useSWR({url: auth ? `/favorites/${product._id}` : null, withCredentials: true});
@@ -436,22 +433,22 @@ const BookWishlist = (props: any) => {
   async function addToWishlist() {
     try {
       await axios.post(`/favorites`, {product: product._id}, {withCredentials: true});
-      notif.showNotification({message: 'Book Added to Wishlist', color: 'green', autoClose: 3000});
+      showNotification({message: 'Book Added to Wishlist', color: 'green', autoClose: 3000});
 
       addToWishList(product, 1, 'product_details', 'Product Details');
       mutate({url: `/favorites/${product._id}`, withCredentials: true});
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
+      showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
   }
 
   async function removeFromWishlist() {
     try {
       await axios.delete(`/favorites/${product._id}`, {withCredentials: true});
-      notif.showNotification({message: 'Book Removed from Wishlist', color: 'green', autoClose: 3000});
+      showNotification({message: 'Book Removed from Wishlist', color: 'green', autoClose: 3000});
       mutate({url: `/favorites/${product._id}`, withCredentials: true});
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
+      showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
   }
 

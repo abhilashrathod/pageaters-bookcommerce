@@ -1,19 +1,18 @@
 import React, {useState} from 'react';
 import useSWR from 'swr';
 import {get} from 'lodash';
-import {useRouter} from "next/router";
 import {useKeenSlider} from "keen-slider/react";
 import styled from "styled-components";
 import {Skeleton} from '@mantine/core';
+import {Icon} from "@iconify/react";
 
 import EmptySectionMessage from "../elements/FailedToLoad";
 import CategoryPortraitCard from "../cards/CategoryPortraitCard";
+import AppIconButton from "../form-controls/IconButton";
+import {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 import {MD} from "../../core/_variables";
 import {ICategory} from "../../schemas/category";
-import {Icon} from "@iconify/react";
-import AppIconButton from "../form-controls/IconButton";
-import {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 interface Props {
 }

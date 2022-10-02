@@ -1,11 +1,11 @@
 import React from "react";
 import {NextPage} from "next";
 import Head from "next/head";
+import {Alert} from "@mantine/core";
 
 import PageWrapper from "../components/elements/PageWrapper";
 import Breadcrumbs from "../components/elements/Breadcrumbs";
 import PageHeadings from "../components/elements/PageHeadings";
-import {Alert} from "@mantine/core";
 
 const BREADCRUMBS_ITEMS = [
   {title: 'Home', href: '/'},

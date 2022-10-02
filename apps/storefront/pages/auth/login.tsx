@@ -1,15 +1,15 @@
 import React, {useState} from 'react';
 import Head from "next/head";
 import {useRouter} from "next/router";
+import Link from "next/link";
 import {mutate} from "swr";
+import {Divider} from "@mantine/core";
+import {useForm} from '@mantine/form';
+import {showNotification} from '@mantine/notifications';
 import styled from "styled-components";
 import {parseUrl} from 'query-string';
-import {Divider} from "@mantine/core";
 import {Icon} from "@iconify/react";
-import {useForm} from '@mantine/hooks';
-import {useNotifications} from '@mantine/notifications';
 import axios from "axios";
-import Link from "next/link";
 import cookie from 'js-cookie';
 
 import AppTextInput from "../../components/form-controls/AppTextInput";
@@ -132,7 +132,6 @@ const LoginButton = styled.button`
 
 const Login: React.FC<Props> = () => {
   const router = useRouter();
-  const notif = useNotifications();
 
   const [redirect, setRedirect] = useState(() => {
     const {query} = parseUrl(router.asPath);
@@ -145,15 +144,10 @@ const Login: React.FC<Props> = () => {
       password: '',
     },
 
-    validationRules: {
-      email: (value) => value !== '',
-      password: (value) => value !== '',
-    },
-
-    errorMessages: {
-      email: 'Please enter valid email address',
-      password: 'Please enter password',
-    },
+    validate: {
+      email: (value) => value === '' ? 'Please enter valid email address' : null,
+      password: (value) => value === '' ? 'Please enter password' : null,
+    }
   });
 
   function renderImageSize(i: string, w: number, h: number) {
@@ -163,7 +157,7 @@ const Login: React.FC<Props> = () => {
   function handleSubmit(values: any) {
     axios.post(`/auth/login`, values, {withCredentials: true})
         .then(({data}) => {
-          notif.showNotification({message: 'Login Successfully!', color: 'green', autoClose: 3000});
+          showNotification({message: 'Login Successfully!', color: 'green', autoClose: 3000});
 
           cookie.set(AUTH_COOKIE, `${+new Date()}`);
           mutate({url: `/auth/me`, withCredentials: true});
@@ -177,7 +171,7 @@ const Login: React.FC<Props> = () => {
           signIn(); // for analytics
         })
         .catch((err) => {
-          notif.showNotification({message: err.message, color: 'red', autoClose: 3000});
+          showNotification({message: err.message, color: 'red', autoClose: 3000});
         })
   }
 

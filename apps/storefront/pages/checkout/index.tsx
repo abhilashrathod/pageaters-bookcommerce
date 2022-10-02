@@ -6,8 +6,8 @@ import {useRouter} from "next/router";
 import axios from "axios";
 import {get} from 'lodash';
 import styled from "styled-components";
-import {useNotifications} from "@mantine/notifications";
-import {Accordion, Loader, AccordionItem, Radio, RadioGroup, Skeleton, Textarea} from "@mantine/core";
+import {showNotification} from "@mantine/notifications";
+import {Accordion, Loader, Radio, Skeleton, Textarea} from "@mantine/core";
 
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
@@ -25,6 +25,7 @@ import {AUTH_COOKIE, LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, SM} from "..
 import emptyCart from "../../public/illustrations/empty-cart.svg";
 import {completePurchase} from "../../core/_analytics";
 import PageLoader from "../../components/elements/PageLoading";
+import MysteryBoxItem from "../../components/cart-elements/cart-mystery-box";
 
 interface Props {
 }
@@ -129,8 +130,6 @@ const OrderLoading = () => (
 
 const Checkout: React.FC<Props> = () => {
   const isLoggedIn = cookie.get(AUTH_COOKIE);
-
-  const notif = useNotifications();
   const router = useRouter();
 
   const {data: orderRes, error} = useSWR({url: isLoggedIn ? `/orders/retrieve` : null, withCredentials: true});
@@ -152,6 +151,7 @@ const Checkout: React.FC<Props> = () => {
   const address = get(orderRes, 'data.deliveryAddress', null);
   const books = get(cartRes, 'data.products', []);
   const bundles = get(cartRes, 'data.bundles', []);
+  const mysteryBoxes = get(cartRes, 'data.mysteryBoxes', []);
 
   async function createOrder() {
     try {
@@ -161,7 +161,7 @@ const Checkout: React.FC<Props> = () => {
         instructions: deliveryInstructions
       }, {withCredentials: true});
       const {data, message} = await response$.data;
-      notif.showNotification({message: message, color: 'green', autoClose: 5000});
+      showNotification({message: message, color: 'green', autoClose: 5000});
 
       if (paymentMethod === 'online') {
         handleOrderConfirm(data);
@@ -174,7 +174,7 @@ const Checkout: React.FC<Props> = () => {
       }
 
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
@@ -234,7 +234,7 @@ const Checkout: React.FC<Props> = () => {
         </PageWrapper>
     );
 
-  if (books.length === 0 && bundles.length === 0)
+  if (books.length === 0 && bundles.length === 0 && mysteryBoxes.length === 0)
     return (
         <PageWrapper>
           <EmptyMessageWithGraphic title={'Cart is empty'} illustration={emptyCart} illustrationHeight={'300px'}
@@ -270,65 +270,88 @@ const Checkout: React.FC<Props> = () => {
                     <div className="row">
                       <div className="col-xl-8 col-md-8 col-12">
                         <OrderSpace>
-                          <Accordion initialItem={2}>
-                            <AccordionItem title="Address" label="Address">
-                              {
-                                address && (
-                                    <AddressContent>
-                                      <h6>Delivery Address</h6>
-                                      <AddressTitle>
-                                        {address.fullName} ({address.type.toLowerCase()})
-                                        | <AddressContactInfo>{address.contactNo}</AddressContactInfo> | <AddressContactInfo>{address.email}</AddressContactInfo>
-                                      </AddressTitle>
-                                      <AddressDetails>
-                                        {address.addressLine1 + ', '} {address.addressLine2 + ', '} {address.landmark} {address.city + ', '} {address.state + ' - '} {address.pinCode}
-                                      </AddressDetails>
-                                    </AddressContent>
-                                )
-                              }
-                            </AccordionItem>
-                            <AccordionItem title="Products" label="Products">
-                              <CartItemsContent>
-                                <h6>Products</h6>
-                                <ProductList>
-                                  {
-                                    books.map((item: any) => {
-                                      return (
-                                          <ProductListItem key={item._id}>
-                                            <ProductItem book={item} viewOnly={true}/>
-                                          </ProductListItem>
-                                      )
-                                    })
-                                  }
-                                  {
-                                    bundles.map((item: any) => {
-                                      return (
-                                          <ProductListItem key={item._id}>
-                                            <BundleItem viewOnly={true} cartBundle={item}/>
-                                          </ProductListItem>
-                                      )
-                                    })
-                                  }
-                                </ProductList>
-                              </CartItemsContent>
-                            </AccordionItem>
-                            <AccordionItem title="Payment Method" label="Payment Method">
-                              <InputWrapper>
-                                <RadioGroup value={paymentMethod} onChange={handleChangePaymentMethod}
-                                            orientation="vertical" label="Please Select Preferred Payment Method" required>
-                                  <Radio value="online" label="Pay Online (Credit Cards, Debit Cards, Wallets, UPIs)"/>
-                                  <Radio value="cod" label="Cash on Delivery"/>
-                                </RadioGroup>
-                              </InputWrapper>
-                              <InputWrapper>
-                                <Textarea
-                                    placeholder="Preferences are used to plan your delivery. However, shipments can sometimes arrive early or later than planned."
-                                    value={deliveryInstructions}
-                                    onChange={handleChangeDeliveryInst}
-                                    label="Delivery Instructions (If any)"
-                                />
-                              </InputWrapper>
-                            </AccordionItem>
+                          <Accordion defaultValue={'payment-method'}>
+                            <Accordion.Item value={'address'}>
+                              <Accordion.Control>
+                                Delivery Address
+                              </Accordion.Control>
+                              <Accordion.Panel>
+                                {
+                                  address && (
+                                      <AddressContent>
+                                        <h6>Delivery Address</h6>
+                                        <AddressTitle>
+                                          {address.fullName} ({address.type.toLowerCase()})
+                                          | <AddressContactInfo>{address.contactNo}</AddressContactInfo> | <AddressContactInfo>{address.email}</AddressContactInfo>
+                                        </AddressTitle>
+                                        <AddressDetails>
+                                          {address.addressLine1 + ', '} {address.addressLine2 + ', '} {address.landmark} {address.city + ', '} {address.state + ' - '} {address.pinCode}
+                                        </AddressDetails>
+                                      </AddressContent>
+                                  )
+                                }
+                              </Accordion.Panel>
+                            </Accordion.Item>
+                            <Accordion.Item value={'products'}>
+                              <Accordion.Control>
+                                In Cart
+                              </Accordion.Control>
+                              <Accordion.Panel>
+                                <CartItemsContent>
+                                  <h6>Products</h6>
+                                  <ProductList>
+                                    {
+                                      books.map((item: any) => {
+                                        return (
+                                            <ProductListItem key={item._id}>
+                                              <ProductItem book={item} viewOnly={true}/>
+                                            </ProductListItem>
+                                        )
+                                      })
+                                    }
+                                    {
+                                      bundles.map((item: any) => {
+                                        return (
+                                            <ProductListItem key={item._id}>
+                                              <BundleItem viewOnly={true} cartBundle={item}/>
+                                            </ProductListItem>
+                                        )
+                                      })
+                                    }
+                                    {
+                                      mysteryBoxes.map((item: any) => {
+                                        return (
+                                            <ProductListItem key={item._id}>
+                                              <MysteryBoxItem viewOnly={true} mysteryBox={item}/>
+                                            </ProductListItem>
+                                        )
+                                      })
+                                    }
+                                  </ProductList>
+                                </CartItemsContent>
+                              </Accordion.Panel>
+                            </Accordion.Item>
+                            <Accordion.Item value={'payment-method'}>
+                              <Accordion.Control>
+                                Payment Method
+                              </Accordion.Control>
+                              <Accordion.Panel>
+                                <InputWrapper>
+                                  <Radio.Group value={paymentMethod} onChange={handleChangePaymentMethod} spacing="xs" orientation="vertical" label="Please Select Preferred Payment Method" required>
+                                    <Radio value="online" label="Pay Online (Credit Cards, Debit Cards, Wallets, UPIs)"/>
+                                    <Radio value="cod" label="Cash on Delivery"/>
+                                  </Radio.Group>
+                                </InputWrapper>
+                                <InputWrapper>
+                                  <Textarea
+                                      placeholder="Preferences are used to plan your delivery. However, shipments can sometimes arrive early or later than planned."
+                                      value={deliveryInstructions}
+                                      onChange={handleChangeDeliveryInst}
+                                      label="Delivery Instructions (If any)"
+                                  />
+                                </InputWrapper>
+                              </Accordion.Panel>
+                            </Accordion.Item>
                           </Accordion>
                         </OrderSpace>
                       </div>

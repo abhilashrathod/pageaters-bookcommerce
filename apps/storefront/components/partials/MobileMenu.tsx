@@ -3,12 +3,13 @@ import styled from 'styled-components';
 import Link from "next/link";
 import {get} from 'lodash';
 import {Icon} from "@iconify/react";
-import {Badge, Divider, Menu} from "@mantine/core";
-import {AUTH_COOKIE, MD} from "../../core/_variables";
+import {Badge, Menu} from "@mantine/core";
 import {useRouter} from "next/router";
 import useSWR from "swr";
 import cookie from "js-cookie";
 import axios from "axios";
+
+import {AUTH_COOKIE, MD} from "../../core/_variables";
 
 interface Props {
 }
@@ -111,12 +112,17 @@ const AppMobileMenu: React.FC<Props> = () => {
             {
               isLoggedIn && (
                   <MobileMenuListItem>
-                    <Menu withArrow placement={'center'} control={<LinkItem><Icon icon={'bx:bx-user-circle'} width={30} height={30}/><LinkName>Account</LinkName></LinkItem>}>
-                      <Menu.Label>Hello, {person?.fullName ? person?.fullName : 'Reader'}!</Menu.Label>
-                      <Menu.Item onClick={() => navigateToUrl('/account/orders')} icon={<Icon icon={'ph:shopping-bag-bold'} width={20} height={20}/>}>Orders</Menu.Item>
-                      <Menu.Item onClick={() => navigateToUrl('/account/wishlist')} icon={<Icon icon={'bx:bx-heart'} width={20} height={20}/>}>Wishlist</Menu.Item>
-                      <Menu.Item onClick={() => navigateToUrl('/account')} icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
-                      <Menu.Item onClick={logout} icon={<Icon icon={'bx:log-out'} width={20} height={20}/>}>Logout</Menu.Item>
+                    <Menu width={180} withArrow>
+                      <Menu.Target>
+                        <LinkItem><Icon icon={'bx:bx-user-circle'} width={30} height={30}/><LinkName>Account</LinkName></LinkItem>
+                      </Menu.Target>
+                      <Menu.Dropdown>
+                        <Menu.Label>Hello, {person?.fullName ? person?.fullName : 'Reader'}!</Menu.Label>
+                        <Menu.Item onClick={() => navigateToUrl('/account/orders')} icon={<Icon icon={'ph:shopping-bag-bold'} width={20} height={20}/>}>Orders</Menu.Item>
+                        <Menu.Item onClick={() => navigateToUrl('/account/wishlist')} icon={<Icon icon={'bx:bx-heart'} width={20} height={20}/>}>Wishlist</Menu.Item>
+                        <Menu.Item onClick={() => navigateToUrl('/account')} icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
+                        <Menu.Item onClick={logout} icon={<Icon icon={'bx:log-out'} width={20} height={20}/>}>Logout</Menu.Item>
+                      </Menu.Dropdown>
                     </Menu>
                   </MobileMenuListItem>
               )
@@ -134,15 +140,20 @@ const AppMobileMenu: React.FC<Props> = () => {
               )
             }
             <MobileMenuListItem>
-              <Menu withArrow placement={'end'} control={<LinkItem><Icon icon={'bx:grid-alt'} width={30} height={30}/><LinkName>Store</LinkName></LinkItem>}>
+              <Menu position="top-end" width={200} withArrow>
+                <Menu.Target>
+                  <LinkItem><Icon icon={'bx:grid-alt'} width={30} height={30}/><LinkName>Store</LinkName></LinkItem>
+                </Menu.Target>
+                <Menu.Dropdown>
                 <Menu.Label>Explore Store</Menu.Label>
                 <Menu.Item onClick={() => navigateToUrl('/deals')} icon={<Icon icon={'ic:twotone-discount'} width={20} height={20}/>}>Deals & Discounts</Menu.Item>
                 <Menu.Item onClick={() => navigateToUrl('/categories')} icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
                 <Menu.Item onClick={() => navigateToUrl('/collections')} icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20} height={20}/>}>Collections</Menu.Item>
                 <Menu.Item onClick={() => navigateToUrl('/bundles')} icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
-                <Divider/>
+                <Menu.Divider />
                 <Menu.Label>Help</Menu.Label>
                 <Menu.Item onClick={() => navigateToUrl('/contact')}>Contact</Menu.Item>
+                </Menu.Dropdown>
               </Menu>
             </MobileMenuListItem>
           </MobileMenuList>

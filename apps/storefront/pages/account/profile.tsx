@@ -9,7 +9,7 @@ import {Icon} from "@iconify/react";
 import Head from "next/head";
 import moment from 'moment';
 import axios from "axios";
-import {useNotifications} from "@mantine/notifications";
+import {showNotification} from "@mantine/notifications";
 import {useInterval} from "@mantine/hooks";
 
 import PageWrapper from "../../components/elements/PageWrapper";
@@ -76,8 +76,6 @@ interface PersonalCardProps {
 }
 
 const PersonalInfoCard = ({user, onSubmit}: PersonalCardProps) => {
-  const notif = useNotifications();
-
   const [editMode, setEditMode] = useState(false);
 
   const personalDetailsForm = useForm({
@@ -97,11 +95,11 @@ const PersonalInfoCard = ({user, onSubmit}: PersonalCardProps) => {
   async function handleSubmit(values: any) {
     try {
       await axios.put(`/auth/me`, values, {withCredentials: true});
-      notif.showNotification({message: 'Profile Info Updated', color: 'green', autoClose: 3000});
+      showNotification({message: 'Profile Info Updated', color: 'green', autoClose: 3000});
       onSubmit();
       toggleEditMode();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
@@ -170,8 +168,6 @@ const ContactNoCard = ({user, onVerifySubmit}: ContactCardProps) => {
   const interval = useInterval(() => setSeconds((s) => s - 1), 1000);
   const [showOtpForm, setShowOtpForm] = useState(false);
 
-  const notif = useNotifications();
-
   useEffect(() => {
     return interval.stop;
   }, []);
@@ -209,37 +205,37 @@ const ContactNoCard = ({user, onVerifySubmit}: ContactCardProps) => {
   async function handleSubmit(values: any) {
     try {
       await axios.post(`/auth/contact/send`, values, {withCredentials: true});
-      notif.showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 5000});
+      showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 5000});
       setSeconds(75);
       interval.start();
       setShowOtpForm(true);
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
   async function handleVerifySubmit(values: any) {
     try {
       await axios.post(`/auth/contact/verify`, values, {withCredentials: true});
-      notif.showNotification({message: 'Verification Completed. Account verified!', color: 'green', autoClose: 3000});
+      showNotification({message: 'Verification Completed. Account verified!', color: 'green', autoClose: 3000});
       onVerifySubmit();
       interval.stop();
       setSeconds(0);
       setEditMode(false);
       setShowOtpForm(false);
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
   async function handleResend() {
     try {
       await axios.post(`/auth/contact/resend`, {}, {withCredentials: true});
-      notif.showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 3000});
+      showNotification({message: 'Verification code sent on provided no.', color: 'green', autoClose: 3000});
       setSeconds(75);
       interval.start();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
@@ -324,8 +320,6 @@ interface ChangePasswordProps {
 }
 
 const ChangePasswordCard = ({user}: ChangePasswordProps) => {
-  const notif = useNotifications();
-
   const [editMode, setEditMode] = useState(false);
 
   const changePasswordForm = useForm({
@@ -345,10 +339,10 @@ const ChangePasswordCard = ({user}: ChangePasswordProps) => {
   async function handleSubmit(values: any) {
     try {
       await axios.put(`/auth/password`, values, {withCredentials: true});
-      notif.showNotification({message: 'Password updated.', color: 'green', autoClose: 3000});
+      showNotification({message: 'Password updated.', color: 'green', autoClose: 3000});
       toggleEditMode();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
@@ -410,7 +404,6 @@ const ChangePasswordCard = ({user}: ChangePasswordProps) => {
 };
 
 const Profile: React.FC<Props> = () => {
-  const notif = useNotifications();
   const isLoggedIn = cookie.get(AUTH_COOKIE);
 
   const {data, error} = useSWR({url: isLoggedIn ? `/auth/me` : null, withCredentials: true});

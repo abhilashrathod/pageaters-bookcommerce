@@ -21,6 +21,8 @@ export interface IBook {
   editorsPick: boolean;
   bestSeller: boolean;
   newRelease: boolean;
+  preOrder: boolean;
+  message?: string;
   language?: string;
   version?: string;
   pages?: number;

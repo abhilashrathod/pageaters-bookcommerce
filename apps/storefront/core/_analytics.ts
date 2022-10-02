@@ -137,7 +137,7 @@ export const addToCart = (product: any, quantity: number, listId: string = '', l
     currency: GOOGLE_ANALYTICS_EVENTS.CURRENCY,
     value: returnDiscountedAmount(product.price, product.currentDiscount),
     items: [{
-      item_id: product.bookId ? product.bookId : product.bundleId,
+      item_id: '',
       item_name: product.title,
       affiliation: "Pageaters",
       currency: GOOGLE_ANALYTICS_EVENTS.CURRENCY,

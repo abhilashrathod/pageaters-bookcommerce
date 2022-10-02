@@ -1,8 +1,8 @@
 import React from 'react';
 import useSWR, {mutate} from "swr";
 import {Skeleton} from "@mantine/core";
+import {showNotification} from "@mantine/notifications";
 import axios from "axios";
-import {useNotifications} from "@mantine/notifications";
 import cookie from "js-cookie";
 import {get} from 'lodash';
 
@@ -32,7 +32,6 @@ interface Props {
 
 const Wishlist: React.FC<Props> = () => {
   const isLoggedIn = cookie.get(AUTH_COOKIE);
-  const notif = useNotifications();
 
   const {data, error} = useSWR({url: isLoggedIn ? `/favorites` : null, withCredentials: true});
 
@@ -43,11 +42,11 @@ const Wishlist: React.FC<Props> = () => {
   async function handleDelete(id: string) {
     try {
       await axios.delete(`/favorites/${id}`, {withCredentials: true});
-      notif.showNotification({message: 'Book removed from wishlist', color: 'green', autoClose: 3000});
+      showNotification({message: 'Book removed from wishlist', color: 'green', autoClose: 3000});
 
       updateWishlist();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
@@ -56,14 +55,14 @@ const Wishlist: React.FC<Props> = () => {
       await axios.post(`/cart/add`, {quantity: 1, product: book._id}, {withCredentials: true});
       await axios.delete(`/favorites/${book._id}`, {withCredentials: true});
 
-      notif.showNotification({message: 'Book added to the cart', color: 'green', autoClose: 3000});
+      showNotification({message: 'Book added to the cart', color: 'green', autoClose: 3000});
 
       updateWishlist();
       updateCart();
 
       addToCart(book, 1, 'wish_list', 'Wish-List'); // analytics event
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 

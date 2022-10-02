@@ -1,5 +1,5 @@
 import React, {forwardRef, useEffect, useState} from 'react';
-import {Autocomplete, Avatar, Badge, Divider, Drawer, Group, Menu, Text} from '@mantine/core';
+import {Autocomplete, Avatar, Drawer, Group, Menu, Badge, Text} from '@mantine/core';
 import useSWR from "swr";
 import {useDebouncedValue} from "@mantine/hooks";
 import styled from "styled-components";
@@ -228,7 +228,7 @@ const AppHeader: React.FC<Props> = () => {
   }
 
   const person = get(userRes, 'data', null);
-  const cartCount = get(cart, 'data.products', []).length + get(cart, 'data.bundles', []).length;
+  const cartCount = get(cart, 'data.products', []).length + get(cart, 'data.bundles', []).length + get(cart, 'data.mysteryBoxes', []).length;
 
   return (
       <>
@@ -267,7 +267,7 @@ const AppHeader: React.FC<Props> = () => {
                           value={search}
                           onItemSubmit={handleSearchSelectionMobile}
                           onChange={setSearch}
-                          style={{width: '100%'}}
+                          style={{width: '90%'}}
                           itemComponent={AutoCompleteItem}
                           data={data ? transformData(data.data) : []}
                           data-autofocus
@@ -280,30 +280,27 @@ const AppHeader: React.FC<Props> = () => {
                         value={search}
                         onItemSubmit={handleSearchSelection}
                         onChange={setSearch}
-                        style={{width: '100%'}}
+                        style={{width: '90%'}}
                         itemComponent={AutoCompleteItem}
                         data={data ? transformData(data.data) : []}
                         data-autofocus
                     />
                   </SearchSection>
                   <HamburgerSection>
-                    <Menu withArrow placement={'end'} control={<AppSmallIconButton><Icon icon={'bx:grid-alt'} width={30}
-                                                                                         height={30}/></AppSmallIconButton>}>
-                      <Menu.Label>Explore Store</Menu.Label>
-                      <Menu.Item onClick={() => navigateToUrl('/deals')}
-                                 icon={<Icon icon={'ic:twotone-discount'} width={20} height={20}/>}>Deals &
-                        Discounts</Menu.Item>
-                      <Menu.Item onClick={() => navigateToUrl('/categories')}
-                                 icon={<Icon icon={'ic:twotone-category'} width={20}
-                                             height={20}/>}>Categories</Menu.Item>
-                      <Menu.Item onClick={() => navigateToUrl('/collections')}
-                                 icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20}
-                                             height={20}/>}>Collections</Menu.Item>
-                      <Menu.Item onClick={() => navigateToUrl('/bundles')}
-                                 icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
-                      <Divider/>
-                      <Menu.Label>Help</Menu.Label>
-                      <Menu.Item onClick={() => navigateToUrl('/contact')}>Contact</Menu.Item>
+                    <Menu width={200} withArrow>
+                      <Menu.Target>
+                        <AppSmallIconButton><Icon icon={'bx:grid-alt'} width={30} height={30}/></AppSmallIconButton>
+                      </Menu.Target>
+                      <Menu.Dropdown>
+                        <Menu.Label>Explore Store</Menu.Label>
+                        <Menu.Item onClick={() => navigateToUrl('/mystery-boxes')} icon={<Icon icon={'icon-park-twotone:dropbox'} width={20} height={20}/>}>Mystery Box</Menu.Item>
+                        <Menu.Item onClick={() => navigateToUrl('/categories')} icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
+                        <Menu.Item onClick={() => navigateToUrl('/collections')} icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20} height={20}/>}>Collections</Menu.Item>
+                        <Menu.Item onClick={() => navigateToUrl('/bundles')} icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
+                        <Menu.Divider />
+                        <Menu.Label>Help</Menu.Label>
+                        <Menu.Item onClick={() => navigateToUrl('/contact')}>Contact</Menu.Item>
+                      </Menu.Dropdown>
                     </Menu>
                   </HamburgerSection>
                   <ProfileSection>
@@ -313,9 +310,13 @@ const AppHeader: React.FC<Props> = () => {
                             <Icon icon={'bx:bx-user-circle'} width={30} height={30}/>
                           </AppSmallIconButton>
                           : (
-                              <Menu withArrow placement={'end'} control={<AppSmallIconButton>
-                                <Icon icon={'bx:bx-user-circle'} width={30} height={30}/>
-                              </AppSmallIconButton>}>
+                              <Menu withArrow width={200}>
+                                <Menu.Target>
+                                  <AppSmallIconButton>
+                                    <Icon icon={'bx:bx-user-circle'} width={30} height={30}/>
+                                  </AppSmallIconButton>
+                                </Menu.Target>
+                                <Menu.Dropdown>
                                 <Menu.Label>Hello, {person.fullName ? person.fullName : 'Reader'}!</Menu.Label>
                                 <Menu.Item onClick={() => navigateToUrl('/account/orders')}
                                            icon={<Icon icon={'ph:shopping-bag-bold'} width={20}
@@ -326,6 +327,7 @@ const AppHeader: React.FC<Props> = () => {
                                            icon={<Icon icon={'bx:user-pin'} width={20} height={20}/>}>Account</Menu.Item>
                                 <Menu.Item onClick={logout}
                                            icon={<Icon icon={'bx:log-out'} width={20} height={20}/>}>Logout</Menu.Item>
+                                </Menu.Dropdown>
                               </Menu>
                           )
                     }

@@ -1,5 +1,6 @@
 import {IBook} from './book';
 import {IBundle} from './bundle';
+import {IMysteryBox} from "./mystery-box";
 
 export interface ICartItem {
   addedOn: string;
@@ -18,12 +19,28 @@ export interface ICartBundle {
   _id: string;
 }
 
+export interface ICartMysteryBox {
+  addedOn: string;
+  box: IMysteryBox;
+  preferences: {
+    favoriteBooks: string;
+    ignoredBooks: string;
+    preferredAuthors: string;
+    preferredGenres: string;
+  };
+  quantity: number;
+  price: number;
+  total: number;
+  _id: string;
+}
+
 export interface ICart {
   createdAt: string;
   updatedAt: string;
   products: Array<ICartItem>;
   rentals: Array<ICartItem>;
   bundles: Array<ICartBundle>;
+  mysteryBoxes: Array<ICartMysteryBox>;
   subTotal: number;
   user: any;
   _id: string;

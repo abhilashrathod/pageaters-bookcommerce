@@ -1,12 +1,10 @@
 import React, {useState} from "react";
-import useSWR from "swr";
-import {get, range} from 'lodash';
+import {range} from 'lodash';
 import {Skeleton} from "@mantine/core";
 import styled from "styled-components";
 import {useKeenSlider} from "keen-slider/react";
 import {Icon} from "@iconify/react";
 
-import EmptySectionMessage from "../elements/FailedToLoad";
 import SectionHeading from "../elements/SectionHeading";
 import CollectionCardSmall from "../cards/CollectionCardSmall";
 import AppIconButton from "../form-controls/IconButton";

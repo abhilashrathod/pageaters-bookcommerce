@@ -6,7 +6,7 @@ import {Skeleton} from "@mantine/core";
 import styled from "styled-components";
 import {Icon} from "@iconify/react";
 import axios from "axios";
-import {useNotifications} from "@mantine/notifications";
+import {showNotification} from "@mantine/notifications";
 
 import PageWrapper from "../../components/elements/PageWrapper";
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
@@ -109,18 +109,16 @@ const Addresses: React.FC<Props> = () => {
   const [edit, setEdit] = useState(false);
   const [opened, setOpened] = useState(false);
 
-  const notif = useNotifications();
-
   const {data, error} = useSWR({url: isLoggedIn ? `/addresses` : null, withCredentials: true});
 
   async function handleAddressSelection(addressId: string) {
     try {
       await axios.patch(`/addresses/${addressId}`, {}, {withCredentials: true});
-      notif.showNotification({message: 'Default address marked', color: 'green', autoClose: 3000});
+      showNotification({message: 'Default address marked', color: 'green', autoClose: 3000});
 
       updateAddresses();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
@@ -128,11 +126,11 @@ const Addresses: React.FC<Props> = () => {
     try {
       await axios.delete(`/addresses/${address._id}`, {withCredentials: true});
 
-      notif.showNotification({message: 'Address deleted', color: 'green', autoClose: 3000});
+      showNotification({message: 'Address deleted', color: 'green', autoClose: 3000});
 
       updateAddresses();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 

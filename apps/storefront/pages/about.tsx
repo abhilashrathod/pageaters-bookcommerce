@@ -2,12 +2,12 @@ import React from "react";
 import {NextPage} from "next";
 import styled from "styled-components";
 import Head from "next/head";
+import {Icon} from "@iconify/react";
 
 import PageWrapper from "../components/elements/PageWrapper";
 
 import {getAssetImage} from "../core/_imageRendererHelper";
 import {ACCENT_COLOR, LG, MD, SECONDARY_ACCENT_COLOR, SM} from "../core/_variables";
-import {Icon} from "@iconify/react";
 
 const Accent = styled.span`
   color: ${SECONDARY_ACCENT_COLOR};

@@ -5,7 +5,7 @@ import {mutate} from "swr";
 import Head from "next/head";
 import {useRouter} from "next/router";
 import KebabCase from 'lodash/kebabCase'
-import {useNotifications} from "@mantine/notifications";
+import {showNotification} from "@mantine/notifications";
 import {Spoiler} from '@mantine/core';
 import {Icon} from "@iconify/react";
 import styled from "styled-components";
@@ -221,7 +221,6 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
   const isLoggedIn = cookie.get(AUTH_COOKIE);
 
   const router = useRouter();
-  const notif = useNotifications();
 
   if (router.isFallback) return <PageWrapper><EmptySectionMessage title={'Loading...'}/></PageWrapper>;
 
@@ -235,16 +234,16 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
 
   async function handleAddCart() {
     if (!isLoggedIn) {
-      return notif.showNotification({message: 'Please login to continue shopping', color: 'orange', autoClose: 5000});
+      return showNotification({message: 'Please login to continue shopping', color: 'orange', autoClose: 5000});
     }
 
     try {
       await axios.post(`/cart/add/bundle`, {bundle: bundleDetails._id}, {withCredentials: true});
-      notif.showNotification({message: 'Bundle Added to Cart', color: 'green', autoClose: 3000});
+      showNotification({message: 'Bundle Added to Cart', color: 'green', autoClose: 3000});
       updateCart();
       addToCart(bundleDetails, 1, 'bundle_details', 'Bundle Details');
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
+      showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
   }
 

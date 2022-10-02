@@ -4,7 +4,7 @@ import Head from "next/head";
 import styled from "styled-components";
 import cookie from "js-cookie";
 import axios from "axios";
-import {useNotifications} from "@mantine/notifications";
+import {showNotification} from "@mantine/notifications";
 import {Skeleton} from '@mantine/core';
 import {useRouter} from "next/router";
 import {get} from 'lodash';
@@ -23,6 +23,7 @@ import {AUTH_COOKIE, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 
 import graphic from '../../public/illustrations/empty-cart.svg';
 import {beginCheckout, removeFromCart, viewCart} from "../../core/_analytics";
+import MysteryBoxItem from "../../components/cart-elements/cart-mystery-box";
 
 const BREADCRUMBS_ITEMS = [
   {title: 'Home', href: '/'},
@@ -108,7 +109,6 @@ const Cart: React.FC<Props> = () => {
   });
 
   const router = useRouter();
-  const notif = useNotifications();
 
   const {data, error} = useSWR({url: auth ? `/cart/retrieve` : null, withCredentials: true});
 
@@ -127,7 +127,7 @@ const Cart: React.FC<Props> = () => {
   async function handleOnDelete(id: string) {
     try {
       await axios.delete(`/cart/remove/${id}`, {withCredentials: true});
-      notif.showNotification({message: 'Book Removed from Cart', color: 'green', autoClose: 3000});
+      showNotification({message: 'Book Removed from Cart', color: 'green', autoClose: 3000});
 
       updateCart();
 
@@ -137,18 +137,29 @@ const Cart: React.FC<Props> = () => {
 
       removeFromCart(book, index, 'cart', 'Cart'); // for analytics
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
   async function handleOnBundleDelete(id: string) {
     try {
       await axios.delete(`/cart/remove/bundle/${id}`, {withCredentials: true});
-      notif.showNotification({message: 'Bundle Removed from Cart', color: 'green', autoClose: 3000});
+      showNotification({message: 'Bundle Removed from Cart', color: 'green', autoClose: 3000});
 
       updateCart();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
+    }
+  }
+
+  async function handleOnBoxDelete(id: string) {
+    try {
+      await axios.delete(`/cart/remove/box/${id}`, {withCredentials: true});
+      showNotification({message: 'Box Removed from Cart', color: 'green', autoClose: 3000});
+
+      updateCart();
+    } catch (e: any) {
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
@@ -156,10 +167,10 @@ const Cart: React.FC<Props> = () => {
     const {quantity, product} = payload;
     try {
       await axios.put(`/cart/update/${product}`, {quantity}, {withCredentials: true});
-      notif.showNotification({message: 'Book Quantity Updated', color: 'green', autoClose: 3000});
+      showNotification({message: 'Book Quantity Updated', color: 'green', autoClose: 3000});
       updateCart();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
@@ -172,6 +183,7 @@ const Cart: React.FC<Props> = () => {
   const cart = get(data, 'data', null);
   const books = get(data, 'data.products', []);
   const bundles = get(data, 'data.bundles', []);
+  const mysteryBoxes = get(data, 'data.mysteryBoxes', []);
 
   return (
       <>
@@ -194,7 +206,7 @@ const Cart: React.FC<Props> = () => {
               ? <section>
                   <div className="custom-container">
                     {
-                      (books.length === 0 && bundles.length === 0)
+                      (books.length === 0 && bundles.length === 0 && mysteryBoxes.length === 0)
                           ? <div className="row">
                             <div className="col-12">
                               <EmptyMessageWithGraphic title={'Add Some Books Here. Cart is Empty'} illustration={graphic} illustrationHeight={'300px'} illustrationWidth={'300px'}/>
@@ -223,6 +235,17 @@ const Cart: React.FC<Props> = () => {
                                             <BundleItem viewOnly={false}
                                                         onDelete={handleOnBundleDelete}
                                                         cartBundle={item}/>
+                                          </ProductListItem>
+                                      )
+                                    })
+                                  }
+                                  {
+                                    mysteryBoxes.map((item: any) => {
+                                      return (
+                                          <ProductListItem key={item._id}>
+                                            <MysteryBoxItem viewOnly={false}
+                                                        onDelete={handleOnBoxDelete}
+                                                        mysteryBox={item}/>
                                           </ProductListItem>
                                       )
                                     })

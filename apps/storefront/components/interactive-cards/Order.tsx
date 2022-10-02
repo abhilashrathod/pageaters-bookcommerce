@@ -3,7 +3,7 @@ import {Icon} from "@iconify/react";
 import {useRouter} from "next/router";
 import moment from "moment";
 
-import {getBundleImage, getProductImage} from "../../core/_imageRendererHelper";
+import {getAssetImage, getBundleImage, getProductImage} from "../../core/_imageRendererHelper";
 import AppIconButton from "../form-controls/IconButton";
 import {ButtonVariants} from "../form-controls/Button";
 
@@ -141,6 +141,11 @@ const OrderOverview = ({order}: OrderOverviewProps) => {
     return getBundleImage(i, {height: h, fit: 'cover', width: w})
   }
 
+  function renderImageSize(w: number, h: number) {
+    return getAssetImage('categories-1.jpg', {height: h, width: w, fit: 'cover'});
+  }
+
+
   function viewDetails() {
     router.push(`/account/orders/${order.orderId}`);
   }
@@ -191,6 +196,16 @@ const OrderOverview = ({order}: OrderOverviewProps) => {
                   <ProductListImageSpace>
                     <ProductListImage src={returnBundleImage(bundle.bundle.poster, 75, 75)} width={75} height={75}
                                       alt={bundle.bundle.title}/>
+                  </ProductListImageSpace>
+                </ProductListItem>
+            ))
+          }
+          {
+            order.boxes.map((mysteryBox) => (
+                <ProductListItem key={mysteryBox.box._id}>
+                  <ProductListImageSpace>
+                    <ProductListImage src={renderImageSize(75, 75)} width={75} height={75}
+                                      alt={mysteryBox.box.title}/>
                   </ProductListImageSpace>
                 </ProductListItem>
             ))

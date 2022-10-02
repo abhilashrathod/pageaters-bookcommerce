@@ -5,16 +5,14 @@ import styled from "styled-components";
 import KebabCase from 'lodash/kebabCase'
 import Head from "next/head";
 import {useRouter} from "next/router";
-import { useKeenSlider } from 'keen-slider/react';
+import {useKeenSlider} from 'keen-slider/react';
 
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import EmptySectionMessage from "../../components/elements/FailedToLoad";
-import CategoryLandscapeCard from "../../components/cards/CategoryLandscapeCard";
 import ProductCardLandScape from "../../components/cards/ProductCardLandscape";
 import CollectionCardSmall from "../../components/cards/CollectionCardSmall";
 
 import {ICollection} from "../../schemas/collection";
-import {ICategory} from "../../schemas/category";
 import {IBook} from "../../schemas/book";
 import {BUCKETS_ORIGINS, LG, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 
@@ -133,13 +131,13 @@ const ViewCollection: NextPage<Props> = ({collectionInfo}: InferGetStaticPropsTy
     mode: "free",
     breakpoints: {
       '(min-width: 992px)': {
-        slides: { origin: "auto", perView: 7.25, spacing: 12 },
+        slides: {origin: "auto", perView: 7.25, spacing: 12},
       },
       '(max-width: 768px)': {
-        slides: { origin: "auto", perView: 4.25, spacing: 12 },
+        slides: {origin: "auto", perView: 4.25, spacing: 12},
       },
       '(max-width: 576px)': {
-        slides: { origin: "auto", perView: 2.25, spacing: 12 },
+        slides: {origin: "auto", perView: 2.25, spacing: 12},
       },
     },
   });
@@ -160,7 +158,7 @@ const ViewCollection: NextPage<Props> = ({collectionInfo}: InferGetStaticPropsTy
           <meta itemProp="image" content={`${BUCKETS_ORIGINS.COLLECTIONS}/${collectionInfo.poster}`}/>
 
 
-          <meta name="title" content={`${collectionInfo?.title} | Pageaters`} />
+          <meta name="title" content={`${collectionInfo?.title} | Pageaters`}/>
           <meta name="description" content={`${collectionInfo?.description}`}/>
           <meta name="image" content={`${BUCKETS_ORIGINS.COLLECTIONS}/${collectionInfo.poster}`}/>
 
@@ -176,10 +174,14 @@ const ViewCollection: NextPage<Props> = ({collectionInfo}: InferGetStaticPropsTy
 
         <CollectionBanner>
           <picture style={{height: 'inherit'}}>
-            <source media={`(max-width: ${SM - 1}px)`} type="image/jpeg" srcSet={renderImageSize(768, 512)} height={512} width={768}/>
-            <source media={`(max-width: ${MD - 1}px)`} type="image/jpeg" srcSet={renderImageSize(1024, 682)} height={682} width={1024}/>
-            <source media={`(max-width: ${LG - 1}px)`} type="image/jpeg" srcSet={renderImageSize(1600, 1066)} height={1066} width={1600}/>
-            <CollectionCoverImage src={renderImageSize(1920, 720)} alt={collectionInfo.title} width={1920} height={720}/>
+            <source media={`(max-width: ${SM - 1}px)`} type="image/jpeg" srcSet={renderImageSize(768, 512)} height={512}
+                    width={768}/>
+            <source media={`(max-width: ${MD - 1}px)`} type="image/jpeg" srcSet={renderImageSize(1024, 682)}
+                    height={682} width={1024}/>
+            <source media={`(max-width: ${LG - 1}px)`} type="image/jpeg" srcSet={renderImageSize(1600, 1066)}
+                    height={1066} width={1600}/>
+            <CollectionCoverImage src={renderImageSize(1920, 720)} alt={collectionInfo.title} width={1920}
+                                  height={720}/>
           </picture>
           <CollectionTitleSpace>
             <CollectionTitle>{collectionInfo?.title}</CollectionTitle>
@@ -207,7 +209,10 @@ const ViewCollection: NextPage<Props> = ({collectionInfo}: InferGetStaticPropsTy
                 collectionInfo.books.map((book: IBook) => {
                   return (
                       <div key={book.bookId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6 mb-1">
-                        <ProductCardLandScape book={book} analytics={{listName: `${collectionInfo?.title} Collection`, listId: `${KebabCase(collectionInfo?.title)}-books`}}/>
+                        <ProductCardLandScape book={book} analytics={{
+                          listName: `${collectionInfo?.title} Collection`,
+                          listId: `${KebabCase(collectionInfo?.title)}-books`
+                        }}/>
                       </div>
                   )
                 })

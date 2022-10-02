@@ -1,13 +1,13 @@
 import React, {useEffect, useState} from 'react';
+import {Skeleton} from "@mantine/core";
+import {showNotification, updateNotification} from "@mantine/notifications";
 import cookie from "js-cookie";
 import styled from "styled-components";
 import {useRouter} from "next/router";
 import axios from "axios";
-import {Skeleton} from "@mantine/core";
 import useSWR, {mutate} from "swr";
 import {Icon} from "@iconify/react";
 import {get} from 'lodash';
-import {useNotifications} from "@mantine/notifications";
 
 import AddOrUpdateAddress from "../../components/dialogs/add-or-update-address";
 import Address from "../../components/interactive-cards/Address";
@@ -119,7 +119,7 @@ const AddressSelect: React.FC<Props> = () => {
   const [edit, setEdit] = useState(false);
   const [opened, setOpened] = useState(false);
 
-  const notif = useNotifications();
+
   const router = useRouter();
 
   const {data: addressRes, error} = useSWR({url: isLoggedIn ? `/addresses` : null, withCredentials: true});
@@ -128,6 +128,7 @@ const AddressSelect: React.FC<Props> = () => {
   const cart = get(cartRes, 'data', null);
   const books = get(cartRes, 'data.products', []);
   const bundles = get(cartRes, 'data.bundles', []);
+  const mysteryBoxes = get(cartRes, 'data.mysteryBoxes', []);
 
   const addresses = get(addressRes, 'data', null);
 
@@ -145,11 +146,11 @@ const AddressSelect: React.FC<Props> = () => {
   async function handleAddressSelection(addressId: string) {
     try {
       await axios.patch(`/addresses/${addressId}`, {}, {withCredentials: true});
-      notif.showNotification({message: 'Delivery address marked', color: 'green', autoClose: 3000});
+      showNotification({message: 'Delivery address marked', color: 'green', autoClose: 3000});
 
       updateAddresses();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
@@ -157,17 +158,17 @@ const AddressSelect: React.FC<Props> = () => {
     try {
       await axios.delete(`/addresses/${address._id}`, {withCredentials: true});
 
-      notif.showNotification({message: 'Address deleted', color: 'green', autoClose: 3000});
+      showNotification({message: 'Address deleted', color: 'green', autoClose: 3000});
 
       updateAddresses();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
   async function handleAddressConfirm() {
     try {
-      notif.showNotification({
+      showNotification({
         id: 'address-confirm',
         loading: true,
         title: 'Processing Address',
@@ -176,7 +177,8 @@ const AddressSelect: React.FC<Props> = () => {
         disallowClose: true,
       });
       await axios.post(`/orders/attempt`, {address: selectedAddress}, {withCredentials: true});
-      notif.updateNotification('address-confirm', {
+      updateNotification({
+        id: 'address-confirm',
         color: 'green',
         title: 'Delivery address confirmed.',
         message: '',
@@ -187,8 +189,9 @@ const AddressSelect: React.FC<Props> = () => {
 
       addShippingInfo(cart, 'cart', 'Cart'); // for analytics
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
-      notif.updateNotification('address-confirm', {
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
+      updateNotification({
+        id: 'address-confirm',
         color: 'red',
         title: '',
         message: '',
@@ -230,7 +233,7 @@ const AddressSelect: React.FC<Props> = () => {
         </PageWrapper>
     );
 
-  if (books.length === 0 && bundles.length === 0)
+  if (books.length === 0 && bundles.length === 0 && mysteryBoxes.length === 0)
     return (
         <PageWrapper>
           <EmptyMessageWithGraphic title={'Cart is empty'} illustration={emptyCart} illustrationHeight={'300px'}

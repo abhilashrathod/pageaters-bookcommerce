@@ -1,20 +1,19 @@
 import React from 'react';
 import styled from 'styled-components'
 import useSWR from "swr";
+import {useRouter} from "next/router";
 import {get, range} from 'lodash';
 import {Skeleton} from "@mantine/core";
 import {useViewportSize} from "@mantine/hooks";
 
 import ProductCardLandScape from "../cards/ProductCardLandscape";
+import SectionHeading from "../elements/SectionHeading";
+import EmptySectionMessage from "../elements/FailedToLoad";
 
 import {getAssetImage} from "../../core/_imageRendererHelper";
 
 import {MD, SECONDARY_COLOR, SM} from "../../core/_variables";
 
-import {IProductItem} from "../../schemas/product-set";
-import SectionHeading from "../elements/SectionHeading";
-import EmptySectionMessage from "../elements/FailedToLoad";
-import {useRouter} from "next/router";
 import {IBook} from "../../schemas/book";
 
 interface Props {
@@ -157,7 +156,9 @@ const FeaturedCategory: React.FC<Props> = () => {
                       ? <Skeleton height={(width <= MD - 1) ? 200 : 750} circle mb="xl"/>
                       : (
                           <>
-                            <PosterImg onClick={() => handleNavigation(discount.dealId)} src={(width <= MD - 1) ? renderImageSize(500, 200) : renderImageSize(500, 750)} loading={'lazy'}/>
+                            <PosterImg onClick={() => handleNavigation(discount.dealId)}
+                                       src={(width <= MD - 1) ? renderImageSize(500, 200) : renderImageSize(500, 750)}
+                                       loading={'lazy'}/>
                             <PosterContent>
                               <PosterTitle>{discount.title}</PosterTitle>
                             </PosterContent>

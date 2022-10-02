@@ -84,7 +84,7 @@ function MyApp({Component, pageProps}: AppProps) {
           <meta property="twitter:card" content="summary_large_image"/>
         </Head>
         <SWRConfig value={{use: [swrMiddleware], fetcher}}>
-          <MantineProvider theme={{fontFamily: 'Metropolis Regular'}}>
+          <MantineProvider theme={{fontFamily: 'Metropolis Regular' }}>
             <NotificationsProvider position={'bottom-right'}>
               <AppHeader/>
               <Component {...pageProps} />

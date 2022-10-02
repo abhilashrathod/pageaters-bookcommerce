@@ -1,23 +1,23 @@
 import React, {useState} from 'react';
+import Link from "next/link";
+import {useRouter} from "next/router";
+import Head from "next/head";
 import styled from "styled-components";
-import {useForm} from "@mantine/hooks";
+import {useForm} from "@mantine/form";
+import {Center, Divider} from "@mantine/core";
+import {showNotification} from "@mantine/notifications";
+import axios from "axios";
+import {Icon} from "@iconify/react";
 
 import PageWrapper from "../../components/elements/PageWrapper";
 import AppTextInput from "../../components/form-controls/AppTextInput";
-import Link from "next/link";
+import EmptyMessageWithGraphic from "../../components/elements/EmptyMessageWithGraphic";
+import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
 
 import {ACCENT_COLOR, LIGHTER_PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variables";
-import axios from "axios";
-import {useNotifications} from "@mantine/notifications";
-import EmptyMessageWithGraphic from "../../components/elements/EmptyMessageWithGraphic";
+import {obscureEmail} from "../../core/_helpers";
 
 import graphic from '../../public/illustrations/forgot-password-success.svg';
-import {Center, Divider} from "@mantine/core";
-import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
-import {useRouter} from "next/router";
-import {Icon} from "@iconify/react";
-import Head from "next/head";
-import {obscureEmail} from "../../core/_helpers";
 
 interface Props {
 }
@@ -58,19 +58,15 @@ const ForgotPassword: React.FC<Props> = () => {
   const [message, setMessage] = useState('');
 
   const router = useRouter();
-  const notif = useNotifications();
+
 
   const form = useForm({
     initialValues: {
       email: '',
     },
 
-    validationRules: {
-      email: (value) => value !== '',
-    },
-
-    errorMessages: {
-      email: 'Please enter valid email address',
+    validate: {
+      email: (value) => value === '' ? 'Please enter valid email address' : null,
     },
   });
 
@@ -80,7 +76,7 @@ const ForgotPassword: React.FC<Props> = () => {
       setMessage(`A reset password email has been sent to to ${obscureEmail(form.values.email)}. Please follow the instructions to reset your password`);
       setSuccess(true);
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
+      showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
   }
 
@@ -88,9 +84,9 @@ const ForgotPassword: React.FC<Props> = () => {
     try {
       await axios.post(`/auth/forgot-password/resend`, {email: form.values.email});
       setMessage(`A new reset password email has been sent to ${obscureEmail(form.values.email)}.`);
-      notif.showNotification({message: 'Resend Success!', color: 'green', autoClose: 3000});
+      showNotification({message: 'Resend Success!', color: 'green', autoClose: 3000});
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 5000});
+      showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
   }
 

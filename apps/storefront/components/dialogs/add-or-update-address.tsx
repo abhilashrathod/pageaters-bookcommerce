@@ -1,14 +1,14 @@
 import React, {useEffect} from 'react';
 import styled from "styled-components";
 import axios from "axios";
-import {useRouter} from "next/router";
 import {get} from 'lodash';
-import {Divider, InputWrapper, Modal, Select, Switch} from '@mantine/core';
-import {useForm} from "@mantine/hooks";
-import {useNotifications} from "@mantine/notifications";
+import {Divider, Input, Modal, Select, Switch} from '@mantine/core';
+import {useForm} from "@mantine/form";
+import {showNotification} from "@mantine/notifications";
 
 import AppTextInput from "../form-controls/AppTextInput";
 import {CONTACT_NO_REGEX, PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variables";
+
 import {IAddress} from "../../schemas/address";
 
 interface Props {
@@ -27,9 +27,6 @@ const Save = styled.button`
 `;
 
 const AddOrUpdateAddress: React.FC<Props> = ({isOpened, editMode, currentAddress, onCancel, onSave}) => {
-  const notif = useNotifications();
-  const router = useRouter();
-
   const form = useForm({
     initialValues: {
       fullName: editMode ? get(currentAddress, 'fullName', '') : '',
@@ -45,26 +42,15 @@ const AddOrUpdateAddress: React.FC<Props> = ({isOpened, editMode, currentAddress
       type: editMode ? get(currentAddress, 'type', 'HOME') : 'HOME',
     },
 
-    validationRules: {
-      fullName: (value) => value !== '',
-      contactNo: (value) => value !== '' && CONTACT_NO_REGEX.test(value),
-      email: (value) => value !== '',
-      city: (value) => value !== '',
-      state: (value) => value !== '',
-      pinCode: (value) => value !== '',
-      addressLine1: (value) => value !== '',
-      addressLine2: (value) => value !== '',
-    },
-
-    errorMessages: {
-      fullName: 'Please enter valid name for this address',
-      contactNo: 'Please enter a phone number so we can call if there are any issues with delivery.',
-      email: 'Please provide valid email address for delivery notifications',
-      city: 'Please provide valid a city name',
-      state: 'Please provide valid state',
-      pinCode: 'Please enter a ZIP or postal code to verify serviceability',
-      addressLine1: 'Please provide valid address',
-      addressLine2: 'Please provide valid address',
+    validate: {
+      fullName: (value) => value === '' ? 'Please enter valid name for this address' : null,
+      contactNo: (value) => (value === '') && !CONTACT_NO_REGEX.test(value) ? 'Please enter a phone number so we can call if there are any issues with delivery.' : null,
+      email: (value) => value === '' ? 'Please provide valid email address for delivery notifications' : null,
+      city: (value) => value === '' ? 'Please provide valid a city name' : null,
+      state: (value) => value === '' ? 'Please provide valid state' : null,
+      pinCode: (value) => value === '' ? 'Please enter a ZIP or postal code to verify serviceability' : null,
+      addressLine1: (value) => value === '' ? 'Please provide valid address' : null,
+      addressLine2: (value) => value === '' ? 'Please provide valid address' : null,
     },
   });
 
@@ -83,20 +69,20 @@ const AddOrUpdateAddress: React.FC<Props> = ({isOpened, editMode, currentAddress
   async function saveAddress(values: any) {
     try {
       await axios.post(`/addresses`, values, {withCredentials: true});
-      notif.showNotification({message: 'Address Added', color: 'green', autoClose: 3000});
+      showNotification({message: 'Address Added', color: 'green', autoClose: 3000});
       onSave();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
   async function updateAddress(values: any, id: any) {
     try {
       await axios.put(`/addresses/${id}`, values, {withCredentials: true});
-      notif.showNotification({message: 'Address Updated', color: 'green', autoClose: 3000});
+      showNotification({message: 'Address Updated', color: 'green', autoClose: 3000});
       onSave();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
@@ -198,19 +184,25 @@ const AddOrUpdateAddress: React.FC<Props> = ({isOpened, editMode, currentAddress
                     <Select
                         label="Address Type"
                         placeholder="Pick one"
-                        {...form.getInputProps('type')}
+                        styles={{
+                          input: {
+                            paddingRight: 0
+                          }
+                        }}
+                        style={{width: '75%'}}
                         data={[
                           {value: 'OFFICE', label: 'Office'},
                           {value: 'HOME', label: 'Home'},
                         ]}
+                        {...form.getInputProps('type')}
                     />
                   </div>
                   <div className="col-6">
-                    <InputWrapper label="Make this my default address">
+                    <Input.Wrapper label="Make default">
                       <Switch size="md"
                               color="dark"
                               {...form.getInputProps('isDefault')} />
-                    </InputWrapper>
+                    </Input.Wrapper>
                   </div>
                 </div>
                 <Save type={'submit'}>{editMode ? 'Update Address' : 'Save Address'}</Save>

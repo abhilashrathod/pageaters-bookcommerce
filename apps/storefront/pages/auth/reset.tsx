@@ -1,10 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {useRouter} from "next/router";
-import Link from "next/link";
 import styled from 'styled-components';
+import {showNotification} from "@mantine/notifications";
+import {useForm} from "@mantine/form";
 import {parseUrl} from 'query-string';
-import {useNotifications} from "@mantine/notifications";
-import {useForm} from "@mantine/hooks";
 import axios from "axios";
 
 import AppTextInput from "../../components/form-controls/AppTextInput";
@@ -48,7 +47,7 @@ const AuthPageHeading = styled.div`
 `;
 
 const ResetPassword: React.FC<Props> = () => {
-  const notif = useNotifications();
+
   const router = useRouter();
 
   const [email, setEmail] = useState(() => {
@@ -77,14 +76,9 @@ const ResetPassword: React.FC<Props> = () => {
       email: email
     },
 
-    validationRules: {
-      newPassword: (value) => value !== '',
-      confirmPassword: (value, values) => (value !== ''),
-    },
-
-    errorMessages: {
-      newPassword: 'Please enter valid password',
-      confirmPassword: 'Passwords did not match',
+    validate: {
+      newPassword: (value) => value === '' ? 'Please enter valid password' : null,
+      confirmPassword: (value, values) => (value !== '') ? 'Passwords did not match' : null,
     },
   });
 
@@ -92,55 +86,55 @@ const ResetPassword: React.FC<Props> = () => {
     const {newPassword, confirmPassword} = values;
 
     if (newPassword !== confirmPassword) {
-      return notif.showNotification({message: 'Passwords do not match.', color: 'red', autoClose: 3000});
+      return showNotification({message: 'Passwords do not match.', color: 'red', autoClose: 3000});
     }
 
     try {
       await axios.post(`/auth/reset-password`, values);
-      notif.showNotification({
+      showNotification({
         message: 'Resetting password complete. Please proceed with login',
         color: 'green',
         autoClose: 5000
       });
       router.replace('/auth/login');
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
   return (
       <>
-      <Head>
-        <title>Password Reset | Pageaters</title>
-      </Head>
-      <PageWrapper>
-        <div className="custom-container">
-          <div className="row">
-            <div className="col-xxl-6 col-xl-6 col-lg-8 col-md-8 col-12" style={{margin: '0 auto'}}>
-              <AuthPageHeading>
-                <h2>Reset Your Password</h2>
-                <h5>Enter your new credentials</h5>
-              </AuthPageHeading>
-            </div>
-            <div className="clearfix"></div>
-            <div className="col-xxl-4 col-xl-4 col-lg-8 col-md-8 col-12" style={{margin: '0 auto'}}>
-              <form onSubmit={form.onSubmit(handleSubmit)}>
-                <AppTextInput id={'newPassword'}
-                              required={true}
-                              label={'New Password'}
-                              type={'password'}
-                              {...form.getInputProps('newPassword')}/>
-                <AppTextInput id={'confirmPassword'}
-                              required={true}
-                              label={'Confirm Password'}
-                              type={'password'}
-                              {...form.getInputProps('confirmPassword')}/>
-                <LoginButton type="submit">Submit</LoginButton>
-              </form>
+        <Head>
+          <title>Password Reset | Pageaters</title>
+        </Head>
+        <PageWrapper>
+          <div className="custom-container">
+            <div className="row">
+              <div className="col-xxl-6 col-xl-6 col-lg-8 col-md-8 col-12" style={{margin: '0 auto'}}>
+                <AuthPageHeading>
+                  <h2>Reset Your Password</h2>
+                  <h5>Enter your new credentials</h5>
+                </AuthPageHeading>
+              </div>
+              <div className="clearfix"></div>
+              <div className="col-xxl-4 col-xl-4 col-lg-8 col-md-8 col-12" style={{margin: '0 auto'}}>
+                <form onSubmit={form.onSubmit(handleSubmit)}>
+                  <AppTextInput id={'newPassword'}
+                                required={true}
+                                label={'New Password'}
+                                type={'password'}
+                                {...form.getInputProps('newPassword')}/>
+                  <AppTextInput id={'confirmPassword'}
+                                required={true}
+                                label={'Confirm Password'}
+                                type={'password'}
+                                {...form.getInputProps('confirmPassword')}/>
+                  <LoginButton type="submit">Submit</LoginButton>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
-      </PageWrapper>
+        </PageWrapper>
       </>
   )
 };

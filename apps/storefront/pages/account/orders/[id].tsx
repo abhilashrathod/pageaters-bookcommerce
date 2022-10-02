@@ -3,10 +3,10 @@ import styled from "styled-components";
 import {useRouter} from "next/router";
 import Head from "next/head";
 import Link from "next/link";
+import {Checkbox, Modal, Radio, Stepper, Text, Textarea, Timeline} from '@mantine/core';
+import {showNotification} from "@mantine/notifications";
+import {useForm} from '@mantine/form';
 import useSWR, {mutate} from "swr";
-import {Checkbox, Modal, Radio, RadioGroup, Stepper, Text, Textarea, Timeline} from '@mantine/core';
-import {useNotifications} from "@mantine/notifications";
-import {formList, useForm} from '@mantine/form';
 import {Icon} from "@iconify/react";
 import axios from "axios";
 import moment from "moment";
@@ -21,7 +21,6 @@ import AppIconButton from "../../../components/form-controls/IconButton";
 import {InputWrapper} from "../../../components/form-controls/AppTextInput";
 
 import {
-  CANCELLATION_REASONS,
   LIGHT_COLOR,
   LIGHTER_PRIMARY_COLOR,
   LIGHTEST_PRIMARY_COLOR,
@@ -29,12 +28,11 @@ import {
   ORDER_STAGES,
   PAYMENT_METHODS,
   PRIMARY_COLOR,
-  RETURN_REASONS,
   SM,
   TRACKING_LINK
 } from "../../../core/_variables";
 import {currencyFormat, returnDiscountedAmount} from "../../../core/_helpers";
-import {getBundleImage, getProductImage} from "../../../core/_imageRendererHelper";
+import {getAssetImage, getBundleImage, getProductImage} from "../../../core/_imageRendererHelper";
 import {IOrder, IOrderHistory} from "../../../schemas/order";
 
 interface Props {
@@ -264,51 +262,24 @@ function returnPaymentBreakdown(payment: any) {
 function FeedbackModal({type, open, books, bundles, onClose, onSubmit}: FeedbackModalProps) {
   const [active, setActive] = useState(0);
 
-  function returnBundles() {
-    return bundles.map((x: any, index: number) => {
-      return {name: x.bundle.title, value: x.bundle._id, active: true}
-    })
-  }
-
-  function returnBooks() {
-    return books.map((x: any, index: number) => {
-      return {name: x.product.title, value: x.product._id, active: true}
-    })
-  }
-
-
   const form = useForm({
     initialValues: {
       reason: '',
       comments: '',
       type: type,
-      books: formList(returnBooks()),
-      bundles: formList(returnBundles()),
+      books: [],
+      bundles: []
     },
 
-    // @ts-ignore
-    validationRules: {
-      reason: (value: string) => value !== '',
-    },
-
-    errorMessages: {
-      reason: 'Please select a reason for return',
-    },
+    validate: {
+      reason: (value) => value === '' ? 'Please select a reason for return' : null,
+    }
   });
-
-  const bookList = form.values.books.map((book: any, index: number) => (
-      <li key={index} style={{display: 'flex', alignItems: 'center'}}>
-        <Checkbox styles={{root: {display: 'inline-flex', marginRight: '0.5rem'}}} color={'gray'} radius={'xl'}
-                  key={index} {...form.getListInputProps('books', index, 'active')} />
-        <Text style={{color: PRIMARY_COLOR, fontSize: '1rem', fontWeight: 'normal', marginBottom: '0'}}
-              component="span">{book.name}</Text>
-      </li>
-  ));
 
   const bundleList = form.values.bundles.map((bundle: any, index: number) => (
       <li key={index} style={{display: 'flex', alignItems: 'center'}}>
         <Checkbox styles={{root: {display: 'inline-flex', marginRight: '0.5rem'}}} color={'gray'} radius={'xl'}
-                  key={index} {...form.getListInputProps('bundles', index, 'active')} />
+                  key={index} {...form.getInputProps('bundles')}/>
         <Text style={{color: PRIMARY_COLOR, fontSize: '1rem', fontWeight: 'normal', marginBottom: '0'}}
               component="span">{bundle.name}</Text>
       </li>
@@ -322,25 +293,25 @@ function FeedbackModal({type, open, books, bundles, onClose, onSubmit}: Feedback
           <Stepper color="gray" size="sm" active={active} onStepClick={setActive}>
             <Stepper.Step label={'Details about ' + type}>
               <InputWrapper>
-                <RadioGroup
+                <Radio.Group
                     {...form.getInputProps('reason')}
                     label="Reason for Returning the order"
                     description=""
-                    spacing="sm"
+                    spacing="xs"
                     orientation="vertical"
                     color="gray"
                     styles={{
                       label: {color: PRIMARY_COLOR, fontSize: '1rem', fontWeight: 'normal', marginBottom: '0'},
                     }}
                     required>
-                  <Radio value="Incorrect product" label="Incorrect product" />
-                  <Radio value="No longer needed" label="No longer needed" />
-                  <Radio value="Did not meet my expectations" label="Did not meet my expectations" />
-                  <Radio value="Quality is not upto the mark" label="Quality is not upto the mark" />
-                  <Radio value="It was damaged or defective" label="It was damaged or defective" />
-                  <Radio value="Not delivered on time" label="Not delivered on time" />
-                  <Radio value="Found a better deal elsewhere" label="Found a better deal elsewhere" />
-                </RadioGroup>
+                  <Radio value="Incorrect product" label="Incorrect product"/>
+                  <Radio value="No longer needed" label="No longer needed"/>
+                  <Radio value="Did not meet my expectations" label="Did not meet my expectations"/>
+                  <Radio value="Quality is not upto the mark" label="Quality is not upto the mark"/>
+                  <Radio value="It was damaged or defective" label="It was damaged or defective"/>
+                  <Radio value="Not delivered on time" label="Not delivered on time"/>
+                  <Radio value="Found a better deal elsewhere" label="Found a better deal elsewhere"/>
+                </Radio.Group>
               </InputWrapper>
               <InputWrapper>
                 <Textarea
@@ -354,8 +325,31 @@ function FeedbackModal({type, open, books, bundles, onClose, onSubmit}: Feedback
             </Stepper.Step>
             <Stepper.Step label={'Select Products'}>
               <ul>
-                {bookList}
-                {bundleList}
+                <li>
+                  <Checkbox.Group
+                      label="Select items you would like to return"
+                      color="orange"
+                      spacing="xs"
+                      orientation="vertical"
+                      {...form.getInputProps('books')}
+                      withAsterisk>
+                    {
+                      books.map((book: any, index: number) => <Checkbox key={index} color="gray" radius={'xl'} value={book.product.title} label={book.product.title}/>)
+                    }
+                  </Checkbox.Group>
+                </li>
+                <li>
+                  <Checkbox.Group
+                      label=""
+                      spacing="xs"
+                      orientation="vertical"
+                      {...form.getInputProps('bundles')}
+                      withAsterisk>
+                    {
+                      bundles.map((bundle: any, index: number) => <Checkbox key={index} color="gray" radius={'xl'} value={bundle.bundle.title} label={bundle.bundle.title}/>)
+                    }
+                  </Checkbox.Group>
+                </li>
               </ul>
               <SubmitButton type={'submit'}>Submit and {type}</SubmitButton>
             </Stepper.Step>
@@ -397,10 +391,7 @@ const ShipmentAction = ({shipment}: ShipmentActionProps) => {
 };
 
 const CancelAction = ({orderId}: CancelActionProps) => {
-  const notif = useNotifications();
-
   const [open, setOpen] = useState(false);
-
 
   const form = useForm({
     initialValues: {
@@ -419,11 +410,11 @@ const CancelAction = ({orderId}: CancelActionProps) => {
   async function handleSubmit(values: any) {
     try {
       await axios.post(`/orders/cancel/${orderId}`, values, {withCredentials: true});
-      notif.showNotification({message: 'Order cancelled', color: 'green', autoClose: 3000});
+      showNotification({message: 'Order cancelled', color: 'green', autoClose: 3000});
       updateOrder();
       closeModal();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
@@ -455,7 +446,7 @@ const CancelAction = ({orderId}: CancelActionProps) => {
           <div>
             <form onSubmit={form.onSubmit(handleSubmit)}>
               <InputWrapper>
-                <RadioGroup
+                <Radio.Group
                     {...form.getInputProps('reason')}
                     label="Reason for cancelling the order"
                     description=""
@@ -475,7 +466,7 @@ const CancelAction = ({orderId}: CancelActionProps) => {
                   <Radio value="Heard bad reviews after ordering the product" label="Heard bad reviews after ordering the product" />
                   <Radio value="Not available to receive the package. Travelling or moving" label="Not available to receive the package. Travelling or moving" />
                   <Radio value="Bad customer care service or representative" label="Bad customer care service or representative" />
-                </RadioGroup>
+                </Radio.Group>
               </InputWrapper>
               <InputWrapper>
                 <Textarea
@@ -494,24 +485,17 @@ const CancelAction = ({orderId}: CancelActionProps) => {
 };
 
 const ReturnAction = ({orderId, type, books, bundles}: ReturnActionProps) => {
-  const notif = useNotifications();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
   async function handleReturn(values: any) {
-    const payload = {
-      ...values,
-      books: values.books.filter((x: any) => x.active).map((x: any) => x.value),
-      bundles: values.bundles.filter((x: any) => x.active).map((x: any) => x.value),
-    };
-
     try {
-      await axios.post(`/orders/return/${orderId}`, payload, {withCredentials: true});
-      notif.showNotification({message: 'Request received', color: 'green', autoClose: 3000});
+      await axios.post(`/orders/return/${orderId}`, values, {withCredentials: true});
+      showNotification({message: 'Request received', color: 'green', autoClose: 3000});
       updateOrder();
       closeModal();
     } catch (e: any) {
-      notif.showNotification({message: e.message, color: 'red', autoClose: 3000});
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
 
@@ -609,6 +593,42 @@ const BundleItem = ({bundle}: any) => {
 
               }
               <small className="text-positive">&nbsp;(Extra {bundle.discount} % Off)</small>
+            </p>
+          </CartProductInfo>
+        </CartContent>
+      </CartItem>
+  )
+};
+
+const MysteryBoxItem = ({mysteryBoxItem}: any) => {
+  function renderImageSize(w: number, h: number) {
+    return getAssetImage('categories-1.jpg', {height: h, width: w, fit: 'cover'});
+  }
+
+  return (
+      <CartItem>
+        <CartContent>
+          <div className="image">
+            <Link href={`/mystery-boxes`} passHref>
+              <CartImage
+                  src={renderImageSize(250, 250)}
+                  alt={mysteryBoxItem.box.title}
+                  width={250} height={250}/>
+            </Link>
+          </div>
+          <CartProductInfo>
+            <Link href={`/mystery-boxes`} passHref>
+              <CartProductTitle>{mysteryBoxItem.box.title}</CartProductTitle>
+            </Link>
+            <p>
+              {
+                mysteryBoxItem.discount
+                    ? <>
+                      <Crossed>{currencyFormat(mysteryBoxItem.price)}</Crossed><span>{currencyFormat(returnDiscountedAmount(mysteryBoxItem.price, mysteryBoxItem.discount))}</span></>
+                    : <span>{currencyFormat(mysteryBoxItem.price)}</span>
+
+              }
+              <small className="text-positive">&nbsp;(Extra {mysteryBoxItem.discount} % Off)</small>
             </p>
           </CartProductInfo>
         </CartContent>
@@ -715,6 +735,15 @@ const OrderDetails: React.FC<Props> = () => {
                           )
                         })
                       }
+                      {
+                        order.boxes.map((item: any) => {
+                          return (
+                              <ProductListItem key={item._id}>
+                                <MysteryBoxItem mysteryBoxItem={item} />
+                              </ProductListItem>
+                          )
+                        })
+                      }
                     </ProductList>
                   </OrderCard>
                 </div>
@@ -742,7 +771,7 @@ const OrderDetails: React.FC<Props> = () => {
                       (order.orderStatus === ORDER_STAGES.RETURNED) && (
                           <AppButton variant={ButtonVariants.LightestPrimary} disabled={true}
                                      onClick={() => console.log('1')} styles={{width: '100%', marginBottom: '1rem'}}>
-                            {'Return in Progress'}
+                            {'Refund in Progress'}
                           </AppButton>
                       )
                     }
