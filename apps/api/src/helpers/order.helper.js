@@ -90,30 +90,35 @@ module.exports.calculateShipping = async function(isFree, totalWeight, deliveryC
         });
       }
 
-      const config = {
-        method: 'get',
-        url: `https://track.delhivery.com/api/kinko/v1/invoice/charges/.json?md=${DELIVERY_MODE}&ss=${STATUS_OF_SHIPMENT}&d_pin=${deliveryCode}&o_pin=${ORIGIN_PIN_CODE}&cgm=${totalWeight}`,
-        headers: {
-          'Authorization': `Token ${AUTH_TOKEN}`,
-        },
-      };
+      resolve({
+        taxes: 0,
+        deliveryAmount: 30,
+        totalDeliveryCharges: 30,
+      });
 
-      axios(config)
-        .then(function(response) {
-          const charges = response.data[0];
-
-          const payload = {
-            taxes: charges.tax_data.SGST + charges.tax_data.CGST,
-            deliveryAmount: charges.gross_amount,
-            totalDeliveryCharges: charges.total_amount,
-          };
-
-          resolve(payload);
-        })
-        .catch(function(error) {
-          console.log(colors.red('ERROR'), error);
-          resolve(0);
-        });
+      // const config = {
+      //   method: 'get',
+      //   url: `https://track.delhivery.com/api/kinko/v1/invoice/charges/.json?md=${DELIVERY_MODE}&ss=${STATUS_OF_SHIPMENT}&d_pin=${deliveryCode}&o_pin=${ORIGIN_PIN_CODE}&cgm=${totalWeight}`,
+      //   headers: {
+      //     'Authorization': `Token ${AUTH_TOKEN}`,
+      //   },
+      // };
+      // axios(config)
+      //   .then(function(response) {
+      //     const charges = response.data[0];
+      //
+      //     const payload = {
+      //       taxes: charges.tax_data.SGST + charges.tax_data.CGST,
+      //       deliveryAmount: charges.gross_amount,
+      //       totalDeliveryCharges: charges.total_amount,
+      //     };
+      //
+      //     resolve(payload);
+      //   })
+      //   .catch(function(error) {
+      //     console.log(colors.red('ERROR'), error);
+      //     resolve(0);
+      //   });
     } catch (e) {
       console.log(colors.red('ERROR'), JSON.stringify(e));
       resolve(0);

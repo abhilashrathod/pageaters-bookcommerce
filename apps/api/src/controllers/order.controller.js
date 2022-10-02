@@ -24,7 +24,7 @@ const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
 
 const populateOptions = [{
   path: 'products.product',
-  select: 'bookId title poster author currentDiscount price weight',
+  select: 'bookId title poster author preOrder currentDiscount price weight',
   populate: {
     path: 'author',
     select: 'name avatar',
@@ -81,6 +81,8 @@ module.exports.attempt = async (req, res) => {
       return res.error('CART_NOT_EXIST');
     }
 
+    const isPreOrder = cartResponse.products.find(item => item.product.preOrder);
+
     const subTotal = await calculateTotal(cartResponse.products, cartResponse.bundles, cartResponse.mysteryBoxes);
     const totalWeight = await calculateTotalWeight(cartResponse.products, cartResponse.bundles, cartResponse.mysteryBoxes);
 
@@ -90,7 +92,7 @@ module.exports.attempt = async (req, res) => {
       return res.error('ORDER_ADDRESS_ATTEMPT_FAILED');
     }
 
-    const shippingRes = await calculateShipping(subTotal > 499, totalWeight, addressRes.pinCode);
+    const shippingRes = await calculateShipping((isPreOrder || subTotal > 499), totalWeight, addressRes.pinCode);
     let shipping = shippingRes.deliveryAmount;
 
     const orderPayload = {
@@ -158,12 +160,13 @@ module.exports.create = async (req, res) => {
 
     const { finalProducts, finalBundles, finalMysteryBoxes } = await prepareItemsForOrder(books, bundles, mysteryBoxes);
 
+    const isPreOrder = books.find(item => item.product.preOrder);
     let subTotal = await calculateTotal(books, bundles, mysteryBoxes);
     let totalWeight = await calculateTotalWeight(books, bundles, mysteryBoxes);
 
     /* CALCULATE SHIPPING AMOUNT */
     const addressRes = await Address.findOne({ isDeleted: false, _id: currentOrderRes.deliveryAddress._id, userId });
-    const shippingRes = await calculateShipping(subTotal > 499, totalWeight, addressRes.pinCode);
+    const shippingRes = await calculateShipping((isPreOrder || subTotal > 499), totalWeight, addressRes.pinCode);
     shipping = shippingRes.deliveryAmount;
 
     /* END CALCULATE SHIPPING AMOUNT */

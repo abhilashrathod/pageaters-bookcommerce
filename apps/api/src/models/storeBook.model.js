@@ -27,6 +27,9 @@ const schema = new Schema({
     editorsPick: { type: Boolean, default: false },
     bestSeller: { type: Boolean, default: false },
     newRelease: { type: Boolean, default: false },
+    preOrder: { type: Boolean, default: false },
+
+    message: { type: String, default: '' },
 
     poster: { type: String, default: '' },
 
