@@ -47,9 +47,9 @@ module.exports.register = async (req, res) => {
 
     const user = await User.create({ email, role: enums.USER_ROLES.USER });
 
-    if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
-      razorPayCustomer = await razorPayInstance.customers.create({ email, contact: '', notes: {} });
-    }
+    // if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
+    //   razorPayCustomer = await razorPayInstance.customers.create({ email, contact: '', notes: {} });
+    // }
 
     await user.setPassword(password);
     const verifyToken = await user.generateVerifyEmailToken();

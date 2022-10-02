@@ -31,7 +31,7 @@ module.exports.getAll = async (req, res) => {
       sort: {
         [sortBy]: sortOrder,
       },
-      select: `title bookId ISBN author inventory poster price weight popularity editorsPick newRelease currentDiscount bestSeller`,
+      select: `title bookId ISBN author inventory poster price weight popularity editorsPick newRelease preOrder currentDiscount bestSeller`,
       populate: [{
         path: 'author',
         select: 'name intro avatar',
@@ -51,17 +51,17 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    let { title, tagline, eyebrow, author, description, tags, language, pages, readingLevel, version, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
+    let { title, tagline, eyebrow, author, description, message, tags, language, pages, readingLevel, version, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, preOrder, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
 
     let bookId = `BK-${generateRandomNumber(10)}`;
     const payload = {
       bookId,
-      title, tagline, eyebrow, author, description, tags,
+      title, tagline, eyebrow, author, description, tags, message,
       language, pages, version, readingLevel,
       dimensions, weight,
       categories, relatedCollections, relatedBooks, relatedBundles,
       ISBN, publicationYear, publisher,
-      editorsPick, bestSeller, newRelease,
+      editorsPick, bestSeller, newRelease, preOrder,
       poster,
       wholeSalePriceHistory, inventory, currentDiscount,
       price, rentPrice, membersPrice, membersRentPrice,
@@ -105,7 +105,7 @@ module.exports.create = async (req, res) => {
 
 module.exports.update = async (req, res) => {
   try {
-    let { id, title, tagline, eyebrow, description, tags, language, pages, readingLevel, version, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedCollections, relatedBundles, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
+    let { id, title, tagline, eyebrow, description, message, tags, language, pages, readingLevel, version, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, preOrder, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedCollections, relatedBundles, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
 
     const book = await Book.findOne({ _id: id, isDeleted: false });
 
@@ -114,12 +114,12 @@ module.exports.update = async (req, res) => {
     }
 
     const payload = {
-      title, tagline, eyebrow, description, tags,
+      title, tagline, eyebrow, description, tags, message,
       language, pages, version, readingLevel,
       dimensions, weight,
       categories, relatedCollections, relatedBooks, relatedBundles,
       ISBN, publicationYear, publisher,
-      editorsPick, bestSeller, newRelease,
+      editorsPick, bestSeller, newRelease, preOrder,
       poster,
       wholeSalePriceHistory, inventory, currentDiscount,
       price, rentPrice, membersPrice, membersRentPrice,
@@ -178,7 +178,7 @@ module.exports.search = async (req, res) => {
     const query = { _id: { $in: lunrIdArray }, isDeleted: false };
 
     const books = await Book.find(query)
-      .select('title ISBN bookId author poster weight price popularity inventory editorsPick newRelease currentDiscount bestSeller')
+      .select('title ISBN bookId author poster weight price popularity inventory editorsPick newRelease preOrder currentDiscount bestSeller')
       .limit(10)
       .populate(populateOptions);
 
@@ -197,7 +197,7 @@ module.exports.getById = async (req, res) => {
       select: '_id authorId name avatar',
     }, {
       path: 'relatedBooks',
-      select: `_id title bookId ISBN author inventory poster price popularity editorsPick newRelease currentDiscount bestSeller`,
+      select: `_id title bookId ISBN author inventory poster price popularity editorsPick newRelease preOrder currentDiscount bestSeller`,
     }, {
       path: 'relatedBundles',
       select: 'bundleId _id title bundledBooks poster currentDiscount priority price membersPrice',
@@ -234,7 +234,7 @@ module.exports.getByUniqueId = async (req, res) => {
       select: '_id authorId name avatar',
     }, {
       path: 'relatedBooks',
-      select: `_id title bookId ISBN author inventory poster price popularity editorsPick newRelease currentDiscount bestSeller`,
+      select: `_id title bookId ISBN author inventory poster price popularity editorsPick newRelease preOrder currentDiscount bestSeller`,
       populate: [{
         path: 'author',
         select: '_id name',

@@ -22,6 +22,7 @@ router.use('/file', require('./file.routes'));
 router.use('/bundles', require('./bundle.routes'));
 router.use('/users', require('./users.routes'));
 router.use('/store-books', require('./storeBooks.routes'));
+router.use('/mystery-boxes', require('./mysteryBox.routes'));
 router.use('/authors', require('./author.routes'));
 router.use('/categories', require('./category.routes'));
 router.use('/collections', require('./collection.routes'));

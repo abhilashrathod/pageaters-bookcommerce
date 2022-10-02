@@ -7,7 +7,7 @@ const { parallel } = require('async');
 const { models, enums } = require('../constants');
 const { RAZOR_PAY, RAZOR_PAY_WEBHOOKS, TWILIO } = require('../appConfig');
 const { calculateTotal } = require('../helpers/cart.helper');
-const { calculateShipping, calculateTotalWeight, orderPaymentInfo, textMessage, returnProductImage, returnBundleImage } = require('../helpers/order.helper');
+const { calculateShipping, calculateTotalWeight, orderPaymentInfo, textMessage, returnProductImage, returnAssetImage, returnBundleImage } = require('../helpers/order.helper');
 const { getId, generateRandomNumber } = require('../helpers/utils.helper');
 const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
@@ -16,6 +16,7 @@ const User = mongoose.model(models.USER);
 const Order = mongoose.model(models.ORDER);
 const Cart = mongoose.model(models.CART);
 const Book = mongoose.model(models.STORE_BOOK);
+const MysteryBox = mongoose.model(models.MYSTERY_BOX);
 const Bundle = mongoose.model(models.BUNDLE);
 
 const razorPayInstance = new Razorpay({ key_id: RAZOR_PAY.USER_ID, key_secret: RAZOR_PAY.PASSWORD });
@@ -23,7 +24,7 @@ const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
 
 const populateOptions = [{
   path: 'products.product',
-  select: 'bookId title poster author currentDiscount price weight',
+  select: 'bookId title poster author preOrder currentDiscount price weight',
   populate: {
     path: 'author',
     select: 'name avatar',
@@ -35,6 +36,9 @@ const populateOptions = [{
     path: 'bundledBooks',
     select: 'bookId title poster author currentDiscount price',
   },
+}, {
+  path: 'mysteryBoxes.box',
+  select: 'boxId title images currentDiscount price weight',
 }];
 
 const orderPopulateOptions = [
@@ -52,6 +56,10 @@ const orderPopulateOptions = [
   {
     path: 'bundles.bundle',
     select: 'bundleId title poster bundledBooks currentDiscount price',
+  },
+  {
+    path: 'boxes.box',
+    select: 'boxId title images currentDiscount price',
   },
 ];
 
@@ -73,8 +81,10 @@ module.exports.attempt = async (req, res) => {
       return res.error('CART_NOT_EXIST');
     }
 
-    const subTotal = await calculateTotal(cartResponse.products, cartResponse.bundles);
-    const totalWeight = await calculateTotalWeight(cartResponse.products, cartResponse.bundles);
+    const isPreOrder = cartResponse.products.find(item => item.product.preOrder);
+
+    const subTotal = await calculateTotal(cartResponse.products, cartResponse.bundles, cartResponse.mysteryBoxes);
+    const totalWeight = await calculateTotalWeight(cartResponse.products, cartResponse.bundles, cartResponse.mysteryBoxes);
 
     const addressRes = await Address.findOne({ _id: address, userId, isDeleted: false });
 
@@ -82,7 +92,7 @@ module.exports.attempt = async (req, res) => {
       return res.error('ORDER_ADDRESS_ATTEMPT_FAILED');
     }
 
-    const shippingRes = await calculateShipping(subTotal > 499, totalWeight, addressRes.pinCode);
+    const shippingRes = await calculateShipping((isPreOrder || subTotal > 499), totalWeight, addressRes.pinCode);
     let shipping = shippingRes.deliveryAmount;
 
     const orderPayload = {
@@ -146,15 +156,17 @@ module.exports.create = async (req, res) => {
 
     const books = cartInfoRes.products;
     const bundles = cartInfoRes.bundles;
+    const mysteryBoxes = cartInfoRes.mysteryBoxes;
 
-    const { finalProducts, finalBundles } = await prepareItemsForOrder(books, bundles);
+    const { finalProducts, finalBundles, finalMysteryBoxes } = await prepareItemsForOrder(books, bundles, mysteryBoxes);
 
-    let subTotal = await calculateTotal(books, bundles);
-    let totalWeight = await calculateTotalWeight(books, bundles);
+    const isPreOrder = books.find(item => item.product.preOrder);
+    let subTotal = await calculateTotal(books, bundles, mysteryBoxes);
+    let totalWeight = await calculateTotalWeight(books, bundles, mysteryBoxes);
 
     /* CALCULATE SHIPPING AMOUNT */
     const addressRes = await Address.findOne({ isDeleted: false, _id: currentOrderRes.deliveryAddress._id, userId });
-    const shippingRes = await calculateShipping(subTotal > 499, totalWeight, addressRes.pinCode);
+    const shippingRes = await calculateShipping((isPreOrder || subTotal > 499), totalWeight, addressRes.pinCode);
     shipping = shippingRes.deliveryAmount;
 
     /* END CALCULATE SHIPPING AMOUNT */
@@ -182,6 +194,7 @@ module.exports.create = async (req, res) => {
     currentOrderRes.orderStatus = method === 'online' ? enums.ORDER_STAGES.CREATED : enums.ORDER_STAGES.CONFIRMED;
     currentOrderRes.products = finalProducts;
     currentOrderRes.bundles = finalBundles;
+    currentOrderRes.boxes = finalMysteryBoxes;
     currentOrderRes.weight = totalWeight;
     currentOrderRes.deliveryInstructions = instructions;
     currentOrderRes.subTotal = subTotal;
@@ -300,7 +313,7 @@ module.exports.getByUniqueId = async (req, res) => {
     const userId = get(req, 'user.userId', '');
 
     let orderRes = await Order.findOne({ orderId: uniqueId, userId })
-      .select(`orderId orderDate deliveryAddress shipmentTrackingId orderHistory payment orderStatus subTotal products bundles shipping total`)
+      .select(`orderId orderDate deliveryAddress shipmentTrackingId orderHistory payment orderStatus subTotal products boxes bundles shipping total`)
       .populate(orderPopulateOptions);
 
     if (orderRes) {
@@ -333,13 +346,8 @@ module.exports.getById = async (req, res) => {
         select: 'bundleId title poster bundledBooks currentDiscount price',
       },
       {
-        path: 'requests.books',
-        select: 'bookId title poster author currentDiscount price',
-        populate: { path: 'author', select: 'name avatar' },
-      },
-      {
-        path: 'requests.bundles',
-        select: 'bundleId title poster bundledBooks currentDiscount price',
+        path: 'boxes.box',
+        select: 'boxId title images currentDiscount price weight',
       },
     ];
 
@@ -362,7 +370,7 @@ module.exports.getAllByUser = async (req, res) => {
       userId: userId,
       orderStatus: { $nin: [enums.ORDER_STAGES.ATTEMPTED, enums.ORDER_STAGES.CREATED] },
     })
-      .select(`orderId orderDate deliveryAddress orderStatus products bundles total`)
+      .select(`orderId orderDate deliveryAddress orderStatus products boxes bundles total`)
       .sort({ createdAt: -1 })
       .populate(orderPopulateOptions);
 
@@ -406,7 +414,7 @@ module.exports.getAll = async (req, res) => {
     const options = {
       page,
       limit,
-      select: `orderId orderDate userId deliveryAddress orderStatus products bundles total`,
+      select: `orderId orderDate userId deliveryAddress orderStatus products boxes bundles total`,
       sort: {
         updatedAt: 'desc',
       },
@@ -421,6 +429,9 @@ module.exports.getAll = async (req, res) => {
       }, {
         path: 'bundles.bundle',
         select: 'bundleId title bundledBooks currentDiscount price',
+      }, {
+        path: 'boxes.box',
+        select: 'boxId title images currentDiscount price',
       }],
     };
 
@@ -906,10 +917,19 @@ function returnBundles(bundles) {
   return bundles;
 }
 
-function prepareItemsForOrder(books, bundles) {
+function returnBoxes(boxes) {
+  for (let boxItem of boxes) {
+    boxItem.box.images[0] = returnAssetImage(boxItem.box.images[0]);
+  }
+
+  return boxes;
+}
+
+function prepareItemsForOrder(books, bundles, mysteryBoxes) {
   return new Promise(async (resolve, reject) => {
     let finalProducts = [];
     let finalBundles = [];
+    let finalMysteryBoxes = [];
 
     try {
       for (let book of books) {
@@ -926,6 +946,20 @@ function prepareItemsForOrder(books, bundles) {
           weight: bookRes.weight * book.quantity,
         };
         finalProducts.push(item);
+      }
+
+      for (let boxItem of mysteryBoxes) {
+        const myBoxRes = await MysteryBox.findOne({ isDeleted: false, _id: boxItem.box._id }).select('currentDiscount price weight');
+        const item = {
+          quantity: boxItem.quantity,
+          price: myBoxRes.price,
+          discount: myBoxRes.currentDiscount,
+          preferences: boxItem.preferences,
+          total: boxItem.quantity * (myBoxRes.price - ((myBoxRes.currentDiscount * myBoxRes.price) / 100)),
+          box: boxItem.box,
+          weight: myBoxRes.weight * boxItem.quantity,
+        };
+        finalMysteryBoxes.push(item);
       }
 
       for (let bundleItem of bundles) {
@@ -949,6 +983,7 @@ function prepareItemsForOrder(books, bundles) {
       resolve({
         finalProducts,
         finalBundles,
+        finalMysteryBoxes,
       });
     } catch (e) {
       reject({ finalProducts, finalBundles });
@@ -962,6 +997,7 @@ function resetCart(userId) {
       $set: {
         products: [],
         bundles: [],
+        mysteryBoxes: [],
         subTotal: 0,
       },
     }, { new: true });
@@ -1001,6 +1037,7 @@ function sendConfirmationEmail(userRes, orderRes) {
           FULL_NAME: userRes.fullName ? userRes.fullName : 'Reader',
           PRODUCTS: returnProducts(orderRes.products),
           BUNDLES: returnBundles(orderRes.bundles),
+          BOXES: returnBoxes(orderRes.boxes),
           SUBTOTAL: orderRes.subTotal,
           SHIPPING: orderRes.shipping,
           TOTAL: orderRes.total,

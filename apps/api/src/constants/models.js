@@ -18,6 +18,7 @@ module.exports = {
   REVIEW: 'review',
   STORE: 'store',
   STORE_BOOK: 'storeBook',
+  MYSTERY_BOX: 'mystery_box',
   BUNDLE: 'bundle',
   AUTHOR: 'author',
   DISCOUNT: 'discount',

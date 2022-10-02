@@ -33,12 +33,8 @@ const schema = new Schema({
       },
       status: { type: String, default: '' },
       shipment: { type: String, default: '' },
-      books: [
-        { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
-      ],
-      bundles: [
-        { type: Schema.Types.ObjectId, ref: models.BUNDLE }
-      ]
+      books: [{ type: String, default: '' }],
+      bundles: [{ type: String, default: '' }]
     }],
 
     products: [{
@@ -62,6 +58,21 @@ const schema = new Schema({
     rentals: [{
       quantity: { type: Number, default: 1 },
       product: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
+    }],
+
+    boxes: [{
+      quantity: { type: Number, default: 1 },
+      price: { type: Number, default: 1 },
+      discount: { type: Number, default: 0 },
+      total: { type: Number, default: 1 },
+      weight: { type: Number, default: 0 },
+      preferences: {
+        preferredAuthors: { type: String, default: '' },
+        preferredGenres: { type: String, default: '' },
+        favoriteBooks: { type: String, default: '' },
+        ignoredBooks: { type: String, default: '' },
+      },
+      box: { type: Schema.Types.ObjectId, ref: models.MYSTERY_BOX },
     }],
 
     giftCard: { type: Schema.Types.ObjectId, ref: models.GIFT_CARD, default: null },

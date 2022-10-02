@@ -8,6 +8,7 @@ require('./log_pushNotification.model');
 require('./user.model');
 require('./book.model');
 require('./storeBook.model');
+require('./mysteryBox.model');
 require('./productSet.model');
 require('./address.model');
 require('./bundle.model');
@@ -23,4 +24,5 @@ require('./subscriptionPlan.model');
 require('./giftCard.model');
 require('./favorites.model');
 require('./order.model');
+
 
