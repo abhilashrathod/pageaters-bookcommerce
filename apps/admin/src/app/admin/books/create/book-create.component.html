@@ -149,16 +149,29 @@
                 </mat-form-field>
 
                 <div class="row mt-3 mb-3">
-                  <div class="col-4">
+                  <div class="col-3">
+                    <mat-slide-toggle formControlName="preOrder">Pre Order?</mat-slide-toggle>
+                  </div>
+                  <div class="col-3">
                     <mat-slide-toggle formControlName="editorsPick">Editor's Pick</mat-slide-toggle>
                   </div>
-                  <div class="col-4">
+                  <div class="col-3">
                     <mat-slide-toggle formControlName="bestSeller">Best Seller</mat-slide-toggle>
                   </div>
-                  <div class="col-4">
+                  <div class="col-3">
                     <mat-slide-toggle formControlName="newRelease">Is New Release</mat-slide-toggle>
                   </div>
                 </div>
+
+                <mat-form-field class="w-100">
+                  <mat-label>Message</mat-label>
+                  <textarea matInput
+                            cdkTextareaAutosize
+                            #autosize="cdkTextareaAutosize"
+                            cdkAutosizeMinRows="5"
+                            cdkAutosizeMaxRows="15"
+                            formControlName="message"></textarea>
+                </mat-form-field>
 
                 <mat-form-field class="w-100">
                   <mat-label>Description</mat-label>

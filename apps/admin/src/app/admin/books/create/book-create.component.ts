@@ -127,6 +127,7 @@ export class BookCreateComponent implements OnInit {
       eyebrow: [''],
       author: ['', Validators.required],
       description: [''],
+      message: [''],
       tags: [[]],
 
       language: ['EN'],
@@ -141,6 +142,7 @@ export class BookCreateComponent implements OnInit {
       bestSeller: [false],
       editorsPick: [false],
       newRelease: [false],
+      preOrder: [false],
     });
     this.shippingFormGroup = this.formBuilder.group({
       dimensions: [''],
