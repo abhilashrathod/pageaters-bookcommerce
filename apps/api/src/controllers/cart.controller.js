@@ -7,6 +7,7 @@ const { models, enums } = require('../constants');
 const Cart = mongoose.model(models.CART);
 const Book = mongoose.model(models.STORE_BOOK);
 const Bundle = mongoose.model(models.BUNDLE);
+const MysteryBox = mongoose.model(models.MYSTERY_BOX);
 
 const CART_COOKIE_OPTIONS = {
   httpOnly: true,
@@ -27,6 +28,9 @@ module.exports.retrieve = async (req, res) => {
     }, {
       path: 'bundles.bundle',
       select: 'bundleId title poster bundledBooks currentDiscount price',
+    }, {
+      path: 'mysteryBoxes.box',
+      select: 'boxId title images currentDiscount price',
     }];
 
     let userCart = await Cart.findOne({ user: userId, _id: cart }).populate(populateOptions);
@@ -36,7 +40,7 @@ module.exports.retrieve = async (req, res) => {
 
       res.cookie(enums.TOKEN_ID.CART_COOKIE, userCart._id, CART_COOKIE_OPTIONS);
 
-      userCart.subTotal = await calculateTotal(userCart.products, userCart.bundles);
+      userCart.subTotal = await calculateTotal(userCart.products, userCart.bundles, userCart.mysteryBoxes);
       return res.ok({ message: 'CART_LIST_SUCCESS', data: userCart });
     }
 
@@ -316,6 +320,63 @@ module.exports.removeBundle = async (req, res) => {
 
     const query = { _id: cart };
     const update = { $pull: { 'bundles': { bundle: bundleId } } };
+    const options = { new: true };
+
+    await Cart.findOneAndUpdate(query, update, options);
+
+    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: true });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+/* MYSTERY BOXES */
+
+module.exports.addBox = async (req, res) => {
+  try {
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
+    let { box, preferences, quantity = 1 } = req.allParams();
+    const userId = get(req, 'user.userId', '');
+
+    if (quantity > 1) return res.error('QUANTITY_LIMIT_BOX');
+
+    let currentCart = await Cart.findOne({ _id: cart, user: userId });
+    if (!currentCart) return res.error('CART_NOT_EXIST');
+
+    currentCart = currentCart.toObject();
+
+    let boxRes = await MysteryBox.findOne({ _id: box, isDeleted: false }).select('boxId');
+    if (!boxRes) return res.error('MYSTERY_BOX_NOT_EXIST');
+
+    const alreadyThere = currentCart.mysteryBoxes.find(x => x.box.toString() === box.toString());
+    if (alreadyThere) return res.error('QUANTITY_LIMIT_BOX');
+
+    const query = { _id: cart };
+    const update = { $addToSet: { mysteryBoxes: { box, quantity, preferences, addedOn: new Date() } } };
+    const options = { new: true };
+
+    await Cart.findOneAndUpdate(query, update, options);
+
+    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: true });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.removeBox = async (req, res) => {
+  try {
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
+    const userId = get(req, 'user.userId', '');
+    let { boxId } = req.allParams(); // id is the mysteryBoxObjectId
+
+    let currentCart = await Cart.findOne({ _id: cart, user: userId });
+    if (!currentCart) return res.error('CART_NOT_EXIST');
+
+    let boxRes = await MysteryBox.findOne({ _id: boxId, isDeleted: false }).select('boxId');
+    if (!boxRes) return res.error('MYSTERY_BOX_NOT_EXIST');
+
+    const query = { _id: cart };
+    const update = { $pull: { 'mysteryBoxes': { box: boxId } } };
     const options = { new: true };
 
     await Cart.findOneAndUpdate(query, update, options);

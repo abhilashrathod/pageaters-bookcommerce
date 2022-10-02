@@ -174,6 +174,7 @@
 	"QUANTITY_OUT_OF_STOCK": "Requested quantity higher than available stock for one of the books from bundle.",
 	"QUANTITY_LIMIT": "QUANTITY ERROR: A Reader can only checkout maximum 2 quantity per title.",
 	"QUANTITY_LIMIT_BUNDLE": "A Reader can only checkout maximum 1 quantity per bundle",
+	"QUANTITY_LIMIT_BOX": "A Reader can only checkout maximum 1 box type per order",
 	"BUNDLE_BOOKS_ALREADY_PRESENT": "QUANTITY LIMIT: One of the bundled books is already present in the cart.",
 	"INVALID_ID": "ID is not valid",
 	"STORE_DEAL_LIST_SUCCESS": "Store Deal list success",
@@ -189,9 +190,12 @@
 	"PRODUCT_SET_SEARCH_SUCCESS": "Product Set Search Successful",
 	"PRODUCT_SET_DELETE_SUCCESS": "Product Set Deleted Successfully",
 	"INVALID_FAVORITE_TYPE": "Type is not allowed",
-	"success": "success",
-	"Invalid Record Length: columns length is 3, got 5 on line 3": "Invalid Record Length: columns length is 3, got 5 on line 3",
 	"MAIL_SENT": "MAIL_SENT",
-	"\"instructions\" is not allowed": "\"instructions\" is not allowed",
-	"\"uniqueId\" is not allowed": "\"uniqueId\" is not allowed"
+	"MYSTERY_BOX_LIST_SUCCESS": "Mystery Box Fetch Success",
+	"MYSTERY_BOX_NOT_EXIST": "Mystery Box Information doesn't exist",
+	"MYSTERY_BOX_CREATE_SUCCESS": "Mystery Box Set Created",
+	"MYSTERY_BOX_UPDATE_SUCCESS": "Mystery Box Information Updated",
+	"MYSTERY_BOX_SEARCH_SUCCESS": "Mystery Box Search Successful",
+	"MYSTERY_BOX_DELETE_SUCCESS": "Mystery Box Deleted Successfully",
+	"success": "success"
 }

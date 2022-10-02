@@ -38,13 +38,14 @@ module.exports.checkServiceabilityInternal = async function(pincode) {
   });
 };
 
-module.exports.calculateTotalWeight = async function(products, bundles) {
+module.exports.calculateTotalWeight = async function(products, bundles, mysteryBoxes) {
   return new Promise(async (resolve, reject) => {
     try {
       let finalProductsWeight = sumBy(products, (obj) => (obj.product.weight * obj.quantity));
       let finalBundleWeight = sumBy(bundles, (obj) => (obj.bundle.weight * obj.quantity));
+      let finalBoxWeight = sumBy(mysteryBoxes, (obj) => (obj.box.weight * obj.quantity));
 
-      const totalWeight = Number(finalProductsWeight) + Number(finalBundleWeight);
+      const totalWeight = Number(finalProductsWeight) + Number(finalBundleWeight) + Number(finalBoxWeight);
 
       resolve(totalWeight);
     } catch (e) {
@@ -194,6 +195,22 @@ module.exports.returnProductImage = function(name) {
 module.exports.returnBundleImage = function(name) {
   const imageRequest = JSON.stringify({
     bucket: enums.BUCKETS.BUNDLES,
+    key: name,
+    edits: {
+      resize: {
+        height: 75,
+        width: 75,
+        fit: 'cover',
+      }
+    }
+  });
+
+  return `${AWS.CLOUDFRONT_ACCESS_POINT}/${universalBtoa(imageRequest)}`;
+};
+
+module.exports.returnAssetImage = function(name) {
+  const imageRequest = JSON.stringify({
+    bucket: enums.BUCKETS.ASSETS,
     key: name,
     edits: {
       resize: {

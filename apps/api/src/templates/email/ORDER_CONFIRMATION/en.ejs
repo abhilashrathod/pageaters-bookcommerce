@@ -722,6 +722,83 @@
                                                                         <% } %>
                                                                     <% } %>
 
+                                                                    <% if(BOXES.length > 0) { %>
+                                                                        <% for(var i = 0; i < BOXES.length; i++) { %>
+                                                                            <tr class="row-border-bottom">
+                                                                                <th class="table-stack product-image-wrapper stack-column-center"
+                                                                                    width="1"
+                                                                                    style="mso-line-height-rule: exactly; border-bottom-width: 1px; border-bottom-color: #eeeeee; border-bottom-style: solid; padding: 11px 11px 11px 0;"
+                                                                                    bgcolor="#ffffff" valign="middle">
+                                                                                    <a href="https://pageaters.com/mystery-boxes?utm_campaign=order-confirmation-email&utm_medium=email&utm_content=product&utm_term=link&utm_source=OrderlyEmails"
+                                                                                       class="product_link"
+                                                                                       target="_blank"
+                                                                                       style="color: #0c0c09; text-decoration: none !important; text-underline: none; word-wrap: break-word;">
+                                                                                        <img width="75"
+                                                                                             class="product-image"
+                                                                                             src="<%= BOXES[i].box.images[0] %>"
+                                                                                             alt="<%= BOXES[i].box.title %>"
+                                                                                             style="vertical-align: middle; text-align: center; width: 75px; max-width: 75px; height: auto !important; border-radius: 0px; padding: 0px;">
+                                                                                    </a>
+                                                                                </th>
+                                                                                <th class="product-details-wrapper table-stack stack-column"
+                                                                                    style="mso-line-height-rule: exactly; padding-top: 11px; padding-bottom: 11px; border-bottom-width: 1px; border-bottom-color: #eeeeee; border-bottom-style: solid;"
+                                                                                    bgcolor="#ffffff" valign="middle">
+                                                                                    <table cellspacing="0"
+                                                                                           cellpadding="0" border="0"
+                                                                                           width="100%"
+                                                                                           style="min-width: 100%;"
+                                                                                           role="presentation">
+                                                                                        <tr>
+                                                                                            <th class="line-item-description"
+                                                                                                style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222; padding: 11px 5px 11px 0;"
+                                                                                                align="left"
+                                                                                                bgcolor="#ffffff"
+                                                                                                valign="top">
+                                                                                                <p style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222; margin: 0;"
+                                                                                                   align="left">
+                                                                                                    <a href="https://pageaters.com/mystery-boxes?utm_campaign=order-confirmation-email&utm_medium=email&utm_content=product&utm_term=link&utm_source=OrderlyEmails"
+                                                                                                       class="product_link"
+                                                                                                       target="_blank"
+                                                                                                       style="color: #222222; text-decoration: none !important; text-underline: none; word-wrap: break-word; text-align: left !important; ">
+                                                                                                        <%= BOXES[i].box.title %>
+                                                                                                    </a>
+                                                                                                </p>
+                                                                                            </th>
+                                                                                            <th style="mso-line-height-rule: exactly;"
+                                                                                                bgcolor="#ffffff"
+                                                                                                valign="top"></th>
+                                                                                            <th class="right line-item-qty"
+                                                                                                width="1"
+                                                                                                style="mso-line-height-rule: exactly; white-space: nowrap; padding: 11px 0 11px 11px;"
+                                                                                                align="right"
+                                                                                                bgcolor="#ffffff"
+                                                                                                valign="top">
+                                                                                                <p style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222; margin: 0;"
+                                                                                                   align="right">
+                                                                                                    x<%= BOXES[i].quantity %></p>
+                                                                                            </th>
+                                                                                            <th class="right line-item-line-price"
+                                                                                                width="1"
+                                                                                                style="mso-line-height-rule: exactly; white-space: nowrap; padding: 11px 0 11px 22px;"
+                                                                                                align="right"
+                                                                                                bgcolor="#ffffff"
+                                                                                                valign="top">
+                                                                                                <p style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222; margin: 0;"
+                                                                                                   align="right">
+                                                                                                    INR <%= BOXES[i].total %></p>
+                                                                                            </th>
+                                                                                        </tr>
+                                                                                    </table>
+                                                                                </th>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th colspan="2"
+                                                                                    class="product-empty-row"
+                                                                                    style="mso-line-height-rule: exactly;"
+                                                                                    bgcolor="#ffffff" valign="top"></th>
+                                                                            </tr>
+                                                                        <% } %>
+                                                                    <% } %>
                                                                 </table>
                                                             </th>
                                                         </tr>
