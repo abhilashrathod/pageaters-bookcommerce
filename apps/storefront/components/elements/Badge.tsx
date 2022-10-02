@@ -6,7 +6,7 @@ import {
   LIGHTER_PRIMARY_COLOR,
   LIGHTEST_PRIMARY_COLOR,
   PRIMARY_COLOR,
-  PRIMARY_DANGER,
+  PRIMARY_DANGER, PRIMARY_SUCCESS,
   SECONDARY_ACCENT_COLOR,
   SECONDARY_COLOR
 } from "../../core/_variables";
@@ -30,6 +30,8 @@ const handleBackgroundColor = (color: string = '') => {
       return PRIMARY_DANGER;
     case ButtonVariants.LightPrimary:
       return LIGHTER_PRIMARY_COLOR;
+    case ButtonVariants.Success:
+      return PRIMARY_SUCCESS;
     case ButtonVariants.LightestPrimary:
       return LIGHTEST_PRIMARY_COLOR;
     default:

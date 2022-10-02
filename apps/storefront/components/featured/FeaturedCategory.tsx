@@ -109,7 +109,7 @@ const LoadingCard = () => (
 );
 
 const FeaturedCategory: React.FC<Props> = () => {
-  const {data: categoryRes, error: categoryErr} = useSWR({url: `/categories/unique/${'CA-5609114898'}`});
+  const {data: categoryRes, error: categoryErr} = useSWR({url: `/categories/unique/${'CA-8238991218'}`});
   const {data: storeDealRes, error: storeDealErr} = useSWR({url: `/deals/unique/${'DE-6009406967'}`});
   const {data: productRes, error: productErr} = useSWR({url: `/product-sets/slug/featured-category-set-gqgACP`});
 

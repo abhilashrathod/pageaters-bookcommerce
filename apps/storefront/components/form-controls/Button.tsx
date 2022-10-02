@@ -24,6 +24,7 @@ export enum ButtonVariants {
   Default = 'default',
   Accent = 'accent',
   SecondaryAccent = 'secondary-accent',
+  Success = 'success',
   Secondary = 'secondary',
   Danger = 'danger',
   LightPrimary = 'light-primary',

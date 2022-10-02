@@ -146,6 +146,10 @@ const ProductDescription = styled.div`
   white-space: pre-wrap;
 `;
 
+const ProductMessage = styled.div`
+  white-space: pre-wrap;
+`;
+
 const ProductSavings = styled.span`
   margin-bottom: 0.25rem;
   font-weight: 600;
@@ -610,10 +614,19 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                     </AddToCartSpace>
 
                     <ProductCategories>
+                      <Alert title="Important Details" color="green">
+                        <ProductMessage>
+                          {book.message}
+                        </ProductMessage>
+                      </Alert>
+                    </ProductCategories>
+
+                    <ProductCategories>
                       <Alert title="Shipping" color="gray">
                         Standard Shipping: 3-5 Days
                       </Alert>
                     </ProductCategories>
+
 
                     <ProductCategories>
                       <span>Categories:</span>

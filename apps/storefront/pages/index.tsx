@@ -14,13 +14,14 @@ import FeaturedCategory from "../components/featured/FeaturedCategory";
 import Bundles from "../components/carousels/Bundles";
 import FeaturedDeals from "../components/featured/FeaturedDeals";
 import GiantSquareBanner from "../components/banners/GiantSquareBanner";
+import PreOrderBanner from "../components/banners/PreOrderBanner";
 
 import {MD, SM} from "../core/_variables";
 
 const FeaturedCategorySection = styled.section`
   background: #f2f2f2;
   padding: 5rem 0;
-  margin: 5rem 0;
+  margin: 0 0 5rem 0;
   
   @media screen and (max-width: ${MD - 1}px) {
     padding: 3.75rem 0;
@@ -29,6 +30,22 @@ const FeaturedCategorySection = styled.section`
   
   @media screen and (max-width: ${SM - 1}px) {
     padding: 2.5rem 0;
+    margin: 2.5rem 0;
+  }
+`;
+
+const PreOrderSection = styled.section`
+  background: #000;
+  padding: 7.5rem 0;
+  margin: 5rem 0 0 0;
+  
+  @media screen and (max-width: ${MD - 1}px) {
+    padding: 4.5rem 0 0.1rem 0;
+    margin: 3.75rem 0;
+  }
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    padding: 4rem 0 0.1rem 0;
     margin: 2.5rem 0;
   }
 `;
@@ -78,6 +95,12 @@ const Home: NextPage = (props: any) => {
           <section className={'mb-25'}>
             <Categories/>
           </section>
+
+          <PreOrderSection>
+            <section className={'mb-25'}>
+              <PreOrderBanner />
+            </section>
+          </PreOrderSection>
 
           <FeaturedCategorySection>
             <FeaturedCategory/>

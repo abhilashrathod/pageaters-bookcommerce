@@ -116,6 +116,7 @@ const ProductCardLandScape: React.FC<Props> = ({book, analytics}) => {
               {book.newRelease && <Badges text={book.newRelease ? 'New Release' : ''} color={ButtonVariants.SecondaryAccent}/>}
               {book.editorsPick && <Badges text={book.editorsPick ? 'Editor\'s Pick' : ''} color={'accent'}/>}
               {book.bestSeller && <Badges text={book.bestSeller ? 'Best Seller' : ''} color={'primary'}/>}
+              {book.preOrder && <Badges text={book.preOrder ? 'Pre-order' : ''} color={ButtonVariants.Success}/>}
             </CardTags>
             <CardTitle>
               {book.title}
