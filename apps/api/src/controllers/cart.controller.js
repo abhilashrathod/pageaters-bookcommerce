@@ -13,25 +13,25 @@ const CART_COOKIE_OPTIONS = {
   httpOnly: true,
 };
 
+const populateOptions = [{
+  path: 'products.product',
+  select: 'bookId title poster author currentDiscount price',
+  populate: {
+    path: 'author',
+    select: 'name avatar',
+  },
+}, {
+  path: 'bundles.bundle',
+  select: 'bundleId title poster bundledBooks currentDiscount price',
+}, {
+  path: 'mysteryBoxes.box',
+  select: 'boxId title images currentDiscount price',
+}];
+
 module.exports.retrieve = async (req, res) => {
   try {
     const userId = get(req, 'user.userId', '');
     const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
-
-    const populateOptions = [{
-      path: 'products.product',
-      select: 'bookId title poster author currentDiscount price',
-      populate: {
-        path: 'author',
-        select: 'name avatar',
-      },
-    }, {
-      path: 'bundles.bundle',
-      select: 'bundleId title poster bundledBooks currentDiscount price',
-    }, {
-      path: 'mysteryBoxes.box',
-      select: 'boxId title images currentDiscount price',
-    }];
 
     let userCart = await Cart.findOne({ user: userId, _id: cart }).populate(populateOptions);
 
@@ -233,6 +233,26 @@ module.exports.getAll = async (req, res) => {
     const cartRes = await Cart.paginate(query, options);
 
     return res.ok({ message: 'CART_LIST_SUCCESS', data: cartRes });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.view = async (req, res) => {
+  try {
+    let { id } = req.allParams();
+
+    let cartRes = await Cart.findOne({ _id: id }).populate(populateOptions);
+
+    if (cartRes) {
+      cartRes = cartRes.toObject();
+
+      cartRes.subTotal = await calculateTotal(cartRes.products, cartRes.bundles, cartRes.mysteryBoxes);
+
+      return res.ok({ message: 'CART_LIST_SUCCESS', data: cartRes });
+    }
+
+    return res.error('CART_NOT_EXIST');
   } catch (e) {
     return res.internalServerError(e);
   }
