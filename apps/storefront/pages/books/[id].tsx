@@ -537,7 +537,7 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
               </div>
             </div>
           </div>
-          <section className={'py-25'}>
+          <section className="mb-25">
             <div className="custom-container">
               <div className="row">
                 <div className="col-xxl-4 col-xl-4 col-12">

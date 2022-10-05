@@ -99,6 +99,16 @@ const ProductDiscount = styled.span`
   color: ${PRIMARY_SUCCESS};
 `;
 
+const ProductDetailsWrapper = styled.div`
+  margin-left: 1rem;
+  margin-top: 0;
+  
+  @media screen and (max-width: ${SM - 1}px) {
+    margin-left: 0;
+    margin-top: 2rem;
+  }
+`;
+
 const OutOfStockLabel = styled.label`
   display: inline-flex;
   align-items: center;
@@ -323,7 +333,7 @@ const MysteryBoxes: NextPage<Props> = () => {
               </div>
             </div>
           </div>
-          <section className={'py-25'}>
+          <section className={'mb-25'}>
             <div className="custom-container">
               <div className="row">
                 <div className="col-xxl-4 col-xl-4 col-12">
@@ -333,16 +343,13 @@ const MysteryBoxes: NextPage<Props> = () => {
                 </div>
 
                 <div className="col-xxl-8 col-xl-8 col-12">
-                  <div>
-                    <>
-                      <ProductTitle>
+                  <ProductDetailsWrapper>
+                    <ProductTitle>
                         Mystery Box | {selectedBox?.title}
                       </ProductTitle>
-                    </>
                     <ProductDescription>
                       <p>{selectedBox?.description}</p>
                     </ProductDescription>
-
                     <ProductPreferences>
                       <h6>Mystery Box Preferences</h6>
                       <Accordion
@@ -433,20 +440,16 @@ const MysteryBoxes: NextPage<Props> = () => {
                         </Accordion.Item>
                       </Accordion>
                     </ProductPreferences>
-
                     <ProductPricing>
                       <Crossed>{currencyFormat(selectedBox?.price || 0)}</Crossed>
                       <span>{currencyFormat(returnDiscountedAmount(selectedBox?.price || 0, selectedBox?.currentDiscount || 0))}</span>
                       <ProductDiscount>&nbsp;({selectedBox?.currentDiscount}% Off)</ProductDiscount>
                     </ProductPricing>
-
                     <AddToCartSpace>
                       <AddToCart options={boxes}
                                  handleBoxSelect={handleBoxSelection}
                                  onClick={handleAddToCart}>Add to Cart</AddToCart>
                     </AddToCartSpace>
-
-
                     <ProductNotes>
                       <Alert title="Things to Note" color="gray">
                         <p>
@@ -457,7 +460,7 @@ const MysteryBoxes: NextPage<Props> = () => {
                         </p>
                       </Alert>
                     </ProductNotes>
-                  </div>
+                  </ProductDetailsWrapper>
                 </div>
               </div>
             </div>
