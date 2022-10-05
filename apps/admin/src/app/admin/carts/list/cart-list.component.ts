@@ -21,6 +21,13 @@ export class CartListComponent implements OnInit {
     'create',
   ];
 
+  public viewResourceUrl: string[] = [
+    '/',
+    'admin',
+    'carts',
+    'view',
+  ];
+
   resourceColumns = [
     {
       header: 'Name',
@@ -30,7 +37,12 @@ export class CartListComponent implements OnInit {
     {
       header: 'Products',
       columnDef: 'products',
-      cell: (element) => `${element.products.length}`,
+      cell: (element) => `P: ${element.products.length}, B:${element.bundles.length}, M:${element.mysteryBoxes.length}`,
+    },
+    {
+      header: 'View Details',
+      columnDef: 'view',
+      cell: (element) => [...this.viewResourceUrl, element._id],
     },
     {
       header: 'Action',

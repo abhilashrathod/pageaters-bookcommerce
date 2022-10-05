@@ -6,6 +6,7 @@ import {EntityTableModule} from '../../core/components/entity-table/entity-table
 import {CartRoutingModule} from './cart-routing.module';
 
 import {CartListComponent} from './list/cart-list.component';
+import { CartViewComponent } from './view/cart-view.component';
 
 
 @NgModule({
@@ -17,7 +18,8 @@ import {CartListComponent} from './list/cart-list.component';
   ],
   exports: [],
   declarations: [
-    CartListComponent
+    CartListComponent,
+    CartViewComponent
   ],
   providers: [],
 })
