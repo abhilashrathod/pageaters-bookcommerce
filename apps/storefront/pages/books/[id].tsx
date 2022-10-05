@@ -613,13 +613,17 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                       }
                     </AddToCartSpace>
 
-                    <ProductCategories>
-                      <Alert title="Important Details" color="green">
-                        <ProductMessage>
-                          {book.message}
-                        </ProductMessage>
-                      </Alert>
-                    </ProductCategories>
+                    {
+                      book.message && (
+                        <ProductCategories>
+                          <Alert title="Important Details" color="green">
+                            <ProductMessage>
+                              {book.message}
+                            </ProductMessage>
+                          </Alert>
+                        </ProductCategories>
+                      )
+                    }
 
                     <ProductCategories>
                       <Alert title="Shipping" color="gray">

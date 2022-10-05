@@ -367,7 +367,7 @@ const ShipmentAction = ({shipment}: ShipmentActionProps) => {
       setOpen(true);
     } else {
       // transfer to tracking website
-      window.open(TRACKING_LINK(shipment));
+      window.open(shipment);
     }
   }
 
@@ -644,12 +644,12 @@ const OrderDetails: React.FC<Props> = () => {
     withCredentials: true
   });
 
-  function track(trackingId: string) {
-    window.open(TRACKING_LINK(trackingId));
-  }
-
   function navigateToContact() {
     router.push('/contact');
+  }
+
+  function track(trackingUrl: string) {
+    window.open(trackingUrl);
   }
 
   const order: IOrder = get(data, 'data', null);
