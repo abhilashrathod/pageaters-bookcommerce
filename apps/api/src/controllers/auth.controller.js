@@ -50,13 +50,13 @@ module.exports.register = async (req, res) => {
     // if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
     //   razorPayCustomer = await razorPayInstance.customers.create({ email, contact: '', notes: {} });
     // }
+    // if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
+    //   user.razorPayCustId = razorPayCustomer.id;
+    // }
 
     await user.setPassword(password);
     const verifyToken = await user.generateVerifyEmailToken();
 
-    if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
-      user.razorPayCustId = razorPayCustomer.id;
-    }
     user.verifyEmailToken = verifyToken;
     user.lastVerifyEmailSentOn = new Date().toISOString();
 
