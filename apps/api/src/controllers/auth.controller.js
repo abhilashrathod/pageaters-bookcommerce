@@ -57,7 +57,6 @@ module.exports.register = async (req, res) => {
     await user.setPassword(password);
     const verifyToken = await user.generateVerifyEmailToken();
 
-
     user.verifyEmailToken = verifyToken;
     user.lastVerifyEmailSentOn = new Date().toISOString();
 

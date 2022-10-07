@@ -27,5 +27,6 @@ router.delete('/clear', permissionValidator(USER_ROLES.USER), cartValidator(), c
 
 // ADMIN
 router.get('/', permissionValidator(USER_ROLES.ADMIN), controller.getAll);
+router.get('/:id', permissionValidator(USER_ROLES.ADMIN), controller.view);
 
 module.exports = router;
