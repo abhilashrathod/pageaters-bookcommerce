@@ -11,6 +11,8 @@ import PageWrapper from "../../components/elements/PageWrapper";
 
 import {ACCENT_COLOR, LIGHTER_PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variables";
 import Head from "next/head";
+import Link from "next/link";
+import {Icon} from "@iconify/react";
 
 interface Props {
 }
@@ -78,17 +80,11 @@ const ResetPassword: React.FC<Props> = () => {
 
     validate: {
       newPassword: (value) => value === '' ? 'Please enter valid password' : null,
-      confirmPassword: (value, values) => (value !== '') ? 'Passwords did not match' : null,
+      confirmPassword: (value, values) => (value === '') ? 'Please enter new password' : (values.confirmPassword !== values.newPassword ? 'Passwords do not match.' : null),
     },
   });
 
   async function handleSubmit(values: any) {
-    const {newPassword, confirmPassword} = values;
-
-    if (newPassword !== confirmPassword) {
-      return showNotification({message: 'Passwords do not match.', color: 'red', autoClose: 3000});
-    }
-
     try {
       await axios.post(`/auth/reset-password`, values);
       showNotification({
@@ -130,6 +126,12 @@ const ResetPassword: React.FC<Props> = () => {
                                 type={'password'}
                                 {...form.getInputProps('confirmPassword')}/>
                   <LoginButton type="submit">Submit</LoginButton>
+                  <p style={{marginBottom: '1.25rem'}}>
+                    <Link href={`/`}><a style={{
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}><Icon icon={'bx:bx-chevron-left'} width={16} height={16}/> Back to Home</a></Link>
+                  </p>
                 </form>
               </div>
             </div>
