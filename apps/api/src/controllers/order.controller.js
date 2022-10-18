@@ -210,7 +210,7 @@ module.exports.create = async (req, res) => {
         description: 'We have received your order. Preparing shipment',
         time: new Date().toISOString(),
       });
-      currentOrderRes.payment = {method: 'cod'};
+      currentOrderRes.payment = { method: 'cod' };
     }
 
     await currentOrderRes.save();
@@ -405,11 +405,17 @@ module.exports.retrieve = async (req, res) => {
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit } = req.allParams();
+    let { page, limit, status } = req.allParams();
 
     const query = {
-      orderStatus: { $nin: [enums.ORDER_STAGES.ATTEMPTED, enums.ORDER_STAGES.CREATED] },
+      $and: [
+        { orderStatus: { $nin: [enums.ORDER_STAGES.ATTEMPTED, enums.ORDER_STAGES.CREATED] } },
+      ]
     };
+
+    if (status) {
+      query.$and.push({ orderStatus: status });
+    }
 
     const options = {
       page,
@@ -418,21 +424,23 @@ module.exports.getAll = async (req, res) => {
       sort: {
         updatedAt: 'desc',
       },
-      populate: [{
-        path: 'deliveryAddress',
-      }, {
-        path: 'userId',
-        select: 'fullName email contactNo',
-      }, {
-        path: 'products.product',
-        select: 'bookId title currentDiscount price',
-      }, {
-        path: 'bundles.bundle',
-        select: 'bundleId title bundledBooks currentDiscount price',
-      }, {
-        path: 'boxes.box',
-        select: 'boxId title images currentDiscount price',
-      }],
+      populate: [
+        {
+          path: 'deliveryAddress',
+        }, {
+          path: 'userId',
+          select: 'fullName email contactNo',
+        }, {
+          path: 'products.product',
+          select: 'bookId title currentDiscount price',
+        }, {
+          path: 'bundles.bundle',
+          select: 'bundleId title bundledBooks currentDiscount price',
+        }, {
+          path: 'boxes.box',
+          select: 'boxId title images currentDiscount price',
+        },
+      ],
     };
 
     const order = await Order.paginate(query, options);
@@ -949,7 +957,10 @@ function prepareItemsForOrder(books, bundles, mysteryBoxes) {
       }
 
       for (let boxItem of mysteryBoxes) {
-        const myBoxRes = await MysteryBox.findOne({ isDeleted: false, _id: boxItem.box._id }).select('currentDiscount price weight');
+        const myBoxRes = await MysteryBox.findOne({
+          isDeleted: false,
+          _id: boxItem.box._id,
+        }).select('currentDiscount price weight');
         const item = {
           quantity: boxItem.quantity,
           price: myBoxRes.price,

@@ -197,5 +197,6 @@
 	"MYSTERY_BOX_UPDATE_SUCCESS": "Mystery Box Information Updated",
 	"MYSTERY_BOX_SEARCH_SUCCESS": "Mystery Box Search Successful",
 	"MYSTERY_BOX_DELETE_SUCCESS": "Mystery Box Deleted Successfully",
-	"success": "success"
+	"success": "success",
+	"Invalid Record Length: columns length is 3, got 4 on line 10": "Invalid Record Length: columns length is 3, got 4 on line 10"
 }

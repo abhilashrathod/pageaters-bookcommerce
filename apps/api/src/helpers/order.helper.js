@@ -154,6 +154,13 @@ module.exports.orderPaymentInfo = function(payment) {
       };
       return payload;
 
+    case enums.PAYMENT_METHODS.WALLET:
+      payload = {
+        method: enums.PAYMENT_METHODS.WALLET,
+        upi_id: get(payment, 'wallet', ''),
+      };
+      return payload;
+
     case enums.PAYMENT_METHODS.EMI:
       payload = {
         method: enums.PAYMENT_METHODS.EMI,

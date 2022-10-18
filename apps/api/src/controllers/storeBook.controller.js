@@ -295,7 +295,7 @@ module.exports.bulkCreate = async (req, res) => {
       if (!err) {
         for (const record of records) {
           const payload = await scrapeData(record.title, record.tagLine, record.pageUrl);
-          await Book.create(payload);
+          // await Book.create(payload);
         }
 
         return res.ok();
