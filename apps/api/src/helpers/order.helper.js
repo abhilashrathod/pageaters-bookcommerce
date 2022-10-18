@@ -157,7 +157,7 @@ module.exports.orderPaymentInfo = function(payment) {
     case enums.PAYMENT_METHODS.WALLET:
       payload = {
         method: enums.PAYMENT_METHODS.WALLET,
-        upi_id: get(payment, 'wallet', ''),
+        wallet: get(payment, 'wallet', ''),
       };
       return payload;
 
