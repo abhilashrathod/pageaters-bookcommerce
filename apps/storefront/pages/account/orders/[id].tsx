@@ -245,6 +245,12 @@ function returnPaymentBreakdown(payment: any) {
         <PaymentListItem>UPI ID: {payment.upi_id}</PaymentListItem>
       </>);
 
+    case PAYMENT_METHODS.WALLET:
+      return (<>
+        <PaymentListItem>Via: {payment.method}</PaymentListItem>
+        <PaymentListItem>Wallet: {payment.wallet}</PaymentListItem>
+      </>);
+
     case PAYMENT_METHODS.COD:
       return (<>
         <PaymentListItem>Via: {'Cash on Delivery'}</PaymentListItem>

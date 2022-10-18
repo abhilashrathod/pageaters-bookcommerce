@@ -133,15 +133,15 @@ const PreOrderBanner: React.FC<Props> = () => {
           <div className="col">
             <MainCardWrapper>
               <BannerImageSpace>
-                <BannerImage src={renderImageSize(250, 380)} loading={"lazy"} alt={'Pre order "It Starts with us"'} height={380} width={250}/>
+                <BannerImage src={renderImageSize(250, 380)} loading={"lazy"} alt={'New Release "It Starts with us"'} height={380} width={250}/>
               </BannerImageSpace>
               <BannerContent>
                 <BannerTextSpace>
-                  <BannerTitle>{'Pre-order "It Starts with us"'}</BannerTitle>
+                  <BannerTitle>{'New Release "It Starts with us"'}</BannerTitle>
                 </BannerTextSpace>
                 <BannerLearnMore>
                   <AppButton onClick={handleNavigation} variant={ButtonVariants.Default} size={ButtonSizes.Default}>
-                    Learn More
+                    Buy Now!
                   </AppButton>
                 </BannerLearnMore>
               </BannerContent>
