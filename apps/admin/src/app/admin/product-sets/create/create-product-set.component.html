@@ -85,7 +85,7 @@
       <div class="list-group" style="max-height: 80vh; overflow: scroll" [sortablejs]="selectedBooks">
         <div class="list-group-item list-group-item-action c-handle" *ngFor="let book of selectedBooks; let i = index;">
           <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">by {{book.author.name}}</h5>
+            <h5 class="mb-1">by {{book?.author?.name}}</h5>
             <small *ngIf="book.editorsPick">Editor's Pick</small> <small *ngIf="book.bestSeller">Best Seller</small>
           </div>
           <p class="mb-1">{{book.title}}</p>
