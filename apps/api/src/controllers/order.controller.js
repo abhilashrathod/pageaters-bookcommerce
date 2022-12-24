@@ -132,7 +132,7 @@ module.exports.create = async (req, res) => {
     let shipping;
     let discount = 0;
     let giftCard = 0;
-    let giftCharges = get(giftOptions, 'details.cost', 0);
+    let giftCharges = giftOptions.isGift ? get(giftOptions, 'details.cost', 0) : 0;
 
     if (!cart || !userId) {
       return res.error('ORDER_INFO_ATTEMPT_FAILED');
