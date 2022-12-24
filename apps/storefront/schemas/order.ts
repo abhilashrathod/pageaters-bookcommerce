@@ -75,6 +75,15 @@ export interface IOrder {
   bundles: Array<IOrderBundleItem>;
   orderHistory: Array<IOrderHistory>;
   requests: Array<IOrderRequest>;
+  giftOptions: {
+    isGift: boolean;
+    details:{
+      cost: number;
+      message: string;
+      from: string;
+      package: string;
+    }
+  }
   giftCard: any;
   discount: any;
   subTotal: number;

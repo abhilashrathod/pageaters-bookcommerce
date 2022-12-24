@@ -18,6 +18,7 @@
 - Forms
 - Lists
 - Code
+- Images
 - Tables
 - Spacing
 - Utilities
@@ -235,7 +236,6 @@ textarea {
 label,
 legend {
   display: block;
-  margin-bottom: .5rem;
   font-weight: 600;
 }
 
@@ -301,6 +301,13 @@ pre > code {
   white-space: pre;
 }
 
+/* Images
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+.greyscale {
+  -webkit-filter: grayscale(100%);
+  filter: grayscale(100%);
+}
 
 /* Tables
 –––––––––––––––––––––––––––––––––––––––––––––––––– */

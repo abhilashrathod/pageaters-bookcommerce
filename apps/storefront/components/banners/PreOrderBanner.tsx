@@ -18,7 +18,7 @@ const MainCardWrapper = styled.div`
   position: relative;
   border-radius: 1.5rem;
   padding: 5rem 2.5rem;
-  background-image: radial-gradient( circle farthest-corner at 92.3% 71.5%,  rgba(83,138,214,1) 0%, rgba(134,231,214,1) 90% );
+  background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
   
   @media screen and (max-width: ${MD - 1}px) {
     padding: 20rem 0 2.5rem 0;
@@ -120,11 +120,11 @@ const PreOrderBanner: React.FC<Props> = () => {
   const router = useRouter();
 
   function renderImageSize(w: number, h: number) {
-    return getProductImage("it-starts-with-us-1SRzUfy8rJ-1664708466753.jpg", {height: h, width: w, fit: 'cover'});
+    return getProductImage("king-of-wrath-QOUrVsZFWM-1669290026314.jpg", {height: h, width: w, fit: 'cover'});
   }
 
   function handleNavigation() {
-    router.push('/books/BK-9534445404');
+    router.push('/books/BK-6364059139');
   }
 
   return (
@@ -133,11 +133,11 @@ const PreOrderBanner: React.FC<Props> = () => {
           <div className="col">
             <MainCardWrapper>
               <BannerImageSpace>
-                <BannerImage src={renderImageSize(250, 380)} loading={"lazy"} alt={'New Release "It Starts with us"'} height={380} width={250}/>
+                <BannerImage src={renderImageSize(250, 380)} loading={"lazy"} alt={'New Release "King of Wrath"'} height={380} width={250}/>
               </BannerImageSpace>
               <BannerContent>
                 <BannerTextSpace>
-                  <BannerTitle>{'New Release "It Starts with us"'}</BannerTitle>
+                  <BannerTitle>{'New Release "King of Wrath"'}</BannerTitle>
                 </BannerTextSpace>
                 <BannerLearnMore>
                   <AppButton onClick={handleNavigation} variant={ButtonVariants.Default} size={ButtonSizes.Default}>

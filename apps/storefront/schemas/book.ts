@@ -14,6 +14,7 @@ export interface IBook {
   poster: string;
   readingLevel?: string;
   price: number;
+  inventory: number;
   membersPrice?: number;
   currentDiscount: number;
   tags?: Array<string>;
@@ -38,7 +39,6 @@ export interface IBook {
   relatedBundles?: Array<IBundle>;
   relatedCollections?: Array<ICollection>;
   author?: IAuthor;
-  inventory?: number;
   rentPrice?: number;
   membersRentPrice?: number;
   isDeleted?: number;

@@ -139,7 +139,7 @@ const Home: NextPage = (props: any) => {
           */}
 
           <section className={'mb-25'}>
-            <Bundles title={'Spectecular Bundles'} bundles={bundles}/>
+            <Bundles title={'Spectacular Bundles'} bundles={bundles}/>
           </section>
 
           <section className={'mb-25'}>
@@ -156,8 +156,8 @@ const Home: NextPage = (props: any) => {
             {/*  poster: 'medium-shot-happy-brunette-woman-with-book-min_wu681i.jpg'*/}
             {/*}}/>*/}
             <GiantSquareBanner banner={{
-              title: 'Explore Membership Benefits',
-              poster: 'Membership-graphic.png'
+              title: 'Try Mystery Box',
+              poster: 'mystery-box-banner.jpg'
             }}/>
           </section>
 

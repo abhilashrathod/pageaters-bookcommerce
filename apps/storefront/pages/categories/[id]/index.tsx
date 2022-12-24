@@ -37,7 +37,7 @@ const CategoryHome: NextPage<Props> = ({categoryDetails}: InferGetStaticPropsTyp
   const {data: collectionsRes, error: collectionsErr} = useSWR({url: `/collections?page=1&limit=6&sortBy=priority&sortOrder=asc&category=${categoryDetails?._id}`});
   const {data: bundlesRes, error: bundlesErr} = useSWR({url: `/bundles?page=1&limit=6&sortBy=priority&sortOrder=asc&category=${categoryDetails?._id}`});
   const {data: discountsRes, error: discountsErr} = useSWR({url: `/deals?limit=10&page=1&sortBy=priority&sortOrder=asc&category=${categoryDetails?._id}`});
-  const {data: productsRes, error: productsErr} = useSWR({url: `/categories/${categoryDetails?._id}/overview?page=1&limit=12&sortOrder=desc`});
+  const {data: productsRes, error: productsErr} = useSWR({url: `/categories/${categoryDetails?._id}/overview?page=1&limit=15&sortOrder=desc`});
 
   const collections = get(collectionsRes, 'data.docs', []);
   const bundles = get(bundlesRes, 'data.docs', []);

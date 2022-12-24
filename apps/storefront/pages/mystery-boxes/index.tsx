@@ -1,11 +1,23 @@
-import React, {forwardRef, useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {NextPage} from "next";
+import Head from "next/head";
+import axios from "axios";
+import {useRouter} from "next/router";
+import styled from "styled-components";
 import cookie from "js-cookie";
 import {get} from 'lodash';
-import {useRouter} from "next/router";
+import useSWR, {mutate} from "swr";
+import {Icon} from "@iconify/react";
+import {Accordion, Alert, Textarea} from "@mantine/core";
+import {showNotification} from "@mantine/notifications";
 
+import Breadcrumbs from "../../components/elements/Breadcrumbs";
+import SectionHeading from "../../components/elements/SectionHeading";
 import PageWrapper from "../../components/elements/PageWrapper";
 
+import {getAssetImage} from "../../core/_imageRendererHelper";
+import {addToCart} from "../../core/_analytics";
+import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
 import {
   ACCENT_COLOR,
   AUTH_COOKIE,
@@ -18,18 +30,8 @@ import {
   SECONDARY_COLOR,
   SM
 } from "../../core/_variables";
-import Breadcrumbs from "../../components/elements/Breadcrumbs";
-import styled from "styled-components";
-import {getAssetImage} from "../../core/_imageRendererHelper";
-import {Accordion, Alert, Group, Text, Textarea} from "@mantine/core";
-import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
-import useSWR, {mutate} from "swr";
+
 import {IMysteryBox} from "../../schemas/mystery-box";
-import {Icon} from "@iconify/react";
-import {showNotification} from "@mantine/notifications";
-import axios from "axios";
-import {addToCart} from "../../core/_analytics";
-import SectionHeading from "../../components/elements/SectionHeading";
 
 interface Props {
 
@@ -214,23 +216,12 @@ const BREADCRUMB_ITEMS = [
   {title: 'Mystery Boxes', href: '', isActive: true,},
 ];
 
-interface ItemProps extends React.ComponentPropsWithoutRef<'div'> {
-  label: string;
-  description: string;
-}
-
-const SelectItem = forwardRef<HTMLDivElement, ItemProps>(
-    ({label, description, ...others}: ItemProps, ref) => (
-        <div ref={ref} {...others}>
-          <Group noWrap>
-            <div>
-              <Text size="sm">{label}</Text>
-              <Text size="xs" color="dimmed">{description}</Text>
-            </div>
-          </Group>
-        </div>
-    )
-);
+const PAGE_META = {
+  imageUrl: 'https://pageaters-assets.s3.ap-south-1.amazonaws.com/mystery-box-banner.jpg',
+  description: 'Looking for bookish mystery box online in India that is tailored to you? Shop for the best books from our collection of exclusive, customized & handpicked books at most affordable prices',
+  title: 'Buy Mystery Box Online In India | Pageaters',
+  url: `${process.env.NEXT_PUBLIC_SITE_URL}/mystery-boxes`
+};
 
 const AddToCart = (props: any) => {
   const [quantity, setQuantity] = useState(1);
@@ -249,7 +240,8 @@ const AddToCart = (props: any) => {
         <QuantitySelectLabel>Box Size</QuantitySelectLabel>
         <QuantitySelection value={quantity} onChange={handleSelection}>
           {
-            props.options.map((option: any) => <option key={option._id} value={option.books}>{option.books} Books</option>)
+            props.options.map((option: any) => <option key={option._id}
+                                                       value={option.books}>{option.books} Books</option>)
           }
         </QuantitySelection>
         <AddToCartButton onClick={handleAddCart}>Add to Cart</AddToCartButton>
@@ -325,6 +317,22 @@ const MysteryBoxes: NextPage<Props> = () => {
 
   return (
       <>
+        <Head>
+          <title>{PAGE_META.title}</title>
+          <meta name="description" content={PAGE_META.description}/>
+          <meta itemProp="name" content={PAGE_META.title}/>
+          <meta itemProp="description" content={PAGE_META.description}/>
+          <meta itemProp="image" content={PAGE_META.imageUrl}/>
+          <meta name="og:title" content={PAGE_META.title}/>
+          <meta name="og:description" content={PAGE_META.description}/>
+          <meta name="og:url" content={PAGE_META.url}/>
+          <meta name="og:image" content={PAGE_META.imageUrl}/>
+          <meta name="twitter:title" content={PAGE_META.title}/>
+          <meta name="twitter:description" content={PAGE_META.description}/>
+          <meta name="twitter:image" content={PAGE_META.imageUrl}/>
+          <meta name="description" content={PAGE_META.description}/>
+          <meta name="image" content={PAGE_META.imageUrl}/>
+        </Head>
         <PageWrapper>
           <div className="custom-container">
             <div className="row">
@@ -345,8 +353,8 @@ const MysteryBoxes: NextPage<Props> = () => {
                 <div className="col-xxl-8 col-xl-8 col-12">
                   <ProductDetailsWrapper>
                     <ProductTitle>
-                        Mystery Box | {selectedBox?.title}
-                      </ProductTitle>
+                      Mystery Box | {selectedBox?.title}
+                    </ProductTitle>
                     <ProductDescription>
                       <p>{selectedBox?.description}</p>
                     </ProductDescription>
@@ -453,10 +461,12 @@ const MysteryBoxes: NextPage<Props> = () => {
                     <ProductNotes>
                       <Alert title="Things to Note" color="gray">
                         <p>
-                          • We save your preferences as a set of guidelines for better experience. It doesn&apos;t necessarily mean that you&apos;re going to get the exact books that you mentioned.
+                          • We save your preferences as a set of guidelines for better experience. It doesn&apos;t
+                          necessarily mean that you&apos;re going to get the exact books that you mentioned.
                         </p>
                         <p>
-                          • Mystery box would consist of pre-owned books that can range from almost new to readable. It would be made sure that your reading experience isn&apos;t compromised.
+                          • Mystery box would consist of pre-owned books that can range from almost new to readable. It
+                          would be made sure that your reading experience isn&apos;t compromised.
                         </p>
                       </Alert>
                     </ProductNotes>
@@ -482,7 +492,8 @@ const MysteryBoxes: NextPage<Props> = () => {
                           Mystery Box is one the best ways to discover new books, push yourself out of your comfirt zone
                           and read books which otherwise you would never read. When you buy our Mystery box you can
                           select whichever many books you want and provide preferences (which are optional). We would
-                          curate 5-15 books based on your taste, box them up and they would be on your way. It&apos;s like
+                          curate 5-15 books based on your taste, box them up and they would be on your way. It&apos;s
+                          like
                           going on a blind date but with books! 😄
                         </p>
                       </Accordion.Panel>
@@ -494,7 +505,8 @@ const MysteryBoxes: NextPage<Props> = () => {
                         <p>
                           The books which are selected as a part of mystery box are mostly pre-loved books ranging from
                           almost new to slightly used. We would make sure that you get the best possible quality of the
-                          books. We also make sure it&apos;s integrity and hand-check them before shipping them to you. Rest
+                          books. We also make sure it&apos;s integrity and hand-check them before shipping them to you.
+                          Rest
                           assured.
                         </p>
                       </Accordion.Panel>
@@ -504,8 +516,10 @@ const MysteryBoxes: NextPage<Props> = () => {
                       <Accordion.Control>Can I choose the books I want?</Accordion.Control>
                       <Accordion.Panel>
                         <p>
-                          Well, to be honest the whole point of mystery box is that you won&apos;t get to choose the books,
-                          however, in order to make sure that even if you&apos;re not picking your books you would atleast
+                          Well, to be honest the whole point of mystery box is that you won&apos;t get to choose the
+                          books,
+                          however, in order to make sure that even if you&apos;re not picking your books you would
+                          atleast
                           get books based on your preferences(which are optional) so that you atleast get the books you
                           might be interested in. We would include a healthy mix of best written and most loved books by
                           default. But, we would highly appreciate to include as much information as possible in those
@@ -528,7 +542,8 @@ const MysteryBoxes: NextPage<Props> = () => {
                       <Accordion.Control>Can I replace/return the books I&apos;ve gotten?</Accordion.Control>
                       <Accordion.Panel>
                         <p>
-                          The mystery boxes by nature can&apos;t be replaced or returned. Unless, it&apos;s an exceptional case.
+                          The mystery boxes by nature can&apos;t be replaced or returned. Unless, it&apos;s an
+                          exceptional case.
                         </p>
                       </Accordion.Panel>
                     </Accordion.Item>

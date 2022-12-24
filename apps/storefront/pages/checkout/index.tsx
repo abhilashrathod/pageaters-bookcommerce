@@ -1,13 +1,13 @@
 import React, {useEffect, useState} from 'react';
-import useSWR, {mutate} from "swr";
+import useSWR from "swr";
 import Head from "next/head";
 import cookie from "js-cookie";
 import {useRouter} from "next/router";
 import axios from "axios";
-import {get} from 'lodash';
+import {get, isString} from 'lodash';
 import styled from "styled-components";
 import {showNotification} from "@mantine/notifications";
-import {Accordion, Loader, Radio, Skeleton, Textarea} from "@mantine/core";
+import {Accordion, Alert, Checkbox, Loader, Radio, Skeleton, Textarea, TextInput} from "@mantine/core";
 
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
@@ -20,7 +20,7 @@ import BundleItem from "../../components/cart-elements/cart-bundle-item";
 import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
 import {InputWrapper} from "../../components/form-controls/AppTextInput";
 
-import {AUTH_COOKIE, LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
+import {AUTH_COOKIE, GIFT_PACKAGES, LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 
 import emptyCart from "../../public/illustrations/empty-cart.svg";
 import {completePurchase} from "../../core/_analytics";
@@ -139,6 +139,10 @@ const Checkout: React.FC<Props> = () => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [opened, setOpened] = useState(false);
+  const [giftOptions, setGiftOptions] = useState({
+    isGift: false,
+    options: {package: 'Basic', cost: 0, details: 'Includes special gift wrapping', message: '', from: ''}
+  });
 
   useEffect(() => {
     initializeRazorpay();
@@ -156,10 +160,20 @@ const Checkout: React.FC<Props> = () => {
   async function createOrder() {
     try {
       setOpened(true);
-      const response$ = await axios.post(`/orders/create`, {
+      const payload = {
         method: paymentMethod,
-        instructions: deliveryInstructions
-      }, {withCredentials: true});
+        instructions: deliveryInstructions,
+        giftOptions: {
+          isGift: giftOptions.isGift,
+          details: {
+            package: giftOptions.options.package,
+            from: giftOptions.options.from,
+            message: giftOptions.options.message,
+            cost: giftOptions.options.cost
+          },
+        }
+      };
+      const response$ = await axios.post(`/orders/create`, payload, {withCredentials: true});
       const {data, message} = await response$.data;
       showNotification({message: message, color: 'green', autoClose: 5000});
 
@@ -174,6 +188,7 @@ const Checkout: React.FC<Props> = () => {
       }
 
     } catch (e: any) {
+      setOpened(false);
       showNotification({message: e.message, color: 'red', autoClose: 3000});
     }
   }
@@ -227,6 +242,39 @@ const Checkout: React.FC<Props> = () => {
     setDeliveryInstructions(e.currentTarget.value)
   }
 
+  function handleGiftToggle(e: any) {
+    const val = e.currentTarget.checked;
+    setGiftOptions((prevState) => ({
+      ...prevState,
+      isGift: val
+    }))
+  }
+
+  function handlePackageChange(prop: string, e: any) {
+    const selectedPackage = GIFT_PACKAGES.find((x) => x.title === e);
+    setGiftOptions((prevState) => ({
+      ...prevState,
+      options: {
+        ...prevState.options,
+        package: e,
+        cost: selectedPackage?.cost || 0,
+        details: selectedPackage?.details || '',
+      }
+    }));
+  }
+
+  function handleFieldChange(prop: string ,e: any) {
+    const val = get(e, 'currentTarget.value', e);
+
+    setGiftOptions((prevState) => ({
+      ...prevState,
+      options: {
+        ...prevState.options,
+        [prop]: val,
+      }
+    }));
+  }
+
   if (error)
     return (
         <PageWrapper>
@@ -271,6 +319,61 @@ const Checkout: React.FC<Props> = () => {
                       <div className="col-xl-8 col-md-8 col-12">
                         <OrderSpace>
                           <Accordion defaultValue={'payment-method'}>
+                            <Accordion.Item value={'gift'}>
+                              <Accordion.Control>
+                                Gift Options
+                              </Accordion.Control>
+                              <Accordion.Panel>
+                                <p>
+                                  <Checkbox
+                                      label="Send this order as gift"
+                                      onChange={handleGiftToggle}
+                                      checked={giftOptions.isGift}
+                                  />
+                                </p>
+                                {
+                                  giftOptions.isGift && (
+                                      <>
+                                        <p>
+                                          <Radio.Group
+                                              label="Choose a package for your gift"
+                                              value={giftOptions.options.package}
+                                              onChange={(e) => handlePackageChange('package', e)}
+                                              description="Please choose an option for your gift packaging">
+                                            {
+                                              GIFT_PACKAGES.map((item) => <Radio value={item.title} key={item.title}
+                                                                                 label={`${item.title} ₹${item.cost}`}/>)
+                                            }
+                                          </Radio.Group>
+                                        </p>
+                                        <p>
+                                          <TextInput
+                                              placeholder="Sender Name"
+                                              label="From"
+                                              value={giftOptions.options.from}
+                                              onChange={(e) => handleFieldChange('from', e)}
+                                              withAsterisk
+                                          />
+                                        </p>
+                                        <p>
+                                          <Textarea
+                                              placeholder="Add your message"
+                                              label="Gift Message"
+                                              autosize
+                                              minRows={2}
+                                              maxRows={5}
+                                              onChange={(e) => handleFieldChange('message', e)}
+                                              value={giftOptions.options.message}
+                                          />
+                                        </p>
+                                        <Alert title="Package details" color="gray">
+                                          <p>{giftOptions.options.details}</p>
+                                        </Alert>
+                                      </>
+                                  )
+                                }
+                              </Accordion.Panel>
+                            </Accordion.Item>
                             <Accordion.Item value={'address'}>
                               <Accordion.Control>
                                 Delivery Address
@@ -337,7 +440,9 @@ const Checkout: React.FC<Props> = () => {
                               </Accordion.Control>
                               <Accordion.Panel>
                                 <InputWrapper>
-                                  <Radio.Group value={paymentMethod} onChange={handleChangePaymentMethod} spacing="xs" orientation="vertical" label="Please Select Preferred Payment Method" required>
+                                  <Radio.Group value={paymentMethod} onChange={handleChangePaymentMethod} spacing="xs"
+                                               orientation="vertical" label="Please Select Preferred Payment Method"
+                                               required>
                                     <Radio value="online" label="Pay Online (Credit Cards, Debit Cards, Wallets, UPIs)"/>
                                     <Radio value="cod" label="Cash on Delivery"/>
                                   </Radio.Group>

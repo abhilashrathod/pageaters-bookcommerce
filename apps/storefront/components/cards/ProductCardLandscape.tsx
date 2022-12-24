@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import Badges from "../elements/Badge";
 
 import {IBook} from "../../schemas/book";
-import {LIGHT_COLOR, PRIMARY_COLOR, SECONDARY_COLOR} from "../../core/_variables";
+import {LIGHT_COLOR, PRIMARY_COLOR, PRIMARY_DANGER, SECONDARY_COLOR} from "../../core/_variables";
 import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
 import {getProductImage} from "../../core/_imageRendererHelper";
 import {useRouter} from "next/router";
@@ -80,8 +80,28 @@ const CartDiscount = styled.div`
   box-shadow: rgb(0 0 0 / 18%) 0 2px 4px 0;
   font-size: 1rem;
   transition: all 0.5s ease;
+  z-index: 1;
   line-height: 1.25rem;
   color: ${PRIMARY_COLOR};
+`;
+
+const OutOfStock = styled.div`
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+  border-radius: 0.5rem;
+  background: ${PRIMARY_DANGER};
+  padding: 0.25rem 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: rgb(0 0 0 / 18%) 0 2px 4px 0;
+  font-size: 1rem;
+  transition: all 0.5s ease;
+  line-height: 1.25rem;
+  color: ${SECONDARY_COLOR};
 `;
 
 const Crossed = styled.span`
@@ -106,9 +126,10 @@ const ProductCardLandScape: React.FC<Props> = ({book, analytics}) => {
   return (
       <>
         <WrapperDiv target={'_blank'} onClick={handleNavigation}>
-          <CartDiscount>{book?.currentDiscount}% Off</CartDiscount>
+          {book.inventory > 0 && <CartDiscount>{book?.currentDiscount}% Off</CartDiscount>}
+          {book.inventory <= 0 && <OutOfStock>Out of Stock</OutOfStock>}
           <CardCover>
-            <CardImage src={renderImageSize(247, 375)} alt={book?.title} loading="lazy" height={375} width={247}/>
+            <CardImage src={renderImageSize(247, 375)} alt={book?.title} className={book.inventory <= 0 ? 'greyscale': ''} loading="lazy" height={375} width={247}/>
           </CardCover>
 
           <CardContent>

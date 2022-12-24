@@ -708,12 +708,22 @@ const OrderDetails: React.FC<Props> = () => {
                         <OrderBreakdown>
                           <Title>Order Summary:</Title>
                           <OrderAmounts>
-                            <OrderAmountListItem><span>Subtotal:</span>
-                              <span>{currencyFormat(order.subTotal)}</span></OrderAmountListItem>
-                            <OrderAmountListItem><span>Shipping:</span>
-                              <span>{currencyFormat(order.shipping)}</span></OrderAmountListItem>
-                            <OrderAmountListItem><span>Grand Total:</span>
-                              <span>{currencyFormat(order.total)}</span></OrderAmountListItem>
+                            <OrderAmountListItem>
+                              <span>Subtotal:</span><span>{currencyFormat(order.subTotal)}</span>
+                            </OrderAmountListItem>
+                            <OrderAmountListItem>
+                              <span>Shipping:</span><span>{currencyFormat(order.shipping)}</span>
+                            </OrderAmountListItem>
+                            {
+                              order.giftOptions.isGift && (
+                                  <OrderAmountListItem>
+                                    <span>Gift Charges:</span><span>{currencyFormat(order.giftOptions.details.cost)}</span>
+                                  </OrderAmountListItem>
+                              )
+                            }
+                            <OrderAmountListItem>
+                              <span>Grand Total:</span><span>{currencyFormat(order.total)}</span>
+                            </OrderAmountListItem>
                           </OrderAmounts>
                         </OrderBreakdown>
                       </div>

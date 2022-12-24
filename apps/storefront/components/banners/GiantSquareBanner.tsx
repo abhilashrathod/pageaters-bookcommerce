@@ -2,10 +2,11 @@ import React from 'react';
 import styled from 'styled-components'
 import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
-import {LG, MD, PRIMARY_COLOR, SM} from "../../core/_variables";
+import {LG, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
 import {getAssetImage} from "../../core/_imageRendererHelper";
 
 import {IBanner} from "../../schemas/banner";
+import {useRouter} from "next/router";
 
 interface Props {
   banner: IBanner;
@@ -13,6 +14,20 @@ interface Props {
 
 const MainCardWrapper = styled.div`
   position: relative;
+  
+  &:after {
+    content: "";
+    display: block;
+    background: #000;
+    background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 100%);
+    opacity: 1;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    border-radius: 1rem;
+    position: absolute;
+  }
 `;
 
 const BannerImageSpace = styled.div`
@@ -44,7 +59,8 @@ const BannerContent = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  bottom: 0;  
+  top: 0;  
+  z-index: 1;
   word-break: break-word;
   flex-direction: column;
   padding: 3rem 0 3rem 3rem;
@@ -66,7 +82,7 @@ const BannerTextSpace = styled.div`
 `;
 
 const BannerTitle = styled.h2`
-  color: ${PRIMARY_COLOR};
+  color: ${SECONDARY_COLOR};
   font-size: 3.6rem;
   line-height: 3.857rem;
   letter-spacing: -3px;
@@ -90,8 +106,14 @@ const BannerTitle = styled.h2`
 
 const GiantSquareBanner: React.FC<Props> = ({banner}) => {
 
+  const router = useRouter();
+
   function renderImageSize(w: number, h: number) {
     return getAssetImage(banner.poster, {height: h, width: w});
+  }
+
+  function navigate() {
+    router.push(`/mystery-boxes`);
   }
 
   return (
@@ -111,11 +133,14 @@ const GiantSquareBanner: React.FC<Props> = ({banner}) => {
                 <BannerContent>
                   <BannerTextSpace>
                     <BannerTitle>
-                      Explore Membership Benefits
+                      {banner.title}
                     </BannerTitle>
                   </BannerTextSpace>
                   <div>
-                    <AppButton styles={{borderRadius: '2rem'}} onClick={() => console.log('1')} variant={ButtonVariants.Secondary} size={ButtonSizes.Default}>
+                    <AppButton styles={{borderRadius: '2rem'}}
+                               onClick={navigate}
+                               variant={ButtonVariants.Secondary}
+                               size={ButtonSizes.Default}>
                       Learn More
                     </AppButton>
                   </div>

@@ -43,7 +43,7 @@ const CategoryCatalog: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
     return {
       page: Number(query.page) || 1,
       limit: 12,
-      sortBy: query.sortBy || 'publicationYear',
+      sortBy: query.sortBy || 'createdAt',
       sortOrder: query.sortOrder || 'desc'
     };
   });
