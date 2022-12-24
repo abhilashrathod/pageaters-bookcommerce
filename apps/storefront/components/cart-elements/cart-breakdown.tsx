@@ -27,19 +27,22 @@ interface Props {
   cart: any;
   shippingCharges: number | string;
   orderTotal: number;
+  giftCharges?: number | undefined;
 }
 
-const CartBreakdown = ({cart, shippingCharges, orderTotal}: Props) => {
+const CartBreakdown = ({cart, shippingCharges, orderTotal, giftCharges}: Props) => {
 
   const [retailTotal, setRetailTotal] = useState(0);
   const [total, setTotal] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [toBePaid, setToBePaid] = useState(0);
+  const [gift, setGift] = useState(0);
   const [shipping, setShipping] = useState(0);
 
   useEffect(() => {
     if (cart) {
       let discountedAmount = 0;
+      let giftValue = 0;
       let productTotal = sumBy(cart.products, (book: ICartItem) => (book.price * book.quantity));
       let bundleTotal = sumBy(cart.bundles, (bundle: ICartBundle) => (bundle.bundle.price));
       let mysteryBoxTotal = sumBy(cart.mysteryBoxes, (box: ICartMysteryBox) => (box.box.price));
@@ -57,12 +60,22 @@ const CartBreakdown = ({cart, shippingCharges, orderTotal}: Props) => {
         discountedAmount = discountedAmount + ((boxItem.quantity * boxItem.box.price) - boxItem.total);
       }
 
+      console.log("giftCharges", giftCharges);
+
+      if (giftCharges) {
+        setGift(giftCharges);
+        giftValue = giftCharges;
+      }
+
+      const totalOrderValue = productTotal + bundleTotal + mysteryBoxTotal + giftValue;
+
+
       setDiscountAmount(discountedAmount);
       setRetailTotal(productTotal + bundleTotal + mysteryBoxTotal);
       setToBePaid(cart.subTotal);
-      setTotal(orderTotal);
+      setTotal((giftValue && giftValue > 0) ? (orderTotal + giftValue) : orderTotal);
     }
-  }, [cart]);
+  }, [cart, giftCharges]);
 
   useEffect(() => {
     if (orderTotal) {
@@ -70,11 +83,20 @@ const CartBreakdown = ({cart, shippingCharges, orderTotal}: Props) => {
     }
   }, [orderTotal]);
 
+  // useEffect(() => {
+  //   if (giftCharges) {
+  //     setGift(giftCharges);
+  //     setTotal((preState) => preState + giftCharges);
+  //   }
+  // }, [giftCharges]);
+
   useEffect(() => {
     let shippingInfo = isString(shippingCharges) ? shippingCharges : currencyFormat(shippingCharges);
     // @ts-ignore
     setShipping(shippingInfo);
   }, [shippingCharges]);
+
+  console.log("giftCharges", giftCharges);
 
   return (
       <BillItemList>
@@ -94,6 +116,14 @@ const CartBreakdown = ({cart, shippingCharges, orderTotal}: Props) => {
           <span>Shipping:</span>
           <span className="text-bold">{shipping}</span>
         </BillingListItem>
+        {
+          (giftCharges && giftCharges > 0) && (
+              <BillingListItem>
+                <span>Gift Wrapping:</span>
+                <span className="text-bold">{currencyFormat(gift)}</span>
+              </BillingListItem>
+          )
+        }
         <BillingListItem>
           <h6>Total:</h6>
           <h6 className="text-bold">{currencyFormat(total)}</h6>

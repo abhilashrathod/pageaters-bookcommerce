@@ -141,7 +141,7 @@ const Checkout: React.FC<Props> = () => {
   const [opened, setOpened] = useState(false);
   const [giftOptions, setGiftOptions] = useState({
     isGift: false,
-    options: {package: 'Basic', cost: 0, details: 'Includes special gift wrapping', message: '', from: ''}
+    options: {package: 'Basic', cost: 49, details: 'Includes special gift wrapping', message: '', from: ''}
   });
 
   useEffect(() => {
@@ -466,7 +466,10 @@ const Checkout: React.FC<Props> = () => {
 
                           {cart && (
                               <>
-                                <CartBreakdown cart={cart} shippingCharges={order?.shipping} orderTotal={order?.total}/>
+                                <CartBreakdown cart={cart}
+                                               shippingCharges={order?.shipping}
+                                               giftCharges={giftOptions.isGift ? giftOptions.options.cost : undefined}
+                                               orderTotal={order?.total}/>
                                 <AppButton variant={ButtonVariants.Accent}
                                            size={ButtonSizes.Large}
                                            disabled={!paymentMethod}
