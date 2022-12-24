@@ -141,7 +141,7 @@ const Checkout: React.FC<Props> = () => {
   const [opened, setOpened] = useState(false);
   const [giftOptions, setGiftOptions] = useState({
     isGift: false,
-    options: {package: 'Basic', cost: 49, details: 'Includes special gift wrapping', message: '', from: ''}
+    options: {package: '', cost: 0, details: 'Includes special gift wrapping', message: '', from: ''}
   });
 
   useEffect(() => {

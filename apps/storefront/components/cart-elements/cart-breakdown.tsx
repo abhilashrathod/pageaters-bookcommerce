@@ -60,8 +60,6 @@ const CartBreakdown = ({cart, shippingCharges, orderTotal, giftCharges}: Props) 
         discountedAmount = discountedAmount + ((boxItem.quantity * boxItem.box.price) - boxItem.total);
       }
 
-      console.log("giftCharges", giftCharges);
-
       if (giftCharges) {
         setGift(giftCharges);
         giftValue = giftCharges;
@@ -95,8 +93,6 @@ const CartBreakdown = ({cart, shippingCharges, orderTotal, giftCharges}: Props) 
     // @ts-ignore
     setShipping(shippingInfo);
   }, [shippingCharges]);
-
-  console.log("giftCharges", giftCharges);
 
   return (
       <BillItemList>
