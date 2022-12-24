@@ -1,4 +1,15 @@
-import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
 
@@ -19,9 +30,10 @@ import {ActivatedRoute, Router} from '@angular/router';
   selector: 'app-entity-table',
   templateUrl: 'entity-table-component.html',
   styleUrls: ['./entity-table.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 
-export class EntityTableComponent implements OnInit, AfterViewInit {
+export class EntityTableComponent implements OnInit, AfterViewInit, OnChanges {
 
   search = new FormControl();
 
@@ -87,7 +99,11 @@ export class EntityTableComponent implements OnInit, AfterViewInit {
           this.ngAfterViewInit();
         }
       });
+  }
 
+
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log('changes', changes);
   }
 
   ngAfterViewInit(): void {

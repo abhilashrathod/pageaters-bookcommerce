@@ -17,9 +17,13 @@
                 <span>Email: {{order.deliveryAddress.email}}</span><br/>
               </p>
               <p>
-                <span>Delivery Address:</span> <br/>
+                <span class="fw-bold">Delivery Address:</span> <br/>
                 <span>{{order.deliveryAddress.addressLine1 + ', '}} {{order.deliveryAddress.addressLine2 + ', '}} {{order.deliveryAddress.landmark}}</span>
                 <span>{{order.deliveryAddress.city + ', '}} {{order.deliveryAddress.state + ' - '}}{{order.deliveryAddress.pinCode}}</span>
+              </p>
+              <p *ngIf="order.deliveryInstructions">
+                <span class="fw-bold">Instructions</span><br/>
+                {{order.deliveryInstructions}}
               </p>
             </mat-card-content>
           </mat-card>
@@ -146,9 +150,9 @@
 
                       <ul>
                         <li><strong>Favorite Books:</strong> {{mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.favoriteBooks : 'n/a'}}</li>
-                        <li><strong>Books to Ignore:</strong> {{mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.ignoredBooks : 'n/a'}}</li>
-                        <li><strong>Favorite Authors:</strong> {{mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.preferredAuthors : 'n/a'}}</li>
-                        <li><strong>Favorite Genres:</strong> {{mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.preferredGenres : 'n/a'}}</li>
+                        <li><strong>Books to Ignore:</strong> {{mysteryBoxItem.preferences.ignoredBooks ? mysteryBoxItem.preferences.ignoredBooks : 'n/a'}}</li>
+                        <li><strong>Favorite Authors:</strong> {{mysteryBoxItem.preferences.preferredAuthors ? mysteryBoxItem.preferences.preferredAuthors : 'n/a'}}</li>
+                        <li><strong>Favorite Genres:</strong> {{mysteryBoxItem.preferences.preferredGenres ? mysteryBoxItem.preferences.preferredGenres : 'n/a'}}</li>
                       </ul>
 
                   </div>

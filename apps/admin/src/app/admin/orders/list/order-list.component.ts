@@ -29,6 +29,8 @@ export class OrderListComponent implements OnInit {
     'create',
   ];
 
+  viewOrderStatus = '';
+
   resourceColumns = [
     {
       header: 'Order ID',
@@ -68,7 +70,7 @@ export class OrderListComponent implements OnInit {
   ];
 
   public deleteBaseUrl = `/orders`;
-  public getAllBaseUrl = '/orders';
+  public getAllBaseUrl = `/orders`;
 
   constructor() {
   }
@@ -81,5 +83,33 @@ export class OrderListComponent implements OnInit {
     const bundle = bundles.map((x) => x.bundle.title);
     const box = boxes.map((x) => x.box.title);
     return `${books.join(`<br />`)} <br/> ${bundle.join(`<br />`)} <br/> ${box.join(`<br />`)}`;
+  }
+
+  handleOrderStatusChange(event: any): void {
+    switch (event.value) {
+      case 'all':
+        this.viewOrderStatus = event.value;
+        this.getAllBaseUrl = this.getAllBaseUrl.concat('');
+        break;
+      case 'new':
+        this.viewOrderStatus = event.value;
+        this.getAllBaseUrl = this.getAllBaseUrl.concat('?status=paid&status=confirmed');
+        break;
+
+      case 'shipped':
+        this.viewOrderStatus = event.value;
+        this.getAllBaseUrl = this.getAllBaseUrl.concat('?status=shipped');
+        break;
+
+      case 'fulfilled':
+        this.viewOrderStatus = event.value;
+        this.getAllBaseUrl = this.getAllBaseUrl.concat('?status=fulfilled');
+        break;
+
+      case 'cancelled':
+        this.viewOrderStatus = event.value;
+        this.getAllBaseUrl = this.getAllBaseUrl.concat('?status=cancelled');
+        break;
+    }
   }
 }
