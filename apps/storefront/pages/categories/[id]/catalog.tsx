@@ -42,7 +42,7 @@ const CategoryCatalog: NextPage<Props> = ({categoryDetails}: InferGetStaticProps
     const {query} = parseUrl(router.asPath);
     return {
       page: Number(query.page) || 1,
-      limit: 12,
+      limit: 18,
       sortBy: query.sortBy || 'createdAt',
       sortOrder: query.sortOrder || 'desc'
     };
