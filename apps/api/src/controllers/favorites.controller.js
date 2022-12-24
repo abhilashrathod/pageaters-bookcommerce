@@ -13,7 +13,7 @@ module.exports.getAll = async (req, res) => {
 
     const populateOptions = {
       path: 'wishlist',
-      select: `title bookId ISBN author inventory poster price popularity editorsPick currentDiscount newRelease preOrder bestSeller`,
+      select: `title bookId ISBN author inventory poster price popularity editorsPick currentDiscount inventory newRelease preOrder bestSeller`,
     };
 
     const wishlistRes = await Favorites.findOne({ userId }).select('wishlist').populate(populateOptions);

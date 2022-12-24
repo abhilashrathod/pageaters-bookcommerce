@@ -76,7 +76,7 @@ module.exports.scrapeData = async (title, tagline, url) => {
       editorsPick: false,
       bestSeller: false,
       poster: '',
-      wholeSalePriceHistory: returnPercentageValue(62, listPrice),
+      wholeSalePriceHistory: returnPercentageValue(65, listPrice),
       inventory: 2,
       currentDiscount: 25,
       price: Number(listPrice),

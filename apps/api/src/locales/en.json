@@ -198,5 +198,7 @@
 	"MYSTERY_BOX_SEARCH_SUCCESS": "Mystery Box Search Successful",
 	"MYSTERY_BOX_DELETE_SUCCESS": "Mystery Box Deleted Successfully",
 	"success": "success",
-	"Invalid Record Length: columns length is 3, got 4 on line 10": "Invalid Record Length: columns length is 3, got 4 on line 10"
+	"Invalid Record Length: columns length is 3, got 4 on line 10": "Invalid Record Length: columns length is 3, got 4 on line 10",
+	"\"giftOptions\" is not allowed": "\"giftOptions\" is not allowed",
+	"child \"giftOptions\" fails because [child \"details\" fails because [\"details\" is not allowed]]": "child \"giftOptions\" fails because [child \"details\" fails because [\"details\" is not allowed]]"
 }

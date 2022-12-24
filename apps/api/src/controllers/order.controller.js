@@ -126,12 +126,13 @@ module.exports.create = async (req, res) => {
     const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
     const userId = get(req, 'user.userId', '');
 
-    const { method, instructions } = req.allParams(); // online | cod
+    const { method, instructions, giftOptions } = req.allParams(); // online | cod
 
     let total;
     let shipping;
     let discount = 0;
     let giftCard = 0;
+    let giftCharges = get(giftOptions, 'details.cost', 0);
 
     if (!cart || !userId) {
       return res.error('ORDER_INFO_ATTEMPT_FAILED');
@@ -176,7 +177,7 @@ module.exports.create = async (req, res) => {
     /* TODO: DO SOME DISCOUNT DEDUCTION IF ANY */
 
     /* ADDING EVERYTHING UP! */
-    total = subTotal + shipping + discount + giftCard;
+    total = subTotal + shipping + discount + giftCard + giftCharges;
 
     let razorPayOrderResponse, payload;
 
@@ -196,6 +197,7 @@ module.exports.create = async (req, res) => {
     currentOrderRes.bundles = finalBundles;
     currentOrderRes.boxes = finalMysteryBoxes;
     currentOrderRes.weight = totalWeight;
+    currentOrderRes.giftOptions = giftOptions;
     currentOrderRes.deliveryInstructions = instructions;
     currentOrderRes.subTotal = subTotal;
     currentOrderRes.shipping = shipping;
@@ -313,7 +315,7 @@ module.exports.getByUniqueId = async (req, res) => {
     const userId = get(req, 'user.userId', '');
 
     let orderRes = await Order.findOne({ orderId: uniqueId, userId })
-      .select(`orderId orderDate deliveryAddress shipmentTrackingId orderHistory payment orderStatus subTotal products boxes bundles shipping total`)
+      .select(`orderId orderDate giftOptions deliveryAddress shipmentTrackingId orderHistory payment orderStatus subTotal products boxes bundles shipping total`)
       .populate(orderPopulateOptions);
 
     if (orderRes) {
@@ -1051,6 +1053,7 @@ function sendConfirmationEmail(userRes, orderRes) {
           BOXES: returnBoxes(orderRes.boxes),
           SUBTOTAL: orderRes.subTotal,
           SHIPPING: orderRes.shipping,
+          GIFT_CHARGES: orderRes.giftOptions.isGift ? orderRes.giftOptions.details.cost : -1,
           TOTAL: orderRes.total,
           ADDRESS: orderRes.deliveryAddress,
         },

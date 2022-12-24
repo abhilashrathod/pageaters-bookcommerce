@@ -134,7 +134,7 @@ module.exports.getOverviewProducts = async (req, res) => {
     const options = {
       page,
       limit,
-      select: `title bookId ISBN author poster price popularity editorsPick currentDiscount newRelease preOrder bestSeller`,
+      select: `title bookId ISBN author poster price popularity editorsPick currentDiscount inventory newRelease preOrder bestSeller`,
       populate: [{
         path: 'author',
         select: 'name avatar',
@@ -165,7 +165,7 @@ module.exports.getAllProducts = async (req, res) => {
     let { id, page, limit, sortBy, sortOrder } = req.allParams();
 
     const query = { isDeleted: false, categories: id };
-    const allowedSortingFields = ['title', 'createdAt', 'publicationYear', 'popularity', 'currentDiscount', 'price'];
+    const allowedSortingFields = ['title', 'createdAt', 'updatedAt', 'publicationYear', 'popularity', 'currentDiscount', 'price'];
 
     if (sortBy && !allowedSortingFields.includes(sortBy)) {
       return res.error('SORTING_NOT_ALLOWED');
@@ -174,7 +174,7 @@ module.exports.getAllProducts = async (req, res) => {
     const options = {
       page,
       limit,
-      select: `title bookId ISBN author poster price popularity editorsPick currentDiscount newRelease preOrder bestSeller`,
+      select: `title bookId ISBN author poster price popularity editorsPick inventory currentDiscount inventory newRelease preOrder bestSeller`,
       populate: [{
         path: 'author',
         select: 'name avatar',

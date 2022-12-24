@@ -34,7 +34,7 @@ const schema = new Schema({
       status: { type: String, default: '' },
       shipment: { type: String, default: '' },
       books: [{ type: String, default: '' }],
-      bundles: [{ type: String, default: '' }]
+      bundles: [{ type: String, default: '' }],
     }],
 
     products: [{
@@ -77,6 +77,16 @@ const schema = new Schema({
 
     giftCard: { type: Schema.Types.ObjectId, ref: models.GIFT_CARD, default: null },
     discount: { type: Schema.Types.ObjectId, ref: models.DISCOUNT, default: null },
+
+    giftOptions: {
+      isGift: { type: Boolean, default: false },
+      details: {
+        package: { type: String, default: '' },
+        cost: { type: Number, default: 0 },
+        message: { type: String, default: '' },
+        from: { type: String, default: '' },
+      },
+    },
 
     subTotal: { type: Number, default: 0 },
     shipping: { type: Number, default: 0 },

@@ -502,7 +502,7 @@
                                                     bgcolor="#ffffff">
                                                     <h2 style=" color: #1a1a1a; font-size: 16px; line-height: 22px; font-weight: 400; text-transform: none; margin: 0;"
                                                         align="left">
-                                                        <span data-key="3499739_order_number">ORDER</span>
+                                                        <span data-key="3499739_order_number">ORDER NO</span>
                                                         #<%= ORDER_ID %>
                                                     </h2>
                                                     <p class="muted"
@@ -832,6 +832,19 @@
                                                                             align="right" bgcolor="#ffffff"
                                                                             valign="middle">INR <%= SHIPPING %></th>
                                                                     </tr>
+                                                                    <% if(GIFT_CHARGES > 0 && GIFT_CHARGES) { %>
+                                                                    <tr>
+                                                                        <th class="table-title"
+                                                                            style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222; width: 65%; padding: 5px 0;"
+                                                                            align="left" bgcolor="#ffffff" valign="top">
+                                                                            Gift Charges
+                                                                        </th>
+                                                                        <th class="table-text"
+                                                                            style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #222222; width: 35%; padding: 5px 0;"
+                                                                            align="right" bgcolor="#ffffff"
+                                                                            valign="middle">INR <%= GIFT_CHARGES %></th>
+                                                                    </tr>
+                                                                    <% } %>
                                                                     <tr class="pricing-table-total-row">
                                                                         <th class="table-title" data-key="3499741_total"
                                                                             style="mso-line-height-rule: exactly;  font-size: 16px; line-height: 22px;  text-transform: none; color: #1a1a1a; width: 65%; padding: 5px 0;"
