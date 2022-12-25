@@ -5,7 +5,7 @@ import styled from "styled-components";
 import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 import {SM} from "../../core/_variables";
-import {getAssetImage} from "../../core/_imageRendererHelper";
+import {getAssetImage, getCollectionImage} from "../../core/_imageRendererHelper";
 
 import {IBanner} from "../../schemas/banner";
 
@@ -14,7 +14,7 @@ interface Props {
 }
 
 const MainCardWrapper = styled.div`
-  margin-bottom: 1rem;
+  margin-bottom: 2.5rem;
 `;
 
 const BannerImageSpace = styled.div`
@@ -24,6 +24,7 @@ const BannerImageSpace = styled.div`
 const BannerImage = styled.img`
   border-radius: 1rem;
   width: 100%;
+  cursor: pointer;
   height: 350px;
   object-fit: cover;
   object-position: top center;
@@ -60,7 +61,12 @@ const LandscapeBanner: React.FC<Props> = ({banner}) => {
   const router = useRouter();
 
   function renderImageSize(w: number, h: number) {
-    return getAssetImage(banner.poster, {height: h, width: w, fit: 'cover'});
+    switch (banner.entity) {
+      case 'collection':
+        return getCollectionImage(banner.poster, {height: h, width: w, fit: 'cover'});
+      default:
+        return getAssetImage(banner.poster, {height: h, width: w, fit: 'cover'});
+    }
   }
 
   function handleNavigation() {
@@ -71,17 +77,17 @@ const LandscapeBanner: React.FC<Props> = ({banner}) => {
   return (
       <MainCardWrapper>
         <BannerImageSpace>
-          <BannerImage src={renderImageSize(776, 350)} loading={"lazy"} alt={banner.title} height={350} width={776}/>
+          <BannerImage onClick={handleNavigation} src={renderImageSize(776, 350)} loading={"lazy"} alt={banner.title} height={350} width={776}/>
         </BannerImageSpace>
         <BannerContent>
           <BannerTextSpace>
             <BannerTitle>{banner.title}</BannerTitle>
           </BannerTextSpace>
-          <BannerLearnMore>
-            <AppButton onClick={handleNavigation} variant={ButtonVariants.Default} size={ButtonSizes.Default}>
-              Learn More
-            </AppButton>
-          </BannerLearnMore>
+          {/*<BannerLearnMore>*/}
+          {/*  <AppButton  variant={ButtonVariants.Secondary} size={ButtonSizes.Small}>*/}
+          {/*    Learn More*/}
+          {/*  </AppButton>*/}
+          {/*</BannerLearnMore>*/}
         </BannerContent>
       </MainCardWrapper>
   )

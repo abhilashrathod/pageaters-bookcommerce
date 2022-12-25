@@ -17,6 +17,8 @@ import GiantSquareBanner from "../components/banners/GiantSquareBanner";
 import PreOrderBanner from "../components/banners/PreOrderBanner";
 
 import {MD, SM} from "../core/_variables";
+import LandscapeBanner from "../components/banners/LandscapeBanner";
+import {IBanner} from "../schemas/banner";
 
 const FeaturedCategorySection = styled.section`
   background: #f2f2f2;
@@ -37,7 +39,7 @@ const FeaturedCategorySection = styled.section`
 const PreOrderSection = styled.section`
   background: #000;
   padding: 7.5rem 0;
-  margin: 5rem 0 0 0;
+  margin: 0 0 5rem 0;
   
   @media screen and (max-width: ${MD - 1}px) {
     padding: 4.5rem 0 0.1rem 0;
@@ -62,6 +64,27 @@ const Home: NextPage = (props: any) => {
   const mostPopular = get(popularRes, 'data.products', []);
   const bundles = get(bundlesRes, 'data.docs', []);
   const collections = get(collectionsRes, 'data.docs', []);
+
+  // featured collection data
+  const bannerCollectionItem: IBanner = {
+    title: 'Best Books of 2022',
+    ctaLink: '/collections/CL-1783679685',
+    poster: 'the-best-books-of-2022-O852fz1tFK-1671962486958.png',
+    bannerId: 'CL-1783679685',
+    ctaText: 'Learn More',
+    description: 'Which were the best books of 2022?',
+    entity: 'collection'
+  };
+
+  const discountItem: IBanner = {
+    title: 'Holiday Treats and Gift Guide for Christmas Sale!',
+    ctaLink: '/deals/DE-2008737169',
+    poster: 'diwali-sale-2022-C5iXhgDC6Q-1671958827235.jpg',
+    bannerId: 'DE-2008737169',
+    ctaText: 'Learn More',
+    description: 'Holiday treats for everyone and a helpful gift guide',
+    entity: 'asset'
+  };
 
   return (
       <>
@@ -96,15 +119,36 @@ const Home: NextPage = (props: any) => {
             <Categories/>
           </section>
 
+          <section className="py-25 mb-25">
+            <div className="custom-container">
+              <div className="row">
+                <div className="col">
+                  <h1 className="jumbo-1">
+                    Happy Holidays!
+                  </h1>
+                  <h1 className="display-1">from Pageaters</h1>
+                </div>
+                <div className="row">
+                  <div className="col-12 col-xl-6">
+                    <LandscapeBanner banner={discountItem}/>
+                  </div>
+                  <div className="col-12 col-xl-6">
+                    <LandscapeBanner banner={bannerCollectionItem}/>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <PreOrderSection>
             <section className={'mb-25'}>
               <PreOrderBanner />
             </section>
           </PreOrderSection>
 
-          <FeaturedCategorySection>
-            <FeaturedCategory/>
-          </FeaturedCategorySection>
+          {/*<FeaturedCategorySection>*/}
+          {/*  <FeaturedCategory/>*/}
+          {/*</FeaturedCategorySection>*/}
 
           <section className={'mb-25'}>
             <ProductSets title={'New Arrivals'} products={newArrivals}/>
@@ -114,36 +158,12 @@ const Home: NextPage = (props: any) => {
             <FeaturedDeals/>
           </section>
 
-          {/*
-          <section className="py-25 mb-25">
-            <div className="custom-container">
-              <div className="row">
-                <div className="col">
-                  <h1 className="display-1">Programs to Help You</h1>
-                  <h1 className="jumbo-1">
-                    Earn from Pageaters
-                  </h1>
-                </div>
-                <div className="row">
-                  {
-                    props.banners.map((item: IBanner, index: number) => (
-                        <div key={index} className="col">
-                          <LandscapeBanner banner={item}/>
-                        </div>
-                    ))
-                  }
-                </div>
-              </div>
-            </div>
-          </section>
-          */}
-
           <section className={'mb-25'}>
             <Bundles title={'Spectacular Bundles'} bundles={bundles}/>
           </section>
 
           <section className={'mb-25'}>
-            <ProductSets title={'Most Discounted'} products={mostDiscounted}/>
+            <ProductSets title={'Best Sellers'} products={mostPopular}/>
           </section>
 
           <section className={'mb-25'}>
@@ -162,7 +182,7 @@ const Home: NextPage = (props: any) => {
           </section>
 
           <section className={'mb-25'}>
-            <ProductSets title={'Best Sellers'} products={mostPopular}/>
+            <ProductSets title={'Most Discounted'} products={mostDiscounted}/>
           </section>
         </PageWrapper>
       </>

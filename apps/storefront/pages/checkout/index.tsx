@@ -4,7 +4,7 @@ import Head from "next/head";
 import cookie from "js-cookie";
 import {useRouter} from "next/router";
 import axios from "axios";
-import {get, isString} from 'lodash';
+import {get} from 'lodash';
 import styled from "styled-components";
 import {showNotification} from "@mantine/notifications";
 import {Accordion, Alert, Checkbox, Loader, Radio, Skeleton, Textarea, TextInput} from "@mantine/core";
@@ -141,7 +141,7 @@ const Checkout: React.FC<Props> = () => {
   const [opened, setOpened] = useState(false);
   const [giftOptions, setGiftOptions] = useState({
     isGift: false,
-    options: {package: '', cost: 0, details: 'Includes special gift wrapping', message: '', from: ''}
+    options: {package: '', cost: 0, details: '', message: '', from: ''}
   });
 
   useEffect(() => {
@@ -247,7 +247,10 @@ const Checkout: React.FC<Props> = () => {
     setGiftOptions((prevState) => ({
       ...prevState,
       isGift: val
-    }))
+    }));
+    if (!giftOptions.options.package) {
+      handlePackageChange('package', 'Basic');
+    }
   }
 
   function handlePackageChange(prop: string, e: any) {
@@ -263,7 +266,7 @@ const Checkout: React.FC<Props> = () => {
     }));
   }
 
-  function handleFieldChange(prop: string ,e: any) {
+  function handleFieldChange(prop: string, e: any) {
     const val = get(e, 'currentTarget.value', e);
 
     setGiftOptions((prevState) => ({
@@ -347,6 +350,11 @@ const Checkout: React.FC<Props> = () => {
                                           </Radio.Group>
                                         </p>
                                         <p>
+                                          <Alert title="Package details" color="gray">
+                                            <p>{giftOptions.options.package}: {giftOptions.options.details}</p>
+                                          </Alert>
+                                        </p>
+                                        <p>
                                           <TextInput
                                               placeholder="Sender Name"
                                               label="From"
@@ -366,9 +374,6 @@ const Checkout: React.FC<Props> = () => {
                                               value={giftOptions.options.message}
                                           />
                                         </p>
-                                        <Alert title="Package details" color="gray">
-                                          <p>{giftOptions.options.details}</p>
-                                        </Alert>
                                       </>
                                   )
                                 }

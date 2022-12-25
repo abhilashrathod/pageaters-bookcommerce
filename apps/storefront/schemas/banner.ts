@@ -4,6 +4,7 @@ export interface IBanner {
   ctaLink?: string;
   ctaText?: string;
   title: string;
+  entity?: string;
   description?: string;
   priority?: number;
   isActive?: boolean;
