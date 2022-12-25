@@ -154,9 +154,9 @@ const Home: NextPage = (props: any) => {
             <ProductSets title={'New Arrivals'} products={newArrivals}/>
           </section>
 
-          <section className={'mb-25'}>
-            <FeaturedDeals/>
-          </section>
+          {/*<section className={'mb-25'}>*/}
+          {/*  <FeaturedDeals/>*/}
+          {/*</section>*/}
 
           <section className={'mb-25'}>
             <Bundles title={'Spectacular Bundles'} bundles={bundles}/>
