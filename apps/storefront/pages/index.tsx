@@ -128,13 +128,13 @@ const Home: NextPage = (props: any) => {
                   </h1>
                   <h1 className="display-1">from Pageaters</h1>
                 </div>
-                <div className="row">
-                  <div className="col-12 col-xl-6">
-                    <LandscapeBanner banner={discountItem}/>
-                  </div>
-                  <div className="col-12 col-xl-6">
-                    <LandscapeBanner banner={bannerCollectionItem}/>
-                  </div>
+              </div>
+              <div className="row">
+                <div className="col-12 col-xl-6">
+                  <LandscapeBanner banner={discountItem}/>
+                </div>
+                <div className="col-12 col-xl-6">
+                  <LandscapeBanner banner={bannerCollectionItem}/>
                 </div>
               </div>
             </div>
