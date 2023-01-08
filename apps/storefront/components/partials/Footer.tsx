@@ -145,7 +145,7 @@ const AppFooter: React.FC<Props> = () => {
                   }
                 </FooterNavigation>
                 <FooterLegal>
-                  <p>&copy; 2021-2022 Pageaters, Inc. All Rights Reserved</p>
+                  <p>&copy; 2021-2023 Pageaters, Inc. All Rights Reserved</p>
 
                   <Greeting>
                     <span>Made in India with 🧡</span>

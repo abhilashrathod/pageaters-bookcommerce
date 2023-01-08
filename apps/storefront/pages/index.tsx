@@ -10,9 +10,7 @@ import Categories from "../components/carousels/Categories";
 import CollectionsCarousel from "../components/carousels/Collections";
 import PageWrapper from "../components/elements/PageWrapper";
 import ProductSets from "../components/carousels/ProductSets";
-import FeaturedCategory from "../components/featured/FeaturedCategory";
 import Bundles from "../components/carousels/Bundles";
-import FeaturedDeals from "../components/featured/FeaturedDeals";
 import GiantSquareBanner from "../components/banners/GiantSquareBanner";
 import PreOrderBanner from "../components/banners/PreOrderBanner";
 
@@ -52,12 +50,19 @@ const PreOrderSection = styled.section`
   }
 `;
 
+const META = {
+  title: 'Pageaters: An Online Bookstore | Eat New Story Everyday',
+  description: 'Pageaters: Online Bookstore. Our original book collection contains only the highest quality books, allowing you to have an exceptional reading experience.',
+  image: 'https://res.cloudinary.com/pageaters/image/upload/v1673173795/web-banner_ogzs01.png',
+  url: 'https://pageaters.com/',
+};
+
 const Home: NextPage = (props: any) => {
   const {data: newArrivalRes, error: newArrivalErr} = useSWR({url: `/product-sets/slug/new-arrivals-xUnVs1`});
   const {data: mostDiscountedRes, error: mostDiscountedErr} = useSWR({url: `/product-sets/slug/most-discounted-cyLclz`});
   const {data: popularRes, error: popularErr} = useSWR({url: `/product-sets/slug/trending-books-boQMVB`});
-  const {data: bundlesRes, error: bundlesErr} = useSWR({url: `/bundles?page=1&limit=8&sortBy=priority&sortOrder=asc`});
-  const {data: collectionsRes, error: collectionsErr} = useSWR({url: `/collections?page=1&limit=6&sortBy=priority&sortOrder=asc`});
+  const {data: bundlesRes, error: bundlesErr} = useSWR({url: `/bundles?page=1&limit=12&sortBy=priority&sortOrder=asc`});
+  const {data: collectionsRes, error: collectionsErr} = useSWR({url: `/collections?page=1&limit=10&sortBy=priority&sortOrder=asc`});
 
   const newArrivals = get(newArrivalRes, 'data.products', []);
   const mostDiscounted = get(mostDiscountedRes, 'data.products', []);
@@ -89,26 +94,17 @@ const Home: NextPage = (props: any) => {
   return (
       <>
         <Head>
-          <title>Pageaters: Online shopping site for Buying, Selling or Renting Books in India</title>
-          <meta name="title" content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
-          <meta name="description"
-                content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books."/>
-
-          <meta property="og:title"
-                content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
-          <meta property="og:description"
-                content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books. "/>
-          <meta property="og:image"
-                content="https://res.cloudinary.com/pageaters/image/upload/v1624257111/pageaters-poster_ohufa0.png"/>
-          <meta property="og:url" content="http://pageaters.com/"/>
-
-          <meta property="twitter:url" content="http://pageaters.com"/>
-          <meta property="twitter:title"
-                content="Pageaters: Online shopping site for Buying, Selling or Renting Books in India"/>
-          <meta property="twitter:description"
-                content="Pageaters is an online shopping site for books. Buy new books, Rent books for first time ever or sell your second hand books. "/>
-          <meta property="twitter:image"
-                content="https://res.cloudinary.com/pageaters/image/upload/v1624257111/pageaters-poster_ohufa0.png"/>
+          <title>{META.title}</title>
+          <meta name="title" content={META.title}/>
+          <meta name="description" content={META.description}/>
+          <meta property="og:title" content={META.title}/>
+          <meta property="og:description" content={META.description}/>
+          <meta property="og:image" content={META.image}/>
+          <meta property="og:url" content={META.url}/>
+          <meta property="twitter:url" content={META.url}/>
+          <meta property="twitter:title" content={META.title}/>
+          <meta property="twitter:description" content={META.description}/>
+          <meta property="twitter:image" content={META.image}/>
         </Head>
         <PageWrapper>
           <section className={'mb-25'}>
@@ -119,30 +115,30 @@ const Home: NextPage = (props: any) => {
             <Categories/>
           </section>
 
-          <section className="py-25 mb-25">
-            <div className="custom-container">
-              <div className="row">
-                <div className="col">
-                  <h1 className="jumbo-1">
-                    Happy Holidays!
-                  </h1>
-                  <h1 className="display-1">from Pageaters</h1>
-                </div>
-              </div>
-              <div className="row">
-                <div className="col-12 col-xl-6">
-                  <LandscapeBanner banner={discountItem}/>
-                </div>
-                <div className="col-12 col-xl-6">
-                  <LandscapeBanner banner={bannerCollectionItem}/>
-                </div>
-              </div>
-            </div>
-          </section>
+          {/*<section className="py-25 mb-25">*/}
+          {/*  <div className="custom-container">*/}
+          {/*    <div className="row">*/}
+          {/*      <div className="col">*/}
+          {/*        <h1 className="jumbo-1">*/}
+          {/*          Happy Holidays!*/}
+          {/*        </h1>*/}
+          {/*        <h1 className="display-1">from Pageaters</h1>*/}
+          {/*      </div>*/}
+          {/*    </div>*/}
+          {/*    <div className="row">*/}
+          {/*      <div className="col-12 col-xl-6">*/}
+          {/*        <LandscapeBanner banner={discountItem}/>*/}
+          {/*      </div>*/}
+          {/*      <div className="col-12 col-xl-6">*/}
+          {/*        <LandscapeBanner banner={bannerCollectionItem}/>*/}
+          {/*      </div>*/}
+          {/*    </div>*/}
+          {/*  </div>*/}
+          {/*</section>*/}
 
           <PreOrderSection>
             <section className={'mb-25'}>
-              <PreOrderBanner />
+              <PreOrderBanner/>
             </section>
           </PreOrderSection>
 
