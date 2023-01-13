@@ -92,7 +92,7 @@ module.exports.calculateShipping = async function(isFree, totalWeight, deliveryC
 
       resolve({
         taxes: 0,
-        deliveryAmount: 30,
+        deliveryAmount: 60,
         totalDeliveryCharges: 30,
       });
 
