@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import {useRouter} from "next/router";
 import {useKeenSlider} from "keen-slider/react";
 import styled from "styled-components";
 import {Skeleton} from "@mantine/core";
@@ -8,7 +9,7 @@ import SectionHeading from "../elements/SectionHeading";
 import BundlesCardMedium from "../cards/BundlesCardMedium";
 
 import AppIconButton from "../form-controls/IconButton";
-import {ButtonSizes, ButtonVariants} from "../form-controls/Button";
+import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 import {MD} from "../../core/_variables";
 
 import {IBundle} from "../../schemas/bundle";
@@ -35,6 +36,7 @@ const Bundles: React.FC<Props> = ({title, bundles}) => {
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const router = useRouter();
 
   const [refCallback, instanceRef] = useKeenSlider({
     mode: "free",
@@ -71,6 +73,7 @@ const Bundles: React.FC<Props> = ({title, bundles}) => {
 
   const SectionExtras = () => (
       <Navigators>
+        {/*<AppButton variant={ButtonVariants.Secondary} size={ButtonSizes.Small} onClick={() => router.push('/')}>View All</AppButton>*/}
         <AppIconButton variant={ButtonVariants.Default} size={ButtonSizes.Small} styles={{padding: 0}}
                        onClick={handlePrev}>
           <Icon icon="fluent:chevron-circle-left-20-regular" height={28} width={28}/>

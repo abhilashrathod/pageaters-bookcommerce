@@ -52,13 +52,9 @@ const BREADCRUMBS_ITEMS = (activeItem: any) => [
 ];
 
 const SITE_FEATURES = [
-  {icon: 'carbon:delivery-truck', title: 'Free Delivery', description: 'On Orders Above INR 499'},
+  {icon: 'carbon:delivery-truck', title: 'Free Delivery', description: 'On Orders Above INR 599'},
   {icon: 'bi:award', title: 'Genuine Books', description: 'No Piracy. No First Copies.'},
-  {
-    icon: 'grommet-icons:insecure',
-    title: 'Secure Payments',
-    description: 'Debit & Credit Cards, Net Banking, UPIs, Wallets'
-  },
+  {icon: 'grommet-icons:insecure', title: 'Easy Payments', description: 'Cash on Delivery, Debit & Credit Cards, UPIs, Wallets'},
   {icon: 'ep:refresh', title: 'Easy Return & Replacements', description: '7 Days Return Policy. No questions asked.'},
 ];
 

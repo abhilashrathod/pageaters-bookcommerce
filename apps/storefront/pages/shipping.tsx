@@ -63,10 +63,10 @@ const Shipping: NextPage = () => {
                     You can track the status of your package 24 hours after your order is dispatched from our warehouse.
                     Following are some our trusted courier partners: <br/>
 
-                    • DTDC - http://www.dtdc.in <br/>
-                    • Bluedart - http://www.bluedart.com <br/>
-                    • Ecom Express - http://www.ecomexpress.in <br/>
-                    • Delhivery - http://www.delhivery.com <br/>
+                    • EKart - https://ekartlogistics.com <br/>
+                    • Kerry Indev Express - https://kerryindevexpress.com <br/>
+                    • Amazon - https://www.amazon.in <br/>
+                    • Delhivery - https://www.delhivery.com <br/>
 
                   </p>
 
@@ -95,9 +95,8 @@ const Shipping: NextPage = () => {
                   <h6>Are there any shipping charges applicable on my order?</h6>
                   <p>
                     We have standard shipping charges for most addresses. <br/>
-                    <strong>India shipping charges</strong> A variable charge is applied to all orders of Rs.499 and below,
-                    while there is
-                    free shipping for all orders for Rs.500 and above
+                    <strong>India shipping charges</strong> A variable charge is applied to all orders of Rs.599 and below, while there is
+                    free shipping for all orders for Rs.600 and above
                   </p>
                 </div>
               </div>

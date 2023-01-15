@@ -533,7 +533,7 @@ const MysteryBoxes: NextPage<Props> = () => {
                       <Accordion.Panel>
                         <p>
                           Standard shipping policy would apply on the shopping of mystery box. <br/> Free shipping above
-                          order value of INR 499
+                          order value of INR 599
                         </p>
                       </Accordion.Panel>
                     </Accordion.Item>
