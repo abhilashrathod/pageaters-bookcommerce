@@ -90,7 +90,7 @@ module.exports.attempt = async (req, res) => {
       return res.error('ORDER_ADDRESS_ATTEMPT_FAILED');
     }
 
-    const shippingRes = await calculateShipping(subTotal > 499, totalWeight, addressRes.pinCode);
+    const shippingRes = await calculateShipping(subTotal > 599, cartResponse.mysteryBoxes.length > 0);
     let shipping = shippingRes.deliveryAmount;
 
     const orderPayload = {
@@ -164,7 +164,7 @@ module.exports.create = async (req, res) => {
 
     /* CALCULATE SHIPPING AMOUNT */
     const addressRes = await Address.findOne({ isDeleted: false, _id: currentOrderRes.deliveryAddress._id, userId });
-    const shippingRes = await calculateShipping(subTotal > 499, totalWeight, addressRes.pinCode);
+    const shippingRes = await calculateShipping(subTotal > 599, finalMysteryBoxes.length > 0);
     shipping = shippingRes.deliveryAmount;
 
     /* END CALCULATE SHIPPING AMOUNT */

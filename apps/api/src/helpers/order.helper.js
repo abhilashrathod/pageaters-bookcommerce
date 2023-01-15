@@ -78,7 +78,7 @@ module.exports.calculateConvenienceFees = async function(subtotal) {
   });
 };
 
-module.exports.calculateShipping = async function(isFree, totalWeight, deliveryCode) {
+module.exports.calculateShipping = async function(isFree, hasMysteryBox) {
   return new Promise(async (resolve, reject) => {
     try {
 
@@ -90,10 +90,18 @@ module.exports.calculateShipping = async function(isFree, totalWeight, deliveryC
         });
       }
 
+      if (hasMysteryBox) {
+        resolve({
+          taxes: 0,
+          deliveryAmount: 125,
+          totalDeliveryCharges: 125,
+        });
+      }
+
       resolve({
         taxes: 0,
-        deliveryAmount: 60,
-        totalDeliveryCharges: 30,
+        deliveryAmount: 50,
+        totalDeliveryCharges: 50,
       });
 
       // const config = {
