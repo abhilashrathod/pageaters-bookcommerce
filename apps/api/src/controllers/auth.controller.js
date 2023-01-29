@@ -26,7 +26,7 @@ const REFRESH_TOKEN_OPTIONS = {
 
 const ACCESS_TOKEN_OPTIONS = {
   httpOnly: true,
-  expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
+  expires: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)),
 };
 
 const CART_COOKIE_OPTIONS = {
