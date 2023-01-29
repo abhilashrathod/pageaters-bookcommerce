@@ -16,7 +16,6 @@ router.use('/public', require('./public.routes'));
 // router.use('/books', require('./book.routes'));
 // router.use('/subscription-plan', require('./subscriptionPlan.routes'));
 // router.use('/subscription', require('./subscription.routes'));
-
 router.use('/auth', require('./auth.routes'));
 router.use('/file', require('./file.routes'));
 router.use('/bundles', require('./bundle.routes'));

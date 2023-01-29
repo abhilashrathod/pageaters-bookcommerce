@@ -124,6 +124,10 @@ this.app.use('/', express.static(path.join(PROJECT_ROOT, 'public')));
 // static files middleware
 this.app.use('/public', express.static(path.join(PROJECT_ROOT, 'public')));
 
+// sitemap
+const siteMap = require('./libs/sitemap');
+this.app.use('/sitemap.xml', siteMap);
+
 // for re-indexing
 this.app.get('/re-index', (req, res) => {
   runIndexing(this.app);

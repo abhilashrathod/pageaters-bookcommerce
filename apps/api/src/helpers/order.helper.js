@@ -228,6 +228,38 @@ module.exports.returnBundleImage = function(name) {
   return `${AWS.CLOUDFRONT_ACCESS_POINT}/${universalBtoa(imageRequest)}`;
 };
 
+module.exports.returnCollectionImage = function(name) {
+  const imageRequest = JSON.stringify({
+    bucket: enums.BUCKETS.COLLECTIONS,
+    key: name,
+    edits: {
+      resize: {
+        height: 75,
+        width: 75,
+        fit: 'cover',
+      }
+    }
+  });
+
+  return `${AWS.CLOUDFRONT_ACCESS_POINT}/${universalBtoa(imageRequest)}`;
+};
+
+module.exports.returnCategoryImage = function(name) {
+  const imageRequest = JSON.stringify({
+    bucket: enums.BUCKETS.CATEGORIES,
+    key: name,
+    edits: {
+      resize: {
+        height: 75,
+        width: 75,
+        fit: 'cover',
+      }
+    }
+  });
+
+  return `${AWS.CLOUDFRONT_ACCESS_POINT}/${universalBtoa(imageRequest)}`;
+};
+
 module.exports.returnAssetImage = function(name) {
   const imageRequest = JSON.stringify({
     bucket: enums.BUCKETS.ASSETS,
