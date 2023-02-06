@@ -94,7 +94,7 @@ const FeaturedBooks: React.FC<Props> = () => {
               <NavigationWrapper>
                 <div ref={refCallback} className="keen-slider">
                   {
-                    bundles.map((bundle: IBundle) => {
+                    [].map((bundle: IBundle) => {
                       return (
                           <div className="keen-slider__slide" key={bundle._id}>
                             <BundlesCardMedium bundle={bundle}/>
