@@ -217,7 +217,7 @@ const PreOrderBanner: React.FC<Props> = () => {
                   <BannerContent>
                     <BannerTextSpace>
                       <BannerTitle>{'New Release "Icebreaker"'}</BannerTitle>
-                      <BannerSubTitle>{TAGS.map((tag: string) => <BannerTag>{tag}</BannerTag>)}</BannerSubTitle>
+                      <BannerSubTitle>{TAGS.map((tag: string, index: number) => <BannerTag key={index}>{tag}</BannerTag>)}</BannerSubTitle>
                     </BannerTextSpace>
                     <BannerLearnMore>
                       <AppButton onClick={handleNavigation} variant={ButtonVariants.Default} size={ButtonSizes.Default}>
