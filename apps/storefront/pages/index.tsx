@@ -13,9 +13,10 @@ import ProductSets from "../components/carousels/ProductSets";
 import Bundles from "../components/carousels/Bundles";
 import GiantSquareBanner from "../components/banners/GiantSquareBanner";
 import PreOrderBanner from "../components/banners/PreOrderBanner";
+// import LandscapeBanner from "../components/banners/LandscapeBanner";
+// import FeaturedBooks from "../components/carousels/FeaturedBooks";
 
 import {MD, SM} from "../core/_variables";
-import LandscapeBanner from "../components/banners/LandscapeBanner";
 import {IBanner} from "../schemas/banner";
 
 const FeaturedCategorySection = styled.section`
@@ -30,22 +31,6 @@ const FeaturedCategorySection = styled.section`
   
   @media screen and (max-width: ${SM - 1}px) {
     padding: 2.5rem 0;
-    margin: 2.5rem 0;
-  }
-`;
-
-const PreOrderSection = styled.section`
-  background: #000;
-  padding: 7.5rem 0;
-  margin: 0 0 5rem 0;
-  
-  @media screen and (max-width: ${MD - 1}px) {
-    padding: 4.5rem 0 0.1rem 0;
-    margin: 3.75rem 0;
-  }
-  
-  @media screen and (max-width: ${SM - 1}px) {
-    padding: 4rem 0 0.1rem 0;
     margin: 2.5rem 0;
   }
 `;
@@ -136,11 +121,9 @@ const Home: NextPage = (props: any) => {
           {/*  </div>*/}
           {/*</section>*/}
 
-          <PreOrderSection>
-            <section className={'mb-25'}>
-              <PreOrderBanner/>
-            </section>
-          </PreOrderSection>
+          <section className={'mb-25'}>
+            <PreOrderBanner/>
+          </section>
 
           {/*<FeaturedCategorySection>*/}
           {/*  <FeaturedCategory/>*/}

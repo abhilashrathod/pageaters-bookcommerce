@@ -131,8 +131,7 @@ const About: NextPage = () => {
                 <div className="col-xxl-9 col-12">
                   <MissionStatement>
                     <div>
-                      <h1>Our mission is to <Accent>recover</Accent> the lost <Accent>love of reading</Accent> by making
-                        books <Accent>affordable</Accent> & <Accent>accessible</Accent></h1>
+                      <h1>Our mission is to give readers <Accent>the best reading experience</Accent> of their lives.</h1>
                     </div>
                   </MissionStatement>
                 </div>

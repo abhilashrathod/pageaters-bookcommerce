@@ -36,6 +36,9 @@ import {IBook} from "../../schemas/book";
 import {ICollection} from "../../schemas/collection";
 
 import {addToCart} from "../../core/_analytics";
+import {useClipboard} from "@mantine/hooks";
+import AppIconButton from "../../components/form-controls/IconButton";
+import {ButtonVariants} from "../../components/form-controls/Button";
 
 const BREADCRUMBS_ITEMS = (activeItem: any) => [
   {title: 'Home', href: '/'},
@@ -69,6 +72,12 @@ const ProductImage = styled.img`
   @media screen and (max-width: ${SM - 1}px) {
      width: 230px;
   }
+`;
+const SuggestionButtons = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
 `;
 
 const TagsSpace = styled.div`
@@ -219,6 +228,7 @@ interface Props {
 
 const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType<typeof getStaticProps>) => {
   const isLoggedIn = cookie.get(AUTH_COOKIE);
+  const clipboard = useClipboard({timeout: 500});
 
   const router = useRouter();
 
@@ -245,6 +255,10 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
     } catch (e: any) {
       showNotification({message: e.message, color: 'red', autoClose: 5000});
     }
+  }
+
+  function share() {
+    clipboard.copy(`${process.env.NEXT_PUBLIC_SITE_URL}/bundles/${bundleDetails.bundleId}`);
   }
 
   function updateCart() {
@@ -303,7 +317,7 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
               </div>
             </div>
           </div>
-          <section className={'py-25'}>
+          <section className='mb-25'>
             <div className="custom-container">
               <div className="row">
                 <div className="col-xxl-4 col-xl-4 col-12">
@@ -317,6 +331,13 @@ const BundleDetails: NextPage<Props> = ({bundleDetails}: InferGetStaticPropsType
                       }
                     </TagsList>
                   </TagsSpace>
+                  <SuggestionButtons>
+                    <AppIconButton variant={clipboard.copied ? ButtonVariants.Accent : ButtonVariants.Secondary}
+                                   onClick={share}>
+                      <Icon icon={'bx:share-alt'} width={18}
+                            height={18}/>&nbsp;{clipboard.copied ? 'Link Copied' : 'Share'}
+                    </AppIconButton>
+                  </SuggestionButtons>
                 </div>
 
                 <div className="col-xxl-8 col-xl-8 col-12">
