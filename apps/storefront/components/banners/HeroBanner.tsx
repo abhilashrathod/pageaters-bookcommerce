@@ -99,7 +99,7 @@ const HeroBanner: React.FC<Props> = ({banner}) => {
             <div className="col-xxl-4 col-lg-6 col-12">
               <HeroTitleSection>
                 <HeroTitle>{banner.title}</HeroTitle>
-                <HeroSubTitle>Novels • Literature • Self-Help</HeroSubTitle>
+                <HeroSubTitle>From 7th Feb to 15th Feb. Discount on All Titles!</HeroSubTitle>
                 <div>
                   <AppButton variant={'secondary'} onClick={handleNavigation}>
                     {loggedIn ? 'Explore' : 'Get Started'}
