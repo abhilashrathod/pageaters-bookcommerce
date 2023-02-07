@@ -152,6 +152,7 @@
 	"ORDER_INFO_ATTEMPT_FAILED": "Invalid Order Request",
 	"ORDER_RETURN_PERIOD_LAPSED": "Return period for this order is over. If you still wish to return then please contact support.",
 	"ORDER_CANCEL_PERIOD_LAPSED": "Cancel period for this order is over. If you still wish to cancel then please contact support.",
+	"ORDER_CANCEL_INVALID": "Once order is shipped and in transit, it's not possible to cancel. It will be delivered inevitably. At the time of delivery you can refuse. That will be marked as cancelled. Please do avoid cancellations after shipment is dispatched because it incures heavy loss for small business like us. Thanks",
 	"ORDER_CANCEL_SUCCESS": "Order cancelled.",
 	"ORDER_RETURN_SUCCESS": "Return request raised successfully",
 	"ORDER_ADDRESS_SUCCESS": "Address Selection Success",
