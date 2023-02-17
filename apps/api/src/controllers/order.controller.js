@@ -644,15 +644,26 @@ module.exports.cancelRequest = async (req, res) => {
   try {
     const { uniqueId, reason, comments } = req.allParams();
     const userId = get(req, 'user.userId', '');
-    const PERIOD = 3; // 3 days from delivery fulfillment
 
     const populateOptions = [{
       path: 'userId',
       select: 'fullName email contactNo',
     }];
 
+    const condition = {
+      orderStatus: enums.ORDER_STAGES.SHIPPED,
+      orderId: uniqueId,
+      userId,
+    };
+
+    const orderCondnRes = await Order.findOne(condition).populate(populateOptions);
+
+    if (orderCondnRes) {
+      return res.error('ORDER_CANCEL_INVALID');
+    }
+
     const query = {
-      $or: [{ orderStatus: enums.ORDER_STAGES.PAID }, { orderStatus: enums.ORDER_STAGES.SHIPPED }, { orderStatus: enums.ORDER_STAGES.CONFIRMED }],
+      $or: [{ orderStatus: enums.ORDER_STAGES.PAID }, { orderStatus: enums.ORDER_STAGES.CONFIRMED }],
       orderId: uniqueId,
       userId,
     };
@@ -663,49 +674,42 @@ module.exports.cancelRequest = async (req, res) => {
       return res.error('ORDER_INFO_ATTEMPT_FAILED');
     }
 
-    const orderDate = orderRes.orderDate;
-    const currentDate = moment().subtract(PERIOD, 'days').toDate().toISOString();
+    const requestInfo = {
+      type: enums.ORDER_REQUEST_TYPES.CANCEL,
+      date: new Date().toISOString(),
+      info: {
+        reason,
+        comments,
+      },
+      status: enums.ORDER_REQUEST_STATUS.OPEN,
+      books: [],
+      bundles: [],
+    };
 
-    if (orderDate >= currentDate) {
-      const requestInfo = {
-        type: enums.ORDER_REQUEST_TYPES.CANCEL,
-        date: new Date().toISOString(),
-        info: {
-          reason,
-          comments,
-        },
-        status: enums.ORDER_REQUEST_STATUS.OPEN,
-        books: [],
-        bundles: [],
-      };
+    orderRes.orderStatus = enums.ORDER_STAGES.CANCELLED;
+    orderRes.orderHistory.push({
+      title: enums.ORDER_STAGES.CANCELLED,
+      description: 'Order cancelled by customer.',
+      time: new Date().toISOString(),
+    });
 
-      orderRes.orderStatus = enums.ORDER_STAGES.CANCELLED;
-      orderRes.orderHistory.push({
-        title: enums.ORDER_STAGES.CANCELLED,
-        description: 'Order cancelled by customer. Refund will be aligned shortly.',
-        time: new Date().toISOString(),
-      });
+    orderRes.requests.push(requestInfo);
+    await orderRes.save();
 
-      orderRes.requests.push(requestInfo);
-      await orderRes.save();
+    const emailBody = {
+      emailModule: 'CANCEL_ORDER',
+      to: orderRes.userId.email,
+      subject: `Order ${orderRes.orderId} Cancellation Confirmation  - Pageaters`,
+      data: {
+        ORDER_ID: orderRes.orderId,
+        FULL_NAME: orderRes.userId.fullName ? orderRes.userId.fullName : 'Reader',
+      },
+    };
+    sendMailQueue.add(emailBody);
 
-      const emailBody = {
-        emailModule: 'CANCEL_ORDER',
-        to: orderRes.userId.email,
-        subject: `Order ${orderRes.orderId} Cancellation Confirmation  - Pageaters`,
-        data: {
-          ORDER_ID: orderRes.orderId,
-          FULL_NAME: orderRes.userId.fullName ? orderRes.userId.fullName : 'Reader',
-        },
-      };
-      sendMailQueue.add(emailBody);
+    // TODO: Send message
 
-      // TODO: Send message
-
-      return res.ok({ message: 'ORDER_CANCEL_SUCCESS', data: {} });
-    }
-
-    return res.error('ORDER_CANCEL_PERIOD_LAPSED');
+    return res.ok({ message: 'ORDER_CANCEL_SUCCESS', data: {} });
   } catch (e) {
     return res.internalServerError(e);
   }
