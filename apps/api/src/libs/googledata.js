@@ -17,7 +17,7 @@ function returnDiscountedAmount(price, discount) {
 
 async function writeGoogleData (req, res, next) {
   // Get products
-  const selectFields = `bookId title description poster inventory tagline price currentDiscount`;
+  const selectFields = `bookId ISBN title description poster inventory tagline price currentDiscount`;
   const products$ = await Book.find({ isDeleted: false }).select(selectFields);
 
   // Setup the XML
@@ -48,6 +48,7 @@ async function writeGoogleData (req, res, next) {
       'g:price': `${returnDiscountedAmount(product.price, product.currentDiscount)} INR`,
       'g:image_link': `${returnProductImage(product.poster, 375, 247)}`,
       'g:availability': `${product.inventory > 0 ? 'in_stock' : 'out_of_stock'}`,
+      'g:gtin': `${product.ISBN}`,
     };
 
     jsonObj.rss.channel.item.push(item);
