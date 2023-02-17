@@ -46,7 +46,7 @@ async function writeGoogleData (req, res, next) {
       'g:description': product.description,
       'g:link': `https://pageaters.com/books/${product.bookId}`,
       'g:price': `${returnDiscountedAmount(product.price, product.currentDiscount)} INR`,
-      'g:image_link': `${returnProductImage(product.poster)}`,
+      'g:image_link': `${returnProductImage(product.poster, 375, 247)}`,
       'g:availability': `${product.inventory > 0 ? 'in_stock' : 'out_of_stock'}`,
     };
 

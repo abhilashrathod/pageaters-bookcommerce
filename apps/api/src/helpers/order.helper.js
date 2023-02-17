@@ -196,14 +196,14 @@ module.exports.returnAddressName = function(name, email) {
   return `${name ? name : email.split('@')[0]}`;
 };
 
-module.exports.returnProductImage = function(name) {
+module.exports.returnProductImage = function(name, height = 110, width = 75) {
   const imageRequest = JSON.stringify({
     bucket: enums.BUCKETS.BOOK,
     key: name,
     edits: {
       resize: {
-        height: 110,
-        width: 75,
+        height,
+        width,
         fit: 'cover',
       }
     }
