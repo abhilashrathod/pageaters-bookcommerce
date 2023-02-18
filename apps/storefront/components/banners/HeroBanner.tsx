@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import AppButton from "../form-controls/Button";
 
-import {LG, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
+import {LG, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 import {IBanner} from "../../schemas/banner";
 import {useRouter} from "next/router";
 import {getAssetImage} from "../../core/_imageRendererHelper";
@@ -15,11 +15,12 @@ interface Props {
 
 const Hero = styled.section`
   background-repeat: no-repeat;
-  background-position: center right;
+  background-position: center center;
   background-size: cover;
 
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  padding-bottom: 2rem;
   position: relative;
   z-index: 0;
   
@@ -29,7 +30,7 @@ const Hero = styled.section`
     content: "";
     display: block;
     background: rgb(0, 0, 0);
-    background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.3) -25%, transparent 100%);
+    background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
     left: 0;
     top: 0;
     height: 100%;
@@ -47,14 +48,12 @@ const Hero = styled.section`
   }
 `;
 
-const HeroTitleSection = styled.div`
-  @media screen and (max-width: ${MD - 1}px) {      
-      text-align: center;
-  }
+const HeroTitleSection = styled.div`        
+  text-align: center;
 `;
 
 const HeroTitle = styled.h2`
-  color: #fff;
+  color: ${SECONDARY_COLOR};
   position: relative;
   font-size: 3.714rem;
   line-height: 4rem;
@@ -89,20 +88,20 @@ const HeroBanner: React.FC<Props> = ({banner}) => {
 
   function handleNavigation() {
     // @ts-ignore
-    router.push(!loggedIn ? banner.ctaLink : '/categories');
+    router.push('/categories');
   }
 
   return (
       <Hero style={{backgroundImage: `url(${renderBanner(banner.poster)})`}}>
         <div className="custom-container" style={{zIndex: 1}}>
           <div className="row">
-            <div className="col-xxl-4 col-lg-6 col-12">
+            <div className="col-12">
               <HeroTitleSection>
                 <HeroTitle>{banner.title}</HeroTitle>
-                <HeroSubTitle>From 7th Feb to 15th Feb. Discount on All Titles!</HeroSubTitle>
+                <HeroSubTitle>Novels • Literature • Self-Help</HeroSubTitle>
                 <div>
                   <AppButton variant={'secondary'} onClick={handleNavigation}>
-                    {loggedIn ? 'Explore' : 'Get Started'}
+                    {'Explore'}
                   </AppButton>
                 </div>
               </HeroTitleSection>

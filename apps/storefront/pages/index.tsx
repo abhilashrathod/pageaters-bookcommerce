@@ -170,8 +170,8 @@ const Home: NextPage = (props: any) => {
 
 Home.getInitialProps = () => {
   const HERO_BANNER = {
-    poster: 'girl-is-reading-book-cafe.jpg',
-    title: 'Pageaters Valentine\'s day Sale is live now!',
+    poster: 'smiling-brunette-woman-shirt-reading-book-min.jpg',
+    title: `Pageaters: India's most loved bookstore!`,
     ctaLink: '/auth/register'
   };
 
