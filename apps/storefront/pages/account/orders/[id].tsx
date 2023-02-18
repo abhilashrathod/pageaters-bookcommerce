@@ -398,6 +398,8 @@ const ShipmentAction = ({shipment}: ShipmentActionProps) => {
 
 const CancelAction = ({orderId}: CancelActionProps) => {
   const [open, setOpen] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [error, setError] = useState('');
 
   const form = useForm({
     initialValues: {
@@ -420,7 +422,9 @@ const CancelAction = ({orderId}: CancelActionProps) => {
       updateOrder();
       closeModal();
     } catch (e: any) {
-      showNotification({message: e.message, color: 'red', autoClose: 3000});
+      // showNotification({message: e.message, color: 'red', autoClose: 3000});
+      setErrorOpen(true);
+      setError(e.message);
     }
   }
 
@@ -485,6 +489,14 @@ const CancelAction = ({orderId}: CancelActionProps) => {
               <SubmitButton type={'submit'}>Submit and Cancel Order</SubmitButton>
             </form>
           </div>
+        </Modal>
+
+        <Modal
+          opened={errorOpen}
+          onClose={() => setErrorOpen(false)}
+          title="Error!"
+        >
+          <p>{error}</p>
         </Modal>
       </>
   )
