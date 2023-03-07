@@ -32,7 +32,9 @@ const MainCardWrapper = styled.div`
   position: relative;
   border-radius: 1.5rem;
   padding: 2.5rem;
-  background: linear-gradient(to right, #6dd5ed, #2193b0);  
+  background: #f953c6;
+  background: -webkit-linear-gradient(to right, #f953c6, #b91d73);  
+  background: linear-gradient(to right, #f953c6, #b91d73);
     
   @media screen and (max-width: ${MD - 1}px) {
    
@@ -185,11 +187,11 @@ const PreOrderBanner: React.FC<Props> = () => {
   const router = useRouter();
 
   function renderImageSize(w: number, h: number) {
-    return getProductImage("icebreaker-PXGH54MWXB-1674293344459.jpg", {height: h, width: w, fit: 'cover'});
+    return getProductImage("things-we-hide-from-the-light-O1xb7U59u8-1676113126252.jpg", {height: h, width: w, fit: 'cover'});
   }
 
   function handleNavigation() {
-    router.push('/books/BK-9818112389');
+    router.push('/books/BK-2730533083');
   }
 
   const TAGS = [
@@ -216,8 +218,8 @@ const PreOrderBanner: React.FC<Props> = () => {
                 <div className="col-12 col-lg-9">
                   <BannerContent>
                     <BannerTextSpace>
-                      <BannerTitle>{'New Release "Icebreaker"'}</BannerTitle>
-                      <BannerSubTitle>{TAGS.map((tag: string, index: number) => <BannerTag key={index}>{tag}</BannerTag>)}</BannerSubTitle>
+                      <BannerTitle>{'New Release "Things We Hide from the Light"'}</BannerTitle>
+                      {/*<BannerSubTitle>{TAGS.map((tag: string, index: number) => <BannerTag key={index}>{tag}</BannerTag>)}</BannerSubTitle>*/}
                     </BannerTextSpace>
                     <BannerLearnMore>
                       <AppButton onClick={handleNavigation} variant={ButtonVariants.Default} size={ButtonSizes.Default}>
