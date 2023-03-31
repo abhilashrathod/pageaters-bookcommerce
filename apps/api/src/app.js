@@ -8,7 +8,7 @@ const multer = require('multer');
 const i18n = require('i18n');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const cron = require('node-cron');
+// const cron = require('node-cron');
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 
@@ -167,9 +167,9 @@ module.exports.startServer = async () => {
     await require('../scripts/seedData').initSeedData();
 
     // cron for google products feed
-    cron.schedule('0 21 * * mon', async () => {
-      await writeGoogleData();
-    });
+    // cron.schedule('0 21 * * mon', async () => {
+    //   await writeGoogleData();
+    // });
 
     this.app.listen(PORT, async () => {
       console.log(`Listening on port ${PORT}`);

@@ -133,12 +133,13 @@ module.exports.getByUniqueId = async (req, res) => {
       select: 'categoryId _id title numberOfBooks thumbnail',
     }];
 
-    let productSetRes = await ProductSets.findOne({ setId: id, isActive: true })
-      .populate(populateOptions);
+    let productSetRes = await ProductSets.findOne({ setId: id, isActive: true }).populate(populateOptions);
+    const sortFun = (item) => item.priority;
+    const mapFun = (item) => item.product;
 
     if (productSetRes) {
       productSetRes = productSetRes.toObject();
-      productSetRes.products = sortBy(productSetRes.products, (item) => item.priority);
+      productSetRes.products = map(sortBy(productSetRes.products, sortFun), mapFun);
       return res.ok({ message: 'PRODUCT_SET_LIST_SUCCESS', data: productSetRes });
     } else {
       return res.error('PRODUCT_SET_NOT_EXIST');
