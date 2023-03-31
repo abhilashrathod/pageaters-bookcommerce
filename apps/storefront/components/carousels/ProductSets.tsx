@@ -112,8 +112,7 @@ const ProductSets: React.FC<Props> = ({title, products}) => {
                         products.map((book: IBook) => {
                           return (
                               <div className="keen-slider__slide" key={book._id}>
-                                <ProductCardLandScape book={book}
-                                                      analytics={{listId: kebabCase(title), listName: title}}/>
+                                <ProductCardLandScape book={book} analytics={{listId: kebabCase(title), listName: title}}/>
                               </div>
                           )
                         })

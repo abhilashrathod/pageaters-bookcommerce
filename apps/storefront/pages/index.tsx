@@ -13,8 +13,8 @@ import ProductSets from "../components/carousels/ProductSets";
 import Bundles from "../components/carousels/Bundles";
 import GiantSquareBanner from "../components/banners/GiantSquareBanner";
 import PreOrderBanner from "../components/banners/PreOrderBanner";
-// import LandscapeBanner from "../components/banners/LandscapeBanner";
-// import FeaturedBooks from "../components/carousels/FeaturedBooks";
+import LandscapeBanner from "../components/banners/LandscapeBanner";
+import FeaturedBooks from "../components/carousels/FeaturedBooks";
 
 import {MD, SM} from "../core/_variables";
 import {IBanner} from "../schemas/banner";
@@ -43,15 +43,25 @@ const META = {
 };
 
 const Home: NextPage = (props: any) => {
-  const {data: newArrivalRes, error: newArrivalErr} = useSWR({url: `/product-sets/slug/new-arrivals-xUnVs1`});
-  const {data: mostDiscountedRes, error: mostDiscountedErr} = useSWR({url: `/product-sets/slug/most-discounted-cyLclz`});
-  const {data: popularRes, error: popularErr} = useSWR({url: `/product-sets/slug/trending-books-boQMVB`});
+  const {data: firstRowProductsRes, error: firstRowProductsErr} = useSWR({url: `/product-sets/unique/SET-2794870116`});
+  const {data: secondRowProductsRes, error: secondRowProductsErr} = useSWR({url: `/product-sets/unique/SET-8402842627`});
+  const {data: thirdRowProductsRes, error: thirdRowProductsErr} = useSWR({url: `/product-sets/unique/SET-4310637033`});
+  const {data: forthRowProductsRes, error: forthRowProductsErr} = useSWR({url: `/product-sets/unique/SET-6205230899`});
+  const {data: fifthRowProductsRes, error: fifthRowProductsErr} = useSWR({url: `/product-sets/unique/SET-1057060109`});
+  const {data: sixthRowProductsRes, error: sixthRowProductsErr} = useSWR({url: `/product-sets/unique/SET-3587650210`});
+  const {data: seventhRowProductsRes, error: seventhRowProductsErr} = useSWR({url: `/product-sets/unique/SET-8781010649`});
+
   const {data: bundlesRes, error: bundlesErr} = useSWR({url: `/bundles?page=1&limit=12&sortBy=priority&sortOrder=asc`});
   const {data: collectionsRes, error: collectionsErr} = useSWR({url: `/collections?page=1&limit=10&sortBy=priority&sortOrder=asc`});
 
-  const newArrivals = get(newArrivalRes, 'data.products', []);
-  const mostDiscounted = get(mostDiscountedRes, 'data.products', []);
-  const mostPopular = get(popularRes, 'data.products', []);
+  const {title: firstRowTitle, products: firstRowProducts} = get(firstRowProductsRes, 'data', {});
+  const {title: secondRowTitle, products: secondRowProducts} = get(secondRowProductsRes, 'data', {});
+  const {title: thirdRowTitle, products: thirdRowProducts} = get(thirdRowProductsRes, 'data', {});
+  const {title: forthRowTitle, products: forthRowProducts} = get(forthRowProductsRes, 'data', {});
+  const {title: fifthRowTitle, products: fifthRowProducts} = get(fifthRowProductsRes, 'data', {});
+  const {title: sixthRowTitle, products: sixthRowProducts} = get(sixthRowProductsRes, 'data', {});
+  const {title: seventhRowTitle, products: seventhRowProducts} = get(seventhRowProductsRes, 'data', {});
+  
   const bundles = get(bundlesRes, 'data.docs', []);
   const collections = get(collectionsRes, 'data.docs', []);
 
@@ -100,26 +110,26 @@ const Home: NextPage = (props: any) => {
             <Categories/>
           </section>
 
-          {/*<section className="py-25 mb-25">*/}
-          {/*  <div className="custom-container">*/}
-          {/*    <div className="row">*/}
-          {/*      <div className="col">*/}
-          {/*        <h1 className="jumbo-1">*/}
-          {/*          Happy Holidays!*/}
-          {/*        </h1>*/}
-          {/*        <h1 className="display-1">from Pageaters</h1>*/}
-          {/*      </div>*/}
-          {/*    </div>*/}
-          {/*    <div className="row">*/}
-          {/*      <div className="col-12 col-xl-6">*/}
-          {/*        <LandscapeBanner banner={discountItem}/>*/}
-          {/*      </div>*/}
-          {/*      <div className="col-12 col-xl-6">*/}
-          {/*        <LandscapeBanner banner={bannerCollectionItem}/>*/}
-          {/*      </div>*/}
-          {/*    </div>*/}
-          {/*  </div>*/}
-          {/*</section>*/}
+          {/* <section className="py-25 mb-25">
+           <div className="custom-container">
+             <div className="row">
+               <div className="col">
+                 <h1 className="jumbo-1">
+                   Happy Holidays!
+                 </h1>
+                 <h1 className="display-1">from Pageaters</h1>
+               </div>
+             </div>
+             <div className="row">
+               <div className="col-12 col-xl-6">
+                 <LandscapeBanner banner={discountItem}/>
+               </div>
+               <div className="col-12 col-xl-6">
+                 <LandscapeBanner banner={bannerCollectionItem}/>
+               </div>
+             </div>
+           </div>
+          </section> */}
 
           <section className={'mb-25'}>
             <PreOrderBanner/>
@@ -129,9 +139,21 @@ const Home: NextPage = (props: any) => {
           {/*  <FeaturedCategory/>*/}
           {/*</FeaturedCategorySection>*/}
 
-          <section className={'mb-25'}>
-            <ProductSets title={'New Arrivals'} products={newArrivals}/>
-          </section>
+          {
+            firstRowProducts && firstRowProducts.length > 0 && (
+              <section className={'mb-25'}>
+                <ProductSets title={firstRowTitle} products={firstRowProducts}/>
+              </section>  
+            )
+          }
+
+          {
+            secondRowProducts && secondRowProducts.length > 0 && (
+              <section className={'mb-25'}>
+                <ProductSets title={secondRowTitle} products={secondRowProducts}/>
+              </section>  
+            )
+          }
 
           {/*<section className={'mb-25'}>*/}
           {/*  <FeaturedDeals/>*/}
@@ -141,13 +163,42 @@ const Home: NextPage = (props: any) => {
             <Bundles title={'Spectacular Bundles'} bundles={bundles}/>
           </section>
 
-          <section className={'mb-25'}>
-            <ProductSets title={'Best Sellers'} products={mostPopular}/>
-          </section>
+          {
+            thirdRowProducts && thirdRowProducts.length > 0 && (
+              <section className={'mb-25'}>
+                <ProductSets title={thirdRowTitle} products={thirdRowProducts}/>
+              </section>  
+            )
+          }
+
+          {
+            forthRowProducts && forthRowProducts.length > 0 && (
+              <section className={'mb-25'}>
+                <ProductSets title={forthRowTitle} products={forthRowProducts}/>
+              </section>  
+            )
+          }          
 
           <section className={'mb-25'}>
             <CollectionsCarousel title={'Spotlight Collections'} collections={collections}/>
           </section>
+
+          {
+            sixthRowProducts && sixthRowProducts.length > 0 && (
+              <section className={'mb-25'}>
+                <ProductSets title={sixthRowTitle} products={sixthRowProducts}/>
+              </section>  
+            )
+          }
+
+
+          {
+            fifthRowProducts && fifthRowProducts.length > 0 && (
+              <section className={'mb-25'}>
+                <ProductSets title={fifthRowTitle} products={fifthRowProducts}/>
+              </section>  
+            )
+          }
 
           <section className="mb-25">
             {/*<GiantFullBleedBanner banner={{*/}
@@ -160,9 +211,13 @@ const Home: NextPage = (props: any) => {
             }}/>
           </section>
 
-          <section className={'mb-25'}>
-            <ProductSets title={'Most Discounted'} products={mostDiscounted}/>
-          </section>
+          {
+            seventhRowProducts && seventhRowProducts.length > 0 && (
+              <section className={'mb-25'}>
+                <ProductSets title={seventhRowTitle} products={seventhRowProducts}/>
+              </section>  
+            )
+          }
         </PageWrapper>
       </>
   )
