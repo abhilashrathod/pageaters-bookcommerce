@@ -50,7 +50,7 @@ const Terms: NextPage = () => {
                   please click the print button on your browser toolbar.
                 </p>
 
-                <h6>1. PRODUCTS</h6>
+                <h6>1. Products</h6>
                 <p>Terms of Offer. This Website offers for sale certain products (the &#34;Products&#34;). By placing an order
                   for Products through this Website, you agree to the terms set forth in this Agreement.</p>
                 <p><strong>Customer Solicitation:</strong> Unless you notify our third party call center reps or direct

@@ -159,6 +159,10 @@ export const FOOTER_NAVIGATION = [
       {
         linkName: 'Shipping Policy',
         linkHref: '/shipping',
+      },
+      {
+        linkName: 'Store Credit Policy',
+        linkHref: '/store-credit',
       }
     ]
   },

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import Head from "next/head";
 import cookie from "js-cookie";
 import {useRouter} from "next/router";
@@ -7,7 +7,7 @@ import axios from "axios";
 import {get} from 'lodash';
 import styled from "styled-components";
 import {showNotification} from "@mantine/notifications";
-import {Accordion, Alert, Checkbox, Loader, Radio, Skeleton, Textarea, TextInput} from "@mantine/core";
+import {Accordion, Alert, Checkbox, Button, Loader, Radio, Skeleton, Textarea, TextInput} from "@mantine/core";
 
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
@@ -26,6 +26,7 @@ import emptyCart from "../../public/illustrations/empty-cart.svg";
 import {completePurchase} from "../../core/_analytics";
 import PageLoader from "../../components/elements/PageLoading";
 import MysteryBoxItem from "../../components/cart-elements/cart-mystery-box";
+import { useForm } from '@mantine/form';
 
 interface Props {
 }
@@ -133,6 +134,7 @@ const Checkout: React.FC<Props> = () => {
   const router = useRouter();
 
   const {data: orderRes, error} = useSWR({url: isLoggedIn ? `/orders/retrieve` : null, withCredentials: true});
+  const {data: creditRes} = useSWR({url: isLoggedIn ? `/store-credit` : null, withCredentials: true});
   const {data: userRes} = useSWR({url: isLoggedIn ? `/auth/me` : null, withCredentials: true});
   const {data: cartRes} = useSWR({url: isLoggedIn ? `/cart/retrieve` : null, withCredentials: true});
 
@@ -156,6 +158,46 @@ const Checkout: React.FC<Props> = () => {
   const books = get(cartRes, 'data.products', []);
   const bundles = get(cartRes, 'data.bundles', []);
   const mysteryBoxes = get(cartRes, 'data.mysteryBoxes', []);
+  const storeCredit = get(creditRes, 'data.storeCredit', 0);
+
+  const form = useForm({
+    initialValues: {
+      credit: storeCredit,
+    },
+
+    validate: {
+      credit: (value) => (/^\d+$/.test(value) ? null : 'Invalid amount. Only numbers are allowed'),
+    },
+  });
+
+  function updateOrder() {
+    mutate({url: `/orders/retrieve`, withCredentials: true});
+  }
+
+  async function handleCreditSubmit(values: any) {
+    try {
+      const {credit} = values;
+      
+      if (credit < 0) {
+        return showNotification({message: `Negative credit can not be applied!`, color: 'red', autoClose: 3000});
+      }
+      
+      if (credit > storeCredit) {
+        return showNotification({message: `Requested credit not available`, color: 'red', autoClose: 3000});
+      }
+
+      if (credit > order.total) {
+        return showNotification({message: `Can't apply store credit more than the order value`, color: 'red', autoClose: 3000});
+      }
+
+      await axios.patch(`/orders/credit`, {amount: credit, uniqueId: order.orderId}, {withCredentials: true});
+      updateOrder();
+
+      showNotification({message: 'Store credit applied!', color: 'green', autoClose: 3000});
+    } catch (e: any) {
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
+    }
+  }
 
   async function createOrder() {
     try {
@@ -288,8 +330,7 @@ const Checkout: React.FC<Props> = () => {
   if (books.length === 0 && bundles.length === 0 && mysteryBoxes.length === 0)
     return (
         <PageWrapper>
-          <EmptyMessageWithGraphic title={'Cart is empty'} illustration={emptyCart} illustrationHeight={'300px'}
-                                   illustrationWidth={'300px'}/>
+          <EmptyMessageWithGraphic title={'Cart is empty'} illustration={emptyCart} illustrationHeight={'300px'} illustrationWidth={'300px'}/>
         </PageWrapper>
     );
 
@@ -379,6 +420,30 @@ const Checkout: React.FC<Props> = () => {
                                 }
                               </Accordion.Panel>
                             </Accordion.Item>
+                            <Accordion.Item value={'store-credit'}>
+                              <Accordion.Control>
+                                Redeem Store Credit
+                              </Accordion.Control>
+                              <Accordion.Panel>
+                                <form onSubmit={form.onSubmit(handleCreditSubmit)}>
+                                  <TextInput
+                                      label="Enter Amount"
+                                      description={'Available Credit: INR ' + storeCredit}
+                                      styles={{
+                                        input: {
+                                          width: '200px',
+                                        }
+                                      }}
+                                      placeholder="Eg. 500"
+                                      {...form.getInputProps('credit')}
+                                    />
+
+                                  <Button type='submit' color="dark" size="xs" styles={{root: {margin: '15px 0'}}}>
+                                    Apply!
+                                  </Button>
+                                </form>
+                              </Accordion.Panel>
+                            </Accordion.Item>
                             <Accordion.Item value={'address'}>
                               <Accordion.Control>
                                 Delivery Address
@@ -448,8 +513,8 @@ const Checkout: React.FC<Props> = () => {
                                   <Radio.Group value={paymentMethod} onChange={handleChangePaymentMethod} spacing="xs"
                                                orientation="vertical" label="Please Select Preferred Payment Method"
                                                required>
-                                    <Radio value="online" label="Pay Online (Credit Cards, Debit Cards, Wallets, UPIs)"/>
-                                    <Radio value="cod" label="Cash on Delivery"/>
+                                    <Radio value="online" label="Pay Online (Priority, Express Shipping)"/>
+                                    <Radio value="cod" label="Cash on Delivery (Standard Shipping)"/>
                                   </Radio.Group>
                                 </InputWrapper>
                                 <InputWrapper>
@@ -473,6 +538,7 @@ const Checkout: React.FC<Props> = () => {
                               <>
                                 <CartBreakdown cart={cart}
                                                shippingCharges={order?.shipping}
+                                               storeCredit={order?.storeCredit}
                                                giftCharges={giftOptions.isGift ? giftOptions.options.cost : undefined}
                                                orderTotal={order?.total}/>
                                 <AppButton variant={ButtonVariants.Accent}

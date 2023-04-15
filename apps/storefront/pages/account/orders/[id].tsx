@@ -733,6 +733,13 @@ const OrderDetails: React.FC<Props> = () => {
                                   </OrderAmountListItem>
                               )
                             }
+                            {
+                              order.storeCredit > 0  && (
+                                  <OrderAmountListItem>
+                                    <span>Store Credit:</span><span>{currencyFormat(order.storeCredit)}</span>
+                                  </OrderAmountListItem>
+                              )
+                            }
                             <OrderAmountListItem>
                               <span>Grand Total:</span><span>{currencyFormat(order.total)}</span>
                             </OrderAmountListItem>

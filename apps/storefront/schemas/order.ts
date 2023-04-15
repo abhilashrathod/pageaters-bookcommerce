@@ -88,6 +88,7 @@ export interface IOrder {
   discount: any;
   subTotal: number;
   shipping: number;
+  storeCredit: number;
   weight: number;
   total: number;
 }
