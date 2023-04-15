@@ -32,9 +32,9 @@ const MainCardWrapper = styled.div`
   position: relative;
   border-radius: 1.5rem;
   padding: 2.5rem;
-  background: #f953c6;
-  background: -webkit-linear-gradient(to right, #f953c6, #b91d73);  
-  background: linear-gradient(to right, #f953c6, #b91d73);
+  background: #41295a;
+  background: -webkit-linear-gradient(to right, #2F0743, #41295a);
+  background: linear-gradient(to right, #2F0743, #41295a);
     
   @media screen and (max-width: ${MD - 1}px) {
    
@@ -187,11 +187,11 @@ const PreOrderBanner: React.FC<Props> = () => {
   const router = useRouter();
 
   function renderImageSize(w: number, h: number) {
-    return getProductImage("things-we-hide-from-the-light-O1xb7U59u8-1676113126252.jpg", {height: h, width: w, fit: 'cover'});
+    return getProductImage("king-of-pride-Ix6qZt76FR-1680517655298.jpeg", {height: h, width: w, fit: 'cover'});
   }
 
   function handleNavigation() {
-    router.push('/books/BK-2730533083');
+    router.push('/books/BK-5088602581');
   }
 
   const TAGS = [
@@ -211,18 +211,18 @@ const PreOrderBanner: React.FC<Props> = () => {
               <div className="row">
                 <div className="col-12 col-lg-3">
                   <BannerImageSpace>
-                    <BannerImage src={renderImageSize(250, 380)} loading={"lazy"} alt={'New Release "Icebreaker"'}
+                    <BannerImage src={renderImageSize(250, 380)} loading={"lazy"} alt={'Pre-order "King of Pride"'}
                                  height={380} width={250}/>
                   </BannerImageSpace>
                 </div>
                 <div className="col-12 col-lg-9">
                   <BannerContent>
                     <BannerTextSpace>
-                      <BannerTitle>{'New Release "Things We Hide from the Light"'}</BannerTitle>
+                      <BannerTitle>{'Pre-order "King of Pride"'}</BannerTitle>
                       {/*<BannerSubTitle>{TAGS.map((tag: string, index: number) => <BannerTag key={index}>{tag}</BannerTag>)}</BannerSubTitle>*/}
                     </BannerTextSpace>
                     <BannerLearnMore>
-                      <AppButton onClick={handleNavigation} variant={ButtonVariants.Default} size={ButtonSizes.Default}>
+                      <AppButton onClick={handleNavigation} variant={ButtonVariants.Secondary} size={ButtonSizes.Default}>
                         Buy Now!
                       </AppButton>
                     </BannerLearnMore>
