@@ -71,13 +71,13 @@ const Categories: React.FC<Props> = () => {
                   data
                       ? data?.data?.docs.map((category: ICategory) => {
                         return (
-                            <div key={category.categoryId} className="col-xxl-3 col-lg-4 col-md-4 col-12">
+                            <div key={category.categoryId} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6 mb-1">
                               <CategoryCardLarge category={category}/>
                             </div>
                         )
                       })
                       : [0, 0, 0, 0, 0, 0, 0, 0].map((item, index) => (
-                          <div key={index} className="col-xxl-3 col-lg-4 col-md-4 col-6">
+                          <div key={index} className="col-xxl-2 col-xl-3 col-lg-3 col-md-3 col-6 mb-1">
                             <Skeleton height={400} radius="lg" mb={25}/>
                           </div>
                       ))

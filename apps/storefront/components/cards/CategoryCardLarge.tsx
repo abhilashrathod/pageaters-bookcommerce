@@ -23,20 +23,8 @@ const CategoryItem = styled.div`
 const CategoryImage = styled.img`
   border-radius: 1rem;
   background-size: cover;
+  object-fit: cover;
   width: 100%;
-  height: 400px;
-  
-  @media screen and (max-width: ${LG - 1}px) {      
-    height: 300px; 
-  }
-  
-  @media screen and (max-width: ${MD - 1}px) {      
-    height: 220px;
-  }
-  
-  @media screen and (max-width: ${SM - 1}px) {      
-    height: 180px;
-  }
 `;
 
 const CategoryTitleArea = styled.div`         
@@ -44,7 +32,7 @@ const CategoryTitleArea = styled.div`
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 25%;
+  height: 20%;
   -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
   background-color: rgba(255, 255, 255, 0.2);
@@ -54,34 +42,31 @@ const CategoryTitleArea = styled.div`
   align-items: center;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-
-  @media screen and (max-width: ${SM - 1}px) {      
-    height: 30%;
-  }
 `;
 
 const CategoryTitle = styled.h4`
-  font-size: 2.5rem;
+  font-size: 1.8rem;
   letter-spacing: -1px;
   text-align: center;
-  line-height: 2.5rem;
+  margin-bottom: 0;
+  line-height: 1.9rem;
   color: ${SECONDARY_COLOR};
   
   @media screen and (max-width: ${LG - 1}px) {      
-    font-size: 1.75rem;
-    line-height: 1.75rem;
+    font-size: 1.4rem;
+    line-height: 1.5rem;
     letter-spacing: normal;  
   }
   
   @media screen and (max-width: ${MD - 1}px) {      
-    font-size: 2.25rem;
-    line-height: 2.25rem;
+    font-size: 1.125rem;
+    line-height: 1.3rem;
     letter-spacing: normal;
   }
   
   @media screen and (max-width: ${SM - 1}px) {      
-    font-size: 1.25rem;
-    line-height: 1.25rem;
+    font-size: 1rem;
+    line-height: 1.1rem;
     letter-spacing: normal;
   }
 `;
@@ -101,7 +86,7 @@ const CategoryCardLarge: React.FC<Props> = ({category}) => {
   return (
       <>
         <CategoryItem onClick={handleRedirection}>
-          <CategoryImage src={(width <= MD - 1) ? renderImageSize(400, 180) : renderImageSize(400, 400)}>
+          <CategoryImage src={renderImageSize(247, 375)}>
           </CategoryImage>
           <CategoryTitleArea>
             <CategoryTitle>
