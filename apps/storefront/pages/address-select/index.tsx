@@ -307,6 +307,7 @@ const AddressSelect: React.FC<Props> = () => {
                                 <>
                                   <CartBreakdown
                                       cart={cart}
+                                      storeCredit={0}
                                       shippingCharges={'Calculated at Checkout'}
                                       orderTotal={cart.subTotal}/>
                                   <AppButton

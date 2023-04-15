@@ -256,7 +256,7 @@ const Cart: React.FC<Props> = () => {
                             <div className="col-xl-4 col-md-4 col-12">
                               <div className="breakdown">
                                 <h5>Bill Details</h5>
-                                {cart && <CartBreakdown cart={cart} shippingCharges={'Calculated at Checkout'} orderTotal={cart.subTotal}/>}
+                                {cart && <CartBreakdown storeCredit={0} cart={cart} shippingCharges={'Calculated at Checkout'} orderTotal={cart.subTotal}/>}
                                 <AppButton variant={ButtonVariants.Accent}
                                            size={ButtonSizes.Large}
                                            styles={{width: '100%', display: 'block'}}
