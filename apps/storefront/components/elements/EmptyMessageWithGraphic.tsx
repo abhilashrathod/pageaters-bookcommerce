@@ -13,6 +13,7 @@ const IllustrationImage = styled.img`
   width: ${(props) => props.width};
   height: ${(props) => props.height};
   margin-bottom: 2rem;
+  margin-top: 2rem;
 `;
 
 const EmptyMessageWithGraphic: React.FC<Props> = ({title, illustration, illustrationHeight, illustrationWidth}) => {

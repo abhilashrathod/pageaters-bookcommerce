@@ -12,6 +12,8 @@ import Head from "next/head";
 import PageWrapper from "../../components/elements/PageWrapper";
 import EmptySectionMessage from "../../components/elements/FailedToLoad";
 
+import TransactionHistory from "../../public/illustrations/transaction-history.svg";
+
 import {
   AUTH_COOKIE,
   LIGHTER_PRIMARY_COLOR,
@@ -23,6 +25,7 @@ import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageHeadings from "../../components/elements/PageHeadings";
 import { ICreditTransaction } from "../../schemas/credit-transaction";
 import { currencyFormat } from "../../core/_helpers";
+import EmptyMessageWithGraphic from "../../components/elements/EmptyMessageWithGraphic";
 
 const BREADCRUMBS_ITEMS = [
   { title: "Home", href: "/" },
@@ -167,7 +170,8 @@ const StoreCredit: React.FC<Props> = () => {
                 </StoreCreditAmount>
               </div>
               <div className="col-xxl-8 col-xl-8 col-12">
-                <h6>Transaction History</h6>
+                {storeCreditTransactions.length > 0 && <h6>Transaction History</h6>}
+                
                 {storeCreditTransactions.length > 0 ? (
                   storeCreditTransactions.map(
                     (creditItem: ICreditTransaction, index: number) => {
@@ -198,7 +202,7 @@ const StoreCredit: React.FC<Props> = () => {
                     }
                   )
                 ) : (
-                  <p>No Transaction History</p>
+                  <EmptyMessageWithGraphic illustration={TransactionHistory} illustrationHeight="100px" illustrationWidth="100px" title="No Transaction History" />
                 )}
               </div>
             </div>
