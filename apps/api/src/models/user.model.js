@@ -78,9 +78,6 @@ class User {
 
     const user = await this.findOne({ email: tokenData.email, verifyEmailToken: { $ne: '' }, isDeleted: false });
 
-    console.log("user", JSON.stringify(user));
-    console.log("tokenData", JSON.stringify(tokenData));
-
     if (!user) {
       return { success: false, message: 'INVALID_TOKEN', helper: 'USER_NOT_FOUND' };
     } else if (user._id.toString() !== tokenData.userId) {

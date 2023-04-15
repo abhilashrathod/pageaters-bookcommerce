@@ -1074,7 +1074,6 @@ function resetCart(userId) {
 }
 
 function deductStoreCredit(orderId, userId, creditToDeduct) {
-  console.log({orderId, userId, creditToDeduct});
   return new Promise(async (resolve, reject) => {
     await User.findOneAndUpdate({ _id: userId },  { $inc: { storeCredit: -creditToDeduct } } , { new: true });
 
