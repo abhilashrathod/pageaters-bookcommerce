@@ -30,9 +30,7 @@ class SendMailQueue {
 
     if (emailModule) {
       let emailTemplate;
-
-      console.log("data", data);
-
+      
       ejs
         .renderFile(path.join(PROJECT_ROOT, 'src', 'templates', 'email', emailModule, `${language}.ejs`), { ...data }, async (err, res) => {
           if (err) {

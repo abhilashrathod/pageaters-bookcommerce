@@ -13,6 +13,7 @@ const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const Address = mongoose.model(models.ADDRESS);
 const User = mongoose.model(models.USER);
+const StoreCreditTransaction = mongoose.model(models.STORE_CREDIT_TRANSACTIONS);
 const Order = mongoose.model(models.ORDER);
 const Cart = mongoose.model(models.CART);
 const Book = mongoose.model(models.STORE_BOOK);
@@ -130,6 +131,7 @@ module.exports.create = async (req, res) => {
     let shipping;
     let discount = 0;
     let giftCard = 0;
+    let storeCredit = 0;
     let giftCharges = giftOptions.isGift ? get(giftOptions, 'details.cost', 0) : 0;
 
     if (!cart || !userId) {
@@ -163,18 +165,19 @@ module.exports.create = async (req, res) => {
     let totalWeight = await calculateTotalWeight(books, bundles, mysteryBoxes);
 
     /* CALCULATE SHIPPING AMOUNT */
-    const addressRes = await Address.findOne({ isDeleted: false, _id: currentOrderRes.deliveryAddress._id, userId });
     const shippingRes = await calculateShipping(subTotal > 599, finalMysteryBoxes.length > 0);
     shipping = shippingRes.deliveryAmount;
-
     /* END CALCULATE SHIPPING AMOUNT */
 
     /* TODO: DO SOME GIFT CART DEDUCTION IF ANY */
 
     /* TODO: DO SOME DISCOUNT DEDUCTION IF ANY */
 
+    /* STORE CREDIT DEDUCTION */
+    storeCredit = currentOrderRes.storeCredit || 0;
+
     /* ADDING EVERYTHING UP! */
-    total = subTotal + shipping + discount + giftCard + giftCharges;
+    total = (subTotal + shipping + giftCharges) - storeCredit;
 
     let razorPayOrderResponse, payload;
 
@@ -199,6 +202,7 @@ module.exports.create = async (req, res) => {
     currentOrderRes.subTotal = subTotal;
     currentOrderRes.shipping = shipping;
     currentOrderRes.total = total;
+    currentOrderRes.storeCredit = storeCredit;
     currentOrderRes.orderDate = new Date().toISOString();
     currentOrderRes.giftCard = null; // here goes the gift card id
     currentOrderRes.discount = null; // here goes the discount id
@@ -232,6 +236,13 @@ module.exports.create = async (req, res) => {
 
       // send SMS
       await sendConfirmationMessage(userRes, currentOrderRes.orderId);
+
+      // deduct store credit
+      if (storeCredit > 0) {
+        const transactionId = await deductStoreCredit(currentOrderRes._id, currentOrderRes.userId, storeCredit);
+        currentOrderRes.storeCreditTransaction = transactionId;
+        await currentOrderRes.save();
+      }
 
       // send EMAIL
       await sendConfirmationEmail(userRes, currentOrderRes);
@@ -288,6 +299,13 @@ module.exports.verifyAndConfirm = async (req, res) => {
         // reset and clear card after order success
         await resetCart(orderRes.userId);
 
+        // deduct store credit
+        if (orderRes.storeCredit > 0) {
+          const transactionId = await deductStoreCredit(orderRes._id, orderRes.userId, orderRes.storeCredit);
+          orderRes.storeCreditTransaction = transactionId;
+          await orderRes.save();
+        }
+
         // send SMS
         await sendConfirmationMessage(userRes, orderRes.orderId);
 
@@ -312,7 +330,7 @@ module.exports.getByUniqueId = async (req, res) => {
     const userId = get(req, 'user.userId', '');
 
     let orderRes = await Order.findOne({ orderId: uniqueId, userId })
-      .select(`orderId orderDate giftOptions deliveryAddress shipmentTrackingId orderHistory payment orderStatus subTotal products boxes bundles shipping total`)
+      .select(`orderId orderDate giftOptions deliveryAddress storeCredit shipmentTrackingId orderHistory payment orderStatus subTotal products boxes bundles shipping total`)
       .populate(orderPopulateOptions);
 
     if (orderRes) {
@@ -386,11 +404,12 @@ module.exports.getAllByUser = async (req, res) => {
 module.exports.retrieve = async (req, res) => {
   try {
     const userId = get(req, 'user.userId', '');
+    const selectString = `orderId userId subTotal orderDate storeCredit total shipping giftOptions deliveryInstructions orderHistory deliveryAddress boxed bundles products total`;
 
     const orderRes = await Order.findOne({
       userId,
       $or: [{ orderStatus: enums.ORDER_STAGES.ATTEMPTED }, { orderStatus: enums.ORDER_STAGES.CREATED }],
-    }).populate(orderPopulateOptions);
+    }).select(selectString).populate(orderPopulateOptions);
 
     if (orderRes) {
       return res.ok({ message: 'ORDER_LIST_SUCCESS', data: orderRes });
@@ -550,6 +569,42 @@ module.exports.completeShipment = async (req, res) => {
     // TODO: In mail ask for review and delivery experience
 
     return res.ok({ message: 'ORDER_UPDATE_SUCCESS', data: orderRes });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.applyStoreCredit = async (req, res) => {
+  try {
+    let { uniqueId, amount } = req.allParams();
+
+    const userId = get(req, 'user.userId', '');
+
+    const userRes = await User.findOne({ _id: userId }).select(`storeCredit`);
+    const orderRes = await Order.findOne({ orderId: uniqueId, userId }).populate(populateOptions);
+
+    if (!orderRes || !userRes) {
+      return res.error('ORDER_INFO_ATTEMPT_FAILED');
+    }
+
+    const currentAvailableCredit = userRes.storeCredit;
+
+    if (amount > currentAvailableCredit) {
+      return res.error('STORE_CREDIT_UNAVAILABLE');
+    }
+
+    if (amount < 0) {
+      return res.error('STORE_CREDIT_NEGATIVE');
+    }
+
+    if (amount > orderRes.total) {
+      return res.error('STORE_CREDIT_SURPLUS')
+    }
+
+    orderRes.storeCredit = amount;
+    await orderRes.save();
+
+    return res.ok({ message: 'ORDER_UPDATE_SUCCESS', data: {} });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -911,7 +966,6 @@ module.exports.completeRefund = async (req, res) => {
   }
 };
 
-
 function returnProducts(products) {
   for (let productItem of products) {
     productItem.product.poster = returnProductImage(productItem.product.poster);
@@ -1019,6 +1073,24 @@ function resetCart(userId) {
   });
 }
 
+function deductStoreCredit(orderId, userId, creditToDeduct) {
+  return new Promise(async (resolve, reject) => {
+    await User.findOneAndUpdate({ _id: userId },  { $inc: { storeCredit: -creditToDeduct } } , { new: true });
+
+    // add a debit transaction
+    const payload = {
+      orderId,
+      creditId: `SC-${generateRandomNumber(10)}`,
+      userId: userId,
+      amount: creditToDeduct,
+      action: 'DEBIT',
+    };
+    const creditRes = await StoreCreditTransaction.create(payload)
+
+    resolve(creditRes._id);
+  });
+}
+
 function sendConfirmationMessage(userData, orderId) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -1054,6 +1126,7 @@ function sendConfirmationEmail(userRes, orderRes) {
           BOXES: returnBoxes(orderRes.boxes),
           SUBTOTAL: orderRes.subTotal,
           SHIPPING: orderRes.shipping,
+          STORE_CREDIT: orderRes.storeCredit,
           GIFT_CHARGES: orderRes.giftOptions.isGift ? orderRes.giftOptions.details.cost : -1,
           TOTAL: orderRes.total,
           ADDRESS: orderRes.deliveryAddress,

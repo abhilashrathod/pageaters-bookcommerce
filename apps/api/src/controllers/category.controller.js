@@ -52,7 +52,7 @@ module.exports.create = async (req, res) => {
 
 module.exports.update = async (req, res) => {
   try {
-    let { id, title, description, thumbnail, meta } = req.allParams();
+    let { id, title, description, thumbnail, meta, popularity, priority } = req.allParams();
 
     const category = await Category.findOne({ _id: id, isDeleted: false });
 
@@ -60,7 +60,7 @@ module.exports.update = async (req, res) => {
       return res.error('CATEGORY_NOT_EXIST');
     }
 
-    const payload = { title, description, thumbnail, meta };
+    const payload = { title, description, thumbnail, meta, popularity, priority };
 
     const categoryRes = await Category.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
 
