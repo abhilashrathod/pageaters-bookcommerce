@@ -77,6 +77,7 @@ const schema = new Schema({
 
     giftCard: { type: Schema.Types.ObjectId, ref: models.GIFT_CARD, default: null },
     discount: { type: Schema.Types.ObjectId, ref: models.DISCOUNT, default: null },
+    storeCreditTransaction: { type: Schema.Types.ObjectId, ref: models.STORE_CREDIT_TRANSACTIONS, default: null },
 
     giftOptions: {
       isGift: { type: Boolean, default: false },
@@ -89,6 +90,7 @@ const schema = new Schema({
     },
 
     subTotal: { type: Number, default: 0 },
+    storeCredit: { type: Number, default: 0 },
     shipping: { type: Number, default: 0 },
     weight: { type: Number, default: 0 },
     total: { type: Number, default: 0 },

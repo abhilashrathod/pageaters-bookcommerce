@@ -36,7 +36,8 @@ const schema = new Schema(
     lastPasswordSetAt: { type: String, default: '' },
     lastLoginAt: { type: String, default: '' },
 
-    razorPayCustId: { type: 'String', default: '' },
+    razorPayCustId: { type: String, default: '' },
+    storeCredit: { type: Number, default: 0 },
 
     __v: { type: Number, select: false },
   },

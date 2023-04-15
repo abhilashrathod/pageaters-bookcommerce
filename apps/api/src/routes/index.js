@@ -31,6 +31,8 @@ router.use('/favorites', require('./favorites.routes'));
 router.use('/stock-alerts', require('./stockAlert.routes'));
 router.use('/addresses', require('./address.routes'));
 router.use('/orders', require('./order.routes'));
+router.use('/store-credit', require('./storeCredit.routes'));
+router.use('/orders', require('./order.routes'));
 router.use('/deals', require('./storeDeal.routes'));
 router.use('/product-sets', require('./productSet.routes'));
 

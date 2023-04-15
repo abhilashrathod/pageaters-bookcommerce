@@ -29,5 +29,6 @@ module.exports = {
   SUBSCRIPTION_HISTORY: 'subscription_history',
   STORE_DEALS: 'store_deals',
   PRODUCT_SETS: 'product_sets',
+  STORE_CREDIT_TRANSACTIONS: 'store_credit_transactions',
   FAVORITES: 'favorites',
 };

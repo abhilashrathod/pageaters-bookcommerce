@@ -12,6 +12,7 @@ require('./mysteryBox.model');
 require('./productSet.model');
 require('./address.model');
 require('./bundle.model');
+require('./storeCredit.model');
 require('./store.model');
 require('./storeDeals.model');
 require('./author.model');

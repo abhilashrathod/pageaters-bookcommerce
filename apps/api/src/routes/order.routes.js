@@ -15,6 +15,7 @@ router.get('/list', permissionValidator(USER_ROLES.USER), controller.getAllByUse
 router.post('/attempt', permissionValidator(USER_ROLES.USER), requestValidator(validator.orderAttempt), controller.attempt);
 router.post('/create', permissionValidator(USER_ROLES.USER), requestValidator(validator.orderCreate), controller.create);
 router.get('/retrieve', permissionValidator(USER_ROLES.USER), controller.retrieve);
+router.patch('/credit', permissionValidator(USER_ROLES.USER), controller.applyStoreCredit);
 
 router.post('/return/:uniqueId', permissionValidator(USER_ROLES.USER), controller.returnRequest); // TODO: add payload validator
 router.post('/cancel/:uniqueId', permissionValidator(USER_ROLES.USER), controller.cancelRequest); // TODO: add payload validator

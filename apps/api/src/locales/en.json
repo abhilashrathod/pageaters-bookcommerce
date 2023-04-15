@@ -198,8 +198,11 @@
 	"MYSTERY_BOX_UPDATE_SUCCESS": "Mystery Box Information Updated",
 	"MYSTERY_BOX_SEARCH_SUCCESS": "Mystery Box Search Successful",
 	"MYSTERY_BOX_DELETE_SUCCESS": "Mystery Box Deleted Successfully",
-	"success": "success",
-	"Invalid Record Length: columns length is 3, got 4 on line 10": "Invalid Record Length: columns length is 3, got 4 on line 10",
-	"\"giftOptions\" is not allowed": "\"giftOptions\" is not allowed",
-	"child \"giftOptions\" fails because [child \"details\" fails because [\"details\" is not allowed]]": "child \"giftOptions\" fails because [child \"details\" fails because [\"details\" is not allowed]]"
+	"STORE_CREDIT_LIST_SUCCESS": "Store credit of user fetch success",
+	"STORE_CREDIT_NOT_EXIST": "Credit information of this user doesn't exist",
+	"STORE_CREDIT_SUCCESS": "Store credit send to user account",
+	"STORE_CREDIT_UNAVAILABLE": "Requested credit not available",
+	"STORE_CREDIT_NOT_APPLICABLE": "Can't apply store credit more than the order value",
+	"STORE_CREDIT_NEGATIVE": "Negative credit can't not be applied.",
+	"STORE_CREDIT_SURPLUS": "Can't apply store credit more than the order value"
 }

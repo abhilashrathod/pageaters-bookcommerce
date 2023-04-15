@@ -17,7 +17,6 @@ const Cart = mongoose.model(models.CART);
 const Favorites = mongoose.model(models.FAVORITES);
 
 const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
-const razorPayInstance = new Razorpay({ key_id: RAZOR_PAY.USER_ID, key_secret: RAZOR_PAY.PASSWORD });
 
 const REFRESH_TOKEN_OPTIONS = {
   httpOnly: true,
