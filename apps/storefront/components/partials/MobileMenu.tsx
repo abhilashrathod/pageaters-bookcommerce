@@ -79,7 +79,7 @@ const AppMobileMenu: React.FC<Props> = () => {
   }
 
   const person = get(userRes, 'data', null);
-  const cartLength = get(cart, 'data.products', []).length + get(cart, 'data.bundles', []).length;
+  const cartCount = get(cart, 'data.products', []).length + get(cart, 'data.bundles', []).length + get(cart, 'data.mysteryBoxes', []).length;
 
   return (
       <>
@@ -97,10 +97,10 @@ const AppMobileMenu: React.FC<Props> = () => {
               <Link href={'/cart'}>
                 <LinkItem>
                   {
-                    cartLength > 0 && (
+                    cartCount > 0 && (
                         <Badge style={{position: 'absolute', top: '-10px', right: '-20px', padding: '0 8px'}} variant="filled"
                                color="orange">
-                          {cartLength}
+                          {cartCount}
                         </Badge>
                     )
                   }
@@ -130,7 +130,7 @@ const AppMobileMenu: React.FC<Props> = () => {
             {
               !isLoggedIn && (
                   <MobileMenuListItem>
-                    <Link href={'/auth/login'}>
+                    <Link href={`/auth/login?redirect=${router.asPath}`}>
                       <LinkItem>
                         <Icon icon={'bx:bx-user-circle'} width={30} height={30}/>
                         <LinkName>Sign In</LinkName>

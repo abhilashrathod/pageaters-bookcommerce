@@ -154,6 +154,11 @@ const Login: React.FC<Props> = () => {
     return getAssetImage(i, {height: h, width: w, fit: 'cover'});
   }
 
+  function redirectToRegister() {
+    if (redirect) return router.replace(`/auth/register?redirect=${redirect}`);
+    router.push('/auth/register');
+  }
+
   function handleSubmit(values: any) {
     axios.post(`/auth/login`, values, {withCredentials: true})
         .then(({data}) => {
@@ -213,7 +218,7 @@ const Login: React.FC<Props> = () => {
                   <Divider my="xs" label="OR" labelPosition="center"/>
                   <h6 style={{textAlign: 'center'}}>New to Pageaters?</h6>
                   <AppButton styles={{width: '33%', margin: '0 auto'}} variant={ButtonVariants.Secondary}
-                             size={ButtonSizes.Small} onClick={() => router.push(`/auth/register`)} type="button">Create
+                             size={ButtonSizes.Small} onClick={redirectToRegister} type="button">Create
                     Account</AppButton>
                 </ContentSpace>
               </div>

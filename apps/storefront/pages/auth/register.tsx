@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import Link from "next/link";
 import Head from "next/head";
+import {parseUrl} from 'query-string';
 import {useRouter} from "next/router";
 import styled from 'styled-components';
 import {Divider, Stepper} from "@mantine/core";
@@ -321,6 +322,11 @@ const ContactForm = ({onStepChange, onSubmit, onVerifySubmit, onResend}: any) =>
 const Register: React.FC<Props> = () => {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [redirect, setRedirect] = useState(() => {
+    const {query} = parseUrl(router.asPath);
+    return query.redirect || ''
+  });
+
 
   function renderImageSize(i: string, w: number, h: number) {
     return getAssetImage(i, {height: h, width: w, fit: 'cover'});
@@ -369,7 +375,10 @@ const Register: React.FC<Props> = () => {
     try {
       await axios.post(`/auth/contact/verify`, values, {withCredentials: true});
       showNotification({message: 'Verification Completed. Account verified!', color: 'green', autoClose: 3000});
+      
+      if (redirect) return router.replace(`${redirect}`);
       router.replace('/');
+      
       updateUser();
     } catch (e: any) {
       showNotification({message: e.message, color: 'red', autoClose: 3000});
@@ -388,7 +397,9 @@ const Register: React.FC<Props> = () => {
   function handleStepChange(val: any) {
     if (val === 3) {
       showNotification({message: 'Registration Completed! Happy Reading 😊', color: 'green', autoClose: 3000});
-      return router.replace('/');
+      
+      if (redirect) return router.replace(`${redirect}`);
+      router.replace('/');
     }
     setStep(val);
   }
