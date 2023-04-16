@@ -38,14 +38,14 @@ const StoreCredit: NextPage = () => {
                                 <p>
                                     1. Store credit is non-transferable and may only be used by the person who was issued the credit. <br />
                                     2. Store credit can only be issued by store itself and isn&apos;t in the control of customer. The issue of credit will be determined by store and can only be issued in the cases see fit by store. <br /> 
-                                    3. Store credit may be used towards the purchase of any item in the store, including books, merchandise, and gift cards. <br />
+                                    3. Store credit may be used towards the purchase of any item in the store, including books and merchandise. <br />
                                     4. Store credit cannot be redeemed for cash or used to purchase additional store credit. <br />
                                     5. Store credit cannot be combined with any other promotional offer or discount. <br />
                                     6. If an item purchased with store credit is returned, the value of the item will be refunded to the original payment method and the store credit will be reinstated. <br />
                                     8. The bookstore reserves the right to cancel or modify the store credit policy at any time without prior notice. <br />
                                     9. The decision of the bookstore regarding the use and validity of store credit shall be final and binding. <br />
                                     10. Customer can&apos;t request more credit if they already have it.<br />
-                                    11. Customer can&apos;t levarage store credit way out in disputes. Such behaviour will mark as abuse of the facility and will be marked illegal and will constitute as blackmail. In this case store can take legal action against the abuser.<br/>
+                                    11. Customer can&apos;t levarage store credit way out in disputes. Such behaviour will mark as abuse of the facility and will be marked illegal. In this case store can take legal action against the abuser.<br/>
                                     12. Store credit can only be used for future purchases and cannot be redeemed for cash or refunded to the original payment method.<br />
                                     13. Store credit is non-transferable and can only be used by the account holder.<br />
                                     14. Store credit does not expire unless otherwise specified by the bookstore.<br />

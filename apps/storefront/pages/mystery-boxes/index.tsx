@@ -551,15 +551,6 @@ const MysteryBoxes: NextPage<Props> = () => {
                   </Accordion>
                 </div>
               </div>
-              {/*<div className="row">*/}
-              {/*  <div className="col">*/}
-              {/*    <div className="col">*/}
-              {/*      <AppIconButton variant={ButtonVariants.Secondary} onClick={() => console.log(1)}>*/}
-              {/*        some*/}
-              {/*      </AppIconButton>*/}
-              {/*    </div>*/}
-              {/*  </div>*/}
-              {/*</div>*/}
             </div>
           </QuestionsSection>
         </PageWrapper>
