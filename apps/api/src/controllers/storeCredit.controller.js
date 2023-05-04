@@ -1,49 +1,80 @@
 const mongoose = require('mongoose');
-const moment = require('moment');
-const path = require('path');
 const { get } = require('lodash');
 
-const { HOST, PROJECT_ROOT, TWILIO, RAZOR_PAY, ENVIRONMENT } = require('./../appConfig');
 const { models, enums } = require('../constants');
 
-const { encrypt, decrypt, generateJwtToken } = require('../helpers/encryption.helper');
 const { writeFile, generateRandomNumber } = require('./../helpers/utils.helper');
 const sendMailQueue = require('./../helpers/sendMailQueue.helper');
+const moment = require('moment/moment');
 
 const User = mongoose.model(models.USER);
-const AccessTokens = mongoose.model(models.ACCESS_TOKEN);
-const Cart = mongoose.model(models.CART);
 const CreditTransactions = mongoose.model(models.STORE_CREDIT_TRANSACTIONS);
-const Favorites = mongoose.model(models.FAVORITES);
 
-const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
+module.exports.issueCredit = async (req, res) => {
+  try {
+    const { userId, credit, orderId } = req.allParams();
 
+    const userRes = await User.findOne({ _id: userId, status: enums.USER_STATUS.ACTIVE }).select('email fullName');
+
+    if (!userRes) {
+      return res.error('USER_NOT_FOUND');
+    }
+
+    const record = {
+      creditId: `CR-${generateRandomNumber(10)}`,
+      orderId,
+      userId,
+      amount: credit,
+      action: 'CREDIT',
+      expired: false,
+    };
+
+    await CreditTransactions.create(record);
+    await User.findOneAndUpdate({ _id: userId }, { $inc: { storeCredit: credit } }, { new: true });
+
+    const emailBody = {
+      emailModule: 'STORE_CREDIT_REWARD',
+      to: userRes.email,
+      subject: `Your Store Credit is Here! - Pageaters`,
+      data: {
+        CUSTOMER_NAME: userRes.fullName ? userRes.fullName : 'Reader',
+        AMOUNT: credit,
+      },
+    };
+    sendMailQueue.add(emailBody);
+
+    return res.created({ message: 'STORE_CREDIT_SUCCESS', data: {} });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
 
 module.exports.getStoreCredit = async (req, res) => {
-    try {
-        const userId = get(req, 'user.userId', '');
+  try {
+    const userId = get(req, 'user.userId', '');
 
-        const userRes = await User.findOne({ _id: userId }).select(`storeCredit`);
+    const userRes = await User.findOne({ _id: userId }).select(`storeCredit`);
 
-        return res.ok({ message: 'STORE_CREDIT_LIST_SUCCESS', data: userRes });
+    return res.ok({ message: 'STORE_CREDIT_LIST_SUCCESS', data: userRes });
 
-    } catch (e) {
-        return res.internalServerError(e);
-    }
-}
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
 
 module.exports.getCreditHistory = async (req, res) => {
-    try {
-      const userId = get(req, 'user.userId', '');
+  try {
+    const userId = get(req, 'user.userId', '');
+    let { page, limit } = req.allParams();
 
-      const creditRes = await CreditTransactions.find({ userId: userId });
-  
-      if (creditRes) {
-        return res.ok({ message: 'STORE_CREDIT_LIST_SUCCESS', data: creditRes });
-      }
-  
-      return res.error('STORE_CREDIT_NOT_EXIST');
-    } catch (e) {
-      return res.internalServerError(e);
+    const creditRes = await CreditTransactions.paginate({}, { page, limit, sort: { createdAt: -1 } });
+
+    if (creditRes) {
+      return res.ok({ message: 'STORE_CREDIT_LIST_SUCCESS', data: creditRes });
     }
-  };
+
+    return res.error('STORE_CREDIT_NOT_EXIST');
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};

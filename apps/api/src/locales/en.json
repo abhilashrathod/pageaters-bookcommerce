@@ -204,5 +204,13 @@
 	"STORE_CREDIT_UNAVAILABLE": "Requested credit not available",
 	"STORE_CREDIT_NOT_APPLICABLE": "Can't apply store credit more than the order value",
 	"STORE_CREDIT_NEGATIVE": "Negative credit can't not be applied.",
-	"STORE_CREDIT_SURPLUS": "Can't apply store credit more than the order value"
+	"STORE_CREDIT_SURPLUS": "Can't apply store credit more than the order value",
+	"REVIEW_LIST_SUCCESS": "Review list success",
+	"REVIEW_NOT_EXIST": "Review doesn't exist",
+	"REVIEW_CREATE_SUCCESS": "Review Created",
+	"REVIEW_UPDATE_SUCCESS": "Review Information Updated",
+	"REVIEW_DELETE_SUCCESS": "Review Deleted Successfully",
+	"REVIEW_EXISTS": "You have already submitted review for this product",
+	"REVIEW_SUCCESS": "Review information fetched",
+	"REVIEW_PURCHASE_ERROR": "Only purchased items can be reviewed"
 }

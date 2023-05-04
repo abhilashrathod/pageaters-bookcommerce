@@ -14,7 +14,7 @@ router.get('/history', permissionValidator(USER_ROLES.USER), controller.getCredi
 
 // For Admin
 // router.get('/', permissionValidator(USER_ROLES.ADMIN), controller.getAll);
-// router.post('/', permissionValidator(USER_ROLES.ADMIN), controller.getAllUsersByProduct);
+router.post('/', permissionValidator(USER_ROLES.ADMIN), controller.issueCredit);
 
 
 module.exports = router;

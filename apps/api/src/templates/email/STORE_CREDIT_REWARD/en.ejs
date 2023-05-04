@@ -231,6 +231,10 @@
         }
 
         .credit-number {
+            display: -webkit-flex;
+            display: -ms-flexbox;
+            text-align: center;
+            padding-top: 16px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -299,19 +303,21 @@
              style="width: 192px; height: auto !important; display: block; text-align: center; margin: auto;"/>
     </div>
     <h1 class="header pt-2 pb-8">
-        Your store credit is here! 
+        Your store credit is here!
     </h1>
     <p class="pb-2">
         Dear <%= CUSTOMER_NAME %>,
     </p>
     <p class="pb-2">
-        We hope this email finds you well. We would like to express our appreciation for your support. As a token of our gratitude, we would like to offer you a store credit of
+        We hope this email finds you well. We would like to express our appreciation for your support. As a token of our
+        gratitude, we would like to offer you a store credit of
     </p>
     <div class="credit-number">
         INR <%= AMOUNT %>
     </div>
     <p class="pb-8">
-        To redeem your store credit, simply visit our website and add the items you wish to purchase to your shopping cart. 
+        To redeem your store credit, simply visit our website and add the items you wish to purchase to your shopping
+        cart.
         At checkout, you will have the option to apply your store credit to your order.
     </p>
     <p class="pb-8">
