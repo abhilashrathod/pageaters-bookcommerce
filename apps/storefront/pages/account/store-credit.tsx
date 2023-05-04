@@ -1,6 +1,6 @@
-import React from "react";
+import React, {useState} from "react";
 import styled from "styled-components";
-import {Accordion} from "@mantine/core";
+import {Pagination, Accordion, Skeleton} from "@mantine/core";
 import { Icon } from "@iconify/react";
 import moment from "moment";
 import { get, startCase } from "lodash";
@@ -30,6 +30,8 @@ import {
 import { currencyFormat } from "../../core/_helpers";
 
 import { ICreditTransaction } from "../../schemas/credit-transaction";
+import {parseUrl} from "query-string";
+import {func} from "prop-types";
 
 
 const BREADCRUMBS_ITEMS = [
@@ -122,30 +124,42 @@ const QuestionsSection = styled.section`
     margin: 2.5rem 0;
   }
 `;
+
+const LoadingItem = () => (
+    <div className="row">
+      <div className="col-xxl-1 col-xl-2 col-3"><Skeleton height={60} mb={20} radius={"md"} /></div>
+      <div className="col-xxl-10 col-xl-10 col-9">
+        <Skeleton height={7} mb={5} width="75%" radius="xl"/>
+        <Skeleton height={7} mb={5} width="50%" radius="xl"/>
+      </div>
+    </div>
+);
 const StoreCredit: React.FC<Props> = () => {
   const isLoggedIn = cookie.get(AUTH_COOKIE);
-
-  const { data, error } = useSWR({
-    url: isLoggedIn ? `/auth/me` : null,
-    withCredentials: true,
+  const [params, setParams] = useState(() => {
+    return {
+      page: 1,
+      limit: 10,
+    };
   });
 
-  const { data: creditRes } = useSWR({
-    url: isLoggedIn ? `/store-credit` : null,
-    withCredentials: true,
-  });
+  const { data: authRes, error: authErr } = useSWR({ url: isLoggedIn ? `/auth/me` : null, withCredentials: true });
+  const { data: creditRes, error: creditErr } = useSWR({ url: isLoggedIn ? `/store-credit` : null, withCredentials: true });
+  const { data: creditTransactionsRes, error: creditTransactionsErr } = useSWR({ url: isLoggedIn ? `/store-credit/history?page=${params.page}&limit=${params.limit}` : null, withCredentials: true });
 
-  const { data: creditHistoryRes } = useSWR({
-    url: isLoggedIn ? `/store-credit/history` : null,
-    withCredentials: true,
-  });
-
-  const user = get(data, "data", null);
+  const user = get(authRes, "data", null);
   const storeCredit = get(creditRes, "data.storeCredit", 0);
-  const storeCreditTransactions = get(creditHistoryRes, "data", []);
+  const storeCreditTransactions = get(creditTransactionsRes, "data", null);
 
   function updateUser() {
     mutate({ url: "/auth/me", withCredentials: true });
+  }
+
+  function handlePageChange(e: any) {
+    setParams((prevState) => ({
+      ...prevState,
+      page: e,
+    }));
   }
 
   function getIcon(action: string) {
@@ -158,7 +172,7 @@ const StoreCredit: React.FC<Props> = () => {
     }
   }
 
-  if (error)
+  if (creditErr || creditTransactionsErr)
     return (
       <PageWrapper>
         <EmptySectionMessage title={"Error while loading account info..."} />
@@ -190,40 +204,59 @@ const StoreCredit: React.FC<Props> = () => {
                 </StoreCreditAmount>
               </div>
               <div className="col-xxl-8 col-xl-8 col-12">
-                {storeCreditTransactions.length > 0 && <h6>Transaction History</h6>}
-                
-                {storeCreditTransactions.length > 0 ? (
-                  storeCreditTransactions.map(
-                    (creditItem: ICreditTransaction, index: number) => {
-                      return (
-                        <TransactionListItem key={creditItem._id}>
-                          <IconSpace color={creditItem.action}>
-                            {getIcon(creditItem.action)}
-                          </IconSpace>
-                          <ContentSpace>
-                            <Info>
-                              <InfoTitle>
-                                {creditItem.creditId} |{" "}
-                                {startCase(creditItem.action)}
-                              </InfoTitle>
-                              <InfoDescription>
-                                {moment(creditItem.createdAt).format(
-                                  "DD/MM/YYYY HH:mm"
-                                )}
-                              </InfoDescription>
-                            </Info>
-                            <Amount>
-                              {creditItem.action === "DEBIT" ? "-" : "+"}{" "}
-                              {currencyFormat(creditItem.amount)}
-                            </Amount>
-                          </ContentSpace>
-                        </TransactionListItem>
-                      );
-                    }
-                  )
-                ) : (
-                  <EmptyMessageWithGraphic illustration={TransactionHistory} illustrationHeight="100px" illustrationWidth="100px" title="No Transaction History" />
-                )}
+                <h6>Transaction History</h6>
+                {
+                  storeCreditTransactions ?
+                      (
+                          <>
+                            {storeCreditTransactions?.docs.length > 0 ? (
+                                storeCreditTransactions?.docs.map(
+                                    (creditItem: ICreditTransaction, index: number) => {
+                                      return (
+                                          <TransactionListItem key={creditItem._id}>
+                                            <IconSpace color={creditItem.action}>
+                                              {getIcon(creditItem.action)}
+                                            </IconSpace>
+                                            <ContentSpace>
+                                              <Info>
+                                                <InfoTitle>
+                                                  {creditItem.creditId} |{" "}
+                                                  {startCase(creditItem.action)}
+                                                </InfoTitle>
+                                                <InfoDescription>
+                                                  {moment(creditItem.createdAt).format(
+                                                      "DD/MM/YYYY HH:mm"
+                                                  )}
+                                                </InfoDescription>
+                                              </Info>
+                                              <Amount>
+                                                {creditItem.action === "DEBIT" ? "-" : "+"}{" "}
+                                                {currencyFormat(creditItem.amount)}
+                                              </Amount>
+                                            </ContentSpace>
+                                          </TransactionListItem>
+                                      );
+                                    }
+                                )
+                            ) : (
+                                <EmptyMessageWithGraphic illustration={TransactionHistory} illustrationHeight="100px" illustrationWidth="100px" title="No Transaction History" />
+                            )}
+                          </>
+                      )
+                      : [0,0,0,0,0].map((i, index) => <LoadingItem key={index} />)
+                }
+
+
+
+                <div className="row py-25">
+                  <div className="col">
+                    <Pagination style={{justifyContent: 'center'}}
+                                total={storeCreditTransactions?.totalPages}
+                                color="dark" size="lg" radius="xl"
+                                page={params.page}
+                                onChange={handlePageChange}/>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

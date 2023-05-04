@@ -29,12 +29,6 @@ interface Props {
   categoryDetails: ICategory;
 }
 
-const FILTER_OPTIONS = {
-  showFilters: true,
-  filterOptions: CATEGORY_SORT_OPTIONS,
-  defaultFilter: CATEGORY_SORT_OPTIONS[0],
-};
-
 const CategoryCatalog: NextPage<Props> = ({categoryDetails}: InferGetStaticPropsType<typeof getStaticProps>) => {
   const router = useRouter();
 
