@@ -6,6 +6,7 @@ import {OrderServices} from '../../../core/services/order.services';
 import {IOrder} from '../../../core/schema/order';
 import {AlignShipmentDialogComponent} from './align-shipment-dialog.component';
 import {MatDialog} from '@angular/material/dialog';
+import {IssueCreditComponent} from './issue-credit.component';
 
 @Component({
   selector: 'app-order-view',
@@ -78,6 +79,7 @@ export class OrderViewComponent implements OnInit {
     const update$ = this.orderServices.ship(payload);
     update$.subscribe(res => {
       this.snackBar.open('Order Shipped', 'OKAY', {duration: 3000});
+      this.getOrderDetails(this.order._id);
     }, err => {
       this.snackBar.open(err, 'OKAY', {duration: 5000});
     });
@@ -87,6 +89,7 @@ export class OrderViewComponent implements OnInit {
     const update$ = this.orderServices.fulfilled(this.order._id);
     update$.subscribe(res => {
       this.snackBar.open('Order Marked as Fulfilled', 'OKAY', {duration: 3000});
+      this.getOrderDetails(this.order._id);
     }, err => {
       this.snackBar.open(err, 'OKAY', {duration: 5000});
     });
@@ -105,6 +108,31 @@ export class OrderViewComponent implements OnInit {
           this.doReverseShipment(requestId, res);
         }
       });
+  }
+
+  openStoreCreditDialog(): void {
+    const dialogRef = this.dialog.open(IssueCreditComponent, {
+      width: '400px',
+    });
+
+    dialogRef.afterClosed()
+      .subscribe(res => {
+        if (res) {
+          this.doIssueCredit(res.credit);
+        }
+      });
+  }
+
+  doIssueCredit(creditAmount): void {
+    const payload = {
+      credit: creditAmount,
+      orderId: this.order._id,
+      userId: this.order.userId,
+    };
+    const obs$ = this.orderServices.issueStoreCredit(payload);
+    obs$.subscribe(res => {
+      this.snackBar.open('Store credit issued.', 'OKAY', {duration: 3000});
+    });
   }
 
   closeReturnRequest(requestId: string): void {

@@ -11,6 +11,7 @@ import {OrderUpdateComponent} from './update/order-update.component';
 import {OrderViewComponent} from './view/order-view.component';
 
 import {AlignShipmentDialogComponent} from './view/align-shipment-dialog.component';
+import {IssueCreditComponent} from './view/issue-credit.component';
 
 @NgModule({
   imports: [
@@ -28,9 +29,11 @@ import {AlignShipmentDialogComponent} from './view/align-shipment-dialog.compone
     OrderUpdateComponent,
     OrderViewComponent,
     AlignShipmentDialogComponent,
+    IssueCreditComponent,
   ],
   providers: [],
   entryComponents: [
+    IssueCreditComponent,
     AlignShipmentDialogComponent
   ]
 })

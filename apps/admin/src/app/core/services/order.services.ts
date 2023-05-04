@@ -82,6 +82,15 @@ export class OrderServices {
       );
   }
 
+  issueStoreCredit(payload: any): Observable<any> {
+    const url = `${environment.BASE_PATH}/store-credit`;
+    return this._http.post(url, payload)
+      .pipe(
+        map((dt: IResponse) => dt.data),
+        catchError((err) => this.handleError(err))
+      );
+  }
+
   handleError(err: any): any {
     return throwError(err.error);
   }

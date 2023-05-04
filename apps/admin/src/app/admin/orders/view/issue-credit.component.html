@@ -1,0 +1,14 @@
+<form [formGroup]="creditFormGroup" (ngSubmit)="handleSubmit()">
+  <h1 mat-dialog-title>Send Store Credit</h1>
+  <div mat-dialog-content>
+    <mat-form-field class="w-100">
+      <mat-label>Credit Amount</mat-label>
+      <input matInput type="numner" placeholder="Enter Credit you wish to send" formControlName="credit" required>
+    </mat-form-field>
+
+  </div>
+  <div mat-dialog-actions>
+    <button class="me-3" type="submit" mat-stroked-button color="primary">Send</button>
+    <button type="button" mat-stroked-button color="danger" (click)="dialogRef.close()">Close</button>
+  </div>
+</form>

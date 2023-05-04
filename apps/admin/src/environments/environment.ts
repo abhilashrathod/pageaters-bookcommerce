@@ -5,7 +5,7 @@
 export const environment = {
   production: false,
   CLIENT_ID: '***REMOVED***',
-  BASE_PATH: 'http://localhost:5000/api/v1',
+  BASE_PATH: 'http://localhost:5005/api/v1',
 };
 
 /*
