@@ -61,7 +61,7 @@ const Home: NextPage = (props: any) => {
   const {title: fifthRowTitle, products: fifthRowProducts} = get(fifthRowProductsRes, 'data', {});
   const {title: sixthRowTitle, products: sixthRowProducts} = get(sixthRowProductsRes, 'data', {});
   const {title: seventhRowTitle, products: seventhRowProducts} = get(seventhRowProductsRes, 'data', {});
-  
+
   const bundles = get(bundlesRes, 'data.docs', []);
   const collections = get(collectionsRes, 'data.docs', []);
 
@@ -106,30 +106,30 @@ const Home: NextPage = (props: any) => {
             <HeroBanner banner={props.heroBanner}/>
           </section>
 
+          <section className="my-5 py-5">
+            <div className="custom-container">
+              <div className="row">
+                <div className="col">
+                  {/*<h1 className="" style={{fontSize: '110px', textAlign: 'center'}}>Turning <span className="text-accent">2</span> Sale!</h1>*/}
+                  {/*<h1 className="" style={{textAlign: 'center'}}>Upto 50% Off All Inventory • 23rd May to 30th May</h1>*/}
+                  <h1 className="jumbo-1 text-center">Turning <span className="text-accent">2</span> Sale!</h1>
+                  <h1 className="display-1 text-center">Upto 50% Off All Inventory From 23rd May to 30th May</h1>
+                </div>
+              </div>
+              {/*<div className="row">*/}
+              {/*  <div className="col-12 col-xl-6">*/}
+              {/*    <LandscapeBanner banner={discountItem}/>*/}
+              {/*  </div>*/}
+              {/*  <div className="col-12 col-xl-6">*/}
+              {/*    <LandscapeBanner banner={bannerCollectionItem}/>*/}
+              {/*  </div>*/}
+              {/*</div>*/}
+            </div>
+          </section>
+
           <section className={'mb-25'}>
             <Categories/>
           </section>
-
-          {/* <section className="py-25 mb-25">
-           <div className="custom-container">
-             <div className="row">
-               <div className="col">
-                 <h1 className="jumbo-1">
-                   Happy Holidays!
-                 </h1>
-                 <h1 className="display-1">from Pageaters</h1>
-               </div>
-             </div>
-             <div className="row">
-               <div className="col-12 col-xl-6">
-                 <LandscapeBanner banner={discountItem}/>
-               </div>
-               <div className="col-12 col-xl-6">
-                 <LandscapeBanner banner={bannerCollectionItem}/>
-               </div>
-             </div>
-           </div>
-          </section> */}
 
           <section className={'mb-25'}>
             <PreOrderBanner/>
@@ -143,7 +143,7 @@ const Home: NextPage = (props: any) => {
             firstRowProducts && firstRowProducts.length > 0 && (
               <section className={'mb-25'}>
                 <ProductSets title={firstRowTitle} products={firstRowProducts}/>
-              </section>  
+              </section>
             )
           }
 
@@ -151,7 +151,7 @@ const Home: NextPage = (props: any) => {
             secondRowProducts && secondRowProducts.length > 0 && (
               <section className={'mb-25'}>
                 <ProductSets title={secondRowTitle} products={secondRowProducts}/>
-              </section>  
+              </section>
             )
           }
 
@@ -167,7 +167,7 @@ const Home: NextPage = (props: any) => {
             thirdRowProducts && thirdRowProducts.length > 0 && (
               <section className={'mb-25'}>
                 <ProductSets title={thirdRowTitle} products={thirdRowProducts}/>
-              </section>  
+              </section>
             )
           }
 
@@ -175,9 +175,9 @@ const Home: NextPage = (props: any) => {
             forthRowProducts && forthRowProducts.length > 0 && (
               <section className={'mb-25'}>
                 <ProductSets title={forthRowTitle} products={forthRowProducts}/>
-              </section>  
+              </section>
             )
-          }          
+          }
 
           <section className={'mb-25'}>
             <CollectionsCarousel title={'Spotlight Collections'} collections={collections}/>
@@ -187,7 +187,7 @@ const Home: NextPage = (props: any) => {
             sixthRowProducts && sixthRowProducts.length > 0 && (
               <section className={'mb-25'}>
                 <ProductSets title={sixthRowTitle} products={sixthRowProducts}/>
-              </section>  
+              </section>
             )
           }
 
@@ -196,7 +196,7 @@ const Home: NextPage = (props: any) => {
             fifthRowProducts && fifthRowProducts.length > 0 && (
               <section className={'mb-25'}>
                 <ProductSets title={fifthRowTitle} products={fifthRowProducts}/>
-              </section>  
+              </section>
             )
           }
 
@@ -215,7 +215,7 @@ const Home: NextPage = (props: any) => {
             seventhRowProducts && seventhRowProducts.length > 0 && (
               <section className={'mb-25'}>
                 <ProductSets title={seventhRowTitle} products={seventhRowProducts}/>
-              </section>  
+              </section>
             )
           }
         </PageWrapper>
@@ -225,7 +225,7 @@ const Home: NextPage = (props: any) => {
 
 Home.getInitialProps = () => {
   const HERO_BANNER = {
-    poster: 'smiling-brunette-woman-shirt-reading-book-min.jpg',
+    poster: 'pageaters-clearance-sale-cQIUNKlbry-1684784460743.png',
     title: `Pageaters: India's most loved bookstore!`,
     ctaLink: '/auth/register'
   };
