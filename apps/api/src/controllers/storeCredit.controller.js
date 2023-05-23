@@ -67,7 +67,7 @@ module.exports.getCreditHistory = async (req, res) => {
     const userId = get(req, 'user.userId', '');
     let { page, limit } = req.allParams();
 
-    const creditRes = await CreditTransactions.paginate({}, { page, limit, sort: { createdAt: -1 } });
+    const creditRes = await CreditTransactions.paginate({userId}, { page, limit, sort: { createdAt: -1 } });
 
     if (creditRes) {
       return res.ok({ message: 'STORE_CREDIT_LIST_SUCCESS', data: creditRes });
