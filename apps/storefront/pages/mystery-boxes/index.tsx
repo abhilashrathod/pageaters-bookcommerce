@@ -454,9 +454,10 @@ const MysteryBoxes: NextPage<Props> = () => {
                       <ProductDiscount>&nbsp;({selectedBox?.currentDiscount}% Off)</ProductDiscount>
                     </ProductPricing>
                     <AddToCartSpace>
-                      <AddToCart options={boxes}
+                      {/* <AddToCart options={boxes}
                                  handleBoxSelect={handleBoxSelection}
-                                 onClick={handleAddToCart}>Add to Cart</AddToCart>
+                                 onClick={handleAddToCart}>Add to Cart</AddToCart> */}
+                      <OutOfStockLabel>Out of Stock</OutOfStockLabel>
                     </AddToCartSpace>
                     <ProductNotes>
                       <Alert title="Things to Note" color="gray">

@@ -131,9 +131,9 @@ const Home: NextPage = (props: any) => {
             <Categories/>
           </section>
 
-          <section className={'mb-25'}>
+          {/* <section className={'mb-25'}>
             <PreOrderBanner/>
-          </section>
+          </section> */}
 
           {/*<FeaturedCategorySection>*/}
           {/*  <FeaturedCategory/>*/}
