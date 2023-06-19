@@ -70,15 +70,15 @@ module.exports.register = async (req, res) => {
     await AccessTokens.create({ ...payload, token });
     // const profile = await User.getProfile(user._id); // TODO: Improvement could be made
 
-    sendMailQueue.add({
-      emailModule: 'REGISTRATION',
-      to: user.email,
-      subject: 'Pageaters Account - Greetings from Pageaters!',
-      data: {
-        FULL_NAME: returnAddressName('', user.email),
-        LINK: `${HOST}/auth/verify?token=${verifyToken}&email=${encodeURIComponent(user.email)}`,
-      },
-    });
+    // sendMailQueue.add({
+    //   emailModule: 'REGISTRATION',
+    //   to: user.email,
+    //   subject: 'Pageaters Account - Greetings from Pageaters!',
+    //   data: {
+    //     FULL_NAME: returnAddressName('', user.email),
+    //     LINK: `${HOST}/auth/verify?token=${verifyToken}&email=${encodeURIComponent(user.email)}`,
+    //   },
+    // });
 
     // create a refresh token cookie that will also expires in 7 days
     // res.cookie(enums.TOKEN_ID.REFRESH_TOKEN_COOKIE, refreshToken.token, REFRESH_TOKEN_OPTIONS);
