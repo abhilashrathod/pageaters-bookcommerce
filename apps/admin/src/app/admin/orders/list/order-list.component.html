@@ -6,16 +6,10 @@
     <app-entity-table
       [columns]="resourceColumns"
       [getResource]="getAllBaseUrl"
+      [showFilters]="true"
       [viewResource]="viewResourceUrl"
-      [editResource]="editResourceUrl"
-      [deleteResource]="deleteBaseUrl">
+      [searchResource]="searchResourceUrl">
     </app-entity-table>
   </div>
-</div>
-
-<div class="action-button-row">
-  <button mat-fab color="primary" [routerLink]="createResourceUrl">
-    <mat-icon>add</mat-icon>
-  </button>
 </div>
 

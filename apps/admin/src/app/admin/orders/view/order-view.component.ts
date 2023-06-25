@@ -7,6 +7,7 @@ import {IOrder} from '../../../core/schema/order';
 import {AlignShipmentDialogComponent} from './align-shipment-dialog.component';
 import {MatDialog} from '@angular/material/dialog';
 import {IssueCreditComponent} from './issue-credit.component';
+import { CreateShipmentComponent } from './create-shipment.component';
 
 @Component({
   selector: 'app-order-view',
@@ -134,6 +135,35 @@ export class OrderViewComponent implements OnInit {
       this.snackBar.open('Store credit issued.', 'OKAY', {duration: 3000});
     });
   }
+
+  openShipmentDialog(): void {
+    const dialogRef = this.dialog.open(CreateShipmentComponent, {
+      width: '400px',
+    });
+
+    dialogRef.afterClosed()
+      .subscribe(res => {
+        if (res) {
+          this.doShipShipment(res);
+        }
+      });
+  }
+
+  doShipShipment(dimensions): void {
+    const payload = {
+      address: {},
+      dimensions,
+    };
+    const obs$ = this.orderServices.creteShipment(this.order._id, payload);
+    obs$.subscribe(res => {
+      this.snackBar.open('Shipment Created', 'OKAY', {duration: 3000});
+      this.getOrderDetails(this.order._id);
+    }, err => {
+      console.log(err);
+      this.snackBar.open(err.message, 'OKAY', {duration: 3000});
+    });
+  }
+
 
   closeReturnRequest(requestId: string): void {
     const obs$ = this.orderServices.closeReturnShipment(this.order._id, requestId);

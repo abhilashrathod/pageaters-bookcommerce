@@ -5,6 +5,18 @@
       <input matInput type="search" [formControl]="search">
     </mat-form-field>
   </div>
+  <div class="col-6" *ngIf="showFilters">
+    <div class="d-flex">
+      <mat-form-field appearance="standard">
+        <mat-label>Status</mat-label>
+        <mat-select (selectionChange)="handleFilterChange($event)">
+          <mat-option *ngFor="let status of statuses" [value]="status.value">
+            {{status.text}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
 </div>
 
 <mat-table #table [dataSource]="dataSource" class="entity-table">
@@ -12,10 +24,10 @@
     <mat-header-cell *matHeaderCellDef> {{col.header}}</mat-header-cell>
     <mat-cell *matCellDef="let row">
       <span *ngIf="col.columnDef == 'action'">
-        <button mat-icon-button color="primary" [routerLink]="col.cell(row)" matTooltip="Edit" class="me-1">
+        <button *ngIf="editResource" mat-icon-button color="primary" [routerLink]="col.cell(row)" matTooltip="Edit" class="me-1">
           <mat-icon>edit</mat-icon>
         </button>
-        <button mat-icon-button color="warn" (click)="deleteRecord(col.cell(row))" matTooltip="Delete">
+        <button *ngIf="deleteResource" mat-icon-button color="warn" (click)="deleteRecord(col.cell(row))" matTooltip="Delete">
           <mat-icon>delete</mat-icon>
         </button>
       </span>

@@ -10,6 +10,19 @@ export const FILE_UPLOAD_MODULES = {
 
 export const BOOK_VERSIONS = ['hardcover', 'paperback', 'mass market paperback'];
 export const READING_LEVELS = ['Beginner', 'Intermediate', 'Advance'];
+export const ORDER_STATUS = [
+  {value: '', text: 'All'},
+  {value: 'paid', text: 'Paid'},
+  {value: 'shipped', text: 'Shipped'},
+  {value: 'confirmed', text: 'Confirmed'},
+  {value: 'fulfilled', text: 'Fulfilled'},
+  {value: 'cancelled', text: 'Cancelled'},
+  {value: 'returned', text: 'Returned'},
+  {value: 'replacement', text: 'Replacement'},
+  {value: 'return in progress', text: 'Return in Progress'},
+  {value: 'replacement in progress', text: 'Replacement in Progress'},
+  {value: 'refunded', text: 'Refunded'},
+]
 
 export const PRICING_PERCENTAGES = {
   NON_MEMBER_RENT: 50,

@@ -21,6 +21,9 @@ export class SharedService {
     params = params.set('page', filters.page);
     params = params.set('sortBy', filters.sortBy);
     params = params.set('sortOrder', filters.sortOrder);
+    if (filters.status) {
+      params = params.set('status', filters.status);
+    }
     return this.httpClient.get(url, {params})
       .pipe(
         map((res: IResponse) => res.data),

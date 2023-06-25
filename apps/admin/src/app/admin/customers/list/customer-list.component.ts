@@ -53,6 +53,7 @@ export class CustomerListComponent implements OnInit {
 
   public deleteBaseUrl = `/users`;
   public getAllBaseUrl = '/users';
+  public searchResource = '/users/search';
 
   constructor() {
   }

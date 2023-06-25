@@ -91,6 +91,15 @@ export class OrderServices {
       );
   }
 
+  creteShipment(orderId: string, payload: any): Observable<any> {
+    const url = `${environment.BASE_PATH}/orders/create-shipment/${orderId}`;
+    return this._http.post(url, payload)
+      .pipe(
+        map((dt: IResponse) => dt.data),
+        catchError((err) => this.handleError(err))
+      );
+  }
+
   handleError(err: any): any {
     return throwError(err.error);
   }

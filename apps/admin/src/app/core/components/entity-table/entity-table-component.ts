@@ -24,6 +24,7 @@ import {AppConfirmService} from '../app-confirm/app-confirm.service';
 import {AppLoaderService} from '../app-loader/app-loader.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {ActivatedRoute, Router} from '@angular/router';
+import { ORDER_STATUS } from '../../helpers/constants';
 
 
 @Component({
@@ -48,6 +49,7 @@ export class EntityTableComponent implements OnInit, AfterViewInit, OnChanges {
   @Input() public checkResource;
   @Input() public featuredResource;
   @Input() public sort;
+  @Input() public showFilters = false;
 
   @ViewChild(MatPaginator, {static: false}) paginator: MatPaginator;
 
@@ -55,12 +57,16 @@ export class EntityTableComponent implements OnInit, AfterViewInit, OnChanges {
   // tslint:disable-next-line:no-output-on-prefix
   @Output() onEmptyRecords = new EventEmitter<any>();
 
+  // orders list only
+  statuses = ORDER_STATUS;
+
   dataSource = new MatTableDataSource();
   public filterObject = {
     limit: 25,
     page: 1,
     sortBy: 'createdAt',
     sortOrder: -1,
+    status: '',
   };
   total: number;
   page: any;
@@ -103,7 +109,12 @@ export class EntityTableComponent implements OnInit, AfterViewInit, OnChanges {
 
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('changes', changes);
+  }
+
+  handleFilterChange($event): void {
+    const value = $event.value;
+    this.filterObject.status = value;
+    this.ngAfterViewInit();
   }
 
   ngAfterViewInit(): void {

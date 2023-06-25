@@ -223,7 +223,10 @@
 
 
 <div class="action-button-row">
-  <button mat-fab color="primary" (click)="openStoreCreditDialog()" [matTooltip]="'Send Store Credit'">
+  <button mat-fab class="me-2" color="primary" (click)="openStoreCreditDialog()" [matTooltip]="'Send Store Credit'">
     <mat-icon>card_giftcard</mat-icon>
+  </button>
+  <button mat-fab color="accent" (click)="openShipmentDialog()" [matTooltip]="'Prepare Shipment'">
+    <mat-icon>local_shipping</mat-icon>
   </button>
 </div>

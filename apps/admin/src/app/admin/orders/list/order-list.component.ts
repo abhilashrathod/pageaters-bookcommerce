@@ -69,8 +69,8 @@ export class OrderListComponent implements OnInit {
     },
   ];
 
-  public deleteBaseUrl = `/orders`;
   public getAllBaseUrl = `/orders`;
+  public searchResourceUrl = `/orders/search`;
 
   constructor() {
   }
