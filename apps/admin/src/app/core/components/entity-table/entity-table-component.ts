@@ -91,6 +91,9 @@ export class EntityTableComponent implements OnInit, AfterViewInit, OnChanges {
       if (queryParams.limit) {
         this.filterObject.limit = queryParams.limit;
       }
+      if (queryParams.status) {
+        this.filterObject.status = queryParams.status;
+      }
     });
 
     this.search
