@@ -1,13 +1,14 @@
 const mongoose = require('mongoose');
-const { get } = require('lodash');
+const { get, map } = require('lodash');
 const Razorpay = require('razorpay');
+const axios = require('axios');
 const moment = require('moment');
 const { parallel } = require('async');
 
 const { models, enums } = require('../constants');
-const { RAZOR_PAY, RAZOR_PAY_WEBHOOKS, TWILIO } = require('../appConfig');
+const { RAZOR_PAY, RAZOR_PAY_WEBHOOKS, TWILIO, DELHIVERY } = require('../appConfig');
 const { calculateTotal } = require('../helpers/cart.helper');
-const { calculateShipping, calculateTotalWeight, orderPaymentInfo, textMessage, returnProductImage, returnAssetImage, returnBundleImage } = require('../helpers/order.helper');
+const { calculateShipping, calculateTotalWeight, orderPaymentInfo, textMessage, returnProductImage, returnAssetImage, returnBundleImage, returnPickupAddress } = require('../helpers/order.helper');
 const { getId, generateRandomNumber } = require('../helpers/utils.helper');
 const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
@@ -210,7 +211,7 @@ module.exports.create = async (req, res) => {
     if (method === 'cod') {
       currentOrderRes.orderHistory.push({
         title: enums.ORDER_STAGES.CONFIRMED,
-        description: 'We have received your order. Preparing shipment',
+        description: 'We have received your order. We shall start preparing your shipment. Once shipment is handover to shipment company, you will receive tracking information and estimated delivery date.',
         time: new Date().toISOString(),
       });
       currentOrderRes.payment = { method: 'cod' };
@@ -283,7 +284,7 @@ module.exports.verifyAndConfirm = async (req, res) => {
       if (orderRes) {
         orderRes.orderHistory.push({
           title: enums.ORDER_STAGES.PAID,
-          description: 'We have received your order. Preparing shipment',
+          description: 'We have received your order. We shall start preparing your shipment. Once shipment is handover to shipment company, you will receive tracking information and estimated delivery date. ',
           time: new Date().toISOString(),
         });
         orderRes.orderStatus = enums.ORDER_STAGES.PAID;
@@ -464,6 +465,57 @@ module.exports.getAll = async (req, res) => {
     const order = await Order.paginate(query, options);
 
     return res.ok({ message: 'CART_LIST_SUCCESS', data: order });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+module.exports.retrieve = async (req, res) => {
+  try {
+    const userId = get(req, 'user.userId', '');
+    const selectString = `orderId userId subTotal orderDate storeCredit total shipping giftOptions deliveryInstructions orderHistory deliveryAddress boxed bundles products total`;
+
+    const orderRes = await Order.findOne({
+      userId,
+      $or: [{ orderStatus: enums.ORDER_STAGES.ATTEMPTED }, { orderStatus: enums.ORDER_STAGES.CREATED }],
+    }).select(selectString).populate(orderPopulateOptions);
+
+    if (orderRes) {
+      return res.ok({ message: 'ORDER_LIST_SUCCESS', data: orderRes });
+    }
+
+    return res.error('ORDER_INFO_ATTEMPT_FAILED');
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.search = async (req, res) => {
+  try {
+    let { q } = req.allParams();
+
+    const query = { orderId: { $regex: q, $options: 'i' } };
+
+    const options = [
+      {
+        path: 'deliveryAddress',
+      }, {
+        path: 'userId',
+        select: 'fullName email contactNo',
+      }, {
+        path: 'products.product',
+        select: 'bookId title currentDiscount price',
+      }, {
+        path: 'bundles.bundle',
+        select: 'bundleId title bundledBooks currentDiscount price',
+      }, {
+        path: 'boxes.box',
+        select: 'boxId title images currentDiscount price',
+      },
+    ];
+
+    const order = await Order.find(query).populate(options);
+
+    return res.ok({ message: 'ORDER_LIST_SUCCESS', data: order });
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -965,6 +1017,115 @@ module.exports.completeRefund = async (req, res) => {
     return res.internalServerError(e);
   }
 };
+
+module.exports.createShipmentForDelhivery = async (req, res) => {
+  try {
+    let { orderId, address, dimensions } = req.allParams();
+
+    const populateOptions = [{
+      path: 'deliveryAddress',
+    }, {
+      path: 'userId',
+      select: 'fullName email contactNo',
+    }, {
+      path: 'products.product',
+      select: 'bookId title currentDiscount price',
+    }, {
+      path: 'bundles.bundle',
+      select: 'bundleId title bundledBooks currentDiscount price',
+    }, {
+      path: 'boxes.box',
+      select: 'boxId title images currentDiscount price',
+    },];
+
+    const orderRes = await Order.findOne({
+      _id: orderId,
+      $or: [{ orderStatus: enums.ORDER_STAGES.PAID }, { orderStatus: enums.ORDER_STAGES.CONFIRMED }],
+    }).populate(populateOptions);
+
+    if (!orderRes) {
+      return res.error('ORDER_INFO_ATTEMPT_FAILED');
+    }
+    const payload = {
+      shipments: [{
+        name: orderRes.deliveryAddress.fullName,
+        add: orderRes.deliveryAddress.addressLine1 + ' ' + orderRes.deliveryAddress.landmark, 
+        pin: orderRes.deliveryAddress.pinCode,
+        city: orderRes.deliveryAddress.city,
+        state: orderRes.deliveryAddress.state,
+        country: 'India',
+        phone: orderRes.deliveryAddress.contactNo,
+        order: orderRes.orderId,
+        payment_mode: orderRes.orderStatus == 'confirmed' ? 'COD' : 'Prepaid',
+        products_desc: returnProductsNames(orderRes),
+        cod_amount: orderRes.orderStatus == 'confirmed' ? orderRes.total : '',
+        total_amount: orderRes.total,
+        shipment_width: dimensions.width,
+        shipment_height: dimensions.height,
+        weight: dimensions.weight,
+        shipping_mode: 'Surface',
+        address_type: orderRes.deliveryAddress.type.toLowerCase()
+      }],
+      pickup_location: returnPickupAddress()
+    }
+
+    const config = {
+      method: 'post',
+      url: `${DELHIVERY.BASE_URL}/api/cmu/create.json`,
+      data: `format=json&data=${JSON.stringify(payload)}`,
+      headers: {
+        "Authorization": `Token ${DELHIVERY.API_TOKEN}`
+      }
+    };
+
+    const {data: apiRes} = await axios(config);
+
+    if (apiRes.success) {
+      orderRes.orderStatus = enums.ORDER_STAGES.SHIPPED;
+      orderRes.shipmentTrackingId = `https://www.delhivery.com/track/package/${apiRes.packages[0].waybill}`;
+      orderRes.orderHistory.push({
+        title: enums.ORDER_STAGES.SHIPPED,
+        description: 'Order hand over to shipment company. Your books are on their way',
+        time: new Date().toISOString(),
+      });
+
+      await orderRes.save();
+    } else {
+      
+      return res.error('SHIPMENT_CREATE_ERROR')
+    }
+
+    const emailBody = {
+      emailModule: 'ORDER_SHIPPED',
+      to: orderRes.userId.email,
+      subject: `Order #${orderRes.orderId} is Shipped - Pageaters`,
+      data: {
+        ORDER_ID: orderRes.orderId,
+        ORDER_DATE: moment(orderRes.orderDate).format('DD MMM YYYY'),
+        FULL_NAME: orderRes.userId.fullName ? orderRes.userId.fullName : 'Reader',
+        SUBTOTAL: orderRes.subTotal,
+        SHIPPING: orderRes.shipping,
+        TOTAL: orderRes.total,
+        ADDRESS: orderRes.deliveryAddress,
+      },
+    };
+
+    sendMailQueue.add(emailBody);
+
+    return res.ok({ message: 'SHIPMENT_CREATE_SUCCESS', data: apiRes });
+  } catch (e) {
+    console.error("ERROR EROOR ERROOOR > > > > > ", e);
+    return res.internalServerError(e);
+  }
+};
+
+function returnProductsNames(orderDetails) {
+  let allBooks = map(orderDetails.products, 'product.title');
+  let allBundles = map(orderDetails.bundles, 'bundle.title');
+  let allBoxes = map(orderDetails.mysteryBoxes, 'box.title');
+
+  return `${allBooks} ${allBundles} ${allBoxes}`;
+}
 
 function returnProducts(products) {
   for (let productItem of products) {

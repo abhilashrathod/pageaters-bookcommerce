@@ -17,6 +17,7 @@ router.post('/create', permissionValidator(USER_ROLES.USER), requestValidator(va
 router.get('/retrieve', permissionValidator(USER_ROLES.USER), controller.retrieve);
 router.patch('/credit', permissionValidator(USER_ROLES.USER), controller.applyStoreCredit);
 
+router.post('/create-shipment/:orderId', permissionValidator(USER_ROLES.USER), controller.createShipmentForDelhivery); // TODO: add payload validator
 router.post('/return/:uniqueId', permissionValidator(USER_ROLES.USER), controller.returnRequest); // TODO: add payload validator
 router.post('/cancel/:uniqueId', permissionValidator(USER_ROLES.USER), controller.cancelRequest); // TODO: add payload validator
 
@@ -28,6 +29,7 @@ router.post('/cancel/:uniqueId', permissionValidator(USER_ROLES.USER), controlle
 // ADMIN: Order fetching
 router.get('/', permissionValidator(USER_ROLES.ADMIN), controller.getAll);
 router.get('/getById/:id', permissionValidator(USER_ROLES.ADMIN), controller.getById);
+router.get('/search', permissionValidator(USER_ROLES.ADMIN), controller.search);
 
 // ADMIN: forward order
 router.post('/ship', permissionValidator(USER_ROLES.ADMIN), controller.ship);

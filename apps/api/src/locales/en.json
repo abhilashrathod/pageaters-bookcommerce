@@ -184,6 +184,8 @@
 	"STORE_DEAL_UPDATE_SUCCESS": "Store Deal Information Updated",
 	"STORE_DEAL_SEARCH_SUCCESS": "Store Deal Search Successful",
 	"STORE_DEAL_DELETE_SUCCESS": "Store Deal Deleted Successfully",
+	"SHIPMENT_CREATE_SUCCESS": "Shipment Created Successfully",
+	"SHIPMENT_CREATE_ERROR": "Something went wrong while creating shipment",
 	"PRODUCT_SET_LIST_SUCCESS": "Product Set list success",
 	"PRODUCT_SET_NOT_EXIST": "Product Set doesn't exist",
 	"PRODUCT_SET_CREATE_SUCCESS": "New Product Set Created",

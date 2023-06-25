@@ -64,3 +64,18 @@ module.exports.getAllDetails = async (req, res) => {
     return res.internalServerError(e);
   }
 };
+
+
+module.exports.search = async (req, res) => {
+  try {
+    let { q } = req.allParams();
+
+    const query = { email: { $regex: q, $options: 'i' } };
+
+    const usersRes = await Users.find(query);
+
+    return res.ok({ message: 'USER_LIST_SUCCESS', data: usersRes });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};

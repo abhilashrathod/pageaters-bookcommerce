@@ -3,7 +3,7 @@ const axios = require('axios');
 const Buffer = require('buffer');
 const colors = require('colors');
 const { sumBy, get } = require('lodash');
-const { DELHIVERY, AWS } = require('../appConfig');
+const { ENVIRONMENT, DELHIVERY, AWS } = require('../appConfig');
 
 const { models, enums } = require('../constants');
 const Book = mongoose.model(models.STORE_BOOK);
@@ -109,6 +109,32 @@ module.exports.calculateShipping = async function(isFree, hasMysteryBox) {
     }
   });
 };
+
+module.exports.returnPickupAddress = function() {
+  const demoAddress = {
+    name: 'Pageaters Main Office',
+    add: 'Unit 1, Demo Logistics Park, Sector 1',
+    city: 'Gandhinagar',
+    pin_code: '382016',
+    country: 'India',
+    phone: '9000000000',
+  };
+
+  const mainAddress = {
+    name: 'PAGEATERS DEMO WAREHOUSE',
+    add: 'Unit 1, Demo Logistics Park, Sector 1',
+    city: 'Gandhinagar',
+    pin_code: '382016',
+    country: 'India',
+    phone: '9000000000',
+  };
+
+  if (ENVIRONMENT === 'development' || ENVIRONMENT === 'staging') {
+    return demoAddress;
+  }
+
+  return mainAddress;
+}
 
 module.exports.orderPaymentInfo = function(payment) {
   let payload;
