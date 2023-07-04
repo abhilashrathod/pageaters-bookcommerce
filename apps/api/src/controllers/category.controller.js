@@ -129,7 +129,7 @@ module.exports.getOverviewProducts = async (req, res) => {
   try {
     let { id, page, limit, sortOrder } = req.allParams();
 
-    const query = { isDeleted: false, categories: id };
+    const query = { isDeleted: false, categories: id, inventory: {$gt: 0} };
 
     const options = {
       page,

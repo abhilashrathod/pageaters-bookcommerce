@@ -1069,50 +1069,50 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
       pickup_location: returnPickupAddress()
     }
 
-    const config = {
-      method: 'post',
-      url: `${DELHIVERY.BASE_URL}/api/cmu/create.json`,
-      data: `format=json&data=${JSON.stringify(payload)}`,
-      headers: {
-        "Authorization": `Token ${DELHIVERY.API_TOKEN}`
-      }
-    };
+    // const config = {
+    //   method: 'post',
+    //   url: `${DELHIVERY.BASE_URL}/api/cmu/create.json`,
+    //   data: `format=json&data=${JSON.stringify(payload)}`,
+    //   headers: {
+    //     "Authorization": `Token ${DELHIVERY.API_TOKEN}`
+    //   }
+    // };
 
-    const {data: apiRes} = await axios(config);
+    // const {data: apiRes} = await axios(config);
 
-    if (apiRes.success) {
-      orderRes.orderStatus = enums.ORDER_STAGES.SHIPPED;
-      orderRes.shipmentTrackingId = `https://www.delhivery.com/track/package/${apiRes.packages[0].waybill}`;
-      orderRes.orderHistory.push({
-        title: enums.ORDER_STAGES.SHIPPED,
-        description: 'Order hand over to shipment company. Your books are on their way',
-        time: new Date().toISOString(),
-      });
+    // if (apiRes.success) {
+    //   orderRes.orderStatus = enums.ORDER_STAGES.SHIPPED;
+    //   orderRes.shipmentTrackingId = `https://www.delhivery.com/track/package/${apiRes.packages[0].waybill}`;
+    //   orderRes.orderHistory.push({
+    //     title: enums.ORDER_STAGES.SHIPPED,
+    //     description: 'Order hand over to shipment company. Your books are on their way',
+    //     time: new Date().toISOString(),
+    //   });
 
-      await orderRes.save();
-    } else {
+    //   await orderRes.save();
+    // } else {
       
-      return res.error('SHIPMENT_CREATE_ERROR')
-    }
+    //   return res.error('SHIPMENT_CREATE_ERROR')
+    // }
 
-    const emailBody = {
-      emailModule: 'ORDER_SHIPPED',
-      to: orderRes.userId.email,
-      subject: `Order #${orderRes.orderId} is Shipped - Pageaters`,
-      data: {
-        ORDER_ID: orderRes.orderId,
-        ORDER_DATE: moment(orderRes.orderDate).format('DD MMM YYYY'),
-        FULL_NAME: orderRes.userId.fullName ? orderRes.userId.fullName : 'Reader',
-        SUBTOTAL: orderRes.subTotal,
-        SHIPPING: orderRes.shipping,
-        TOTAL: orderRes.total,
-        ADDRESS: orderRes.deliveryAddress,
-      },
-    };
+    // const emailBody = {
+    //   emailModule: 'ORDER_SHIPPED',
+    //   to: orderRes.userId.email,
+    //   subject: `Order #${orderRes.orderId} is Shipped - Pageaters`,
+    //   data: {
+    //     ORDER_ID: orderRes.orderId,
+    //     ORDER_DATE: moment(orderRes.orderDate).format('DD MMM YYYY'),
+    //     FULL_NAME: orderRes.userId.fullName ? orderRes.userId.fullName : 'Reader',
+    //     SUBTOTAL: orderRes.subTotal,
+    //     SHIPPING: orderRes.shipping,
+    //     TOTAL: orderRes.total,
+    //     ADDRESS: orderRes.deliveryAddress,
+    //   },
+    // };
 
-    sendMailQueue.add(emailBody);
+    // sendMailQueue.add(emailBody);
 
-    return res.ok({ message: 'SHIPMENT_CREATE_SUCCESS', data: apiRes });
+    return res.ok({ message: 'SHIPMENT_CREATE_SUCCESS', data: payload });
   } catch (e) {
     console.error("ERROR EROOR ERROOOR > > > > > ", e);
     return res.internalServerError(e);
@@ -1122,9 +1122,9 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
 function returnProductsNames(orderDetails) {
   let allBooks = map(orderDetails.products, 'product.title');
   let allBundles = map(orderDetails.bundles, 'bundle.title');
-  let allBoxes = map(orderDetails.mysteryBoxes, 'box.title');
+  let allBoxes = map(orderDetails.boxes, 'box.title');
 
-  return `${allBooks} ${allBundles} ${allBoxes}`;
+  return `${allBooks} ${allBundles} ${allBoxes}`.trim();
 }
 
 function returnProducts(products) {
