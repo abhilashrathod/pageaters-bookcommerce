@@ -441,7 +441,7 @@ module.exports.getAll = async (req, res) => {
       limit,
       select: `orderId orderDate userId deliveryAddress orderStatus products boxes bundles total`,
       sort: {
-        createdAt: 'asc',
+        updatedAt: 'desc',
       },
       populate: [
         {
