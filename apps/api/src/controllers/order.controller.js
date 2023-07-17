@@ -1049,7 +1049,7 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
     const payload = {
       shipments: [{
         name: orderRes.deliveryAddress.fullName,
-        add: orderRes.deliveryAddress.addressLine1 + ' ' + orderRes.deliveryAddress.landmark, 
+        add: orderRes.deliveryAddress.addressLine1 + ' ' + orderRes.deliveryAddress.addressLine2 + ' ' + orderRes.deliveryAddress.landmark, 
         pin: orderRes.deliveryAddress.pinCode,
         city: orderRes.deliveryAddress.city,
         state: orderRes.deliveryAddress.state,
