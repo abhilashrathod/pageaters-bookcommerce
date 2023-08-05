@@ -26,20 +26,20 @@ const Hero = styled.section`
   
   height: 80vh;
   
- &:after {
-    content: "";
-    display: block;
-    background: rgb(0, 0, 0);
-    background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 100%;
-    position: absolute;
-  }
+//  &:after {
+//     content: "";
+//     display: block;
+//     background: rgb(0, 0, 0);
+//     background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+//     left: 0;
+//     top: 0;
+//     height: 100%;
+//     width: 100%;
+//     position: absolute;
+//   }
   
   @media screen and (max-width: ${LG - 1}px) {      
-    height: 60vh;
+    height: 25vh;
   }
   
   @media screen and (max-width: ${MD - 1}px) {      
@@ -83,7 +83,8 @@ const HeroBanner: React.FC<Props> = ({banner}) => {
   const loggedIn = useAuth();
 
   function renderBanner(image: string) {
-    return getAssetImage(image, {height: 1280, width: 1920, fit: 'cover'})
+    // return getAssetImage(image, {height: 1280, width: 1920, fit: 'cover'})
+    return 'https://res.cloudinary.com/pageaters/image/upload/v1691269696/sale_hrebfa.png';
   }
 
   function handleNavigation() {
@@ -96,7 +97,7 @@ const HeroBanner: React.FC<Props> = ({banner}) => {
         <div className="custom-container" style={{zIndex: 1}}>
           <div className="row">
             <div className="col-12">
-              <HeroTitleSection>
+              {/* <HeroTitleSection>
                 <HeroTitle>{banner.title}</HeroTitle>
                 <HeroSubTitle>Novels • Literature • Self-Help</HeroSubTitle>
                 <div>
@@ -104,7 +105,7 @@ const HeroBanner: React.FC<Props> = ({banner}) => {
                     {'Explore'}
                   </AppButton>
                 </div>
-              </HeroTitleSection>
+              </HeroTitleSection> */}
             </div>
           </div>
         </div>
