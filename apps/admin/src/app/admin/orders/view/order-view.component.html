@@ -223,6 +223,9 @@
 
 
 <div class="action-button-row">
+  <button mat-fab color="warn" class="me-2" (click)="cancelShipmentConfirmation()" [matTooltip]="'Cancel Order'">
+    <mat-icon>close</mat-icon>
+  </button>
   <button mat-fab class="me-2" color="primary" (click)="openStoreCreditDialog()" [matTooltip]="'Send Store Credit'">
     <mat-icon>card_giftcard</mat-icon>
   </button>

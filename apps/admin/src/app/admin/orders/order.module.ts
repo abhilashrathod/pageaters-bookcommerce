@@ -13,6 +13,7 @@ import {OrderViewComponent} from './view/order-view.component';
 import {AlignShipmentDialogComponent} from './view/align-shipment-dialog.component';
 import {IssueCreditComponent} from './view/issue-credit.component';
 import {CreateShipmentComponent} from './view/create-shipment.component';
+import {CancelOrderDialogComponent} from './view/cancel-order-dialog.component';
 
 @NgModule({
   imports: [
@@ -32,12 +33,14 @@ import {CreateShipmentComponent} from './view/create-shipment.component';
     AlignShipmentDialogComponent,
     IssueCreditComponent,
     CreateShipmentComponent,
+    CancelOrderDialogComponent,
   ],
   providers: [],
   entryComponents: [
     IssueCreditComponent,
     AlignShipmentDialogComponent,
     CreateShipmentComponent,
+    CancelOrderDialogComponent,
   ]
 })
 export class OrderModule {

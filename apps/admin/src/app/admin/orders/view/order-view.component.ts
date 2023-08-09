@@ -8,6 +8,7 @@ import {AlignShipmentDialogComponent} from './align-shipment-dialog.component';
 import {MatDialog} from '@angular/material/dialog';
 import {IssueCreditComponent} from './issue-credit.component';
 import { CreateShipmentComponent } from './create-shipment.component';
+import { CancelOrderDialogComponent } from './cancel-order-dialog.component';
 
 @Component({
   selector: 'app-order-view',
@@ -61,8 +62,34 @@ export class OrderViewComponent implements OnInit {
     });
   }
 
-  cancelShipment(): void {
-    // write shipment cancel code
+  cancelShipmentConfirmation(): void {
+    const dialogRef = this.dialog.open(CancelOrderDialogComponent, {
+      width: '400px',
+    });
+
+    dialogRef.afterClosed()
+      .subscribe(res => {
+        if (res) {
+          this.cancelShipment(res);
+        }
+      });
+  }
+
+  cancelShipment(data: any): void {
+    const payload = {
+      uniqueId: this.order.orderId,
+      userId: this.order.userId,
+      reason: data.reason,
+      notify: data.notify,
+    };
+
+    const cancel$ = this.orderServices.cancelOrder(payload);
+    cancel$.subscribe(res => {
+      this.snackBar.open('Order marked as cancelled', 'OKAY', {duration: 3000});
+      this.getOrderDetails(this.order._id);
+    }, err => {
+      this.snackBar.open(err, 'OKAY', {duration: 5000});
+    })
   }
 
   dumpRecord(): string {
