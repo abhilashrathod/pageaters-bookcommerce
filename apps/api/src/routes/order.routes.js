@@ -39,6 +39,7 @@ router.patch('/ship/:id/complete', permissionValidator(USER_ROLES.ADMIN), contro
 router.patch('/return/:id/shipment/:requestId', permissionValidator(USER_ROLES.ADMIN), controller.alignReturnShipment);
 router.patch('/return/:id/shipment/:requestId/close', permissionValidator(USER_ROLES.ADMIN), controller.closeReturnRequest);
 router.patch('/replace/:id/shipment/:requestId/close', permissionValidator(USER_ROLES.ADMIN), controller.closeReplaceRequest);
+router.post('/admin-cancel/:id', permissionValidator(USER_ROLES.ADMIN), controller.cancelByAdmin);
 
 /**
  *  WEBHOOKS

@@ -6,7 +6,7 @@ const moment = require('moment');
 const { parallel } = require('async');
 
 const { models, enums } = require('../constants');
-const { RAZOR_PAY, RAZOR_PAY_WEBHOOKS, TWILIO, DELHIVERY } = require('../appConfig');
+const { RAZOR_PAY, RAZOR_PAY_WEBHOOKS, TWILIO, DELHIVERY, ENVIRONMENT } = require('../appConfig');
 const { calculateTotal } = require('../helpers/cart.helper');
 const { calculateShipping, calculateTotalWeight, orderPaymentInfo, textMessage, returnProductImage, returnAssetImage, returnBundleImage, returnPickupAddress } = require('../helpers/order.helper');
 const { getId, generateRandomNumber } = require('../helpers/utils.helper');
@@ -812,9 +812,71 @@ module.exports.cancelRequest = async (req, res) => {
         FULL_NAME: orderRes.userId.fullName ? orderRes.userId.fullName : 'Reader',
       },
     };
-    sendMailQueue.add(emailBody);
+
+    if(ENVIRONMENT === 'production') {
+      sendMailQueue.add(emailBody);
+    }
 
     // TODO: Send message
+
+    // restoring inventory
+    await restoreInventory(orderRes);
+
+    return res.ok({ message: 'ORDER_CANCEL_SUCCESS', data: {} });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.cancelByAdmin = async (req, res) => {
+  try {
+    const { uniqueId, userId, reason, notify } = req.allParams();
+
+    const populateOptions = [{
+      path: 'userId',
+      select: 'fullName email contactNo',
+    }];
+
+    const query = {
+      $or: [{ orderStatus: enums.ORDER_STAGES.PAID }, { orderStatus: enums.ORDER_STAGES.CONFIRMED }, { orderStatus: enums.ORDER_STAGES.SHIPPED }],
+      orderId: uniqueId,
+      userId,
+    };
+
+    const orderRes = await Order.findOne(query).populate(populateOptions);
+
+    if (!orderRes) {
+      return res.error('ORDER_INFO_ATTEMPT_FAILED');
+    }
+
+    orderRes.orderStatus = enums.ORDER_STAGES.CANCELLED;
+    orderRes.orderHistory.push({
+      title: enums.ORDER_STAGES.CANCELLED,
+      description: reason,
+      time: new Date().toISOString(),
+    });
+
+    await orderRes.save();
+
+    const emailBody = {
+      emailModule: 'CLOSE_ORDER',
+      to: orderRes.userId.email,
+      subject: `Order ${orderRes.orderId} Cancellation Confirmation  - Pageaters`,
+      data: {
+        ORDER_ID: orderRes.orderId,
+        FULL_NAME: orderRes.userId.fullName ? orderRes.userId.fullName : 'Reader',
+        REASON: reason,
+      },
+    };
+
+    if(ENVIRONMENT === 'production' && notify) {
+      sendMailQueue.add(emailBody);
+    }
+
+    // TODO: Send message
+
+    // restoring inventory
+    await restoreInventory(orderRes);
 
     return res.ok({ message: 'ORDER_CANCEL_SUCCESS', data: {} });
   } catch (e) {
@@ -1255,16 +1317,23 @@ function deductStoreCredit(orderId, userId, creditToDeduct) {
 function sendConfirmationMessage(userData, orderId) {
   return new Promise(async (resolve, reject) => {
     try {
-      if (userData.contactNo) {
-        let message = {
-          body: textMessage(userData.fullName, userData.email, orderId),
-          from: TWILIO.PHONE,
-          to: `+91${userData.contactNo}`,
-        };
-
-        await twilioClient.messages.create(message);
+      if (ENVIRONMENT === 'production') {
+        if (userData.contactNo) {
+          let message = {
+            body: textMessage(userData.fullName, userData.email, orderId),
+            from: TWILIO.PHONE,
+            to: `+91${userData.contactNo}`,
+          };
+          await twilioClient.messages.create(message);
+          resolve();
+        } else {
+          resolve();
+        }
+      } else {
+        console.info("MESSAGE:", textMessage(userData.fullName, userData.email, orderId));
         resolve();
       }
+      resolve();
     } catch (e) {
       resolve();
     }
@@ -1274,29 +1343,71 @@ function sendConfirmationMessage(userData, orderId) {
 function sendConfirmationEmail(userRes, orderRes) {
   return new Promise((resolve, reject) => {
     try {
-      const emailBody = {
-        emailModule: 'ORDER_CONFIRMATION',
-        to: userRes.email,
-        subject: `Order Confirmation #${orderRes.orderId} - Pageaters`,
-        data: {
-          ORDER_ID: orderRes.orderId,
-          ORDER_DATE: moment(orderRes.orderDate).format('DD MMM YYYY'),
-          FULL_NAME: userRes.fullName ? userRes.fullName : 'Reader',
-          PRODUCTS: returnProducts(orderRes.products),
-          BUNDLES: returnBundles(orderRes.bundles),
-          BOXES: returnBoxes(orderRes.boxes),
-          SUBTOTAL: orderRes.subTotal,
-          SHIPPING: orderRes.shipping,
-          STORE_CREDIT: orderRes.storeCredit,
-          GIFT_CHARGES: orderRes.giftOptions.isGift ? orderRes.giftOptions.details.cost : -1,
-          TOTAL: orderRes.total,
-          ADDRESS: orderRes.deliveryAddress,
-        },
-      };
-      sendMailQueue.add(emailBody);
-      resolve(true);
+      if (ENVIRONMENT === 'production') {
+        const emailBody = {
+          emailModule: 'ORDER_CONFIRMATION',
+          to: userRes.email,
+          subject: `Order Confirmation #${orderRes.orderId} - Pageaters`,
+          data: {
+            ORDER_ID: orderRes.orderId,
+            ORDER_DATE: moment(orderRes.orderDate).format('DD MMM YYYY'),
+            FULL_NAME: userRes.fullName ? userRes.fullName : 'Reader',
+            PRODUCTS: returnProducts(orderRes.products),
+            BUNDLES: returnBundles(orderRes.bundles),
+            BOXES: returnBoxes(orderRes.boxes),
+            SUBTOTAL: orderRes.subTotal,
+            SHIPPING: orderRes.shipping,
+            STORE_CREDIT: orderRes.storeCredit,
+            GIFT_CHARGES: orderRes.giftOptions.isGift ? orderRes.giftOptions.details.cost : -1,
+            TOTAL: orderRes.total,
+            ADDRESS: orderRes.deliveryAddress,
+          },
+        };
+        sendMailQueue.add(emailBody);
+        resolve(true);
+      } else {
+        console.info("MAIL WILL BE SENT");
+        resolve();
+      }
     } catch (e) {
       resolve(true);
+    }
+  });
+}
+
+function restoreInventory(orderRes) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      for (let book of orderRes.products) {
+        const bookRes = await Book.findOne({
+          isDeleted: false,
+          _id: book.product._id,
+        }).select('currentDiscount price membersPrice inventory weight');
+        bookRes.inventory = bookRes.inventory + book.quantity;
+        bookRes.save();
+      }
+
+      for (let bundleItem of orderRes.bundles) {
+        const bundleRes = await Bundle.findOne({ isDeleted: false, _id: bundleItem.bundle._id })
+          .select('currentDiscount bundledBooks price')
+          .populate({
+            path: 'bundledBooks',
+            select: 'bookId title poster author currentDiscount price inventory weight',
+          });
+
+        for (let bundledBook of bundleRes.bundledBooks) {
+          const bookRes = await Book.findOne({
+            isDeleted: false,
+            _id: bundledBook._id,
+          }).select('currentDiscount price membersPrice inventory weight');
+          bookRes.inventory = bookRes.inventory + bundleItem.quantity;
+          bookRes.save();
+        }
+      }
+
+      resolve();
+    } catch (e) {
+      resolve();
     }
   });
 }
