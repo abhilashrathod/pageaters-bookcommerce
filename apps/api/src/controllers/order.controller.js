@@ -388,7 +388,7 @@ module.exports.getAllByUser = async (req, res) => {
       userId: userId,
       orderStatus: { $nin: [enums.ORDER_STAGES.ATTEMPTED, enums.ORDER_STAGES.CREATED] },
     })
-      .select(`orderId orderDate deliveryAddress orderStatus products boxes bundles total`)
+      .select(`orderId orderDate deliveryAddress orderStatus shipmentTrackingId products boxes bundles total`)
       .sort({ createdAt: -1 })
       .populate(orderPopulateOptions);
 
@@ -469,6 +469,7 @@ module.exports.getAll = async (req, res) => {
     return res.internalServerError(e);
   }
 };
+
 module.exports.retrieve = async (req, res) => {
   try {
     const userId = get(req, 'user.userId', '');
@@ -883,6 +884,104 @@ module.exports.cancelByAdmin = async (req, res) => {
     return res.internalServerError(e);
   }
 };
+
+module.exports.getAnalyticsBestSelling = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.allParams();
+
+    const aggregateQuery = [
+      {
+        $match: {
+          status: 'fulfilled', // Match orders with a status of "fulfilled"
+          createdAt: { $gte: startDate, $lt: endDate },
+        },
+      },
+      {
+        $unwind: '$products',
+      },
+      {
+        $group: {
+          _id: '$products.product',
+          totalQuantity: { $sum: '$products.quantity' },
+        },
+      },
+      {
+        $sort: { totalQuantity: -1 },
+      },
+      {
+        $limit: 10,
+      },
+      {
+        $lookup: {
+          from: 'storebooks', // Replace with the actual collection name for StoreBook
+          localField: '_id',
+          foreignField: '_id',
+          as: 'bookDetails',
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          totalQuantity: 1,
+          bookDetails: {
+            $arrayElemAt: ['$bookDetails', 0],
+          },
+        },
+      },
+      {
+        $project: {
+          totalQuantity: 1,
+          bookDetails: {
+            _id: "$bookDetails._id",
+            title: "$bookDetails.title",
+            author: "$bookDetails.author",
+            // Add other fields from the "storeBook" collection as needed
+          },
+        },
+      },
+    ];
+
+    const result = await Order.aggregate(aggregateQuery).exec();
+    
+    return res.ok({ message: 'ORDER_LIST_SUCCESS', data: result });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.getAnalyticsRevenue = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.allParams();
+    
+    const aggregationPipeline = [
+      {
+        $match: {
+          orderStatus: 'fulfilled', // Match orders with a status of "fulfilled"
+          // createdAt: { $gte: startDate, $lt: endDate },
+        },
+      },
+      {
+        $group: {
+          _id: null, // Group all documents together
+          totalRevenue: { $sum: '$total' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          totalRevenue: 1,
+        },
+      },
+    ];
+
+    let result = await Order.aggregate(aggregationPipeline).exec();
+
+    return res.ok({ message: 'ORDER_LIST_SUCCESS', data: result });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+}
+
 
 module.exports.alignReturnShipment = async (req, res) => {
   try {
