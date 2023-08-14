@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {Icon} from "@iconify/react";
+import { startCase } from "lodash";
 
 import AppIconButton from "../form-controls/IconButton";
 
@@ -10,6 +11,7 @@ import {currencyFormat, returnDiscountedAmount} from "../../core/_helpers";
 import {ICartItem} from "../../schemas/cart";
 
 import {
+  Availability,
   CartActions,
   CartActionsWrapper,
   CartContent,
@@ -63,7 +65,7 @@ const ProductItem = ({book, viewOnly, onDelete, onQuantityChange}: Props) => {
                        height={110}/>
           </div>
           <CartProductInfo>
-            <CartProductTitle onClick={viewProductDetails}>{book.product.title}</CartProductTitle>
+            <CartProductTitle onClick={viewProductDetails}>{book.product.title} <Availability>{startCase(book.product.availability)}</Availability></CartProductTitle>
             <p>By <strong>{book.product?.author?.name}</strong></p>
             <p>
               {

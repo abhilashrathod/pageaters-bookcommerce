@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import {LIGHT_COLOR, SM} from "../../core/_variables";
+import {LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, LIGHT_COLOR, SM} from "../../core/_variables";
 
 export const Crossed = styled.span`
   margin-right: 0.5rem;
@@ -45,6 +45,13 @@ export const CartProductTitle = styled.p`
   margin-bottom: 0;
   cursor: pointer;
   font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+export const Availability = styled.small`
+  color: ${LIGHTEST_PRIMARY_COLOR};
 `;
 
 export const CartActions = styled.span`

@@ -33,6 +33,7 @@ export interface IBook {
   publisher?: string;
   totalReviews?: number;
   averageReviews?: string;
+  availability: string;
   wholeSalePriceHistory?: Array<string>;
   categories?: Array<ICategory>;
   relatedBooks?: Array<IBook>;

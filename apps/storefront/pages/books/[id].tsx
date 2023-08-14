@@ -25,6 +25,7 @@ import Badges from "../../components/elements/Badge";
 import {
   ACCENT_COLOR,
   AUTH_COOKIE,
+  BOOK_AVAILABILITY,
   LIGHT_COLOR,
   LIGHTER_PRIMARY_COLOR,
   LIGHTEST_PRIMARY_COLOR,
@@ -242,6 +243,8 @@ const SubtitleText = styled.span`
 `;
 const AuthorText = styled.span`
   color: ${ACCENT_COLOR};  
+  cursor: pointer;
+  text-decoration: underline;
 `;
 
 const ProductBadges = styled.div`
@@ -387,10 +390,39 @@ const AddToCart = (props: any) => {
           <option value={1}>1</option>
           <option value={2}>2</option>
         </QuantitySelection>
-        <ProductButton onClick={handleAddCart}>{props.product.preOrder ? 'Pre-order Now' : 'Add to Cart'}</ProductButton>
+        <ProductButton onClick={handleAddCart}>{'Add to Cart'}</ProductButton>
       </>
   )
 };
+
+const InformationBanner = (type: string, message: string) => {
+  switch(type) {
+    case BOOK_AVAILABILITY.AVAILABLE: 
+      return (
+        <Alert icon={<Icon icon='ph:package-duotone' width={24} height={24}></Icon>} title="Available, Ready To Ship!" color="green" radius="md">
+          Ships in 2-3 Days. Approximate delivery in 5-7 business days.
+        </Alert>
+      );
+    case BOOK_AVAILABILITY.PROCUREMENT: 
+      return (
+        <Alert icon={<Icon icon='ph:truck-duotone' width={24} height={24}></Icon>} title="Procurement" color="cyan" radius="md">
+          {message}
+        </Alert>
+      );
+    case BOOK_AVAILABILITY.IMPORT: 
+      return (
+        <Alert icon={<Icon icon='icon-park-twotone:ship' width={24} height={24}></Icon>} title="Import" color="grape" radius="md">
+          {message}
+        </Alert>
+      );
+    case BOOK_AVAILABILITY.PRE_ORDER: 
+      return (
+        <Alert icon={<Icon icon='ph:clock-counter-clockwise-duotone' width={24} height={24}></Icon>} title="It's a Pre-order!" color="orange" radius="md">
+         <pre> {message}</pre>
+        </Alert>
+      );
+  }
+}
 
 const NotifyMe = ({product}: any) => {
   const isLoggedIn = cookie.get(AUTH_COOKIE);
@@ -470,6 +502,10 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
 
   function share() {
     clipboard.copy(`${process.env.NEXT_PUBLIC_SITE_URL}/books/${book.bookId}`);
+  }
+
+  function handleAuthorView() {
+    router.push(`/authors/${book?.author?.authorId}`);
   }
 
   if (router.isFallback) return <PageWrapper><EmptySectionMessage title={'Loading...'}/></PageWrapper>;
@@ -566,7 +602,7 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                     <ProductAuthor>
                       <h6>
                         <SubtitleText>by&nbsp;</SubtitleText>
-                        <AuthorText>{book?.author?.name}</AuthorText>
+                        <AuthorText onClick={handleAuthorView}>{book?.author?.name}</AuthorText>
                       </h6>
                     </ProductAuthor>
                     <ProductBadges>
@@ -610,23 +646,12 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                     </AddToCartSpace>
 
                     {
-                      book.message && (
+                        book.inventory > 0 && (
                         <ProductCategories>
-                          <Alert title="Important Details" color="green">
-                            <ProductMessage>
-                              {book.message}
-                            </ProductMessage>
-                          </Alert>
+                          {InformationBanner(book.availability ,book.message)}
                         </ProductCategories>
-                      )
+                        )
                     }
-
-                    <ProductCategories>
-                      <Alert title="Shipping" color="gray">
-                        Standard Shipping: 3-5 Days
-                      </Alert>
-                    </ProductCategories>
-
 
                     <ProductCategories>
                       <span>Categories:</span>

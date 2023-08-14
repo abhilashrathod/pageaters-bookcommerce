@@ -6,6 +6,7 @@ import {useRouter} from "next/router";
 import axios from "axios";
 import {get} from 'lodash';
 import styled from "styled-components";
+import {Icon} from '@iconify/react';
 import {showNotification} from "@mantine/notifications";
 import {Accordion, Alert, Checkbox, Button, Loader, Radio, Skeleton, Textarea, TextInput} from "@mantine/core";
 
@@ -20,7 +21,7 @@ import BundleItem from "../../components/cart-elements/cart-bundle-item";
 import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
 import {InputWrapper} from "../../components/form-controls/AppTextInput";
 
-import {AUTH_COOKIE, GIFT_PACKAGES, LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
+import {AUTH_COOKIE, BOOK_AVAILABILITY, GIFT_PACKAGES, LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 
 import emptyCart from "../../public/illustrations/empty-cart.svg";
 import {completePurchase} from "../../core/_analytics";
@@ -139,6 +140,7 @@ const Checkout: React.FC<Props> = () => {
   const {data: cartRes} = useSWR({url: isLoggedIn ? `/cart/retrieve` : null, withCredentials: true});
 
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [cashOnDelivery, setCashOnDelivery] = useState(true);
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [opened, setOpened] = useState(false);
   const [giftOptions, setGiftOptions] = useState({
@@ -159,6 +161,19 @@ const Checkout: React.FC<Props> = () => {
   const bundles = get(cartRes, 'data.bundles', []);
   const mysteryBoxes = get(cartRes, 'data.mysteryBoxes', []);
   const storeCredit = get(creditRes, 'data.storeCredit', 0);
+
+  useEffect(() => {
+    const referenceType = books.length > 0 ? books[0].product.availability : '';
+    if (mysteryBoxes.length > 0 || bundles.length > 0) {
+      setCashOnDelivery(true);
+    } else if (books.length === 0) {
+      setCashOnDelivery(true);
+    } else if (books.length > 0 && referenceType === BOOK_AVAILABILITY.AVAILABLE) {
+      setCashOnDelivery(true);
+    } else {
+      setCashOnDelivery(false);
+    }
+  }, [cart])
 
   const form = useForm({
     initialValues: {
@@ -514,8 +529,17 @@ const Checkout: React.FC<Props> = () => {
                                                orientation="vertical" label="Please Select Preferred Payment Method"
                                                required>
                                     <Radio value="online" label="Pay Online (Priority, Express Shipping)"/>
-                                    <Radio value="cod" label="Cash on Delivery (Standard Shipping)"/>
+                                    <Radio value="cod" label="Cash on Delivery (Standard Shipping)" disabled={!cashOnDelivery}/>
                                   </Radio.Group>
+                                  </InputWrapper>
+                                  <InputWrapper>
+                                  {
+                                    (!paymentMethod && !cashOnDelivery) && (
+                                      <Alert icon={<Icon icon="ph:warning-duotone" width={20} height={20} />} title="Info!" radius="md">
+                                        Import, procurement or pre-order items can not be purchased with cash on delivery payment method
+                                      </Alert>
+                                    )
+                                  }
                                 </InputWrapper>
                                 <InputWrapper>
                                   <Textarea

@@ -202,7 +202,9 @@ const Cart: React.FC<Props> = () => {
           <PageHeadings title={'Cart'}/>
         </section>
         {
-          cart
+          auth 
+          ? (
+            cart
               ? <section>
                   <div className="custom-container">
                     {
@@ -270,8 +272,19 @@ const Cart: React.FC<Props> = () => {
                   </div>
                 </section>
               : <CartLoading/>
+          )
+          : (
+            <section>
+              <div className="custom-container">
+                <div className="row">
+                  <div className="col-12">
+                    <EmptyMessageWithGraphic title={'Please Sign In/Register to Access Your Cart'} illustration={graphic} illustrationHeight={'300px'} illustrationWidth={'300px'}/>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )
         }
-
       </PageWrapper>
       </>
   )

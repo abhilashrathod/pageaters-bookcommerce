@@ -261,6 +261,13 @@ export const ORDER_REQUEST_STATUS = {
   CLOSED: 'closed',
 };
 
+export const BOOK_AVAILABILITY = {
+  AVAILABLE: 'available',
+  PROCUREMENT: 'procurement',
+  IMPORT: 'import',
+  PRE_ORDER: 'pre-order',
+};
+
 export const ORDER_REQUEST_TYPES = {
   RETURN: 'return',
   REPLACE: 'replace',
