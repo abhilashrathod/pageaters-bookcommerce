@@ -150,6 +150,11 @@ const OrderOverview = ({order}: OrderOverviewProps) => {
     router.push(`/account/orders/${order.orderId}`);
   }
 
+  function handleAction() {
+    // transfer to tracking website
+    window.open(order.shipmentTrackingId);
+  }
+
   return (
       <OrderWrapper>
         <OrderTitleSpace>
@@ -215,6 +220,13 @@ const OrderOverview = ({order}: OrderOverviewProps) => {
           <AppIconButton variant={ButtonVariants.Default} onClick={viewDetails}>
             <Icon icon={'ic:twotone-remove-red-eye'} width={24} height={24}/>&nbsp;View Details
           </AppIconButton>
+          {
+            order.orderStatus === 'shipped' && (
+              <AppIconButton variant={ButtonVariants.Default} onClick={handleAction}>
+                <Icon icon={'ph:truck-duotone'} width={24} height={24}/>&nbsp;Track Package
+              </AppIconButton>
+            )
+          }
         </OrderActions>
       </OrderWrapper>
   )
