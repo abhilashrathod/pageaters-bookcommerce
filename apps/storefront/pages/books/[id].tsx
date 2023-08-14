@@ -406,19 +406,19 @@ const InformationBanner = (type: string, message: string) => {
     case BOOK_AVAILABILITY.PROCUREMENT: 
       return (
         <Alert icon={<Icon icon='ph:truck-duotone' width={24} height={24}></Icon>} title="Procurement" color="cyan" radius="md">
-          {message}
+          <pre>{message}</pre>
         </Alert>
       );
     case BOOK_AVAILABILITY.IMPORT: 
       return (
         <Alert icon={<Icon icon='icon-park-twotone:ship' width={24} height={24}></Icon>} title="Import" color="grape" radius="md">
-          {message}
+          <pre>{message}</pre>
         </Alert>
       );
     case BOOK_AVAILABILITY.PRE_ORDER: 
       return (
         <Alert icon={<Icon icon='ph:clock-counter-clockwise-duotone' width={24} height={24}></Icon>} title="It's a Pre-order!" color="orange" radius="md">
-         <pre> {message}</pre>
+         <pre>{message}</pre>
         </Alert>
       );
   }
