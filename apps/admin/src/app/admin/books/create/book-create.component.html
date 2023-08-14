@@ -149,9 +149,24 @@
                 </mat-form-field>
 
                 <div class="row mt-3 mb-3">
-                  <div class="col-3">
-                    <mat-slide-toggle formControlName="preOrder">Pre Order?</mat-slide-toggle>
+                  <div class="col-6">
+                    <mat-form-field class="w-100">
+                      <mat-label>Availability</mat-label>
+                      <mat-select formControlName="availability">
+                        <mat-option *ngFor="let availableOption of bookAvailabilityOptions"
+                                    [value]="availableOption">{{availableOption | titlecase}}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
                   </div>
+                  <div class="col-6">
+                    <mat-form-field class="w-100">
+                      <mat-label>Popularity</mat-label>
+                      <input matInput formControlName="popularity">
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <div class="row mt-5 mb-5">
                   <div class="col-3">
                     <mat-slide-toggle formControlName="editorsPick">Editor's Pick</mat-slide-toggle>
                   </div>
@@ -170,6 +185,7 @@
                             #autosize="cdkTextareaAutosize"
                             cdkAutosizeMinRows="5"
                             cdkAutosizeMaxRows="15"
+                            placeholder="Write terms and condtions, cancellation policy, availability timeline etc"
                             formControlName="message"></textarea>
                 </mat-form-field>
 

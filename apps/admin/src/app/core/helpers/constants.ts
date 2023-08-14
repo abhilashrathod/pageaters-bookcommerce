@@ -10,6 +10,8 @@ export const FILE_UPLOAD_MODULES = {
 
 export const BOOK_VERSIONS = ['hardcover', 'paperback', 'mass market paperback'];
 export const READING_LEVELS = ['Beginner', 'Intermediate', 'Advance'];
+export const BOOK_AVAILABILITY = ['available', 'procurement', 'import', 'pre-order'];
+
 export const ORDER_STATUS = [
   {value: '', text: 'All'},
   {value: 'paid', text: 'Paid'},
@@ -28,6 +30,7 @@ export const PRICING_PERCENTAGES = {
   NON_MEMBER_RENT: 50,
   MEMBER_PRICE: 75,
   MEMBER_RENT: 0,
+  WHOLESALE_PRICE: 65,
 };
 
 export const BUCKETS = {

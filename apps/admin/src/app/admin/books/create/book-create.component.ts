@@ -9,6 +9,7 @@ import {CollectionService} from '../../../core/services/collection.service';
 import {AuthorService} from '../../../core/services/author.service';
 import {BooksService} from '../../../core/services/books.service';
 import {
+  BOOK_AVAILABILITY,
   BOOK_VERSIONS,
   BUCKETS,
   FILE_UPLOAD_MODULES,
@@ -43,6 +44,7 @@ export class BookCreateComponent implements OnInit {
 
   bookEditionOptions = BOOK_VERSIONS;
   readingLevelOptions = READING_LEVELS;
+  bookAvailabilityOptions = BOOK_AVAILABILITY;
 
   DROPDOWN_OPTIONS = {
     enableSearchFilter: true,
@@ -134,6 +136,8 @@ export class BookCreateComponent implements OnInit {
       pages: [''],
       version: [''],
       readingLevel: [this.readingLevelOptions[0]],
+      popularity: [0],
+      availability: [this.bookAvailabilityOptions[0]],
 
       ISBN: [''],
       publicationYear: [''],
@@ -155,9 +159,9 @@ export class BookCreateComponent implements OnInit {
       membersRentPrice: [0],
 
       wholeSalePriceHistory: [0],
-      inventory: [0],
+      inventory: [1],
 
-      currentDiscount: [0],
+      currentDiscount: [15],
     });
     this.relatedInfoFormGroup = this.formBuilder.group({
       relatedBooks: [[]],
@@ -320,6 +324,7 @@ export class BookCreateComponent implements OnInit {
     this.pricingFormGroup.get('rentPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.NON_MEMBER_RENT, price));
     this.pricingFormGroup.get('membersPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.MEMBER_PRICE, price));
     this.pricingFormGroup.get('membersRentPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.MEMBER_RENT, price));
+    this.pricingFormGroup.get('wholeSalePriceHistory').patchValue(returnPercentageValue(PRICING_PERCENTAGES.WHOLESALE_PRICE, price));
   }
 
   add(event: MatChipInputEvent): void {
@@ -375,7 +380,7 @@ export class BookCreateComponent implements OnInit {
       relatedCollections: relatedCollections.map(x => x._id),
       relatedBundles: relatedBundles.map(x => x._id),
       categories: categories.map(x => x._id),
-      poster: this.poster.split('/').pop()
+      poster: this.poster ? this.poster.split('/').pop() : '',
     };
     const book$ = this.booksService.create(payload);
     book$.subscribe(res => {

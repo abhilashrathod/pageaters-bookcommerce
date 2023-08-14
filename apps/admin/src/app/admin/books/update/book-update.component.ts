@@ -10,7 +10,7 @@ import {AuthorService} from '../../../core/services/author.service';
 import {CollectionService} from '../../../core/services/collection.service';
 import {BooksService} from '../../../core/services/books.service';
 import {FilesService} from '../../../core/services/files.service';
-import {BOOK_VERSIONS, BUCKETS, FILE_UPLOAD_MODULES, PRICING_PERCENTAGES, READING_LEVELS} from '../../../core/helpers/constants';
+import {BOOK_AVAILABILITY, BOOK_VERSIONS, BUCKETS, FILE_UPLOAD_MODULES, PRICING_PERCENTAGES, READING_LEVELS, returnPercentageValue} from '../../../core/helpers/constants';
 import {BundleService} from '../../../core/services/bundle.service';
 import {debounceTime} from 'rxjs/operators';
 
@@ -38,6 +38,7 @@ export class BookUpdateComponent implements OnInit {
   authors = [];
   bookEditionOptions = BOOK_VERSIONS;
   readingLevelOptions = READING_LEVELS;
+  bookAvailabilityOptions = BOOK_AVAILABILITY;
 
   DROPDOWN_OPTIONS = {
     enableSearchFilter: true,
@@ -142,6 +143,8 @@ export class BookUpdateComponent implements OnInit {
       pages: [get(data, 'pages', '')],
       readingLevel: [get(data, 'readingLevel', '')],
       version: [get(data, 'version', '')],
+      popularity: [get(data, 'popularity', 0)],
+      availability: [get(data, 'availability', this.bookAvailabilityOptions[0])],
 
       ISBN: [get(data, 'ISBN', '')],
       publicationYear: [get(data, 'publicationYear', '')],
@@ -159,13 +162,13 @@ export class BookUpdateComponent implements OnInit {
     });
 
     this.pricingFormGroup = this.formBuilder.group({
-      price: [get(data, 'price', '')],
-      rentPrice: [get(data, 'rentPrice', '')],
-      membersPrice: [get(data, 'membersPrice', '')],
-      membersRentPrice: [get(data, 'membersRentPrice', '')],
-      wholeSalePriceHistory: [get(data, 'wholeSalePriceHistory', '')],
-      inventory: [get(data, 'inventory', '')],
-      currentDiscount: [get(data, 'currentDiscount', '')],
+      price: [get(data, 'price', 0)],
+      rentPrice: [get(data, 'rentPrice', 0)],
+      membersPrice: [get(data, 'membersPrice', 0)],
+      membersRentPrice: [get(data, 'membersRentPrice', 0)],
+      wholeSalePriceHistory: [get(data, 'wholeSalePriceHistory', 0)],
+      inventory: [get(data, 'inventory', 1)],
+      currentDiscount: [get(data, 'currentDiscount', 15)],
     });
 
     this.relatedInfoFormGroup = this.formBuilder.group({
@@ -341,13 +344,10 @@ export class BookUpdateComponent implements OnInit {
   calculateAmounts(): void {
     const {price} = this.pricingFormGroup.value;
 
-    this.pricingFormGroup.get('rentPrice').patchValue(this.returnPercentageValue(PRICING_PERCENTAGES.NON_MEMBER_RENT, price));
-    this.pricingFormGroup.get('membersPrice').patchValue(this.returnPercentageValue(PRICING_PERCENTAGES.MEMBER_PRICE, price));
-    this.pricingFormGroup.get('membersRentPrice').patchValue(this.returnPercentageValue(PRICING_PERCENTAGES.MEMBER_RENT, price));
-  }
-
-  returnPercentageValue(percent, total): number {
-    return ((percent / 100) * total);
+    this.pricingFormGroup.get('rentPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.NON_MEMBER_RENT, price));
+    this.pricingFormGroup.get('membersPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.MEMBER_PRICE, price));
+    this.pricingFormGroup.get('membersRentPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.MEMBER_RENT, price));
+    this.pricingFormGroup.get('wholeSalePriceHistory').patchValue(returnPercentageValue(PRICING_PERCENTAGES.WHOLESALE_PRICE, price));
   }
 
   uploadImage(): any {
