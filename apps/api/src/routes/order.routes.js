@@ -48,6 +48,13 @@ router.post('/admin-cancel/:id', permissionValidator(USER_ROLES.ADMIN), controll
 router.post('/confirm', controller.verifyAndConfirm);
 router.post('/refund/processed', controller.completeRefund);
 
+/**
+ *  ANALYTICS
+ *  ***************************************************************************************************/
+
+
+router.get('/analytics/best-selling', permissionValidator(USER_ROLES.ADMIN), controller.getAnalyticsBestSelling);
+router.get('/analytics/revenue', permissionValidator(USER_ROLES.ADMIN), controller.getAnalyticsRevenue);
 
 module.exports = router;
 

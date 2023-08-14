@@ -28,6 +28,7 @@ const schema = new Schema({
     bestSeller: { type: Boolean, default: false },
     newRelease: { type: Boolean, default: false },
     preOrder: { type: Boolean, default: false },
+    availability: {type: String, enum: Object.values(enums.BOOK_AVAILABILITY), default: enums.BOOK_AVAILABILITY.AVAILABLE},
 
     message: { type: String, default: '' },
 

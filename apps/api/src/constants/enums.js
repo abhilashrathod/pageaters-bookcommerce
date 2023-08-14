@@ -74,6 +74,12 @@ module.exports = {
     INTERMEDIATE: 'Intermediate',
     ADVANCE: 'Advance',
   },
+  BOOK_AVAILABILITY: {
+    AVAILABLE: 'available',
+    PROCUREMENT: 'procurement',
+    IMPORT: 'import',
+    PRE_ORDER: 'pre-order',
+  },
   NOTIFICATION_STATUS: {
     WAITING_FOR_DELIVERY: 'WAITING_FOR_DELIVERY',
     DELIVERED: 'DELIVERED',

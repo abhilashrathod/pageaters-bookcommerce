@@ -3,6 +3,7 @@ const { get } = require('lodash');
 const { getId } = require('../helpers/utils.helper');
 const { calculateTotal } = require('../helpers/cart.helper');
 const { models, enums } = require('../constants');
+const { BOOK_AVAILABILITY } = require('../constants/enums');
 
 const Cart = mongoose.model(models.CART);
 const Book = mongoose.model(models.STORE_BOOK);
@@ -15,7 +16,7 @@ const CART_COOKIE_OPTIONS = {
 
 const populateOptions = [{
   path: 'products.product',
-  select: 'bookId title poster author currentDiscount price',
+  select: 'bookId title poster author currentDiscount availability price',
   populate: {
     path: 'author',
     select: 'name avatar',
@@ -27,6 +28,17 @@ const populateOptions = [{
   path: 'mysteryBoxes.box',
   select: 'boxId title images currentDiscount price',
 }];
+
+const AddToCartPopulateOptions = [
+  {
+    path: 'bundles.bundle',
+    select: 'bundledBooks',
+  },
+  {
+    path: 'products.product',
+    select: 'bookId title poster author availability currentDiscount price',
+  },
+];
 
 module.exports.retrieve = async (req, res) => {
   try {
@@ -56,17 +68,12 @@ module.exports.add = async (req, res) => {
     let { product, quantity } = req.allParams();
     const userId = get(req, 'user.userId', '');
 
-    const populateOptions = {
-      path: 'bundles.bundle',
-      select: 'bundledBooks',
-    };
-
-    let currentCart = await Cart.findOne({ _id: cart, user: userId }).populate(populateOptions);
+    let currentCart = await Cart.findOne({ _id: cart, user: userId }).populate(AddToCartPopulateOptions);
     if (!currentCart) return res.error('CART_NOT_EXIST');
 
     currentCart = currentCart.toObject();
 
-    let book = await Book.findOne({ _id: product, isDeleted: false }).select('price inventory');
+    let book = await Book.findOne({ _id: product, isDeleted: false }).select('price availability inventory');
     if (!book) return res.error('BOOK_NOT_EXIST');
 
     book = book.toObject();
@@ -81,8 +88,22 @@ module.exports.add = async (req, res) => {
       }
     }
 
+    // check if all books are from same type
+    const referenceType = currentCart.products.length > 0 ? currentCart.products[0].product.availability : '';
+    const isMatch = addProductWithMatchingAvailability(book, currentCart.products);
+
+    if (!isMatch) {
+      const message = `You current have a ${referenceType} item(s) in your cart, which can't be purchased with ${book.availability} item(s). Please place separate order for this.`;
+      return res.status(400).send({ statusCode: 400, status: "PRODUCT_ITEM_MISMATCH", error: message, message: message, data: {}});
+    }
+
+    if (book.availability !== BOOK_AVAILABILITY.AVAILABLE && (currentCart.bundles.length > 0 || currentCart.mysteryBoxes.length > 0)) {
+      const message = `You current have a Bundle or Mystery Box in your cart, which can't be purchased with ${book.availability} item(s). Please place separate order for this.`;
+      return res.status(400).send({ statusCode: 400, status: "PRODUCT_ITEM_MISMATCH", error: message, message: message, data: {}});
+    }
+
     // check if product is already in the cart then increase the quantity if available
-    const alreadyThere = currentCart.products.find(x => x.product.toString() === product.toString());
+    const alreadyThere = currentCart.products.find(x => x.product._id.toString() === product.toString());
 
     if (alreadyThere) {
       quantity = alreadyThere.quantity + quantity; // add upcoming and already exist qty to check final quantity is available.
@@ -266,7 +287,7 @@ module.exports.addBundle = async (req, res) => {
     const userId = get(req, 'user.userId', '');
     let { bundle, quantity = 1 } = req.allParams();
 
-    let currentCart = await Cart.findOne({ _id: cart, user: userId });
+    let currentCart = await Cart.findOne({ _id: cart, user: userId }).populate(AddToCartPopulateOptions);
     if (!currentCart) return res.error('CART_NOT_EXIST');
 
     currentCart = currentCart.toObject();
@@ -285,6 +306,12 @@ module.exports.addBundle = async (req, res) => {
 
     if (bundlePresent) {
       return res.error('QUANTITY_LIMIT_BUNDLE');
+    }
+
+    const isMatch = checkAvailableProductWithBundleOrMysteryBox(currentCart.products);
+
+    if (!isMatch) {
+      return res.error('BUNDLE_ITEM_MISMATCH');
     }
 
     for (let book of bundleRes.bundledBooks) {
@@ -360,7 +387,7 @@ module.exports.addBox = async (req, res) => {
 
     if (quantity > 1) return res.error('QUANTITY_LIMIT_BOX');
 
-    let currentCart = await Cart.findOne({ _id: cart, user: userId });
+    let currentCart = await Cart.findOne({ _id: cart, user: userId }).populate(AddToCartPopulateOptions);
     if (!currentCart) return res.error('CART_NOT_EXIST');
 
     currentCart = currentCart.toObject();
@@ -370,6 +397,12 @@ module.exports.addBox = async (req, res) => {
 
     const alreadyThere = currentCart.mysteryBoxes.find(x => x.box.toString() === box.toString());
     if (alreadyThere) return res.error('QUANTITY_LIMIT_BOX');
+
+    const isMatch = checkAvailableProductWithBundleOrMysteryBox(currentCart.products);
+
+    if (!isMatch) {
+      return res.error('BOX_ITEM_MISMATCH');
+    }
 
     const query = { _id: cart };
     const update = { $addToSet: { mysteryBoxes: { box, quantity, preferences, addedOn: new Date() } } };
@@ -406,3 +439,24 @@ module.exports.removeBox = async (req, res) => {
     return res.internalServerError(e);
   }
 };
+
+// Function to add an object to the array if its "type" matches existing elements
+function addProductWithMatchingAvailability(product, products) {
+  if (products.length === 0) {
+    return true;
+  }
+
+  const referenceType = products[0].product.availability;
+  return product.availability === referenceType;
+}
+
+// for bundles and mysteryboxes: don't let customer order with other than available ones 
+function checkAvailableProductWithBundleOrMysteryBox(products) {
+  if (products.length === 0) {
+    return true;
+  }
+
+  const referenceType = products[0].product.availability;
+  
+  return referenceType === BOOK_AVAILABILITY.AVAILABLE;
+}

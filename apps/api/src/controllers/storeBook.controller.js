@@ -51,13 +51,13 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    let { title, tagline, eyebrow, author, description, message, tags, language, pages, readingLevel, version, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, preOrder, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
+    let { title, tagline, eyebrow, author, description, message, tags, language, popularity, pages, readingLevel, version, availability, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, preOrder, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
 
     let bookId = `BK-${generateRandomNumber(10)}`;
     const payload = {
       bookId,
       title, tagline, eyebrow, author, description, tags, message,
-      language, pages, version, readingLevel,
+      language, pages, version, readingLevel, popularity, availability,
       dimensions, weight,
       categories, relatedCollections, relatedBooks, relatedBundles,
       ISBN, publicationYear, publisher,
@@ -105,7 +105,7 @@ module.exports.create = async (req, res) => {
 
 module.exports.update = async (req, res) => {
   try {
-    let { id, title, tagline, eyebrow, description, message, tags, language, pages, readingLevel, version, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, preOrder, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedCollections, relatedBundles, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
+    let { id, title, tagline, eyebrow, description, message, tags, language, pages, readingLevel, popularity, version, availability, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, preOrder, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedCollections, relatedBundles, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
 
     const book = await Book.findOne({ _id: id, isDeleted: false });
 
@@ -115,7 +115,7 @@ module.exports.update = async (req, res) => {
 
     const payload = {
       title, tagline, eyebrow, description, tags, message,
-      language, pages, version, readingLevel,
+      language, pages, version, readingLevel, popularity, availability,
       dimensions, weight,
       categories, relatedCollections, relatedBooks, relatedBundles,
       ISBN, publicationYear, publisher,

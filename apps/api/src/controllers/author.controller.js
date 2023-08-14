@@ -22,7 +22,7 @@ module.exports.getAll = async (req, res) => {
     const options = {
       page,
       limit,
-      select: `name books popularity isDeleted deletedAt`,
+      select: `name books authorId popularity isDeleted deletedAt`,
       sort: {
         [sortBy]: sortOrder,
       },
@@ -136,7 +136,7 @@ module.exports.getByUniqueId = async (req, res) => {
 
     const populateOptions = {
       path: 'books',
-      select: '_id title'
+      select: 'title bookId ISBN author poster price popularity availability editorsPick inventory currentDiscount inventory newRelease preOrder bestSeller'
     };
 
     const author = await Author.findOne({ authorId: id, isDeleted: false }).populate(populateOptions);

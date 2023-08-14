@@ -134,7 +134,7 @@ module.exports.getOverviewProducts = async (req, res) => {
     const options = {
       page,
       limit,
-      select: `title bookId ISBN author poster price popularity editorsPick currentDiscount inventory newRelease preOrder bestSeller`,
+      select: `title bookId ISBN author poster price popularity editorsPick availability currentDiscount inventory newRelease preOrder bestSeller`,
       populate: [{
         path: 'author',
         select: 'name avatar',
@@ -174,7 +174,7 @@ module.exports.getAllProducts = async (req, res) => {
     const options = {
       page,
       limit,
-      select: `title bookId ISBN author poster price popularity editorsPick inventory currentDiscount inventory newRelease preOrder bestSeller`,
+      select: `title bookId ISBN author poster price popularity availability editorsPick inventory currentDiscount inventory newRelease preOrder bestSeller`,
       populate: [{
         path: 'author',
         select: 'name avatar',
