@@ -39,7 +39,7 @@ const Hero = styled.section`
   }
   
   @media screen and (max-width: ${LG - 1}px) {      
-    height: 25vh;
+    height: 50vh;
   }
   
   @media screen and (max-width: ${MD - 1}px) {      
