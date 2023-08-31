@@ -39,7 +39,7 @@ const Hero = styled.section`
   }
   
   @media screen and (max-width: ${LG - 1}px) {      
-    height: 50vh;
+    height: 33vh;
   }
   
   @media screen and (max-width: ${MD - 1}px) {      
@@ -98,10 +98,10 @@ const HeroBanner: React.FC<Props> = ({banner}) => {
             <div className="col-12">
               <HeroTitleSection>
                 <HeroTitle>{banner.title}</HeroTitle>
-                <HeroSubTitle>Enjoy Special Discounts on Bestsellers and More!</HeroSubTitle>
+                <HeroSubTitle>Novels • Literature • Self-Help</HeroSubTitle>
                 <div>
                   <AppButton variant={'secondary'} onClick={handleNavigation}>
-                    {'Show Now!'}
+                    {'Explore'}
                   </AppButton>
                 </div>
               </HeroTitleSection>
