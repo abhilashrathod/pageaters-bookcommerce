@@ -13,6 +13,7 @@ const Book = mongoose.model(models.STORE_BOOK);
 const Category = mongoose.model(models.CATEGORY);
 const Author = mongoose.model(models.AUTHOR);
 const Bundle = mongoose.model(models.BUNDLE);
+const Collection = mongoose.model(models.COLLECTION);
 
 module.exports.getAll = async (req, res) => {
   try {
