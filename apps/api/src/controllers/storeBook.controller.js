@@ -278,6 +278,10 @@ module.exports.destroy = async (req, res) => {
       book.isDeleted = true;
       book.deletedAt = new Date();
 
+      await Book.updateMany({ relatedBooks: id }, { $pull: { relatedBooks: id }});
+      await Bundle.updateMany({ bundledBooks: id }, { $pull: { bundledBooks: id }});
+      await Collection.updateMany({ books: id }, { $pull: { books: id }});
+
       await book.save();
       return res.ok('BOOK_DELETE_SUCCESS');
     } else {
