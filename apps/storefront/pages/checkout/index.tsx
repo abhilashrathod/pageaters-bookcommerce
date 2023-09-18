@@ -140,6 +140,7 @@ const Checkout: React.FC<Props> = () => {
   const {data: cartRes} = useSWR({url: isLoggedIn ? `/cart/retrieve` : null, withCredentials: true});
 
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [availability, setAvailability] = useState('');
   const [cashOnDelivery, setCashOnDelivery] = useState(true);
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [opened, setOpened] = useState(false);
@@ -164,16 +165,16 @@ const Checkout: React.FC<Props> = () => {
 
   useEffect(() => {
     const referenceType = books.length > 0 ? books[0].product.availability : '';
-    if (mysteryBoxes.length > 0 || bundles.length > 0) {
+    
+    if (referenceType !== BOOK_AVAILABILITY.AVAILABLE && paymentMethod === 'cod') {
       setCashOnDelivery(true);
-    } else if (books.length === 0) {
-      setCashOnDelivery(true);
-    } else if (books.length > 0 && referenceType === BOOK_AVAILABILITY.AVAILABLE) {
-      setCashOnDelivery(true);
+      setAvailability(referenceType);
     } else {
       setCashOnDelivery(false);
+      setAvailability(referenceType);
     }
-  }, [cart])
+
+  }, [paymentMethod])
 
   const form = useForm({
     initialValues: {
@@ -529,14 +530,16 @@ const Checkout: React.FC<Props> = () => {
                                                orientation="vertical" label="Please Select Preferred Payment Method"
                                                required>
                                     <Radio value="online" label="Pay Online (Priority, Express Shipping)"/>
-                                    <Radio value="cod" label="Cash on Delivery (Standard Shipping)" disabled={!cashOnDelivery}/>
+                                    <Radio value="cod" label="Cash on Delivery (Standard Shipping)"/>
                                   </Radio.Group>
                                   </InputWrapper>
                                   <InputWrapper>
                                   {
-                                    (!paymentMethod && !cashOnDelivery) && (
+                                    (paymentMethod && cashOnDelivery) && (
                                       <Alert icon={<Icon icon="ph:warning-duotone" width={20} height={20} />} title="Info!" radius="md">
-                                        Import, procurement or pre-order items can not be purchased with cash on delivery payment method
+                                        For orders made via COD for {availability}, we kindly request that you do not cancel or 
+                                        only in exceptional circumstances. The cancellations of COD orders for these items may result in a permanent store ban. <br/>
+                                        We appreciate your understanding and cooperation in helping us maintain a smooth order process.
                                       </Alert>
                                     )
                                   }
