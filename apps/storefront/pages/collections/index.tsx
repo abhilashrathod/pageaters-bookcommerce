@@ -28,7 +28,7 @@ const BREADCRUMBS_ITEMS = [
   {title: 'Collections', isActive: true, href: ''},
 ];
 
-const Deals: React.FC<Props> = () => {
+const Collections: React.FC<Props> = () => {
   const router = useRouter();
 
   useEffect(() => {
@@ -153,4 +153,4 @@ const Deals: React.FC<Props> = () => {
   )
 };
 
-export default Deals;
+export default Collections;

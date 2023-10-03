@@ -106,26 +106,26 @@ const Home: NextPage = (props: any) => {
             <HeroBanner banner={props.heroBanner}/>
           </section>
 
-          {/*<section className="my-5 py-5">*/}
-          {/*  <div className="custom-container">*/}
-          {/*    <div className="row">*/}
-          {/*      <div className="col">*/}
-          {/*        /!*<h1 className="" style={{fontSize: '110px', textAlign: 'center'}}>Turning <span className="text-accent">2</span> Sale!</h1>*!/*/}
-          {/*        /!*<h1 className="" style={{textAlign: 'center'}}>Upto 50% Off All Inventory • 23rd May to 30th May</h1>*!/*/}
-          {/*        <h1 className="jumbo-1 text-center">Turning <span className="text-accent">2</span> Sale!</h1>*/}
-          {/*        <h1 className="display-1 text-center">Upto 50% Off All Inventory From 23rd May to 30th May</h1>*/}
-          {/*      </div>*/}
-          {/*    </div>*/}
-          {/*    /!*<div className="row">*!/*/}
-          {/*    /!*  <div className="col-12 col-xl-6">*!/*/}
-          {/*    /!*    <LandscapeBanner banner={discountItem}/>*!/*/}
-          {/*    /!*  </div>*!/*/}
-          {/*    /!*  <div className="col-12 col-xl-6">*!/*/}
-          {/*    /!*    <LandscapeBanner banner={bannerCollectionItem}/>*!/*/}
-          {/*    /!*  </div>*!/*/}
-          {/*    /!*</div>*!/*/}
-          {/*  </div>*/}
-          {/*</section>*/}
+          {/* <section className="my-5 py-5">
+            <div className="custom-container">
+              <div className="row">
+                <div className="col">
+                  <h1 className="" style={{fontSize: '110px', textAlign: 'center'}}>Turning <span className="text-accent">2</span> Sale!</h1>
+                  <h1 className="" style={{textAlign: 'center'}}>Upto 50% Off All Inventory • 23rd May to 30th May</h1>
+                  <h1 className="jumbo-1 text-center">Turning <span className="text-accent">2</span> Sale!</h1>
+                  <h1 className="display-1 text-center">Upto 50% Off All Inventory From 23rd May to 30th May</h1>
+                </div>
+              </div>
+              <div className="row">
+                <div className="col-12 col-xl-6">
+                  <LandscapeBanner banner={discountItem}/>
+                </div>
+                <div className="col-12 col-xl-6">
+                  <LandscapeBanner banner={bannerCollectionItem}/>
+                </div>
+              </div>
+            </div>
+          </section> */}
 
           <section className={'mb-25'}>
             <Categories/>
@@ -206,8 +206,8 @@ const Home: NextPage = (props: any) => {
             {/*  poster: 'medium-shot-happy-brunette-woman-with-book-min_wu681i.jpg'*/}
             {/*}}/>*/}
             <GiantSquareBanner banner={{
-              title: 'Try Mystery Box',
-              poster: 'mystery-box-banner.jpg'
+              title: 'Try Bookish Box',
+              poster: 'BookishBoxes-main-hero-banner.jpg'
             }}/>
           </section>
 

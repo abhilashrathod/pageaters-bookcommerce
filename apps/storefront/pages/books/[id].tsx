@@ -10,6 +10,8 @@ import {showNotification} from "@mantine/notifications";
 import {Icon} from "@iconify/react";
 import styled from "styled-components";
 import cookie from "js-cookie";
+import {range} from 'lodash';
+import FsLightbox from "fslightbox-react";
 
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
 import PageWrapper from "../../components/elements/PageWrapper";
@@ -26,9 +28,11 @@ import {
   ACCENT_COLOR,
   AUTH_COOKIE,
   BOOK_AVAILABILITY,
+  LG,
   LIGHT_COLOR,
   LIGHTER_PRIMARY_COLOR,
   LIGHTEST_PRIMARY_COLOR,
+  MD,
   PRIMARY_COLOR,
   PRIMARY_DANGER,
   PRIMARY_SUCCESS,
@@ -45,6 +49,7 @@ import {ICategory} from "../../schemas/category";
 
 import useAuth from "../../hooks/useAuth";
 import {addToCart, addToWishList} from "../../core/_analytics";
+import { useKeenSlider } from "keen-slider/react";
 
 
 const BREADCRUMBS_ITEMS = (activeItem: any) => [
@@ -62,6 +67,7 @@ const SITE_FEATURES = [
 const ProductCoverSpace = styled.div`
   display: flex;
   justify-content: center;
+  position: relative;
 `;
 
 const ProductImage = styled.img`
@@ -332,6 +338,30 @@ const SpecValue = styled.span`
   font-weight: 600;
 `;
 
+const CardImage = styled.img`
+  width: 100%;
+  border-radius: 10px;
+  height: 420px;
+  object-fit: cover;
+  object-position: center center;
+  vertical-align: middle;
+
+  @media screen and (max-width: ${LG - 1}px) {
+    width: 100%;
+    height: 355px;
+  }
+
+  @media screen and (max-width: ${MD - 1}px) {
+    width: 100%;
+    height: 275px;
+  }
+
+  @media screen and (max-width: ${SM - 1}px) {
+    width: 100%;
+    height: 320px;
+  }
+`;
+
 interface Props {
   book: IBook;
 }
@@ -491,13 +521,94 @@ const BookWishlist = (props: any) => {
   )
 };
 
+const ProductImageSlider = ({book}: any) => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const [toggler, setToggler] = useState(false);
+
+  const [sliderRef, instanceRef] = useKeenSlider({
+    initial: 0,
+    mode: "free",
+    slideChanged(slider) {
+      setCurrentSlide(slider.track.details.rel);
+    },
+    created() {
+      setLoaded(true);
+    },
+  });
+  
+  function renderImageSize(image: string, w: number, h: number) {
+    return getProductImage(image, {height: h, width: w, fit: 'cover'});
+  }
+
+  function returnImages() {
+    return book.images.map((image: string) => {
+      return renderImageSize(image, 1560, 1170);
+    });
+  }
+
+  return (
+    <>
+      <FsLightbox
+        toggler={toggler}
+        types={
+          [...new Array(book.images.length).fill('image')]
+        }
+        sources={[...returnImages()]}
+      />  
+      <div ref={sliderRef} className="keen-slider">
+        {book.images && book.images.map((image: string) => {
+            return (
+              <div className="keen-slider__slide" key={image}>
+                <CardImage
+                  onClick={() => setToggler(!toggler)}
+                  src={renderImageSize(image, 1560, 1170)}
+                  loading={"lazy"}
+                  alt={book.title}
+                  height={1170}
+                  width={1560}
+                />
+              </div>
+            );
+          })}
+      </div>
+      {loaded && instanceRef.current && (
+        <div
+          className="dots"
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            margin: "auto",
+          }}
+        >
+          {[...range(instanceRef.current.track.details.slides.length)].map(
+            (idx) => {
+              return (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    instanceRef.current?.moveToIdx(idx);
+                  }}
+                  className={"dot" + (currentSlide === idx ? " active" : "")}
+                ></button>
+              );
+            }
+          )}
+        </div>
+      )}
+    </>
+  );
+};
+
 const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof getStaticProps>) => {
   const router = useRouter();
   const auth = useAuth();
   const clipboard = useClipboard({timeout: 500});
 
-  function renderImageSize(w: number, h: number) {
-    return getProductImage(book.poster, {height: h, width: w, fit: 'cover'});
+  function renderImageSize(image: string, w: number, h: number) {
+    return getProductImage(image, {height: h, width: w, fit: 'cover'});
   }
 
   function share() {
@@ -518,16 +629,16 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
           <meta itemProp="name"
                 content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
           <meta itemProp="description" content={book.description}/>
-          <meta itemProp="image" content={`${renderImageSize(300, 450)}`}/>
+          <meta itemProp="image" content={`${renderImageSize(book.poster, 300, 450)}`}/>
 
           <meta name="og:title"
                 content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
           <meta name="twitter:title"
                 content={`Buy ${book.title} ${book.tagline} Book Online at Best Prices in India | Pageaters`}/>
 
-          <meta name="image" content={`${renderImageSize(300, 450)}`}/>
-          <meta name="og:image" content={`${renderImageSize(300, 450)}`}/>
-          <meta name="twitter:image" content={`${renderImageSize(300, 450)}`}/>
+          <meta name="image" content={`${renderImageSize(book.poster, 300, 450)}`}/>
+          <meta name="og:image" content={`${renderImageSize(book.poster, 300, 450)}`}/>
+          <meta name="twitter:image" content={`${renderImageSize(book.poster, 300, 450)}`}/>
 
           <meta name="og:description" content={book.description}/>
           <meta name="twitter:description" content={book.description}/>
@@ -544,7 +655,7 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                   name: `${book.title} - ${book.tagline}`,
                   description: book.description,
                   url: `${process.env.NEXT_PUBLIC_SITE_URL}/books/${book.bookId}`,
-                  image: [renderImageSize(300, 450)],
+                  image: [renderImageSize(book.poster, 300, 450)],
                   sku: book.bookId,
                   brand: {
                     "@type": "Brand",
@@ -574,7 +685,12 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
               <div className="row">
                 <div className="col-xxl-4 col-xl-4 col-12">
                   <ProductCoverSpace>
-                    <ProductImage src={renderImageSize(300, 450)} alt={book.title} width={300} height={'auto'}/>
+                    {
+                      book.images.length === 0 && <ProductImage src={renderImageSize(book.poster, 300, 450)} alt={book.title} width={300} height={'auto'}/>
+                    }
+                    {
+                      book.images.length > 0 && <ProductImageSlider book={book} />
+                    }
                   </ProductCoverSpace>
                   <TagsSpace>
                     <TagsList>
@@ -612,6 +728,8 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                       <Badges text={book.editorsPick ? 'Editor\'s Pick' : ''} color={ButtonVariants.Accent}/>}
                       {book.bestSeller &&
                       <Badges text={book.bestSeller ? 'Best Seller' : ''} color={ButtonVariants.Default}/>}
+                      {book.preOrder &&
+                      <Badges text={book.preOrder ? 'Pre-order' : ''} color={ButtonVariants.Accent}/>}
                     </ProductBadges>
 
                     <ProductDescription>
@@ -646,9 +764,18 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                     </AddToCartSpace>
 
                     {
-                        book.inventory > 0 && (
+                        (book.inventory > 0 && book.type === 'book') && (
                         <ProductCategories>
                           {InformationBanner(book.availability ,book.message)}
+                        </ProductCategories>
+                        )
+                    }
+                    {
+                        (book.inventory > 0 && book.type === 'book_box') && (
+                        <ProductCategories>
+                          <Alert icon={<Icon icon='ph:package-duotone' width={24} height={24}></Icon>} title="Curate on Demand" color="green" radius="md">
+                            Advance bookings are preferred. Curate on demand items can take 3-4 weeks to fulfill. 
+                          </Alert>
                         </ProductCategories>
                         )
                     }

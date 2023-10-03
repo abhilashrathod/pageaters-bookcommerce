@@ -6,6 +6,7 @@ import {ICollection} from './collection';
 export interface IBook {
   _id: string;
   title: string;
+  type?: string;
   ISBN?: string;
   tagline?: string;
   eyebrow?: string;
@@ -18,6 +19,7 @@ export interface IBook {
   membersPrice?: number;
   currentDiscount: number;
   tags?: Array<string>;
+  images?: Array<string>;
   popularity?: number;
   editorsPick: boolean;
   bestSeller: boolean;

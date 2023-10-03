@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from 'styled-components'
+import styled from 'styled-components';
 import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
 import {LG, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
@@ -58,12 +58,12 @@ const BannerContent = styled.div`
   width: 100%;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   top: 0;  
   z-index: 1;
   word-break: break-word;
   flex-direction: column;
-  padding: 3rem 0 3rem 3rem;
+  padding: 3rem;
   
   @media screen and (max-width: ${MD - 1}px) {      
     max-width: 100%;
@@ -83,10 +83,11 @@ const BannerTextSpace = styled.div`
 
 const BannerTitle = styled.h2`
   color: ${SECONDARY_COLOR};
-  font-size: 3.6rem;
-  line-height: 3.857rem;
+  font-size: 3.8rem;
+  line-height: 3.957rem;
   letter-spacing: -3px;
-  
+  margin-bottom: 1rem;
+
   @media screen and (max-width: ${MD - 1}px) {
    font-size: 2.8rem;
    line-height: 3.086rem;
@@ -113,7 +114,7 @@ const GiantSquareBanner: React.FC<Props> = ({banner}) => {
   }
 
   function navigate() {
-    router.push(`/mystery-boxes`);
+    router.push(`/book-boxes`);
   }
 
   return (

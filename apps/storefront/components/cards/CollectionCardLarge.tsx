@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from "styled-components";
+import {useKeenSlider} from "keen-slider/react";
 
 import {getCollectionImage} from "../../core/_imageRendererHelper";
 
