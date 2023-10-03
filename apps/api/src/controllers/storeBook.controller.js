@@ -8,6 +8,7 @@ const { scrapeData } = require('../helpers/scrapping.helpers');
 
 const { models } = require('../constants');
 const {PROJECT_ROOT} = require('../appConfig');
+const enums = require('../constants/enums');
 
 const Book = mongoose.model(models.STORE_BOOK);
 const Category = mongoose.model(models.CATEGORY);
@@ -17,9 +18,9 @@ const Collection = mongoose.model(models.COLLECTION);
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit, sortBy, sortOrder } = req.allParams();
+    let { page, limit, sortBy, sortOrder, type } = req.allParams();
 
-    const query = { isDeleted: false };
+    const query = { isDeleted: false, type: type || enums.PRODUCT_TYPES.BOOK };
     const allowedSortingFields = ['title', 'createdAt', 'popularity', 'priority', 'currentDiscount'];
 
     if (sortBy && !allowedSortingFields.includes(sortBy)) {
@@ -32,7 +33,7 @@ module.exports.getAll = async (req, res) => {
       sort: {
         [sortBy]: sortOrder,
       },
-      select: `title bookId ISBN author inventory poster price weight popularity editorsPick newRelease preOrder currentDiscount bestSeller`,
+      select: `title bookId ISBN author inventory poster images tags price weight popularity editorsPick newRelease preOrder currentDiscount bestSeller`,
       populate: [{
         path: 'author',
         select: 'name intro avatar',
@@ -52,18 +53,18 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    let { title, tagline, eyebrow, author, description, message, tags, language, popularity, pages, readingLevel, version, availability, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, preOrder, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
+    let { type, title, tagline, eyebrow, author, description, message, tags, language, popularity, pages, readingLevel, version, availability, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bookOfTheMonth, bestSeller, preOrder, poster, images, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
 
     let bookId = `BK-${generateRandomNumber(10)}`;
     const payload = {
-      bookId,
+      bookId, type,
       title, tagline, eyebrow, author, description, tags, message,
       language, pages, version, readingLevel, popularity, availability,
       dimensions, weight,
       categories, relatedCollections, relatedBooks, relatedBundles,
       ISBN, publicationYear, publisher,
       editorsPick, bestSeller, newRelease, preOrder,
-      poster,
+      poster, images,
       wholeSalePriceHistory, inventory, currentDiscount,
       price, rentPrice, membersPrice, membersRentPrice,
     };
@@ -106,7 +107,7 @@ module.exports.create = async (req, res) => {
 
 module.exports.update = async (req, res) => {
   try {
-    let { id, title, tagline, eyebrow, description, message, tags, language, pages, readingLevel, popularity, version, availability, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, preOrder, poster, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedCollections, relatedBundles, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
+    let { id, title, type, tagline, eyebrow, description, message, tags, language, pages, readingLevel, popularity, version, availability, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, preOrder, poster, images, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedCollections, relatedBundles, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
 
     const book = await Book.findOne({ _id: id, isDeleted: false });
 
@@ -115,13 +116,13 @@ module.exports.update = async (req, res) => {
     }
 
     const payload = {
-      title, tagline, eyebrow, description, tags, message,
+      title, type, tagline, eyebrow, description, tags, message,
       language, pages, version, readingLevel, popularity, availability,
       dimensions, weight,
       categories, relatedCollections, relatedBooks, relatedBundles,
       ISBN, publicationYear, publisher,
       editorsPick, bestSeller, newRelease, preOrder,
-      poster,
+      poster, images,
       wholeSalePriceHistory, inventory, currentDiscount,
       price, rentPrice, membersPrice, membersRentPrice,
     };

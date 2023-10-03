@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { generateRandomNumber, getId } = require('../helpers/utils.helper');
-const { models } = require('../constants');
+
+const { models, enums } = require('../constants');
 
 const Category = mongoose.model(models.CATEGORY);
 const Collection = mongoose.model(models.COLLECTION);
@@ -129,7 +130,7 @@ module.exports.getOverviewProducts = async (req, res) => {
   try {
     let { id, page, limit, sortOrder } = req.allParams();
 
-    const query = { isDeleted: false, categories: id, inventory: {$gt: 0} };
+    const query = { isDeleted: false, type: enums.PRODUCT_TYPES.BOOK, categories: id, inventory: {$gt: 0} };
 
     const options = {
       page,
@@ -164,7 +165,7 @@ module.exports.getAllProducts = async (req, res) => {
   try {
     let { id, page, limit, sortBy, sortOrder } = req.allParams();
 
-    const query = { isDeleted: false, categories: id };
+    const query = { isDeleted: false, categories: id, type: enums.PRODUCT_TYPES.BOOK };
     const allowedSortingFields = ['title', 'createdAt', 'updatedAt', 'publicationYear', 'popularity', 'currentDiscount', 'price'];
 
     if (sortBy && !allowedSortingFields.includes(sortBy)) {

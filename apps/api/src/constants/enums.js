@@ -69,6 +69,13 @@ module.exports = {
     PAPERBACK: 'paperback',
     MASS_MARKET: 'mass market paperback',
   },
+  PRODUCT_TYPES: {
+    BOOK: 'book',
+    BUNDLE: 'bundle',
+    BOOKISH_BOOK: 'book_box',
+    BLIND_BOOK: 'blind_book',
+    MYSTERY_BOX: 'mystery_box',
+  },
   READING_LEVEL: {
     BEGINNER: 'Beginner',
     INTERMEDIATE: 'Intermediate',

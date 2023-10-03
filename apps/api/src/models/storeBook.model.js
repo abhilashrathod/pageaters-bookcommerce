@@ -6,6 +6,7 @@ const { enums, models } = require('./../constants');
 const schema = new Schema({
     bookId: { type: String, default: '' },
     title: { type: String, default: '' },
+    blindTitle: { type: String, default: '' },
     tagline: { type: String, default: '' },
     eyebrow: { type: String, default: '' },
     author: { type: Schema.Types.ObjectId, ref: models.AUTHOR },
@@ -16,6 +17,9 @@ const schema = new Schema({
     pages: { type: Number, default: 0 },
     readingLevel: { type: String, enum: Object.values(enums.READING_LEVEL), default: enums.READING_LEVEL.BEGINNER },
     version: { type: String, enum: Object.values(enums.BOOK_VERSIONS) },
+    type: { type: String, enum: Object.values(enums.PRODUCT_TYPES), default: enums.PRODUCT_TYPES.BOOK },
+    books: { type: Number, default: 0 },
+    bundledBooks: [{ type: Schema.Types.ObjectId, ref: models.STORE_BOOK }],
 
     dimensions: { type: String, default: '' },
     weight: { type: Number, default: 0 },
@@ -28,11 +32,13 @@ const schema = new Schema({
     bestSeller: { type: Boolean, default: false },
     newRelease: { type: Boolean, default: false },
     preOrder: { type: Boolean, default: false },
+    bookOfTheMonth: { type: Boolean, default: false },
     availability: {type: String, enum: Object.values(enums.BOOK_AVAILABILITY), default: enums.BOOK_AVAILABILITY.AVAILABLE},
 
     message: { type: String, default: '' },
 
     poster: { type: String, default: '' },
+    images: [{ type: String, default: '' }],
 
     totalReviews: { type: Number, default: 0 },
     averageReviews: { type: Number, default: 0 },
@@ -43,6 +49,7 @@ const schema = new Schema({
     currentDiscount: { type: Number, default: 0 },
 
     popularity: { type: Number, default: 0 },
+    priority: { type: Number, default: 0 },
 
     categories: [{ type: Schema.Types.ObjectId, ref: models.CATEGORY }],
     relatedBooks: [{ type: Schema.Types.ObjectId, ref: models.STORE_BOOK }],
