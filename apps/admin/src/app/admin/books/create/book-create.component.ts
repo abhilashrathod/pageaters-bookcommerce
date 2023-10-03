@@ -14,6 +14,7 @@ import {
   BUCKETS,
   FILE_UPLOAD_MODULES,
   PRICING_PERCENTAGES,
+  PRODUCT_TYPES,
   READING_LEVELS,
   returnPercentageValue
 } from '../../../core/helpers/constants';
@@ -29,7 +30,8 @@ import {debounceTime} from 'rxjs/operators';
 export class BookCreateComponent implements OnInit {
 
   poster;
-  selectedFile: File;
+  images: any[] = [];
+  // selectedFile: File;
 
   filters = {
     limit: 25,
@@ -45,6 +47,7 @@ export class BookCreateComponent implements OnInit {
   bookEditionOptions = BOOK_VERSIONS;
   readingLevelOptions = READING_LEVELS;
   bookAvailabilityOptions = BOOK_AVAILABILITY;
+  productTypeOptions = PRODUCT_TYPES;
 
   DROPDOWN_OPTIONS = {
     enableSearchFilter: true,
@@ -125,6 +128,7 @@ export class BookCreateComponent implements OnInit {
   buildPrimaryForm(): void {
     this.primaryFormGroup = this.formBuilder.group({
       title: [''],
+      type: [this.productTypeOptions[0]],
       tagline: [''],
       eyebrow: [''],
       author: ['', Validators.required],
@@ -305,17 +309,32 @@ export class BookCreateComponent implements OnInit {
       .subscribe(res => this.bundles = res);
   }
 
-  previewImage(event): void {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
+  detectFiles(event) {
+    let files = event.target.files;
 
-      const reader = new FileReader();
-      reader.onload = e => this.poster = reader.result;
+    if (files) {
+      for (let file of files) {
+        let reader = new FileReader();
+        reader.onload = (e: any) => this.images.push({url: reader.result, cloudUrl: '', isPoster: false, file});
 
-      reader.readAsDataURL(file);
-
-      this.selectedFile = file;
+        reader.readAsDataURL(file);
+      }
     }
+  }
+
+  makePrimaryPoster(idx: number) {
+    this.images = this.images.map((item, index) => {
+      return {
+        ...item,
+        isPoster: index === idx,
+      }
+    })
+    this.snackBar.open("Image marked as poster", 'OKAY', {duration: 3000});
+  }
+
+  removeImage(index: number) {
+    this.images.splice(index, 1);
+    this.snackBar.open("Image removed from list", 'OKAY', {duration: 3000});
   }
 
   calculateAmounts(): void {
@@ -340,34 +359,62 @@ export class BookCreateComponent implements OnInit {
     this.tags.updateValueAndValidity();
   }
 
-  uploadImage(): any {
+  uploadImages() {
+    const posterImages = this.images.filter((x) => x.isPoster);
+
+    if(posterImages.length <= 0) {
+      return this.snackBar.open("Please select atleast one image as poster", "OKAY", {duration: 3000});
+    }
+
     if (!this.primaryFormGroup.get('title').value) {
       return this.snackBar.open('Please enter the name first before file upload', 'OKAY', {duration: 3000});
     }
 
-    if (!this.selectedFile) {
-      return this.snackBar.open('Please select a file to upload', 'OKAY', {duration: 3000});
+    if (this.images.length === 0) {
+      return this.snackBar.open('Please select images to upload', 'OKAY', {duration: 3000});
     }
 
+    const bookName = this.primaryFormGroup.get('title').value;
+
+    this.images.forEach((image, index) => {
+      const fileName = `${bookName}-image-${index}`;
+      if (!image.cloudUrl) {
+        this.uploadImage(image.file, fileName, index);
+      }
+    })
+  }
+
+  uploadImage(file, title, index): any {
     const formData: FormData = new FormData();
-    formData.append('file', this.selectedFile, this.selectedFile.name);
-    formData.append('title', this.primaryFormGroup.get('title').value);
+    formData.append('file', file, file.name);
+    formData.append('title', title);
     formData.append('fileModule', FILE_UPLOAD_MODULES.STORE_BOOK);
+
     const file$ = this.filesService.upload(formData);
     file$.subscribe(res => {
-      this.poster = `${BUCKETS.BOOKS}/${res.fileUrl}`;
+      this.images[index].cloudUrl = res.fileUrl;
       this.snackBar.open('Book Thumbnail Uploaded!', 'OKAY', {duration: 5000});
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
     });
   }
 
-  onSubmit(): void {
+  onSubmit() {
     const {relatedBooks, relatedCollections, relatedBundles, categories} = this.relatedInfoFormGroup.value;
     const {author} = this.primaryFormGroup.value;
 
-    if (!this.poster) {
-      this.snackBar.open('Please select poster', 'OKAY', {duration: 5000});
+    if (this.images.length <= 0) {
+      return this.snackBar.open('Please upload images and select a poster', 'OKAY', {duration: 5000});
+    }
+
+    const uploadedImages = this.images.filter((x) => x.cloudUrl === '');
+    if (uploadedImages.length > 0) {
+      return this.snackBar.open('Please upload selected images first', 'OKAY', {duration: 5000});
+    }
+
+    const posterImages = this.images.filter((x) => x.isPoster);
+    if(posterImages.length <= 0) {
+      return this.snackBar.open("Please select atleast one image as poster", "OKAY", {duration: 3000});
     }
 
     const payload = {
@@ -380,7 +427,8 @@ export class BookCreateComponent implements OnInit {
       relatedCollections: relatedCollections.map(x => x._id),
       relatedBundles: relatedBundles.map(x => x._id),
       categories: categories.map(x => x._id),
-      poster: this.poster ? this.poster.split('/').pop() : '',
+      poster: posterImages[0].cloudUrl.split('/').pop(),
+      images: this.images.filter((x) => !x.isPoster).map((x) => x.cloudUrl),
     };
     const book$ = this.booksService.create(payload);
     book$.subscribe(res => {

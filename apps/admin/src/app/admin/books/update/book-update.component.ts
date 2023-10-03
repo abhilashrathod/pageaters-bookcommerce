@@ -10,9 +10,10 @@ import {AuthorService} from '../../../core/services/author.service';
 import {CollectionService} from '../../../core/services/collection.service';
 import {BooksService} from '../../../core/services/books.service';
 import {FilesService} from '../../../core/services/files.service';
-import {BOOK_AVAILABILITY, BOOK_VERSIONS, BUCKETS, FILE_UPLOAD_MODULES, PRICING_PERCENTAGES, READING_LEVELS, returnPercentageValue} from '../../../core/helpers/constants';
+import {BOOK_AVAILABILITY, BOOK_VERSIONS, BUCKETS, FILE_UPLOAD_MODULES, PRICING_PERCENTAGES, PRODUCT_TYPES, READING_LEVELS, returnPercentageValue} from '../../../core/helpers/constants';
 import {BundleService} from '../../../core/services/bundle.service';
 import {debounceTime} from 'rxjs/operators';
+import { AppLoaderService } from 'src/app/core/components/app-loader/app-loader.service';
 
 @Component({
   selector: 'app-book-update',
@@ -22,9 +23,10 @@ import {debounceTime} from 'rxjs/operators';
 export class BookUpdateComponent implements OnInit {
 
   book;
+  images: any[] = [];
   isReady = false;
   avatar;
-  selectedFile: File;
+  // selectedFile: File;
 
   filters = {
     limit: 25,
@@ -36,9 +38,11 @@ export class BookUpdateComponent implements OnInit {
   collections = [];
   categories = [];
   authors = [];
+
   bookEditionOptions = BOOK_VERSIONS;
   readingLevelOptions = READING_LEVELS;
   bookAvailabilityOptions = BOOK_AVAILABILITY;
+  productTypeOptions = PRODUCT_TYPES;
 
   DROPDOWN_OPTIONS = {
     enableSearchFilter: true,
@@ -97,6 +101,7 @@ export class BookUpdateComponent implements OnInit {
               private authorService: AuthorService,
               private collectionService: CollectionService,
               private router: Router,
+              private appLoader: AppLoaderService,
               private route: ActivatedRoute,
               private location: Location,
               private booksService: BooksService,
@@ -122,16 +127,34 @@ export class BookUpdateComponent implements OnInit {
     const book$ = this.booksService.getById(id);
     book$.subscribe(res => {
       this.book = res;
-      this.book.poster = `${BUCKETS.BOOKS}/${this.book.poster}`;
+      this.prepareImages(this.book);
       this.buildForms(res);
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
     });
   }
 
+  prepareImages(book: any): void {
+    this.images = book.images.map((image: string, idx: number) => {
+      return {
+        url: '',
+        cloudUrl: `${BUCKETS.BOOKS}/${image}`,
+        isPoster: image === book.poster,
+        file: null,
+      }
+    });
+    this.images.unshift({
+      url: '',
+      cloudUrl: `${BUCKETS.BOOKS}/${book.poster}`,
+      isPoster: true,
+      file: null,
+    })
+  }
+
   buildForms(data): void {
     this.primaryFormGroup = this.formBuilder.group({
       title: [get(data, 'title', '')],
+      type: [get(data, 'type', '')],
       tagline: [get(data, 'tagline', '')],
       eyebrow: [get(data, 'eyebrow', '')],
       author: [data?.author ? [data.author] : []],
@@ -315,17 +338,73 @@ export class BookUpdateComponent implements OnInit {
       .subscribe(res => this.bundles = res);
   }
 
-  previewImage(event): void {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
+  detectFiles(event) {
+    let files = event.target.files;
 
-      const reader = new FileReader();
-      reader.onload = e => this.book.poster = reader.result;
+    if (files) {
+      for (let file of files) {
+        let reader = new FileReader();
+        reader.onload = (e: any) => this.images.push({url: reader.result, cloudUrl: '', isPoster: false, file});
 
-      reader.readAsDataURL(file);
-
-      this.selectedFile = file;
+        reader.readAsDataURL(file);
+      }
     }
+  }
+
+  makePrimaryPoster(idx: number) {
+    this.images = this.images.map((item, index) => {
+      return {
+        ...item,
+        isPoster: index === idx,
+      }
+    })
+    this.snackBar.open("Image marked as poster", 'OKAY', {duration: 3000});
+  }
+
+  removeImage(index: number) {
+    this.images.splice(index, 1);
+    this.snackBar.open("Image removed from list", 'OKAY', {duration: 3000});
+  }
+
+  uploadImages() {
+    const posterImages = this.images.filter((x) => x.isPoster);
+
+    if(posterImages.length <= 0) {
+      return this.snackBar.open("Please select atleast one image as poster", "OKAY", {duration: 3000});
+    }
+
+    if (!this.primaryFormGroup.get('title').value) {
+      return this.snackBar.open('Please enter the name first before file upload', 'OKAY', {duration: 3000});
+    }
+
+    if (this.images.length === 0) {
+      return this.snackBar.open('Please select images to upload', 'OKAY', {duration: 3000});
+    }
+
+    const bookName = this.primaryFormGroup.get('title').value;
+
+    this.images.forEach((image, index) => {
+      const fileName = image.isPoster ? `${bookName}-poster-${index}` : `${bookName}-image-${index}`;
+
+      if (!image.cloudUrl) {
+        this.uploadImage(image.file, fileName, index);
+      }
+    })
+  }
+
+  uploadImage(file, title, index) {
+    const formData: FormData = new FormData();
+    formData.append('file', file, file.name);
+    formData.append('title', title);
+    formData.append('fileModule', FILE_UPLOAD_MODULES.STORE_BOOK);
+
+    const file$ = this.filesService.upload(formData);
+    file$.subscribe(res => {
+      this.images[index].cloudUrl = `${BUCKETS.BOOKS}/${res.fileUrl}`;
+      this.snackBar.open('Book Thumbnail Uploaded!', 'OKAY', {duration: 5000});
+    }, err => {
+      this.snackBar.open(err.message, 'OKAY', {duration: 5000});
+    });
   }
 
   add(event: MatChipInputEvent): void {
@@ -350,31 +429,23 @@ export class BookUpdateComponent implements OnInit {
     this.pricingFormGroup.get('wholeSalePriceHistory').patchValue(returnPercentageValue(PRICING_PERCENTAGES.WHOLESALE_PRICE, price));
   }
 
-  uploadImage(): any {
-    if (!this.primaryFormGroup.get('title').value) {
-      return this.snackBar.open('Please enter the name first before file upload', 'OKAY', {duration: 3000});
-    }
-
-    if (!this.selectedFile) {
-      return this.snackBar.open('Please select a file to upload', 'OKAY', {duration: 3000});
-    }
-
-    const formData: FormData = new FormData();
-    formData.append('file', this.selectedFile, this.selectedFile.name);
-    formData.append('title', this.primaryFormGroup.get('title').value);
-    formData.append('fileModule', FILE_UPLOAD_MODULES.STORE_BOOK);
-    const file$ = this.filesService.upload(formData);
-    file$.subscribe(res => {
-      this.book.poster = `${BUCKETS.BOOKS}/${res.fileUrl}`;
-      this.snackBar.open('Book Thumbnail Uploaded!', 'OKAY', {duration: 5000});
-    }, err => {
-      this.snackBar.open(err.message, 'OKAY', {duration: 5000});
-    });
-  }
-
-  onSubmit(): void {
+  onSubmit() {
     const {relatedBooks, relatedCollections, relatedBundles, categories} = this.relatedInfoFormGroup.value;
     const {author} = this.primaryFormGroup.value;
+
+    if (this.images.length <= 0) {
+      return this.snackBar.open('Please upload images and select a poster', 'OKAY', {duration: 5000});
+    }
+
+    const uploadedImages = this.images.filter((x) => x.cloudUrl === '');
+    if (uploadedImages.length > 0) {
+      return this.snackBar.open('Please upload selected images first', 'OKAY', {duration: 5000});
+    }
+
+    const posterImages = this.images.filter((x) => x.isPoster);
+    if(posterImages.length <= 0) {
+      return this.snackBar.open("Please select atleast one image as poster", "OKAY", {duration: 3000});
+    }
 
     const payload = {
       ...this.book,
@@ -387,7 +458,8 @@ export class BookUpdateComponent implements OnInit {
       relatedCollections: relatedCollections.map(x => x._id),
       relatedBundles: relatedBundles.map(x => x._id),
       categories: categories.map(x => x._id),
-      poster: this.book.poster ? this.book.poster.split('/').pop() : '',
+      poster: posterImages[0].cloudUrl.split('/').pop(),
+      images: this.images.filter((x) => !x.isPoster).map((x) => x.cloudUrl.split('/').pop()),
     };
     const book$ = this.booksService.update(this.book._id, payload);
     book$.subscribe(res => {

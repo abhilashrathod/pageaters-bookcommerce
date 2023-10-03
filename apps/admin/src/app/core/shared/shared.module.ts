@@ -22,6 +22,7 @@ import {MatIconModule} from '@angular/material/icon';
 import {MatStepperModule} from '@angular/material/stepper';
 import {MatSelectModule} from '@angular/material/select';
 import {MatCardModule} from '@angular/material/card';
+import {MatRadioModule} from '@angular/material/radio';
 
 @NgModule({
   imports: [CommonModule],
@@ -47,6 +48,7 @@ import {MatCardModule} from '@angular/material/card';
     MatSnackBarModule,
     MatTooltipModule,
     MatCardModule,
+    MatRadioModule,
   ],
   declarations: [],
   providers: [],

@@ -11,6 +11,7 @@ export const FILE_UPLOAD_MODULES = {
 export const BOOK_VERSIONS = ['hardcover', 'paperback', 'mass market paperback'];
 export const READING_LEVELS = ['Beginner', 'Intermediate', 'Advance'];
 export const BOOK_AVAILABILITY = ['available', 'procurement', 'import', 'pre-order'];
+export const PRODUCT_TYPES =  ['book', 'bundle', 'book_box', 'blind_book', 'mystery_box'];
 
 export const ORDER_STATUS = [
   {value: '', text: 'All'},

@@ -11,26 +11,38 @@
             <div class="row">
               <div class="col-5">
                 <div class="mb-4">
-                  <p>
-                    <input type="url" placeholder="Place URL if any..." class="form-control" [(ngModel)]="poster" [ngModelOptions]="{standalone: true}"/>
-                  </p>
-                  <p class="text-center">
-                    -- OR --
-                  </p>
-                  <div *ngIf="!poster" class="image-upload-thumbnail" (click)="profileImage.click()">Book Cover
+                  <div *ngIf="images.length <= 0" class="image-upload-thumbnail" (click)="profileImage.click()">Book Images
                   </div>
-                  <img *ngIf="poster" class="pointer img-fluid img-thumbnail" [src]="poster"
-                       (click)="profileImage.click()"/>
-                  <input #profileImage class="d-none" type="file" (change)="previewImage($event)">
+                  <div *ngFor="let image of images; let idx = index;" class="position-relative mb-3">
+                    <img [src]="image.url" style="height: 400px; width: auto; object-fit: contain;" class="pointer img-fluid me-2" height="200px" width="auto">
+                    <div style="top: -10px; z-index: 3; left: -10px;" class="d-flex position-absolute">
+                      <button *ngIf="!image.isPoster" (click)="makePrimaryPoster(idx)" class="me-2" mat-mini-fab [color]="'accent'"><mat-icon>wallpaper</mat-icon></button>
+                      <button (click)="removeImage(idx)" mat-mini-fab [color]="'warn'"><mat-icon>clear</mat-icon></button>
+                    </div>
+                  </div>
+
+                  <input #profileImage class="d-none" type="file" multiple (change)="detectFiles($event)">
                 </div>
                 <p class="text-center">
-                  <button mat-stroked-button [color]="'accent'" (click)="uploadImage()">
+                  <button *ngIf="images.length > 0" mat-stroked-button [color]="'primary'" (click)="profileImage.click()">
+                    Add More
+                  </button>
+                  &nbsp;
+                  <button mat-stroked-button [color]="'accent'" (click)="uploadImages()">
                     Upload
                   </button>
                 </p>
-
               </div>
               <div class="col-7">
+                <div class="row">
+                  <div class="col-12">
+                    <label class="me-3">Product Type:</label>
+                    <mat-radio-group formControlName="type" aria-label="Product Type">
+                      <mat-radio-button class="me-3" *ngFor="let type of productTypeOptions" value="{{type}}">{{type | titlecase}}</mat-radio-button>
+                    </mat-radio-group>
+                  </div>
+                </div>
+                <hr>
                 <div class="row">
                   <div class="col-8">
                     <mat-form-field class="w-100">
