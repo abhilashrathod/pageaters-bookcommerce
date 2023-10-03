@@ -293,7 +293,7 @@ const AppHeader: React.FC<Props> = () => {
                       </Menu.Target>
                       <Menu.Dropdown>
                         <Menu.Label>Explore Store</Menu.Label>
-                        <Menu.Item onClick={() => navigateToUrl('/box-boxes')} icon={<Icon icon={'icon-park-twotone:dropbox'} width={20} height={20}/>}>Bookish Box</Menu.Item>
+                        <Menu.Item onClick={() => navigateToUrl('/book-boxes')} icon={<Icon icon={'icon-park-twotone:dropbox'} width={20} height={20}/>}>Bookish Box</Menu.Item>
                         <Menu.Item onClick={() => navigateToUrl('/categories')} icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
                         <Menu.Item onClick={() => navigateToUrl('/collections')} icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20} height={20}/>}>Collections</Menu.Item>
                         <Menu.Item onClick={() => navigateToUrl('/bundles')} icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>
