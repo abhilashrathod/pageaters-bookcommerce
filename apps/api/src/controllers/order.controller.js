@@ -957,7 +957,7 @@ module.exports.getAnalyticsRevenue = async (req, res) => {
       {
         $match: {
           orderStatus: 'fulfilled', // Match orders with a status of "fulfilled"
-          // createdAt: { $gte: startDate, $lt: endDate },
+          createdAt: { $gte: startDate, $lt: endDate },
         },
       },
       {
