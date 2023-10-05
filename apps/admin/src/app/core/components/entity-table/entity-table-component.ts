@@ -24,7 +24,7 @@ import {AppConfirmService} from '../app-confirm/app-confirm.service';
 import {AppLoaderService} from '../app-loader/app-loader.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {ActivatedRoute, Router} from '@angular/router';
-import { ORDER_STATUS } from '../../helpers/constants';
+import { ORDER_STATUS, PRODUCT_TYPES } from '../../helpers/constants';
 
 
 @Component({
@@ -49,7 +49,8 @@ export class EntityTableComponent implements OnInit, AfterViewInit, OnChanges {
   @Input() public checkResource;
   @Input() public featuredResource;
   @Input() public sort;
-  @Input() public showFilters = false;
+  @Input() public showStatuses = false;
+  @Input() public showTypes = false;
 
   @ViewChild(MatPaginator, {static: false}) paginator: MatPaginator;
 
@@ -59,6 +60,7 @@ export class EntityTableComponent implements OnInit, AfterViewInit, OnChanges {
 
   // orders list only
   statuses = ORDER_STATUS;
+  types = PRODUCT_TYPES;
 
   dataSource = new MatTableDataSource();
   public filterObject = {
@@ -67,6 +69,7 @@ export class EntityTableComponent implements OnInit, AfterViewInit, OnChanges {
     sortBy: 'createdAt',
     sortOrder: -1,
     status: '',
+    type: '',
   };
   total: number;
   page: any;
@@ -94,6 +97,9 @@ export class EntityTableComponent implements OnInit, AfterViewInit, OnChanges {
       if (queryParams.status) {
         this.filterObject.status = queryParams.status;
       }
+      if (queryParams.type) {
+        this.filterObject.type = queryParams.type;
+      }
     });
 
     this.search
@@ -117,6 +123,12 @@ export class EntityTableComponent implements OnInit, AfterViewInit, OnChanges {
   handleFilterChange($event): void {
     const value = $event.value;
     this.filterObject.status = value;
+    this.ngAfterViewInit();
+  }
+
+  handleTypeChange($event): void {
+    const value = $event.value;
+    this.filterObject.type = value;
     this.ngAfterViewInit();
   }
 

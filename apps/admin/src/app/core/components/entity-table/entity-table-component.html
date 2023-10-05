@@ -5,13 +5,25 @@
       <input matInput type="search" [formControl]="search">
     </mat-form-field>
   </div>
-  <div class="col-6" *ngIf="showFilters">
+  <div class="col-6" *ngIf="showStatuses">
     <div class="d-flex">
       <mat-form-field appearance="standard">
         <mat-label>Status</mat-label>
         <mat-select (selectionChange)="handleFilterChange($event)">
           <mat-option *ngFor="let status of statuses" [value]="status.value">
             {{status.text}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="col-6" *ngIf="showTypes">
+    <div class="d-flex">
+      <mat-form-field appearance="standard">
+        <mat-label>Product Type</mat-label>
+        <mat-select (selectionChange)="handleTypeChange($event)">
+          <mat-option *ngFor="let type of types" [value]="type">
+            {{type | titlecase}}
           </mat-option>
         </mat-select>
       </mat-form-field>

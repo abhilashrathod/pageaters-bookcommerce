@@ -40,11 +40,6 @@ export class SidebarComponent implements OnInit {
       title: 'Collections'
     },
     {
-      icon: 'savings',
-      path: ['/', 'admin', 'bundles'],
-      title: 'Bundles'
-    },
-    {
       icon: 'person',
       path: ['/', 'admin', 'customers'],
       title: 'Customers'

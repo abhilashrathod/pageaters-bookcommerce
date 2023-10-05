@@ -24,6 +24,9 @@ export class SharedService {
     if (filters.status) {
       params = params.set('status', filters.status);
     }
+    if (filters.type) {
+      params = params.set('type', filters.type);
+    }
     return this.httpClient.get(url, {params})
       .pipe(
         map((res: IResponse) => res.data),

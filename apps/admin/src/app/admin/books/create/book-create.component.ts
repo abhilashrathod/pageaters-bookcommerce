@@ -428,7 +428,7 @@ export class BookCreateComponent implements OnInit {
       relatedBundles: relatedBundles.map(x => x._id),
       categories: categories.map(x => x._id),
       poster: posterImages[0].cloudUrl.split('/').pop(),
-      images: this.images.filter((x) => !x.isPoster).map((x) => x.cloudUrl),
+      images: this.images.map((x) => x.cloudUrl),
     };
     const book$ = this.booksService.create(payload);
     book$.subscribe(res => {

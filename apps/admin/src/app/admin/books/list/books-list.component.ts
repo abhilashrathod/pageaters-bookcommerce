@@ -1,4 +1,5 @@
 import {Component, OnInit} from '@angular/core';
+import { Router } from '@angular/router';
 import {get} from 'lodash';
 
 @Component({
@@ -71,7 +72,7 @@ export class BooksListComponent implements OnInit {
   public getAllBaseUrl = '/store-books';
   public searchBaseUrl = '/store-books/search';
 
-  constructor() {
+  constructor(private router: Router) {
   }
 
   ngOnInit(): void {
