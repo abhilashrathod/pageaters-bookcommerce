@@ -125,7 +125,6 @@ const AppFooter: React.FC<Props> = () => {
                     Gandhinagar, Gujarat - 382016 <br/>
                     (Active Hours: Monday to Saturday, 11AM to 7PM) <br/>
                     <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}} size={ButtonSizes.Small} onClick={() => handleContact( 'mailto:support@demo.pageaters.com')}>Mail Us</AppButton>
-                    <AppButton variant={ButtonVariants.Secondary} styles={{margin: '0.6rem 1rem 0.6rem 0'}}  size={ButtonSizes.Small} onClick={() => handleContact( 'tel:+91-9000000000')}>Call Us</AppButton>
                   </address>
                 </MainFooterAddress>
                 <FooterNavigation>

@@ -108,39 +108,6 @@ const Contact: React.FC<Props> = () => {
                     </ContentSpace>
                   </ContactCard>
                 </div>
-                <div className="col-xl-3 col-xxl-3 col-12">
-                  <ContactCard onClick={handleContact}>
-                    <IconSpace>
-                      <Icon height={48} width={48} color={SECONDARY_ACCENT_COLOR} icon={'ic:outline-call'}/>
-                    </IconSpace>
-                    <ContentSpace>
-                      <span>Talk to us</span>
-                      <Title>Via Call</Title>
-                    </ContentSpace>
-                  </ContactCard>
-                </div>
-                <div className="col-xl-3 col-xxl-3 col-12">
-                  <ContactCard onClick={handleWhatsApp}>
-                    <IconSpace>
-                      <Icon height={48} width={48} color={SECONDARY_ACCENT_COLOR} icon={'mdi:whatsapp'}/>
-                    </IconSpace>
-                    <ContentSpace>
-                      <span>Instant Chat</span>
-                      <Title>Via WhatsApp</Title>
-                    </ContentSpace>
-                  </ContactCard>
-                </div>
-                <div className="col-xl-3 col-xxl-3 col-12">
-                  <ContactCard onClick={handleInstagram}>
-                    <IconSpace>
-                      <Icon height={48} width={48} color={SECONDARY_ACCENT_COLOR} icon={'mdi:instagram'}/>
-                    </IconSpace>
-                    <ContentSpace>
-                      <span>DM or Visit us</span>
-                      <Title>Via Instagram</Title>
-                    </ContentSpace>
-                  </ContactCard>
-                </div>
               </div>
             </div>
           </section>

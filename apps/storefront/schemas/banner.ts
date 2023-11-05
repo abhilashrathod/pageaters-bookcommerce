@@ -1,14 +1,9 @@
 export interface IBanner {
-  bannerId?: string;
   poster: string;
   ctaLink?: string;
   ctaText?: string;
+  ctaVisible?: boolean;
   title: string;
-  entity?: string;
-  description?: string;
+  subtitle?: string;
   priority?: number;
-  isActive?: boolean;
-  deactivatedAt?: string;
-  createdAt?: string;
-  updatedAt?: string;
 }
