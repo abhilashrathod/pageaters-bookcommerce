@@ -61,12 +61,12 @@ const LandscapeBanner: React.FC<Props> = ({banner}) => {
   const router = useRouter();
 
   function renderImageSize(w: number, h: number) {
-    switch (banner.entity) {
-      case 'collection':
-        return getCollectionImage(banner.poster, {height: h, width: w, fit: 'cover'});
-      default:
-        return getAssetImage(banner.poster, {height: h, width: w, fit: 'cover'});
-    }
+    // switch (banner.entity) {
+      // case 'collection':
+        // return getCollectionImage(banner.poster, {height: h, width: w, fit: 'cover'});
+      // default:
+    return getAssetImage(banner.poster, {height: h, width: w, fit: 'cover'});
+    // }
   }
 
   function handleNavigation() {

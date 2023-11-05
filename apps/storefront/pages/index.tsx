@@ -66,25 +66,25 @@ const Home: NextPage = (props: any) => {
   const collections = get(collectionsRes, 'data.docs', []);
 
   // featured collection data
-  const bannerCollectionItem: IBanner = {
-    title: 'Best Books of 2022',
-    ctaLink: '/collections/CL-1783679685',
-    poster: 'the-best-books-of-2022-O852fz1tFK-1671962486958.png',
-    bannerId: 'CL-1783679685',
-    ctaText: 'Learn More',
-    description: 'Which were the best books of 2022?',
-    entity: 'collection'
-  };
+  // const bannerCollectionItem: IBanner = {
+  //   title: 'Best Books of 2022',
+  //   ctaLink: '/collections/CL-1783679685',
+  //   poster: 'the-best-books-of-2022-O852fz1tFK-1671962486958.png',
+  //   bannerId: 'CL-1783679685',
+  //   ctaText: 'Learn More',
+  //   description: 'Which were the best books of 2022?',
+  //   entity: 'collection'
+  // };
 
-  const discountItem: IBanner = {
-    title: 'Holiday Treats and Gift Guide for Christmas Sale!',
-    ctaLink: '/deals/DE-2008737169',
-    poster: 'diwali-sale-2022-C5iXhgDC6Q-1671958827235.jpg',
-    bannerId: 'DE-2008737169',
-    ctaText: 'Learn More',
-    description: 'Holiday treats for everyone and a helpful gift guide',
-    entity: 'asset'
-  };
+  // const discountItem: IBanner = {
+  //   title: 'Holiday Treats and Gift Guide for Christmas Sale!',
+  //   ctaLink: '/deals/DE-2008737169',
+  //   poster: 'diwali-sale-2022-C5iXhgDC6Q-1671958827235.jpg',
+  //   bannerId: 'DE-2008737169',
+  //   ctaText: 'Learn More',
+  //   description: 'Holiday treats for everyone and a helpful gift guide',
+  //   entity: 'asset'
+  // };
 
   return (
       <>
@@ -103,7 +103,7 @@ const Home: NextPage = (props: any) => {
         </Head>
         <PageWrapper>
           <section className={'mb-25'}>
-            <HeroBanner banner={props.heroBanner}/>
+            <HeroBanner />
           </section>
 
           {/* <section className="my-5 py-5">
