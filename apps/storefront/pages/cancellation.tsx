@@ -66,6 +66,10 @@ const Cancellation: NextPage = () => {
                     same account from which the payment was made within 24-48 business hours of us receiving the
                     products back. It may take 3-5 additional business days for the amount to reflect in your account.
                   </p>
+                  <p>
+                    <strong>Are there any cancellation charges? </strong><br/>
+                    Yes, if your order is a pre-order then, 25% cancellation charges are deducated when you cancel your order. If your order is Cash on Delivery, the deduction amount is collected in your next order. Until you pay the fees your account will be blocked from further service.
+                  </p>
 
                   <hr/>
 
