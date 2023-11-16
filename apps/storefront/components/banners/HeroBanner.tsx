@@ -77,14 +77,6 @@ const BannerImage = styled.img`
 
 const DATA: Array<IBanner> = [
   {
-    poster: "diwali-sale-banner.png",
-    title: "Diwali'23 Sale",
-    subtitle: "Store wide discount (Except on Pre-orders, Procurement and Import Items)",
-    ctaLink: "",
-    ctaText: "",
-    ctaVisible: false,
-  },
-  {
     poster: "if-bkg-min.png",
     title: "Pre-order Iron Flame",
     subtitle: "The Thrilling Sequel To The Number One Global Bestselling Phenomenon Fourth Wing",
