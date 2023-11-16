@@ -139,7 +139,7 @@
                     <div class="fw-bold">{{productItem.product.title}}</div>
                     <p>MRP: {{productItem.price|currency:'INR'}}&nbsp;|&nbsp;Discount:{{productItem.discount | number}}&nbsp;|&nbsp;Weight: {{productItem.weight * productItem.quantity | number}}</p>
                   </div>
-                  <span class="badge bg-primary rounded-pill">{{productItem.productTotal | currency:'INR'}}
+                  <span class="badge bg-primary rounded-pill">{{productItem.price | currency:'INR'}}
                     x {{productItem.quantity}}</span>
                 </li>
                 <li *ngFor="let bundleItem of order.bundles"

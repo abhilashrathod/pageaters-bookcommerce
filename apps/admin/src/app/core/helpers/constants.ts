@@ -27,6 +27,22 @@ export const ORDER_STATUS = [
   {value: 'refunded', text: 'Refunded'},
 ]
 
+
+export const ORDER_STATUSES = {
+  ATTEMPTED: 'attempted',
+  CREATED: 'created',
+  PAID: 'paid',
+  SHIPPED: 'shipped',
+  CONFIRMED: 'confirmed',
+  FULFILLED: 'fulfilled',
+  CANCELLED: 'cancelled',
+  RETURNED: 'returned',
+  REPLACEMENT: 'replacement',
+  RETURNED_IN_PROGRESS: 'return in progress',
+  REPLACEMENT_IN_PROGRESS: 'replacement in progress',
+  REFUNDED: 'refunded',
+};
+
 export const PRICING_PERCENTAGES = {
   NON_MEMBER_RENT: 50,
   MEMBER_PRICE: 75,
