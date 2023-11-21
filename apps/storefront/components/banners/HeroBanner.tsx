@@ -78,10 +78,18 @@ const BannerImage = styled.img`
 const DATA: Array<IBanner> = [
   {
     poster: "if-bkg-min.png",
-    title: "Pre-order Iron Flame",
+    title: "Iron Flame",
     subtitle: "The Thrilling Sequel To The Number One Global Bestselling Phenomenon Fourth Wing",
     ctaLink: "/books/BK-9405609836",
-    ctaText: "Pre-order Now!",
+    ctaText: "Order Now!",
+    ctaVisible: true,
+  },
+  {
+    poster: "the-complete-off-campus-series-illustrated-set-image-1-n5Z6TezXR1-1700553955014.png",
+    title: "Off Campus Illustrated Series Set",
+    subtitle: "Each book will have the first print run blue sprayed edge and the new illustrated cover.",
+    ctaLink: "/books/BK-3955836820",
+    ctaText: "Order Now!",
     ctaVisible: true,
   },
   {
