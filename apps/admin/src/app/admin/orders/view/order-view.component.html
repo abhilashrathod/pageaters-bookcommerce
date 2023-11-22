@@ -136,25 +136,31 @@
                 <li *ngFor="let productItem of order.products"
                     class="list-group-item d-flex justify-content-between align-items-start">
                   <div class="ms-2 me-auto">
-                    <div class="fw-bold">{{productItem.product.title}}</div>
+                    <div class="fw-bold">{{productItem.product.title}} x {{productItem.quantity}}</div>
                     <p>MRP: {{productItem.price|currency:'INR'}}&nbsp;|&nbsp;Discount:{{productItem.discount | number}}&nbsp;|&nbsp;Weight: {{productItem.weight * productItem.quantity | number}}</p>
                   </div>
-                  <span class="badge bg-primary rounded-pill">{{productItem.price | currency:'INR'}}
-                    x {{productItem.quantity}}</span>
+                  <span class="badge bg-primary rounded-pill">{{productItem.productTotal | currency:'INR'}}</span>
                 </li>
                 <li *ngFor="let bundleItem of order.bundles"
                     class="list-group-item d-flex justify-content-between align-items-start">
                   <div class="ms-2 me-auto">
-                    <div class="fw-bold">{{bundleItem.bundle.title}}</div>
+                    <div class="fw-bold">{{bundleItem.bundle.title}} x {{bundleItem.quantity}}</div>
                     <p>MRP: {{bundleItem.price|currency:'INR'}}&nbsp;|&nbsp;Discount:{{bundleItem.discount | number}}&nbsp;|&nbsp;Weight: {{bundleItem.weight * bundleItem.quantity | number}}</p>
                   </div>
-                  <span class="badge bg-primary rounded-pill">{{bundleItem.total | currency:'INR'}}
-                    x {{bundleItem.quantity}}</span>
+                  <span class="badge bg-primary rounded-pill">{{bundleItem.total | currency:'INR'}}</span>
+                </li>
+                <li *ngFor="let addonItem of order.addOns"
+                    class="list-group-item d-flex justify-content-between align-items-start">
+                  <div class="ms-2 me-auto">
+                    <div class="fw-bold">{{addonItem.addOn.name}} x {{addonItem.quantity}}</div>
+                    <p>MRP: {{addonItem.price | currency:'INR'}}&nbsp;|&nbsp;Discount:{{addonItem.discount | number}}</p>
+                  </div>
+                  <span class="badge bg-primary rounded-pill">{{addonItem.total | currency:'INR'}}</span>
                 </li>
                 <li *ngFor="let mysteryBoxItem of order.boxes"
                     class="list-group-item d-flex justify-content-between align-items-start">
                   <div class="ms-2 me-auto">
-                    <div class="fw-bold">{{mysteryBoxItem.box.title}}</div>
+                    <div class="fw-bold">{{mysteryBoxItem.box.title}} x {{mysteryBoxItem.quantity}}</div>
                     <p>
                       MRP: {{mysteryBoxItem.price|currency:'INR'}}&nbsp;|&nbsp;Discount:{{mysteryBoxItem.discount | number}}&nbsp;|&nbsp;Weight: {{mysteryBoxItem.weight * mysteryBoxItem.quantity | number}}</p>
 
@@ -174,8 +180,7 @@
                     </ul>
 
                   </div>
-                  <span class="badge bg-primary rounded-pill">{{mysteryBoxItem.total | currency:'INR'}}
-                    x {{mysteryBoxItem.quantity}}</span>
+                  <span class="badge bg-primary rounded-pill">{{mysteryBoxItem.total | currency:'INR'}}</span>
                 </li>
               </ol>
             </mat-card-content>

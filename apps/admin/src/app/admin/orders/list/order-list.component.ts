@@ -40,7 +40,7 @@ export class OrderListComponent implements OnInit {
     {
       header: 'Order Date',
       columnDef: 'orderDate',
-      cell: (element) => `${moment(element.orderDate).format('DD MMM YYYY, ddd, hh:mm')}`,
+      cell: (element) => `${moment(element.orderDate).format('DD/MM/YY, ddd, hh:mm')}`,
     },
     {
       header: 'Status',
@@ -50,22 +50,22 @@ export class OrderListComponent implements OnInit {
     {
       header: 'Products',
       columnDef: 'products',
-      cell: (element) => this.returnProductItems(element.products, element.bundles, element.boxes),
+      cell: (element) => this.returnProductItems(element.products, element.bundles, element.boxes, element.addOns),
+    },
+    {
+      header: 'Total',
+      columnDef: 'orderTotal',
+      cell: (element) => `INR ${element.total}`,
     },
     {
       header: 'Customer',
       columnDef: 'customer',
-      cell: (element) => `<strong>${element.userId.fullName}</strong><br/><p>${element.userId.contactNo} | ${element.userId.email}</p>`,
+      cell: (element) => `<strong>${element.userId.fullName}</strong><br/><p>${element.userId.email}<br/>${element.userId.contactNo}</p>`,
     },
     {
       header: 'View Details',
       columnDef: 'view',
       cell: (element) => [...this.viewResourceUrl, element._id],
-    },
-    {
-      header: 'Action',
-      columnDef: 'action',
-      cell: (element) => [...this.editResourceUrl, element._id],
     },
   ];
 
@@ -78,11 +78,12 @@ export class OrderListComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  returnProductItems(products, bundles, boxes): string {
-    const books = products.map((x) => x.product.title);
-    const bundle = bundles.map((x) => x.bundle.title);
-    const box = boxes.map((x) => x.box.title);
-    return `${books.join(`<br />`)} <br/> ${bundle.join(`<br />`)} <br/> ${box.join(`<br />`)}`;
+  returnProductItems(products, bundles, boxes, addOns): string {
+    const books = products.map((x) => x.product.title +' x '+ x.quantity);
+    const bundle = bundles.map((x) => x.bundle.title +' x '+x.quantity);
+    const box = boxes.map((x) => x.box.title +' x '+ x.quantity);
+    const addOn = addOns.map((x) => x.addOn.name +' x '+ x.quantity);
+    return `${books.join(`<br />`)} <br/> ${bundle.join(`<br />`)} <br/> ${box.join(`<br />`)} <br/> ${addOn.join(`<br />`)}`;
   }
 
   handleOrderStatusChange(event: any): void {

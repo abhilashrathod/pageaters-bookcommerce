@@ -52,6 +52,7 @@ export class ViewCustomerComponent implements OnInit {
 
       console.log('user', this.details);
 
+      this.details.orders = this.details.orders.filter((x) => x.orderStatus !== ORDER_STATUSES.ATTEMPTED);
       this.getPastOrderStats(this.details.orders);
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});

@@ -3,6 +3,7 @@ import { IBundle } from './bundle';
 import { IAddress } from './address';
 import { IMysteryBox } from './mystery-box';
 import { ICreditTransaction } from './credit-transactions';
+import { IAddon } from './addon';
 
 export interface IOrderProductItem {
   quantity: number;
@@ -36,6 +37,14 @@ export interface IOrderBoxItem {
   total: number;
   weight: number;
   _id: string;
+}
+
+export interface IOrderAddOnItem {
+  quantity: number;
+  price: number;
+  discount: number;
+  total: number;
+  addOn: IAddon;
 }
 
 export interface IOrderHistory {
@@ -74,6 +83,7 @@ export interface IOrder {
   products: Array<IOrderProductItem>;
   bundles: Array<IOrderBundleItem>;
   boxes: Array<IOrderBoxItem>;
+  addOns: Array<IOrderAddOnItem>;
   orderHistory: Array<IOrderHistory>;
   requests: Array<IOrderRequest>;
   storeCreditTransaction: Array<ICreditTransaction>
