@@ -18,6 +18,7 @@ router.use('/public', require('./public.routes'));
 // router.use('/subscription', require('./subscription.routes'));
 router.use('/auth', require('./auth.routes'));
 router.use('/file', require('./file.routes'));
+router.use('/add-ons', require('./add-on.routes'));
 router.use('/bundles', require('./bundle.routes'));
 router.use('/users', require('./users.routes'));
 router.use('/store-books', require('./storeBooks.routes'));

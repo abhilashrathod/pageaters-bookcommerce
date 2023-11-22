@@ -8,6 +8,45 @@ const Address = mongoose.model(models.ADDRESS);
 const Order = mongoose.model(models.ORDER);
 const Cart = mongoose.model(models.CART);
 
+
+const cartPopulateOptions = [{
+  path: 'products.product',
+  select: 'bookId title poster author currentDiscount availability price',
+  populate: {
+    path: 'author',
+    select: 'name avatar',
+  },
+}, {
+  path: 'bundles.bundle',
+  select: 'bundleId title poster bundledBooks currentDiscount price',
+}, {
+  path: 'mysteryBoxes.box',
+  select: 'boxId title images currentDiscount price',
+}];
+
+
+const orderPopulateOptions = [
+  {
+    path: 'deliveryAddress',
+  },
+  {
+    path: 'products.product',
+    select: 'bookId title poster author currentDiscount price',
+    populate: {
+      path: 'author',
+      select: 'name avatar',
+    },
+  },
+  {
+    path: 'bundles.bundle',
+    select: 'bundleId title poster bundledBooks currentDiscount price',
+  },
+  {
+    path: 'boxes.box',
+    select: 'boxId title images currentDiscount price',
+  },
+];
+
 module.exports.getAll = async (req, res) => {
   try {
     let { page, limit } = req.allParams();
@@ -48,9 +87,12 @@ module.exports.getAllDetails = async (req, res) => {
     let { id } = req.allParams();
 
     const userRes = await Users.findOne({_id: id});
-    const cartRes = await Cart.findOne({user: id});
+    const cartRes = await Cart.findOne({user: id}).populate(cartPopulateOptions);
     const addressRes = await Address.find({userId: id});
-    const orderRes = await Order.find({userId: id});
+    const orderRes = await Order.find({userId: id})
+                                  .select(`orderId orderDate deliveryAddress orderStatus shipmentTrackingId products boxes bundles total`)
+                                  .sort({ createdAt: -1 })
+                                  .populate(orderPopulateOptions);
 
     const details = {
       user: userRes,

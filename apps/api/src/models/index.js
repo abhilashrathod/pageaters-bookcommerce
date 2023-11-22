@@ -1,4 +1,5 @@
 require('./apiClient.model');
+require('./addOn.model');
 require('./token.model');
 require('./device.model');
 require('./file.model');

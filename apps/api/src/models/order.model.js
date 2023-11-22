@@ -46,6 +46,14 @@ const schema = new Schema({
       product: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
     }],
 
+    addOns: [{
+      quantity: { type: Number, default: 1 },
+      price: { type: Number, default: 1 },
+      discount: { type: Number, default: 0 },
+      total: { type: Number, default: 1 },
+      addOn: { type: Schema.Types.ObjectId, ref: models.ADD_ON },
+    }],
+
     bundles: [{
       quantity: { type: Number, default: 1 },
       price: { type: Number, default: 1 },

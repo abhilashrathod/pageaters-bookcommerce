@@ -9,6 +9,7 @@ const Cart = mongoose.model(models.CART);
 const Book = mongoose.model(models.STORE_BOOK);
 const Bundle = mongoose.model(models.BUNDLE);
 const MysteryBox = mongoose.model(models.MYSTERY_BOX);
+const AddOn = mongoose.model(models.ADD_ON);
 
 const CART_COOKIE_OPTIONS = {
   httpOnly: true,
@@ -24,6 +25,9 @@ const populateOptions = [{
 }, {
   path: 'bundles.bundle',
   select: 'bundleId title poster bundledBooks currentDiscount price',
+}, {
+  path: 'addOns.addOn',
+  select: 'name poster currentDiscount price',
 }, {
   path: 'mysteryBoxes.box',
   select: 'boxId title images currentDiscount price',
@@ -52,7 +56,7 @@ module.exports.retrieve = async (req, res) => {
 
       res.cookie(enums.TOKEN_ID.CART_COOKIE, userCart._id, CART_COOKIE_OPTIONS);
 
-      userCart.subTotal = await calculateTotal(userCart.products, userCart.bundles, userCart.mysteryBoxes);
+      userCart.subTotal = await calculateTotal(userCart.products, userCart.bundles, userCart.mysteryBoxes, userCart.addOns);
       return res.ok({ message: 'CART_LIST_SUCCESS', data: userCart });
     }
 
@@ -440,6 +444,111 @@ module.exports.removeBox = async (req, res) => {
   }
 };
 
+/* ADD ONS */
+module.exports.addAddon = async (req, res) => {
+  try {
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
+    let { addOn, quantity } = req.allParams();
+    const userId = get(req, 'user.userId', '');
+    const populateOptions = {
+      path: 'addOns.addOn',
+      select: 'name description poster price currentDiscount',
+    };
+
+    let currentCart = await Cart.findOne({ _id: cart, user: userId }).populate(populateOptions);
+    if (!currentCart) return res.error('CART_NOT_EXIST');
+    currentCart = currentCart.toObject();
+
+    let addOnRes = await AddOn.findOne({ _id: getId(addOn), isDeleted: false }).select('price inventory');
+    if (!addOnRes) return res.error('ADD_ON_NOT_EXIST');
+    addOnRes = addOnRes.toObject();
+
+    // check if product is already in the cart then increase the quantity if available
+    const alreadyThere = currentCart.addOns.find(x => x.addOn._id.toString() === addOn.toString());
+
+    if (alreadyThere) {
+      quantity = alreadyThere.quantity + quantity; // add upcoming and already exist qty to check final quantity is available.
+      if (quantity > 5) return res.error('ADD_ON_ADD_QUANTITY_LIMIT');
+      if (quantity > addOnRes.inventory) return res.error('INVALID_QUANTITY');
+      const query = { _id: cart, 'addOns.addOn': getId(addOn) };
+      const update = { $set: { 'addOns.$.quantity': quantity } };
+      const options = { new: true };
+      const updatedCart = await Cart.findOneAndUpdate(query, update, options);
+      return res.ok({ message: 'ADD_ON_UPDATE_SUCCESS', data: updatedCart });
+    } else {
+      if (quantity > 5) return res.error('QUANTITY_LIMIT');
+      if (quantity > addOnRes.inventory) return res.error('INVALID_QUANTITY');
+      const addedAddOn = {
+        addOn,
+        quantity,
+        addedOn: new Date(),
+      };
+      await Cart.findOneAndUpdate({ _id: cart }, {
+        $addToSet: {
+          addOns: addedAddOn,
+        },
+      }, { new: true });
+      return res.ok({ message: 'CART_UPDATE_SUCCESS', data: true });
+    }
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.updateAddonQuantity = async (req, res) => {
+  try {
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
+    let { id, quantity } = req.allParams();
+    const userId = get(req, 'user.userId', '');
+
+    let currentCart = await Cart.findOne({ _id: cart, user: userId });
+    if (!currentCart) return res.error('CART_NOT_EXIST');
+
+    let addOnRes = await AddOn.findOne({ _id: id, isDeleted: false }).select('price inventory');
+    if (!addOnRes) return res.error('ADD_ON_NOT_EXIST');
+
+    addOnRes = addOnRes.toObject();
+
+    if (quantity > 5) return res.error('QUANTITY_LIMIT');
+
+    if (quantity > addOnRes.inventory) return res.error('INVALID_QUANTITY');
+
+    const query = { _id: cart, 'addOns.addOn': getId(id) };
+    const update = { $set: { 'addOns.$.quantity': quantity } };
+    const options = { new: true };
+
+    await Cart.findOneAndUpdate(query, update, options);
+
+    return res.ok({ message: 'ADD_ON_UPDATE_SUCCESS', data: true });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+module.exports.removeAddon = async (req, res) => {
+  try {
+    const cart = req.cookies[enums.TOKEN_ID.CART_COOKIE];
+    const userId = get(req, 'user.userId', '');
+    let { addOnId } = req.allParams();
+
+    let currentCart = await Cart.findOne({ _id: cart, user: userId });
+    if (!currentCart) return res.error('CART_NOT_EXIST');
+
+    let addOnRes = await AddOn.findOne({ _id: addOnId, isDeleted: false }).select('price inventory');
+    if (!addOnRes) return res.error('ADD_ON_NOT_EXIST');
+
+    const query = { _id: cart };
+    const update = { $pull: { 'addOns': { addOn: addOnId } } };
+    const options = { new: true };
+
+    await Cart.findOneAndUpdate(query, update, options);
+
+    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: true });
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
 // Function to add an object to the array if its "type" matches existing elements
 function addProductWithMatchingAvailability(product, products) {
   if (products.length === 0) {
@@ -450,13 +559,13 @@ function addProductWithMatchingAvailability(product, products) {
   return product.availability === referenceType;
 }
 
-// for bundles and mysteryboxes: don't let customer order with other than available ones 
+// for bundles and mysteryboxes: don't let customer order with other than available ones
 function checkAvailableProductWithBundleOrMysteryBox(products) {
   if (products.length === 0) {
     return true;
   }
 
   const referenceType = products[0].product.availability;
-  
+
   return referenceType === BOOK_AVAILABILITY.AVAILABLE;
 }

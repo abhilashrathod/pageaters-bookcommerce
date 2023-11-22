@@ -1,4 +1,4 @@
-module.exports.calculateTotal = async function(books, bundles, boxes) {
+module.exports.calculateTotal = async function(books, bundles, boxes, addOns) {
   try {
     let total = 0;
 
@@ -17,6 +17,12 @@ module.exports.calculateTotal = async function(books, bundles, boxes) {
       box.total = box.quantity * Math.floor((box.box.price - ((box.box.currentDiscount * box.box.price) / 100)));
       box.price = box.box.price;
       total = total + Math.floor(box.total);
+    }
+
+    for (let addOn of addOns) {
+      addOn.total = addOn.quantity * Math.floor((addOn.addOn.price - ((addOn.addOn.currentDiscount * addOn.addOn.price) / 100)));
+      addOn.price = addOn.addOn.price;
+      total = total + Math.floor(addOn.total);
     }
 
     return total;

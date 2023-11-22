@@ -21,6 +21,7 @@ module.exports = {
   MYSTERY_BOX: 'mystery_box',
   BUNDLE: 'bundle',
   AUTHOR: 'author',
+  ADD_ON: 'add_on',
   DISCOUNT: 'discount',
   GIFT_CARD: 'gift_card',
   ACCESS_TOKEN: 'access_token',
@@ -29,6 +30,7 @@ module.exports = {
   SUBSCRIPTION_HISTORY: 'subscription_history',
   STORE_DEALS: 'store_deals',
   PRODUCT_SETS: 'product_sets',
+  PAGE: 'page',
   STORE_CREDIT_TRANSACTIONS: 'store_credit_transactions',
   FAVORITES: 'favorites',
 };

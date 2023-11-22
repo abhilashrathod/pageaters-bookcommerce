@@ -3,6 +3,8 @@ const mongoosePaginate = require('mongoose-paginate-v2');
 
 const { models } = require('./../constants');
 
+// db.carts.updateMany({}, {$rename: { "rentals": "addOns" }})
+
 const schema = new Schema({
     user: { type: Schema.Types.ObjectId, ref: models.USER },
     products: [{
@@ -10,10 +12,10 @@ const schema = new Schema({
       addedOn: { type: String, default: '' },
       product: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
     }],
-    rentals: [{
+    addOns: [{
       quantity: { type: Number, default: 1 },
       addedOn: { type: String, default: '' },
-      product: { type: Schema.Types.ObjectId, ref: models.STORE_BOOK },
+      addOn: { type: Schema.Types.ObjectId, ref: models.ADD_ON },
     }],
     bundles: [{
       quantity: { type: Number, default: 1 },
