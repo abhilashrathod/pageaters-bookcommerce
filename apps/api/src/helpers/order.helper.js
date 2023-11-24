@@ -138,11 +138,11 @@ module.exports.returnPickupAddress = function() {
     phone: '9000000000',
   };
 
-  // if (ENVIRONMENT === 'development' || ENVIRONMENT === 'staging') {
-  //   return demoAddress;
-  // }
+  if (ENVIRONMENT === 'development' || ENVIRONMENT === 'staging') {
+    return demoAddress;
+  }
 
-  return NimawatMarketingAddress;
+  return mainAddress;
 }
 
 module.exports.orderPaymentInfo = function(payment) {
