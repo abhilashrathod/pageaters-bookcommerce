@@ -1378,11 +1378,11 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
     if (apiRes.success) {
       orderRes.orderStatus = enums.ORDER_STAGES.SHIPPED;
       orderRes.shipmentTrackingId = `https://www.delhivery.com/track/package/${apiRes.packages[0].waybill}`;
-      orderRes.orderHistory.push({
-        title: enums.ORDER_STAGES.SHIPPED,
-        description: 'Order hand over to shipment company. Your books are on their way',
-        time: new Date().toISOString(),
-      });
+      // orderRes.orderHistory.push({
+      //   title: enums.ORDER_STAGES.SHIPPED,
+      //   description: 'Order hand over to shipment company. Your books are on their way',
+      //   time: new Date().toISOString(),
+      // });
 
       await orderRes.save();
     } else {
@@ -1405,7 +1405,7 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
       },
     };
 
-    sendMailQueue.add(emailBody);
+    // sendMailQueue.add(emailBody);
 
     return res.ok({ message: 'SHIPMENT_CREATE_SUCCESS', data: apiRes });
   } catch (e) {
