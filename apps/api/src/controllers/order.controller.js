@@ -1364,6 +1364,8 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
       pickup_location: returnPickupAddress()
     }
 
+    console.log("payload", payload);
+
     const config = {
       method: 'post',
       url: `${DELHIVERY.BASE_URL}/api/cmu/create.json`,
@@ -1373,7 +1375,10 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
       }
     };
 
-    const {data: apiRes} = await axios(config);
+    const {data: apiRes, ...rest} = await axios(config);
+
+    console.log(rest);
+    console.log(apiRes);
 
     if (apiRes.success) {
       orderRes.orderStatus = enums.ORDER_STAGES.SHIPPED;

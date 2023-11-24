@@ -121,12 +121,12 @@ module.exports.returnPickupAddress = function() {
   };
 
   const NimawatMarketingAddress = {
-    "name": "Demo Supplier",
-    "add": "Unit 1, Demo Logistics Park, Sector 1",
-    "city": "Udaipur",
-    "pin_code": "313001",
-    "country": "India",
-    "phone": "+919000000000",
+    name: "Demo Supplier",
+    add: "Unit 1, Demo Logistics Park, Sector 1",
+    city: "Udaipur",
+    pin_code: "313001",
+    country: "India",
+    phone: "+919000000000",
   }
 
   const mainAddress = {
@@ -138,9 +138,9 @@ module.exports.returnPickupAddress = function() {
     phone: '9000000000',
   };
 
-  if (ENVIRONMENT === 'development' || ENVIRONMENT === 'staging') {
-    return demoAddress;
-  }
+  // if (ENVIRONMENT === 'development' || ENVIRONMENT === 'staging') {
+  //   return demoAddress;
+  // }
 
   return NimawatMarketingAddress;
 }
