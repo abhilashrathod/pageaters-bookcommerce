@@ -1327,6 +1327,14 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
     if (!orderRes) {
       return res.error('ORDER_INFO_ATTEMPT_FAILED');
     }
+    const mainAddress = {
+      name: 'PAGEATERS DEMO WAREHOUSE',
+      add: 'Unit 1, Demo Logistics Park, Sector 1',
+      city: 'Gandhinagar',
+      pin_code: '382016',
+      country: 'India',
+      phone: '9000000000',
+    };
     const payload = {
       shipments: [{
         name: orderRes.deliveryAddress.fullName,
@@ -1345,7 +1353,13 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
         shipment_height: dimensions.height,
         weight: dimensions.weight,
         shipping_mode: 'Surface',
-        address_type: orderRes.deliveryAddress.type.toLowerCase()
+        address_type: orderRes.deliveryAddress.type.toLowerCase(),
+        return_pin: mainAddress.pin_code,
+        return_city: mainAddress.city,
+        return_phone: mainAddress.phone,
+        return_add: mainAddress.add,
+        return_state: mainAddress.Gujarat,
+        return_country: mainAddress.country,
       }],
       pickup_location: returnPickupAddress()
     }

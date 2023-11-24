@@ -120,6 +120,15 @@ module.exports.returnPickupAddress = function() {
     phone: '9000000000',
   };
 
+  const NimawatMarketingAddress = {
+    "name": "Demo Supplier",
+    "add": "Unit 1, Demo Logistics Park, Sector 1",
+    "city": "Udaipur",
+    "pin_code": "313001",
+    "country": "India",
+    "phone": "+919000000000",
+  }
+
   const mainAddress = {
     name: 'PAGEATERS DEMO WAREHOUSE',
     add: 'Unit 1, Demo Logistics Park, Sector 1',
@@ -133,7 +142,7 @@ module.exports.returnPickupAddress = function() {
     return demoAddress;
   }
 
-  return mainAddress;
+  return NimawatMarketingAddress;
 }
 
 module.exports.orderPaymentInfo = function(payment) {
