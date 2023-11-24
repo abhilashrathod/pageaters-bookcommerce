@@ -126,7 +126,7 @@ module.exports.returnPickupAddress = function() {
     city: "Udaipur",
     pin_code: "313001",
     country: "India",
-    phone: "+919000000000",
+    phone: "9000000000",
   }
 
   const mainAddress = {
