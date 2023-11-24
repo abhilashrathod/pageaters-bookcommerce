@@ -562,11 +562,11 @@ module.exports.ship = async (req, res) => {
 
     orderRes.orderStatus = enums.ORDER_STAGES.SHIPPED;
     orderRes.shipmentTrackingId = shipmentTrackingId;
-    orderRes.orderHistory.push({
-      title: enums.ORDER_STAGES.SHIPPED,
-      description: 'Order hand over to shipment company. Your books are on their way',
-      time: new Date().toISOString(),
-    });
+    // orderRes.orderHistory.push({
+    //   title: enums.ORDER_STAGES.SHIPPED,
+    //   description: 'Order hand over to shipment company. Your books are on their way',
+    //   time: new Date().toISOString(),
+    // });
 
     await orderRes.save();
 
