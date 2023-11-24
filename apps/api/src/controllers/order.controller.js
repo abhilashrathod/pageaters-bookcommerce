@@ -585,7 +585,7 @@ module.exports.ship = async (req, res) => {
       },
     };
 
-    sendMailQueue.add(emailBody);
+    // sendMailQueue.add(emailBody);
 
     return res.ok({ message: 'ORDER_UPDATE_SUCCESS', data: orderRes });
   } catch (e) {
