@@ -1358,7 +1358,7 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
         return_city: mainAddress.city,
         return_phone: mainAddress.phone,
         return_add: mainAddress.add,
-        return_state: mainAddress.Gujarat,
+        return_state: 'Gujarat',
         return_country: mainAddress.country,
       }],
       pickup_location: returnPickupAddress()
