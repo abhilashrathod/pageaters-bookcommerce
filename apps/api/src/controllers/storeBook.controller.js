@@ -1,13 +1,15 @@
 const mongoose = require('mongoose');
 const csv = require('csv');
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const fs = require('fs');
-const { toArray } = require('lodash');
+const path = require('path');
+const { toArray, kebabCase } = require('lodash');
 
 const { generateRandomNumber, getId, arrayDifference } = require('../helpers/utils.helper');
 const { scrapeData } = require('../helpers/scrapping.helpers');
 
 const { models } = require('../constants');
-const {PROJECT_ROOT} = require('../appConfig');
+const { PROJECT_ROOT } = require('../appConfig');
 const enums = require('../constants/enums');
 
 const Book = mongoose.model(models.STORE_BOOK);
@@ -310,6 +312,104 @@ module.exports.bulkCreate = async (req, res) => {
       return res.error(err);
     });
     fs.createReadStream(PROJECT_ROOT + `\\seedData\\products.csv`).pipe(parser);
+
+  } catch (e) {
+    return res.internalServerError(e);
+  }
+};
+
+function convertJsStringToHtml(jsonString) {
+  return jsonString.replace(/\n/g, '<br>');
+}
+
+function returnDiscountedAmount(price, discount){
+  return Math.floor((price - (discount * price) / 100));
+};
+
+// FOR DEV PURPOSES ONLY
+module.exports.bulkExport = async (req, res) => {
+  try {
+    const populateOptions = [{
+      path: 'author',
+      select: '_id authorId name avatar',
+    }, {
+      path: 'categories',
+      select: '_id categoryId title',
+    }];
+    const selectFields = `bookId ISBN title author publisher tagline categories weight description poster inventory price currentDiscount`;
+    
+    let products$ = await Book.find().select(selectFields).populate(populateOptions);
+
+    products$ = products$.map((item) => {
+      return {
+        handle: kebabCase(item.title+'-'+item.tagline),
+        title: `${item.title} ${item.tagline ? '('+item.tagline+')' : ''}`,
+        publisher: item.publisher,
+        description: convertJsStringToHtml(item.description),
+        productCategory: 'Media > Books',
+        category: item.categories.map(x => x.title)[0],
+        tags: item.author ? item.author.name : '',
+        published: true,
+        weight: item.weight,
+        inventory: item.inventory,
+        inventoryTracker: 'shopify',
+        fulfillment: 'manual',
+        finalPrice: returnDiscountedAmount(item.price, item.currentDiscount),
+        barcode: item.ISBN,
+        price: item.price,
+        requiredShipping: true,
+        isTaxable: true,
+        isGiftcard: false,
+        productImage: `https://storebooks.s3.ap-south-1.amazonaws.com/${item.poster}`,
+        productImagePosition: 1,
+        weightUnit: 'g',
+        status: 'active',
+      }
+    });
+
+    const filePath =  path.join(PROJECT_ROOT, 'public', `product_template.csv`);
+    
+    const csvWriter = createCsvWriter({
+      path: filePath,
+      header: [
+          {id: 'handle', title: 'Handle'},
+          {id: 'title', title: 'Title'},
+          {id: 'description', title: 'Body (HTML)'},
+          {id: 'publisher', title: 'Vendor'},
+          {id: 'productCategory', title: 'Product Category'},
+          {id: 'category', title: 'Type'},
+          {id: 'tags', title: 'Tags'},
+          {id: 'published', title: 'Published'},
+          {id: 'weight', title: 'Variant Grams'},
+          {id: 'inventoryTracker', title: 'Variant Inventory Tracker'},
+          {id: 'inventory', title: 'Variant Inventory Qty'},
+          {id: 'fulfillment', title: 'Variant Fulfillment Service'},
+          {id: 'finalPrice', title: 'Variant Price'},
+          {id: 'price', title: 'Variant Compare At Price'},
+          {id: 'requiredShipping', title: 'Variant Requires Shipping'},
+          {id: 'isTaxable', title: 'Variant Taxable'},
+          {id: 'barcode', title: 'Variant Barcode'},
+          {id: 'productImage', title: 'Image Src'},
+          {id: 'productImagePosition', title: 'Image Position'},
+          {id: 'title', title: 'Image Alt Text'},
+          {id: 'isGiftcard', title: 'Gift Card'},
+          {id: 'title', title: 'SEO Title'},
+          {id: 'description', title: 'SEO Description'},
+          {id: 'weightUnit', title: 'Variant Weight Unit'},
+          {id: 'status', title: 'Status'},
+      ]
+    });
+
+    await csvWriter.writeRecords(products$);
+
+    res.download(filePath, 'product_template.csv', (err) => {
+      if (err) {
+        console.error('Error sending file:', err);
+        res.status(500).send('Error sending file');
+      }
+      // Delete the temporary file after sending
+      fs.unlinkSync(filePath);
+    });
 
   } catch (e) {
     return res.internalServerError(e);
