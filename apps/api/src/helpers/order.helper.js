@@ -142,7 +142,7 @@ module.exports.returnPickupAddress = function() {
     return demoAddress;
   }
 
-  return NimawatMarketingAddress;
+  return mainAddress;
 }
 
 module.exports.orderPaymentInfo = function(payment) {

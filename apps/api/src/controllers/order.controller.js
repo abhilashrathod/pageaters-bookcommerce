@@ -562,11 +562,11 @@ module.exports.ship = async (req, res) => {
 
     orderRes.orderStatus = enums.ORDER_STAGES.SHIPPED;
     orderRes.shipmentTrackingId = shipmentTrackingId;
-    // orderRes.orderHistory.push({
-    //   title: enums.ORDER_STAGES.SHIPPED,
-    //   description: 'Order hand over to shipment company. Your books are on their way',
-    //   time: new Date().toISOString(),
-    // });
+    orderRes.orderHistory.push({
+      title: enums.ORDER_STAGES.SHIPPED,
+      description: 'Order hand over to shipment company. Your books are on their way',
+      time: new Date().toISOString(),
+    });
 
     await orderRes.save();
 
@@ -585,7 +585,7 @@ module.exports.ship = async (req, res) => {
       },
     };
 
-    // sendMailQueue.add(emailBody);
+    sendMailQueue.add(emailBody);
 
     return res.ok({ message: 'ORDER_UPDATE_SUCCESS', data: orderRes });
   } catch (e) {
@@ -1002,104 +1002,6 @@ module.exports.getAnalyticsRevenue = async (req, res) => {
 }
 
 
-module.exports.getAnalyticsBestSelling = async (req, res) => {
-  try {
-    const { startDate, endDate } = req.allParams();
-
-    const aggregateQuery = [
-      {
-        $match: {
-          status: 'fulfilled', // Match orders with a status of "fulfilled"
-          createdAt: { $gte: startDate, $lt: endDate },
-        },
-      },
-      {
-        $unwind: '$products',
-      },
-      {
-        $group: {
-          _id: '$products.product',
-          totalQuantity: { $sum: '$products.quantity' },
-        },
-      },
-      {
-        $sort: { totalQuantity: -1 },
-      },
-      {
-        $limit: 10,
-      },
-      {
-        $lookup: {
-          from: 'storebooks', // Replace with the actual collection name for StoreBook
-          localField: '_id',
-          foreignField: '_id',
-          as: 'bookDetails',
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          totalQuantity: 1,
-          bookDetails: {
-            $arrayElemAt: ['$bookDetails', 0],
-          },
-        },
-      },
-      {
-        $project: {
-          totalQuantity: 1,
-          bookDetails: {
-            _id: "$bookDetails._id",
-            title: "$bookDetails.title",
-            author: "$bookDetails.author",
-            // Add other fields from the "storeBook" collection as needed
-          },
-        },
-      },
-    ];
-
-    const result = await Order.aggregate(aggregateQuery).exec();
-
-    return res.ok({ message: 'ORDER_LIST_SUCCESS', data: result });
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-module.exports.getAnalyticsRevenue = async (req, res) => {
-  try {
-    const { startDate, endDate } = req.allParams();
-
-    const aggregationPipeline = [
-      {
-        $match: {
-          orderStatus: 'fulfilled', // Match orders with a status of "fulfilled"
-          // createdAt: { $gte: startDate, $lt: endDate },
-        },
-      },
-      {
-        $group: {
-          _id: null, // Group all documents together
-          totalRevenue: { $sum: '$total' },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          totalRevenue: 1,
-        },
-      },
-    ];
-
-    let result = await Order.aggregate(aggregationPipeline).exec();
-
-    return res.ok({ message: 'ORDER_LIST_SUCCESS', data: result });
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-}
-
-
 module.exports.alignReturnShipment = async (req, res) => {
   try {
     let { id, requestId, shipment } = req.allParams();
@@ -1327,14 +1229,6 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
     if (!orderRes) {
       return res.error('ORDER_INFO_ATTEMPT_FAILED');
     }
-    const mainAddress = {
-      name: 'PAGEATERS DEMO WAREHOUSE',
-      add: 'Unit 1, Demo Logistics Park, Sector 1',
-      city: 'Gandhinagar',
-      pin_code: '382016',
-      country: 'India',
-      phone: '9000000000',
-    };
     const payload = {
       shipments: [{
         name: orderRes.deliveryAddress.fullName,
@@ -1353,18 +1247,10 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
         shipment_height: dimensions.height,
         weight: dimensions.weight,
         shipping_mode: 'Surface',
-        address_type: orderRes.deliveryAddress.type.toLowerCase(),
-        return_pin: mainAddress.pin_code,
-        return_city: mainAddress.city,
-        return_phone: mainAddress.phone,
-        return_add: mainAddress.add,
-        return_state: 'Gujarat',
-        return_country: mainAddress.country,
+        address_type: orderRes.deliveryAddress.type.toLowerCase()
       }],
       pickup_location: returnPickupAddress()
     }
-
-    console.log("payload", payload);
 
     const config = {
       method: 'post',
@@ -1375,19 +1261,16 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
       }
     };
 
-    const {data: apiRes, ...rest} = await axios(config);
-
-    console.log(rest);
-    console.log(apiRes);
+    const {data: apiRes} = await axios(config);
 
     if (apiRes.success) {
       orderRes.orderStatus = enums.ORDER_STAGES.SHIPPED;
       orderRes.shipmentTrackingId = `https://www.delhivery.com/track/package/${apiRes.packages[0].waybill}`;
-      // orderRes.orderHistory.push({
-      //   title: enums.ORDER_STAGES.SHIPPED,
-      //   description: 'Order hand over to shipment company. Your books are on their way',
-      //   time: new Date().toISOString(),
-      // });
+      orderRes.orderHistory.push({
+        title: enums.ORDER_STAGES.SHIPPED,
+        description: 'Order hand over to shipment company. Your books are on their way',
+        time: new Date().toISOString(),
+      });
 
       await orderRes.save();
     } else {
@@ -1410,7 +1293,7 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
       },
     };
 
-    // sendMailQueue.add(emailBody);
+    sendMailQueue.add(emailBody);
 
     return res.ok({ message: 'SHIPMENT_CREATE_SUCCESS', data: apiRes });
   } catch (e) {
