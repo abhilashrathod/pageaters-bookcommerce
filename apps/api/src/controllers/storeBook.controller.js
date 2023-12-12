@@ -338,7 +338,7 @@ module.exports.bulkExport = async (req, res) => {
     }];
     const selectFields = `bookId ISBN title author publisher tagline categories weight description poster inventory price currentDiscount`;
     
-    let products$ = await Book.find().select(selectFields).populate(populateOptions);
+    let products$ = await Book.find({isDeleted: false}).select(selectFields).populate(populateOptions);
 
     products$ = products$.map((item) => {
       return {
