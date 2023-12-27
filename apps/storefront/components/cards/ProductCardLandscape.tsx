@@ -124,7 +124,7 @@ const ProductCardLandScape: React.FC<Props> = ({book, analytics}) => {
   return (
       <>
         <WrapperDiv target={'_blank'} onClick={handleNavigation}>
-          {book.inventory > 0 && <CartDiscount>{book?.currentDiscount}% Off</CartDiscount>}
+          {(book.inventory > 0 && book.currentDiscount > 0) && <CartDiscount>{book?.currentDiscount}% Off</CartDiscount>}
           {book.inventory <= 0 && <OutOfStock>Out of Stock</OutOfStock>}
           <CardCover>
             <CardImage src={renderImageSize(247, 375)} alt={book?.title} className={book.inventory <= 0 ? 'greyscale': ''} loading="lazy" height={375} width={247}/>

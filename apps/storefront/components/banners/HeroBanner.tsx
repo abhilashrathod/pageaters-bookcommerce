@@ -77,10 +77,42 @@ const BannerImage = styled.img`
 
 const DATA: Array<IBanner> = [
   {
-    poster: "if-bkg-min.png",
-    title: "Iron Flame",
-    subtitle: "The Thrilling Sequel To The Number One Global Bestselling Phenomenon Fourth Wing",
+    poster: "fourthwing-redtower-herobanner.png",
+    title: "Fourth Wing: Special Redtower Edition",
+    subtitle: "a stunning, revamped cover with gorgeous new endpapers. black sprayed edges. plus two bonus chapters from Xaden’s POV",
+    ctaLink: "/books/BK-8774268760",
+    ctaText: "Order Now!",
+    ctaVisible: true,
+  },
+  {
+    poster: "ironflame-herobanner.png",
+    title: "Iron Flame: Stenciled Edges Edition",
+    subtitle: "The Thrilling Sequel To The Number One Global Bestselling Phenomenon Fourth Wing with gorgeous stenciled edges",
     ctaLink: "/books/BK-9405609836",
+    ctaText: "Order Now!",
+    ctaVisible: true,
+  },
+  {
+    poster: "ironflame-uk-edition-herobanner.png",
+    title: "Iron Flame: Overseas Hardcover Edition",
+    subtitle: "An alternate cover for Iron Flame",
+    ctaLink: "/books/BK-8544799397",
+    ctaText: "Order Now!",
+    ctaVisible: true,
+  },
+  {
+    poster: "gothikana-herobanner.png",
+    title: "Gothikana: Special Edition with Sprayed Edges",
+    subtitle: "Featuring sprayed edges, a foiled case stamp, gorgeously detailed endpapers, an updated map and deliciously moody art throughout.",
+    ctaLink: "/books/BK-8108211402",
+    ctaText: "Order Now!",
+    ctaVisible: true,
+  },
+  {
+    poster: "ruthless-wows-herobanner.png",
+    title: "Ruthless Vows",
+    subtitle: "The epic conclusion to the intensely romantic and beautifully written story that started in Divine Rivals.",
+    ctaLink: "/books/BK-4039867415",
     ctaText: "Order Now!",
     ctaVisible: true,
   },
@@ -100,14 +132,14 @@ const DATA: Array<IBanner> = [
     ctaText: "Buy Now!",
     ctaVisible: true,
   },
-  {
-    poster: "TWLB - HeroImage - A.png",
-    title: "Things We Left Behind",
-    subtitle: "Most Anticipated 3rd Installment in Lucy Score's Masterful Knockemout Series",
-    ctaLink: "/books/BK-9841269278",
-    ctaText: "Buy Now!",
-    ctaVisible: true,
-  },
+  // {
+  //   poster: "TWLB - HeroImage - A.png",
+  //   title: "Things We Left Behind",
+  //   subtitle: "Most Anticipated 3rd Installment in Lucy Score's Masterful Knockemout Series",
+  //   ctaLink: "/books/BK-9841269278",
+  //   ctaText: "Buy Now!",
+  //   ctaVisible: true,
+  // },
   {
     poster: "FourthWIng - HeroBanner - B.png",
     title: "Fourth Wing: Hardback Stenciled Edges Edition",
@@ -116,30 +148,30 @@ const DATA: Array<IBanner> = [
     ctaText: "Buy Now!",
     ctaVisible: true,
   },
-  {
-    poster: "AGGGTM - HeroBanner - B.png",
-    title: "A Good Girl's Guide to Murder: The Collector's Edition!",
-    subtitle: "Out on 15th November in Hardback!",
-    ctaLink: "/books/BK-2956334839",
-    ctaText: "Buy Now!",
-    ctaVisible: true,
-  },
-  {
-    poster: "Circe - HeroBanner - B.png",
-    title: "Circe: 5th Anniversary Collector's Edition",
-    subtitle: "Out on 18th Nov 23",
-    ctaLink: "/books/BK-9408385306",
-    ctaText: "Buy Now!",
-    ctaVisible: true,
-  },
-  {
-    poster: "Shatter Me - HeroBanner - B.png",
-    title: "Shatter Me: Collector's Edition",
-    subtitle: "Coming Soon",
-    ctaLink: "",
-    ctaText: "",
-    ctaVisible: false,
-  }
+  // {
+  //   poster: "AGGGTM - HeroBanner - B.png",
+  //   title: "A Good Girl's Guide to Murder: The Collector's Edition!",
+  //   subtitle: "Out on 15th November in Hardback!",
+  //   ctaLink: "/books/BK-2956334839",
+  //   ctaText: "Buy Now!",
+  //   ctaVisible: true,
+  // },
+  // {
+  //   poster: "Circe - HeroBanner - B.png",
+  //   title: "Circe: 5th Anniversary Collector's Edition",
+  //   subtitle: "Out on 18th Nov 23",
+  //   ctaLink: "/books/BK-9408385306",
+  //   ctaText: "Buy Now!",
+  //   ctaVisible: true,
+  // },
+  // {
+  //   poster: "Shatter Me - HeroBanner - B.png",
+  //   title: "Shatter Me: Collector's Edition",
+  //   subtitle: "Coming Soon",
+  //   ctaLink: "",
+  //   ctaText: "",
+  //   ctaVisible: false,
+  // }
 ];
 
 function Arrow(props: any) {
