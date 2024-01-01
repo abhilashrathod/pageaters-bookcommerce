@@ -114,7 +114,7 @@ const GiantSquareBanner: React.FC<Props> = ({banner}) => {
   }
 
   function navigate() {
-    router.push(`/book-boxes`);
+    router.push(banner.ctaLink || '/');
   }
 
   return (
@@ -142,7 +142,7 @@ const GiantSquareBanner: React.FC<Props> = ({banner}) => {
                                onClick={navigate}
                                variant={ButtonVariants.Secondary}
                                size={ButtonSizes.Default}>
-                      Learn More
+                      {banner.ctaText}
                     </AppButton>
                   </div>
                 </BannerContent>

@@ -187,10 +187,7 @@ const AppHeader: React.FC<Props> = () => {
     }
   };
 
-  const {data, error} = useSWR({
-    url: `/store-books/search`,
-    args: {q: searchDebounced}
-  });
+  const {data, error} = useSWR({url: `/store-books/search`, args: {q: searchDebounced}}, null, {revalidateOnFocus: false});
 
   useEffect(() => {
     if (searchDebounced) {
@@ -294,6 +291,7 @@ const AppHeader: React.FC<Props> = () => {
                       <Menu.Dropdown>
                         <Menu.Label>Explore Store</Menu.Label>
                         <Menu.Item onClick={() => navigateToUrl('/book-boxes')} icon={<Icon icon={'icon-park-twotone:dropbox'} width={20} height={20}/>}>Bookish Box</Menu.Item>
+                        <Menu.Item onClick={() => navigateToUrl('/mystery-boxes')} icon={<Icon icon={'icon-park-twotone:dropbox'} width={20} height={20}/>}>Mystery Box</Menu.Item>
                         <Menu.Item onClick={() => navigateToUrl('/categories')} icon={<Icon icon={'ic:twotone-category'} width={20} height={20}/>}>Categories</Menu.Item>
                         <Menu.Item onClick={() => navigateToUrl('/collections')} icon={<Icon icon={'ic:twotone-collections-bookmark'} width={20} height={20}/>}>Collections</Menu.Item>
                         <Menu.Item onClick={() => navigateToUrl('/bundles')} icon={<Icon icon={'ic:twotone-all-inbox'} width={20} height={20}/>}>Bundles</Menu.Item>

@@ -207,7 +207,9 @@ const Home: NextPage = (props: any) => {
             {/*}}/>*/}
             <GiantSquareBanner banner={{
               title: 'Try Bookish Box',
-              poster: 'BookishBoxes-main-hero-banner.jpg'
+              poster: 'BookishBoxes-main-hero-banner.jpg',
+              ctaLink: `/book-boxes`,
+              ctaText: 'Learn More',
             }}/>
           </section>
 
@@ -218,6 +220,15 @@ const Home: NextPage = (props: any) => {
               </section>
             )
           }
+
+          <section className="mb-25">
+          <GiantSquareBanner banner={{
+              title: 'Try Mystery Box',
+              poster: 'mystery-box-banner.jpg',
+              ctaLink: `/mystery-boxes`,
+              ctaText: 'Buy Now',
+            }}/>
+          </section>
         </PageWrapper>
       </>
   )

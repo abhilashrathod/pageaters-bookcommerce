@@ -392,7 +392,7 @@ const MysteryBoxes: NextPage<Props> = () => {
                             />
                           </Accordion.Panel>
                         </Accordion.Item>
-                        <Accordion.Item value={'books'}>
+                        {/* <Accordion.Item value={'books'}>
                           <Accordion.Control>Books you like (optional)</Accordion.Control>
                           <Accordion.Panel>
                             <Textarea
@@ -445,7 +445,7 @@ const MysteryBoxes: NextPage<Props> = () => {
                                 minRows={3}
                             />
                           </Accordion.Panel>
-                        </Accordion.Item>
+                        </Accordion.Item> */}
                       </Accordion>
                     </ProductPreferences>
                     <ProductPricing>
@@ -454,10 +454,10 @@ const MysteryBoxes: NextPage<Props> = () => {
                       <ProductDiscount>&nbsp;({selectedBox?.currentDiscount}% Off)</ProductDiscount>
                     </ProductPricing>
                     <AddToCartSpace>
-                      {/* <AddToCart options={boxes}
+                      <AddToCart options={boxes}
                                  handleBoxSelect={handleBoxSelection}
-                                 onClick={handleAddToCart}>Add to Cart</AddToCart> */}
-                      <OutOfStockLabel>Out of Stock</OutOfStockLabel>
+                                 onClick={handleAddToCart}>Add to Cart</AddToCart>
+                      {/* <OutOfStockLabel>Out of Stock</OutOfStockLabel> */}
                     </AddToCartSpace>
                     <ProductNotes>
                       <Alert title="Things to Note" color="gray">
