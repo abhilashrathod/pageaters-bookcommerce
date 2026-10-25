@@ -1,3 +1,4 @@
+import {IAddon} from './addon';
 import {IBook} from './book';
 import {IBundle} from './bundle';
 import {IMysteryBox} from "./mystery-box";
@@ -32,6 +33,13 @@ export interface ICartMysteryBox {
   price: number;
   total: number;
   _id: string;
+}
+
+export interface ICartAddon {
+  addedOn?: string;
+  addOn: IAddon;
+  quantity: number;
+  _id?: string;
 }
 
 export interface ICart {

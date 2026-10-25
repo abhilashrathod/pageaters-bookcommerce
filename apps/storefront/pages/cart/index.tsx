@@ -7,7 +7,7 @@ import axios from "axios";
 import {showNotification} from "@mantine/notifications";
 import {Skeleton} from '@mantine/core';
 import {useRouter} from "next/router";
-import {get} from 'lodash';
+import {add, get} from 'lodash';
 
 import PageWrapper from "../../components/elements/PageWrapper";
 import PageHeadings from "../../components/elements/PageHeadings";
@@ -24,6 +24,7 @@ import {AUTH_COOKIE, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 import graphic from '../../public/illustrations/empty-cart.svg';
 import {beginCheckout, removeFromCart, viewCart} from "../../core/_analytics";
 import MysteryBoxItem from "../../components/cart-elements/cart-mystery-box";
+import CartAddonItem from '../../components/cart-elements/cart-addon-item';
 
 const BREADCRUMBS_ITEMS = [
   {title: 'Home', href: '/'},
@@ -174,6 +175,29 @@ const Cart: React.FC<Props> = () => {
     }
   }
 
+  async function handleDeleteAddon(id: string) {
+    try {
+      await axios.delete(`/cart/remove/addOn/${id}`, {withCredentials: true});
+      showNotification({message: 'Addon removed from cart', color: 'green', autoClose: 3000});
+
+      updateCart();
+    } catch (e: any) {
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
+    }
+  }
+
+  async function handleAddonQuantityChange(payload: any) {
+    const {quantity, addOn} = payload;
+    try {
+      await axios.put(`/cart/update/addOn/${addOn}`, {quantity}, {withCredentials: true});
+      showNotification({message: 'Addon quantity updated', color: 'green', autoClose: 3000});
+      updateCart();
+    } catch (e: any) {
+      showNotification({message: e.message, color: 'red', autoClose: 3000});
+    }
+  }
+
+
   function updateCart() {
     mutate({url: `/cart/retrieve`, withCredentials: true});
   }
@@ -183,8 +207,12 @@ const Cart: React.FC<Props> = () => {
   const cart = get(data, 'data', null);
   const books = get(data, 'data.products', []);
   const bundles = get(data, 'data.bundles', []);
+  const addOns = get(data, 'data.addOns', []);
   const mysteryBoxes = get(data, 'data.mysteryBoxes', []);
 
+  const cartCount = books.length + bundles.length + mysteryBoxes.length + addOns.length;
+
+  console.log("cartCount", cartCount);
   return (
       <>
       <Head>
@@ -208,7 +236,7 @@ const Cart: React.FC<Props> = () => {
               ? <section>
                   <div className="custom-container">
                     {
-                      (books.length === 0 && bundles.length === 0 && mysteryBoxes.length === 0)
+                      (cartCount === 0)
                           ? <div className="row">
                             <div className="col-12">
                               <EmptyMessageWithGraphic title={'Add Some Books Here. Cart is Empty'} illustration={graphic} illustrationHeight={'300px'} illustrationWidth={'300px'}/>
@@ -237,6 +265,19 @@ const Cart: React.FC<Props> = () => {
                                             <BundleItem viewOnly={false}
                                                         onDelete={handleOnBundleDelete}
                                                         cartBundle={item}/>
+                                          </ProductListItem>
+                                      )
+                                    })
+                                  }
+                                  {
+                                    addOns.map((item: any) => {
+                                      return (
+                                          <ProductListItem key={item._id}>
+                                            <CartAddonItem mode="update" 
+                                                          cartAddon={item} 
+                                                          onDelete={handleDeleteAddon}
+                                                          onQuantityChange={handleAddonQuantityChange}
+                                                          viewOnly={false}/>
                                           </ProductListItem>
                                       )
                                     })

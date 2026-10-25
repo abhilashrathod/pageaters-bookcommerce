@@ -28,6 +28,7 @@ import {completePurchase} from "../../core/_analytics";
 import PageLoader from "../../components/elements/PageLoading";
 import MysteryBoxItem from "../../components/cart-elements/cart-mystery-box";
 import { useForm } from '@mantine/form';
+import CartAddonItem from '../../components/cart-elements/cart-addon-item';
 
 interface Props {
 }
@@ -160,17 +161,20 @@ const Checkout: React.FC<Props> = () => {
   const address = get(orderRes, 'data.deliveryAddress', null);
   const books = get(cartRes, 'data.products', []);
   const bundles = get(cartRes, 'data.bundles', []);
+  const addOns = get(cartRes, 'data.addOns', []);
   const mysteryBoxes = get(cartRes, 'data.mysteryBoxes', []);
   const storeCredit = get(creditRes, 'data.storeCredit', 0);
+
+  const cartCount = books.length + bundles.length + addOns.length + mysteryBoxes.length;
 
   useEffect(() => {
     const referenceType = books.length > 0 ? books[0].product.availability : '';
     
-    if (referenceType !== BOOK_AVAILABILITY.AVAILABLE && paymentMethod === 'cod') {
-      setCashOnDelivery(true);
+    if (referenceType === BOOK_AVAILABILITY.PRE_ORDER) {
+      setCashOnDelivery(false);
       setAvailability(referenceType);
     } else {
-      setCashOnDelivery(false);
+      setCashOnDelivery(true);
       setAvailability(referenceType);
     }
 
@@ -483,7 +487,7 @@ const Checkout: React.FC<Props> = () => {
                             </Accordion.Item>
                             <Accordion.Item value={'products'}>
                               <Accordion.Control>
-                                In Cart
+                                In Cart ({cartCount})
                               </Accordion.Control>
                               <Accordion.Panel>
                                 <CartItemsContent>
@@ -503,6 +507,15 @@ const Checkout: React.FC<Props> = () => {
                                         return (
                                             <ProductListItem key={item._id}>
                                               <BundleItem viewOnly={true} cartBundle={item}/>
+                                            </ProductListItem>
+                                        )
+                                      })
+                                    }
+                                    {
+                                      addOns.map((item: any) => {
+                                        return (
+                                            <ProductListItem key={item._id}>
+                                              <CartAddonItem viewOnly={true} cartAddon={item} mode='' />
                                             </ProductListItem>
                                         )
                                       })
@@ -530,16 +543,14 @@ const Checkout: React.FC<Props> = () => {
                                                orientation="vertical" label="Please Select Preferred Payment Method"
                                                required>
                                     <Radio value="online" label="Pay Online (Priority, Express Shipping)"/>
-                                    <Radio value="cod" label="Cash on Delivery (Standard Shipping)"/>
+                                    <Radio value="cod" disabled={!cashOnDelivery} label="Cash on Delivery (Standard Shipping)" />
                                   </Radio.Group>
                                   </InputWrapper>
                                   <InputWrapper>
                                   {
-                                    (paymentMethod && cashOnDelivery) && (
+                                    (!cashOnDelivery) && (
                                       <Alert icon={<Icon icon="ph:warning-duotone" width={20} height={20} />} title="Info!" radius="md">
-                                        For orders made via COD for {availability}, we kindly request that you do not cancel or 
-                                        only in exceptional circumstances. The cancellations of COD orders for these items may result in a permanent store ban. <br/>
-                                        We appreciate your understanding and cooperation in helping us maintain a smooth order process.
+                                        Pre-order can not be purcahsed using Cash on Delivery.
                                       </Alert>
                                     )
                                   }

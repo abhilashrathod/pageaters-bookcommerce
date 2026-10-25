@@ -4,13 +4,13 @@ import axios from "axios";
 import useSWR, {mutate} from "swr";
 import Head from "next/head";
 import {useRouter} from "next/router";
-import {Alert, Spoiler} from '@mantine/core';
-import {useClipboard} from "@mantine/hooks";
+import {Alert, Accordion, Modal, Spoiler, Tabs} from '@mantine/core';
+import {useClipboard, useDisclosure} from "@mantine/hooks";
 import {showNotification} from "@mantine/notifications";
 import {Icon} from "@iconify/react";
 import styled from "styled-components";
 import cookie from "js-cookie";
-import {range} from 'lodash';
+import {get, range} from 'lodash';
 import FsLightbox from "fslightbox-react";
 
 import Breadcrumbs from "../../components/elements/Breadcrumbs";
@@ -50,6 +50,7 @@ import {ICategory} from "../../schemas/category";
 import useAuth from "../../hooks/useAuth";
 import {addToCart, addToWishList} from "../../core/_analytics";
 import { useKeenSlider } from "keen-slider/react";
+import CartAddonItem from "../../components/cart-elements/cart-addon-item";
 
 
 const BREADCRUMBS_ITEMS = (activeItem: any) => [
@@ -190,7 +191,6 @@ const ProductButton = styled.button`
   padding: 1rem 2.5rem;
   border-radius: 0.5rem;
   font-weight: normal;
-  margin-left: 1.25rem;
   box-shadow: 0 2px 10px 0 rgb(0 0 0 / 16%);
   
   &:hover {
@@ -199,7 +199,6 @@ const ProductButton = styled.button`
   }
   
   @media screen and (max-width: ${SM - 1}px) {
-    margin-left: 0.5rem;
     letter-spacing: -0.5px;
     font-size: 1.2rem;
     padding: 0.825rem 2rem;
@@ -257,16 +256,18 @@ const ProductBadges = styled.div`
   margin-bottom: 1.25rem;
 `;
 
-const QuantitySelectLabel = styled.label`
+const AddOnSelectLabel = styled.a`
   display: inline-flex;
   align-items: center;
-  font-size: 1.5rem;
-  margin-right: 0.825rem;
+  font-size: 1.25rem;
+  margin-left: 1.25rem;
   margin-bottom: 0;
+  cursor: pointer;
+  text-decoration: underline;
   
   @media screen and (max-width: ${SM - 1}px) {
-   margin-right: 0.5rem;
-   font-size: 1.2rem;
+   margin-left: 1rem;
+   font-size: 1rem;
   }  
 `;
 
@@ -393,7 +394,15 @@ const ProductSpecification = ({icon, prop, value}: SpecProps) => {
 const AddToCart = (props: any) => {
   const isLoggedIn = cookie.get(AUTH_COOKIE);
 
+  const {data: addOnRes, error: addOnsError} = useSWR({url: `/add-ons/produtct/${props.product._id}`}, null, {revalidateOnFocus: false});
+  const addOnsList = get(addOnRes, 'data', []);
+
   const [quantity, setQuantity] = useState(1);
+  const [opened, { open, close }] = useDisclosure(false);
+
+  function updateCart() {
+    mutate({url: `/cart/retrieve`, withCredentials: true});
+  }
 
   async function handleAddCart() {
     if (!isLoggedIn) {
@@ -409,20 +418,53 @@ const AddToCart = (props: any) => {
     }
   }
 
-  function updateCart() {
-    mutate({url: `/cart/retrieve`, withCredentials: true});
+  async function handleOnAdd(addonItem: any) {
+    if (!isLoggedIn) {
+      return showNotification({message: 'Please login/register to continue shopping', color: 'orange', autoClose: 5000});
+    }
+    try {
+      await axios.post(`/cart/add/addOn`, addonItem, {withCredentials: true});
+      // addToCart(props.product, quantity, 'product_details', 'Product Details'); // analytics event
+      showNotification({message: 'Add-on added to cart', color: 'green', autoClose: 3000});
+      updateCart();
+    } catch (e: any) {
+      showNotification({message: e.message, color: 'red', autoClose: 5000});
+    }
   }
 
   return (
-      <>
-        <QuantitySelectLabel>Quantity</QuantitySelectLabel>
-        <QuantitySelection value={quantity} onChange={(e) => setQuantity(Number(e.target.value))}>
-          <option value={1}>1</option>
-          <option value={2}>2</option>
-        </QuantitySelection>
-        <ProductButton onClick={handleAddCart}>{'Add to Cart'}</ProductButton>
-      </>
-  )
+    <>
+      <Modal opened={opened} onClose={close} size={"lg"} title="Purchase Add-ons">
+        <Accordion styles={{content: {padding: '1rem 0'}}}>
+          {addOnsList.map((addOnGroup: any) => {
+            return (
+              <Accordion.Item key={addOnGroup._id} value={addOnGroup._id}>
+                <Accordion.Control>{addOnGroup._id} ({addOnGroup.addOns.length})</Accordion.Control>
+                <Accordion.Panel>
+                  {addOnGroup.addOns.map((addOn: any) => {
+                    return (
+                      <div key={addOn._id} className="row">
+                        <div className="col-12">
+                          <CartAddonItem
+                            cartAddon={{ quantity: 1, addOn: addOn }}
+                            viewOnly={false}
+                            mode="create"
+                            onAddonPurchase={handleOnAdd}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </Accordion.Panel>
+              </Accordion.Item>
+            );
+          })}
+        </Accordion>
+      </Modal>
+      <ProductButton onClick={handleAddCart}>{"Add to Cart"}</ProductButton>
+      <AddOnSelectLabel onClick={open}>Purchase Add-ons</AddOnSelectLabel>
+    </>
+  );
 };
 
 const InformationBanner = (type: string, message: string) => {
@@ -482,7 +524,7 @@ const BookWishlist = (props: any) => {
   const auth = useAuth();
   const {product} = props;
 
-  const {data} = useSWR({url: auth ? `/favorites/${product._id}` : null, withCredentials: true});
+  const {data} = useSWR({url: auth ? `/favorites/${product._id}` : null, withCredentials: true}, null, {revalidateOnFocus: false});
 
   async function toggleWishlist() {
     if (data?.data) {
@@ -755,14 +797,6 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                       {book.currentDiscount > 0 && <ProductSavings>&nbsp;({book.currentDiscount}% Off)</ProductSavings>}
                     </ProductPricing>
 
-                    <AddToCartSpace>
-                      {
-                        book.inventory > 0
-                            ? <AddToCart product={book}/>
-                            : <NotifyMe product={book._id}/>
-                      }
-                    </AddToCartSpace>
-
                     {
                         (book.inventory > 0 && book.type === 'book') && (
                         <ProductCategories>
@@ -779,6 +813,14 @@ const BookDetails: NextPage<Props> = ({book}: InferGetStaticPropsType<typeof get
                         </ProductCategories>
                         )
                     }
+
+                    <AddToCartSpace>
+                      {
+                        book.inventory > 0
+                            ? <AddToCart product={book}/>
+                            : <NotifyMe product={book._id}/>
+                      }
+                    </AddToCartSpace>
 
                     <ProductCategories>
                       <span>Categories:</span>

@@ -2,6 +2,7 @@ import {IAddress} from "./address";
 import {IBundle} from "./bundle";
 import {IBook} from "./book";
 import {IMysteryBox} from "./mystery-box";
+import {IAddon} from "./addon";
 
 export interface IOrderProductItem {
   quantity: number;
@@ -35,6 +36,14 @@ export interface IOrderBoxItem {
   total: number;
   weight: number;
   _id: string;
+}
+
+export interface IOrderAddOnItem {
+  quantity: number;
+  price: number;
+  discount: number;
+  total: number;
+  addOn: IAddon;
 }
 
 export interface IOrderHistory {
@@ -73,6 +82,7 @@ export interface IOrder {
   products: Array<IOrderProductItem>;
   boxes: Array<IOrderBoxItem>;
   bundles: Array<IOrderBundleItem>;
+  addOns: Array<IOrderAddOnItem>;
   orderHistory: Array<IOrderHistory>;
   requests: Array<IOrderRequest>;
   giftOptions: {

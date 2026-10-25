@@ -13,6 +13,7 @@ import {ICartBundle} from "../../schemas/cart";
 import {
   CartActions,
   CartActionsWrapper,
+  CartBundleImage,
   CartContent,
   CartImage,
   CartItem,
@@ -43,7 +44,7 @@ const BundleItem = ({cartBundle, viewOnly, onDelete}: Props) => {
         <CartContent>
           <div className="image">
             <Link href={`/bundles/${cartBundle.bundle.bundleId}`} passHref>
-              <CartImage
+              <CartBundleImage
                 src={renderImageSize(cartBundle.bundle.poster, 300, 300)}
                 alt={cartBundle.bundle.title}
                 width={300} height={300}/>

@@ -606,7 +606,7 @@ const BundleItem = ({bundle}: any) => {
               {
                 bundle.discount
                     ? <>
-                      <Crossed>{currencyFormat(bundle.price)}</Crossed><span>{currencyFormat(returnDiscountedAmount(bundle.price, bundle.discount))}</span></>
+                      <Crossed>{currencyFormat(bundle.price)}</Crossed><span>{currencyFormat(returnDiscountedAmount(bundle.price, bundle.discount))} x {bundle.quantity}</span></>
                     : <span>{currencyFormat(bundle.price)}</span>
 
               }
@@ -642,11 +642,44 @@ const MysteryBoxItem = ({mysteryBoxItem}: any) => {
               {
                 mysteryBoxItem.discount
                     ? <>
-                      <Crossed>{currencyFormat(mysteryBoxItem.price)}</Crossed><span>{currencyFormat(returnDiscountedAmount(mysteryBoxItem.price, mysteryBoxItem.discount))}</span></>
+                      <Crossed>{currencyFormat(mysteryBoxItem.price)}</Crossed><span>{currencyFormat(returnDiscountedAmount(mysteryBoxItem.price, mysteryBoxItem.discount))} x {mysteryBoxItem.quantity}</span></>
                     : <span>{currencyFormat(mysteryBoxItem.price)}</span>
 
               }
               <small className="text-positive">&nbsp;(Extra {mysteryBoxItem.discount} % Off)</small>
+            </p>
+          </CartProductInfo>
+        </CartContent>
+      </CartItem>
+  )
+};
+
+const AddOnItem = ({addOnItem}: any) => {
+  function renderImageSize(p:string, w: number, h: number) {
+    return getAssetImage(p, {height: h, width: w, fit: 'cover'});
+  }
+
+  return (
+      <CartItem>
+        <CartContent>
+          <div className="image">
+            <CartImage
+                  src={renderImageSize(addOnItem.addOn.poster, 300, 300)}
+                  alt={addOnItem.addOn.name}
+                  width={300} height={300}/>
+          </div>
+          <CartProductInfo>
+            <Link href={`/mystery-boxes`} passHref>
+              <CartProductTitle>{addOnItem.addOn.name}</CartProductTitle>
+            </Link>
+            <p>
+              {
+                addOnItem.discount
+                    ? <><Crossed>{currencyFormat(addOnItem.price)}</Crossed><span>{currencyFormat(returnDiscountedAmount(addOnItem.price, addOnItem.discount))} x {addOnItem.quantity}</span></>
+                    : <span>{currencyFormat(addOnItem.price)} x {addOnItem.quantity}</span>
+
+              }
+              <small className="text-positive">&nbsp;({addOnItem.discount} % Off)</small>
             </p>
           </CartProductInfo>
         </CartContent>
@@ -766,6 +799,15 @@ const OrderDetails: React.FC<Props> = () => {
                           return (
                               <ProductListItem key={item._id}>
                                 <BundleItem bundle={item}/>
+                              </ProductListItem>
+                          )
+                        })
+                      }
+                      {
+                        order.addOns.map((item: any) => {
+                          return (
+                              <ProductListItem key={item._id}>
+                                <AddOnItem addOnItem={item} />
                               </ProductListItem>
                           )
                         })

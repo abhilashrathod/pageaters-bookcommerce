@@ -65,7 +65,7 @@ const ProductItem = ({book, viewOnly, onDelete, onQuantityChange}: Props) => {
                        height={110}/>
           </div>
           <CartProductInfo>
-            <CartProductTitle onClick={viewProductDetails}>{book.product.title} <Availability>{startCase(book.product.availability)}</Availability></CartProductTitle>
+            <CartProductTitle onClick={viewProductDetails}>{book.product.title}</CartProductTitle>
             <p>By <strong>{book.product?.author?.name}</strong></p>
             <p>
               {

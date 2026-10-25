@@ -27,10 +27,14 @@ nProgress.configure({showSpinner: false});
 /* SWR FETCHER GLOBAL FUNCTION */
 
 const swrMiddleware: Middleware = (useSWRNext: SWRHook) => (key, fetcher, config) => {
+  // console.log("config", config);
+  
   return useSWRNext(key, fetcher, config)
 };
 
 const fetcher = (configuration: any) => {
+  // console.log("configuration", configuration);
+  
   const {withCredentials = false, args, url,} = configuration;
 
   return axios.get(url, {params: args, withCredentials})

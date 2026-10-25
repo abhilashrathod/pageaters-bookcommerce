@@ -36,6 +36,17 @@ export const CartImage = styled.img`
   }
 `;
 
+export const CartBundleImage = styled.img`
+  width: 100px;
+  height: 80px;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  object-fit: cover;
+  -webkit-box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
+  -moz-box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
+  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
+`;
+
 export const CartProductInfo = styled.div`
   margin-left: 1rem;
   width: 100%;
@@ -66,6 +77,11 @@ export const CartQuantity = styled.span`
 `;
 
 export const CartActionsWrapper = styled.div`
+  margin-bottom: 1rem;
+  display: flex;
+`;
+
+export const CartActionsWrapperForAddons = styled.div`
   margin-bottom: 1rem;
   display: flex;
 `;
