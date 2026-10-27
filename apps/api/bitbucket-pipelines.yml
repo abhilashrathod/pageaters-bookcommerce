@@ -1,0 +1,12 @@
+image: node:12.15.0
+
+pipelines:
+  branches:
+    staging:
+      - step:
+          name: Deploy to Staging
+          image: node:12.15.0
+          deployment: staging
+          script:
+            - ssh -o StrictHostKeyChecking=no $USERNAME@$SERVER "cd /var/api.twik.work && git pull"
+            - ssh -o StrictHostKeyChecking=no $USERNAME@$SERVER "bash -i -c 'cd /var/api.twik.work && npm run start:stag'"

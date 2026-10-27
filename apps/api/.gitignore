@@ -1,0 +1,16 @@
+node_modules
+output.log
+*.sqlite
+*.png
+package-lock.json
+
+.vscode/
+.idea/
+.DS_Store/
+.DS_Store
+
+# File Uploads
+resources/
+
+# for web scrapping
+seedData/
