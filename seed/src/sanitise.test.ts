@@ -75,8 +75,7 @@ void describe('sanitise', () => {
     assert.ok(first);
     assert.equal('wholeSalePriceHistory' in first, false);
     assert.equal('__v' in first, false);
-    assert.equal(first.inventory, generateStock(oid(1).$oid, 'available', true));
-    assert.equal(books[1]?.inventory, generateStock(oid(3).$oid, 'available'));
+    assert.equal(first.inventory, generateStock(oid(1).$oid));
   });
 
   void it('produces identical output on every run', () => {
@@ -144,29 +143,13 @@ void describe('sanitise', () => {
 
 void describe('generateStock', () => {
   void it('is deterministic per document', () => {
-    assert.equal(generateStock('abc', 'available'), generateStock('abc', 'available'));
+    assert.equal(generateStock('abc'), generateStock('abc'));
   });
 
-  void it('keeps procurement, import and pre-order books orderable', () => {
-    for (const availability of ['procurement', 'import', 'pre-order']) {
-      for (let n = 0; n < 200; n++) assert.ok(generateStock(`id${n}`, availability) >= 10);
-    }
-  });
-
-  void it('keeps books inside bundles stocked', () => {
-    for (let n = 0; n < 500; n++) assert.ok(generateStock(`id${n}`, 'available', true) >= 5);
-  });
-
-  void it('leaves some standalone books low or out of stock', () => {
-    const stocks = Array.from({ length: 500 }, (_, n) => generateStock(`id${n}`, 'available'));
-    assert.ok(stocks.includes(0));
-    assert.ok(stocks.some((stock) => stock > 0 && stock < 5));
-  });
-
-  void it('stays within 0–40', () => {
+  void it('stocks every book with 500–1000 copies', () => {
     for (let n = 0; n < 500; n++) {
-      const stock = generateStock(`id${n}`, 'available');
-      assert.ok(stock >= 0 && stock <= 40);
+      const stock = generateStock(`id${n}`);
+      assert.ok(stock >= 500 && stock <= 1000);
     }
   });
 });

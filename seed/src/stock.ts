@@ -1,9 +1,6 @@
 // Generated stock levels. The real inventory is never read: values depend only on the document ID, so every
-// run produces the same seed. The API rejects add-to-cart above `inventory` and hides `inventory: 0` books
-// from category pages, so almost everything is stocked; a few books are low or out of stock to exercise
-// those states. Books inside a bundle are always stocked: one empty book blocks the whole bundle.
-
-const AVAILABLE = 'available';
+// run produces the same seed. Stock is high enough that a portfolio demo never runs out, while orders still
+// deduct it as in the real store.
 
 // FNV-1a: stable 32-bit hash of the document ID.
 function hash(value: string): number {
@@ -31,13 +28,6 @@ function between(next: () => number, min: number, max: number): number {
   return min + Math.floor(next() * (max - min + 1));
 }
 
-export function generateStock(id: string, availability: unknown, inBundle = false): number {
-  const next = random(hash(id));
-  // Procurement, import and pre-order books are always orderable.
-  if (availability !== AVAILABLE) return between(next, 10, 40);
-  const roll = next();
-  if (inBundle) return between(next, 5, 40);
-  if (roll < 0.04) return 0;
-  if (roll < 0.1) return between(next, 1, 2);
-  return between(next, 5, 40);
+export function generateStock(id: string): number {
+  return between(random(hash(id)), 500, 1000);
 }

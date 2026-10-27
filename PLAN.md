@@ -25,7 +25,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 | Images                 | Book covers from Open Library by ISBN (665/669); author photos from Open Library only on confident name match, else branded initials avatar; collections, bundles, categories and the 4 ISBN-less books get generated brand artwork. All stored on Vercel Blob |
 | Payments               | Razorpay **test mode only**; boot guard rejects `rzp_live_` keys in demo                                                                                                                                                                                       |
 | Email / SMS / Shipping | Mock adapters; in-app outbox                                                                                                                                                                                                                                   |
-| Demo access            | Storefront: one-click demo shopper; cart/address/orders/search only. Admin: catalog read-only, order lifecycle actions allowed. CMS: read-only. No uploads anywhere. Nightly reset                                                                             |
+| Demo access            | Storefront: one-click demo shopper; cart/address/orders/search only. Admin: catalog read-only, order lifecycle actions allowed. CMS: read-only. No uploads anywhere. Seeded once, no reset                                                                     |
 | Credentials            | Razorpay, Twilio, Delhivery, SendGrid revoked/rotated by owner; AWS and Cloudinary accounts closed; Vultr DB destroyed                                                                                                                                         |
 
 ---
@@ -95,7 +95,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 ## Phase 2 — Seed data & images
 
 - [x] `seed/` pipeline: read dump → drop `wholeSalePriceHistory`, real `inventory`, deleted docs, internal fields → generate stock → write sanitised JSON
-  - Done 2026-10-27: `@pageaters/seed` workspace (`pnpm --filter @pageaters/seed sanitise`, Node 22 type stripping, no runtime deps). Per-collection field allowlists mirror the API models, nested keys included; unreviewed fields are dropped and fail the run. Soft-deleted docs dropped (309 authors, 52 bundles, 12 categories, 11 collections, 23 product sets incl. 14 inactive, 618 books); 181 refs to removed docs pruned per target collection. Stock generated from the doc ID only (reruns byte-identical): ~3% of standalone books out of stock, ~3% low, bundle books always stocked so every bundle is purchasable. Category `numberOfBooks` recounted, legacy `meta.url` cleared, `EN` → `English`, stray `deletedAt` cleared on kept docs (owner: one author marked deleted by mistake stays). Reviewed + audited
+  - Done 2026-10-27: `@pageaters/seed` workspace (`pnpm --filter @pageaters/seed sanitise`, Node 22 type stripping, no runtime deps). Per-collection field allowlists mirror the API models, nested keys included; unreviewed fields are dropped and fail the run. Soft-deleted docs dropped (309 authors, 52 bundles, 12 categories, 11 collections, 23 product sets incl. 14 inactive, 618 books); 181 refs to removed docs pruned per target collection. Stock generated from the doc ID only (reruns byte-identical): 500–1000 per book (owner, 2026-10-28: seeded once, never reset, so the demo must not run out). Category `numberOfBooks` recounted, legacy `meta.url` cleared, `EN` → `English`, stray `deletedAt` cleared on kept docs (owner: one author marked deleted by mistake stays). Reviewed + audited
   - `seed/data/` is local dev data only: gitignored, never committed or deployed (owner decision 2026-10-27). Free text to scan next: author `intro` (has external links), book/bundle/collection `description`, `tagline`, `message`, category `meta`
 - [x] Scan seed output for PII/sensitive data; flag anything found
   - Done 2026-10-27: `src/scan.ts` runs inside every `sanitise`, before anything is written (masked output; a flagged value or a changed reviewed count fails the run and leaves `seed/data` untouched). Detectors: emails, UPI IDs, mobile/landline/toll-free numbers in any grouping, Aadhaar/card/bank-account digit runs, GSTIN/PAN/IFSC, old-store domains and handles, links, social handles, business terms; ID/ISBN fields skipped only when they have the expected shape. Result: none of those found; the dump holds no customer data. Reviewed and accepted (pinned by count): 17 author websites and 24 social handles in author `intro` (publisher bio copy), 3 words in book blurbs (`vendor`, `supplier`, `call us`; plot text). False positives handled in the scanner: ISBNs, birth–death years, upload timestamps in image names. `popularity` is the old storefront view count per item (owner, 2026-10-27): kept, it drives sort-by-popularity and isn't sales data. Code-reviewed and audited (the audit's independent sweep was clean too)
@@ -104,7 +104,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Author photos: Open Library match by name with confidence threshold; fallback branded initials avatar
 - [ ] Generate brand artwork for collections, bundles, categories and ISBN-less books
 - [ ] Upload images to Vercel Blob; write image manifest; rewrite seed image fields to Blob URLs
-- [ ] Demo accounts: demo shopper, demo admin (read-only catalog role), CMS read-only user
+- [ ] Demo accounts: demo shopper, demo admin (read-only catalog role), CMS read-only user; sample orders across the order lifecycle
 - [ ] **Owner:** in Atlas, create a DB user for the demo, allow network access `0.0.0.0/0` (Vercel has no fixed IPs on free tiers), put the connection strings for databases `pageaters_api` and `pageaters_cms` into local `.env`
 - [ ] `pnpm seed` (idempotent) against Atlas
 - **Checkpoint:** owner spot-checks catalog data and images
@@ -138,7 +138,6 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] `rzp_live_` boot guard; Razorpay test-mode checkout
 - [ ] Mock email/SMS → outbox collection + outbox view
 - [ ] Uploads disabled; rate limits on public endpoints
-- [ ] Protected reset endpoint + nightly Vercel Cron
 - [ ] Tests for every guard
 
 ## Phase 6 — CMS (Payload)
@@ -188,7 +187,6 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Renovate
 - [ ] Vercel projects ×4 with root directories, `turbo-ignore`, preview deploys per PR
 - [ ] Environment variables per project (test-mode Razorpay, Atlas, Blob, CMS secret, `DEMO_MODE=true`)
-- [ ] Vercel Cron: nightly reset
 - [ ] DNS for the four `*.demo.pageaters.com` hosts
 - [ ] Multi-stage Dockerfile for API (`turbo prune`) as alternate target
 - **Checkpoint:** all four apps live, E2E passing against production demo
