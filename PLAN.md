@@ -94,7 +94,9 @@ This file is temporary: when every phase is done, archive the decision log into 
 
 ## Phase 2 — Seed data & images
 
-- [ ] `seed/` pipeline: read dump → drop `wholeSalePriceHistory`, real `inventory`, deleted docs, internal fields → generate stock → write sanitised JSON
+- [x] `seed/` pipeline: read dump → drop `wholeSalePriceHistory`, real `inventory`, deleted docs, internal fields → generate stock → write sanitised JSON
+  - Done 2026-10-27: `@pageaters/seed` workspace (`pnpm --filter @pageaters/seed sanitise`, Node 22 type stripping, no runtime deps). Per-collection field allowlists mirror the API models, nested keys included; unreviewed fields are dropped and fail the run. Soft-deleted docs dropped (309 authors, 52 bundles, 12 categories, 11 collections, 23 product sets incl. 14 inactive, 618 books); 181 refs to removed docs pruned per target collection. Stock generated from the doc ID only (reruns byte-identical): ~3% of standalone books out of stock, ~3% low, bundle books always stocked so every bundle is purchasable. Category `numberOfBooks` recounted, legacy `meta.url` cleared, `EN` → `English`. Reviewed + audited
+  - `seed/data/*.json` is generated locally and committed in the next step, after the PII scan. Free text to scan there: author `intro` (has external links), book/bundle/collection `description`, `tagline`, `message`, category `meta`
 - [ ] Scan seed output for PII/sensitive data; flag anything found
 - [ ] Covers: fetch Open Library covers by ISBN; record misses
 - [ ] Author photos: Open Library match by name with confidence threshold; fallback branded initials avatar

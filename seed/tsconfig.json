@@ -1,0 +1,9 @@
+{
+  "extends": "@pageaters/config/tsconfig/node.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true
+  },
+  "include": ["src"]
+}
