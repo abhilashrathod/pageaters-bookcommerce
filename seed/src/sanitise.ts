@@ -72,6 +72,8 @@ export function sanitise(dump: Dump): { data: Dump; report: Report } {
     data[spec.seedName] = docs.map((source) => {
       const doc = pick(source, spec, unknown);
       for (const [field, target] of Object.entries(spec.refs)) doc[field] = keepLive(target, doc[field]);
+      // A kept document is live: a stray deletion date (an old admin mistake) is cleared.
+      if (spec.softDelete) doc.deletedAt = '';
       return doc;
     });
   }

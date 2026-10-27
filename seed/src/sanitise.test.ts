@@ -33,7 +33,7 @@ function book(n: number, overrides: Doc = {}): Doc {
 function fixture(): Dump {
   return {
     authors: [
-      { _id: oid(100), name: 'Author', books: [oid(1), oid(2)], isDeleted: false },
+      { _id: oid(100), name: 'Author', books: [oid(1), oid(2)], isDeleted: false, deletedAt: 'Tue May 03 2022' },
       { _id: oid(101), name: 'Gone', books: [], isDeleted: true },
     ],
     bundles: [
@@ -101,6 +101,10 @@ void describe('sanitise', () => {
   void it('recounts category books and clears legacy canonical URLs', () => {
     assert.equal(data.categories?.[0]?.numberOfBooks, 2);
     assert.deepEqual(data.categories?.[0]?.meta, { title: 't', url: '' });
+  });
+
+  void it('clears stray deletion dates on kept documents', () => {
+    assert.equal(data.authors?.[0]?.deletedAt, '');
   });
 
   void it('normalises language codes', () => {
