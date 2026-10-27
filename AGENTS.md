@@ -20,8 +20,8 @@ public, sandboxed demo. It is **not** a live store.
   open-source license, and never remove the LICENSE notice or the in-app demo banner.
 
 The original git history (2022–2024, hand-written before AI coding tools) is preserved on purpose.
-Never rewrite, squash or rebase historical commits. The only sanctioned history rewrite is the one-time
-secret scrub in PLAN.md Phase 1.
+Never rewrite, squash or rebase historical commits. The only sanctioned history rewrites are the one-time
+scrubs recorded in PLAN.md Phase 1 (secrets; personal and business contact data).
 
 ---
 
@@ -248,6 +248,6 @@ and ask for exactly that — never invent credentials or create accounts. Secret
 - Never commit secrets, real customer data, wholesale prices or the raw data dump.
 - Never point anything at `pageaters.com` (root) or use live payment keys.
 - Never send real emails/SMS from demo, or let visitors create catalog data or upload files.
-- Never rewrite original git history (beyond the Phase 1 scrub) or force-push `main`.
+- Never rewrite original git history (beyond the Phase 1 scrubs) or force-push `main`.
 - Never add an open-source license or remove the demo banner.
 - Never bypass hooks, linters, tests or the secret scanner.
