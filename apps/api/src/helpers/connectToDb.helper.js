@@ -14,5 +14,5 @@ module.exports = async () => {
   // connect to database.
   await mongoose.connect(MONGODB_URL, options);
 
-  console.log(`Connected to ${MONGODB_URL}`);
+  console.log('Connected to MongoDB');
 };
