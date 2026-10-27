@@ -18,6 +18,9 @@ playwright-report/
 test-results/
 blob-report/
 
+# Seed data generated from the raw dump: local dev only, never committed
+seed/data/
+
 # Env (only .env.example is committed)
 .env
 .env.*

@@ -39,7 +39,7 @@ pageaters/
 │  ├─ api-client/   Typed API client used by storefront and admin
 │  ├─ cms-types/    Types generated from Payload config (`payload generate:types`)
 │  └─ config/       Shared tsconfig, ESLint, Prettier, Tailwind presets
-├─ seed/            Sanitised demo seed data + image manifest (committed)
+├─ seed/            Seed pipeline; its output `seed/data/` is local and gitignored
 ├─ docs/            Feature, site and architecture explanations (see §9)
 │  └─ adr/          Architecture Decision Records
 ├─ agents/          Subagent definitions (see §9); `.claude/agents` symlinks here
@@ -189,7 +189,8 @@ Rules:
 - Secrets only in Vercel environment variables or local `.env` (gitignored). Only `.env.example` is committed.
 - Env vars are minimal: add one only when running code reads it. Don't carry over legacy config keys for
   services that are removed, mocked or unused.
-- Seed data in `seed/` must stay sanitised. The raw dump (`../pageaters-data-dump`) is never copied into the repo.
+- Seed data is generated locally into `seed/data/` (gitignored) for development only. It is **never committed** or
+  shipped with any app, and it must stay sanitised. The raw dump (`../pageaters-data-dump`) is never copied into the repo.
 - A secret scanner (gitleaks) runs in pre-commit and CI. Never bypass it (`--no-verify` is forbidden).
 - Never use real user data for tests or fixtures.
 
@@ -275,7 +276,7 @@ above still applies — subagents split a checkbox, they don't widen it.
 
 ## 11. Never
 
-- Never commit secrets, real customer data, wholesale prices or the raw data dump.
+- Never commit secrets, real customer data, wholesale prices, the raw data dump or the generated seed data.
 - Never point anything at `pageaters.com` (root) or use live payment keys.
 - Never send real emails/SMS from demo, or let visitors create catalog data or upload files.
 - Never rewrite original git history (beyond the Phase 1 scrubs) or force-push `main`.

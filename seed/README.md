@@ -1,6 +1,6 @@
 # @pageaters/seed
 
-Sanitised demo catalog for the API database, generated from the original store's books-only export.
+Sanitised catalog for local development, generated from the original store's books-only export.
 The raw dump stays outside the repo (`../pageaters-data-dump`) and is never committed.
 
 ```sh
@@ -8,7 +8,8 @@ pnpm --filter @pageaters/seed sanitise [dump-dir]   # default: $SEED_DUMP_DIR or
 ```
 
 Writes `data/{authors,bundles,categories,collections,product-sets,store-books}.json` in MongoDB Extended JSON.
-Running it again on the same dump produces identical files.
+Running it again on the same dump produces identical files. `data/` is gitignored: seed data is for local
+development only and is never committed or deployed.
 
 What the pipeline does:
 
