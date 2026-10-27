@@ -1,0 +1,40 @@
+.entity-table {
+  width: 100%;
+
+  .table-header {
+    background-color: #777777;
+    color: #fff;
+    tr {
+      th {
+        padding: 14px;
+        font-weight: normal;
+        border-bottom: 0;
+      }
+    }
+  }
+
+  .table-body {
+    background-color: #f8f8f8;
+
+    tr {
+      td {
+        padding: 20px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        color: #444444;
+
+        b,
+        strong {
+          color: #000;
+        }
+
+        &.active {
+          color: #58b574;
+        }
+
+        &.inactive {
+          color: #dc4a29;
+        }
+      }
+    }
+  }
+}

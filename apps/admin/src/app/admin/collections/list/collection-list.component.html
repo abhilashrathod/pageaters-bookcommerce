@@ -1,0 +1,21 @@
+<div class="row">
+  <div class="col-12">
+    <h1>Collections</h1>
+  </div>
+  <div class="col-12">
+    <app-entity-table
+      [columns]="resourceColumns"
+      [getResource]="getAllBaseUrl"
+      [searchResource]="searchBaseUrl"
+      [editResource]="editResourceUrl"
+      [deleteResource]="deleteBaseUrl">
+    </app-entity-table>
+  </div>
+</div>
+
+<div class="action-button-row">
+  <button mat-fab color="primary" [routerLink]="createResourceUrl">
+    <mat-icon>add</mat-icon>
+  </button>
+</div>
+

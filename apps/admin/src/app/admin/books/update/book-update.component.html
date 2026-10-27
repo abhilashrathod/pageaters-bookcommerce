@@ -1,0 +1,441 @@
+<div *ngIf="isReady" class="row">
+  <div class="col-12">
+    <h1>Update: {{book?.title}}</h1>
+  </div>
+  <div class="col-12">
+    <mat-stepper #stepper>
+      <mat-step>
+        <ng-template matStepLabel>Book Information</ng-template>
+        <form [formGroup]="primaryFormGroup">
+          <div class="mb-5 bg-body rounded form-card">
+            <div class="row">
+              <div class="col-5">
+                <div class="mb-4">
+                  <div *ngIf="images.length <= 0" class="image-upload-thumbnail" (click)="profileImage.click()">Book Images
+                  </div>
+                  <div *ngFor="let image of images; let idx = index;" class="position-relative mb-3">
+                    <img [src]="image.cloudUrl ? image.cloudUrl : image.url" style="height: 400px; width: auto; object-fit: contain;" class="pointer img-fluid me-2" height="200px" width="auto">
+                    <div style="top: -10px; z-index: 3; left: -10px;" class="d-flex position-absolute">
+                      <button *ngIf="!image.isPoster" (click)="makePrimaryPoster(idx)" class="me-2" mat-mini-fab [color]="'accent'"><mat-icon>wallpaper</mat-icon></button>
+                      <button (click)="removeImage(idx)" mat-mini-fab [color]="'warn'"><mat-icon>clear</mat-icon></button>
+                    </div>
+                  </div>
+
+                  <input #profileImage class="d-none" type="file" multiple (change)="detectFiles($event)">
+                </div>
+                <p class="text-center">
+                  <button *ngIf="images.length > 0" mat-stroked-button [color]="'primary'" (click)="profileImage.click()">
+                    Add More
+                  </button>
+                  &nbsp;
+                  <button mat-stroked-button [color]="'accent'" (click)="uploadImages()">
+                    Upload
+                  </button>
+                </p>
+              </div>
+              <div class="col-7">
+                <div class="row">
+                  <div class="col-12">
+                    <label class="me-3">Product Type:</label>
+                    <mat-radio-group formControlName="type" aria-label="Product Type">
+                      <mat-radio-button class="me-3" *ngFor="let type of productTypeOptions" value="{{type}}">{{type | titlecase}}</mat-radio-button>
+                    </mat-radio-group>
+                  </div>
+                </div>
+                <hr>
+                <div class="row">
+                  <div class="col-8">
+                    <mat-form-field class="w-100">
+                      <mat-label>Title</mat-label>
+                      <input matInput formControlName="title">
+                    </mat-form-field>
+                  </div>
+                  <div class="col-4">
+                    <mat-form-field class="w-100">
+                      <mat-label>ISBN</mat-label>
+                      <input matInput formControlName="ISBN">
+                    </mat-form-field>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-7">
+                    <mat-form-field class="w-100">
+                      <mat-label>Tag line</mat-label>
+                      <input matInput formControlName="tagline">
+                    </mat-form-field>
+                  </div>
+                  <div class="col-5">
+                    <mat-form-field class="w-100">
+                      <mat-label>Eyebrow Content</mat-label>
+                      <input matInput formControlName="eyebrow">
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <angular2-multiselect [data]="authors" formControlName="author"
+                                        [settings]="authorDropdownSettings">
+                    <c-badge>
+                      <ng-template let-item="item">
+                        <span class="m-0">{{item.name | titlecase}}</span>
+                      </ng-template>
+                    </c-badge>
+                    <c-search>
+                      <ng-template>
+                        <input type="text" [formControl]="searchAuthorsCtrl"
+                               placeholder="Search authors..."
+                               style="border: none;width: 100%; height: 100%;outline: none;"/>
+                      </ng-template>
+                    </c-search>
+                    <c-item>
+                      <ng-template let-item="item">
+                    <span class="m-0">
+                      {{item.name | titlecase}}
+                    </span>
+                      </ng-template>
+                    </c-item>
+                  </angular2-multiselect>
+                </div>
+
+                <div class="row">
+                  <div class="col-4">
+                    <mat-form-field class="w-100">
+                      <mat-label>Language</mat-label>
+                      <input matInput formControlName="language">
+                    </mat-form-field>
+                  </div>
+                  <div class="col-4">
+                    <mat-form-field class="w-100">
+                      <mat-label>Pages</mat-label>
+                      <input matInput formControlName="pages">
+                    </mat-form-field>
+                  </div>
+                  <div class="col-4">
+                    <mat-form-field class="w-100">
+                      <mat-label>Book Version / Edition</mat-label>
+                      <mat-select formControlName="version">
+                        <mat-option *ngFor="let version of bookEditionOptions"
+                                    [value]="version">{{version | titlecase}}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-4">
+                    <mat-form-field class="w-100">
+                      <mat-label>Reading Level</mat-label>
+                      <mat-select formControlName="readingLevel">
+                        <mat-option *ngFor="let option of readingLevelOptions"
+                                    [value]="option">{{option | titlecase}}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div class="col-4">
+                    <mat-form-field class="w-100">
+                      <mat-label>Publisher</mat-label>
+                      <input matInput formControlName="publisher">
+                    </mat-form-field>
+                  </div>
+                  <div class="col-4">
+                    <mat-form-field class="w-100">
+                      <mat-label>Publication Year</mat-label>
+                      <input matInput formControlName="publicationYear">
+                    </mat-form-field>
+                  </div>
+                </div>
+
+
+                <mat-form-field class="w-100">
+                  <mat-chip-list #chipList formControlName="tags">
+                    <mat-chip *ngFor="let tag of tags.value; let idx = index;" (removed)="remove(idx);">
+                      {{tag }}
+                      <mat-icon matChipRemove>cancel</mat-icon>
+                    </mat-chip>
+
+                    <input matInput
+                           [matChipInputFor]="chipList"
+                           placeholder="Tags"
+                           (matChipInputTokenEnd)="add($event)">
+                  </mat-chip-list>
+                </mat-form-field>
+
+                <div class="row mt-3 mb-3">
+                  <div class="col-6">
+                    <mat-form-field class="w-100">
+                      <mat-label>Availability</mat-label>
+                      <mat-select formControlName="availability">
+                        <mat-option *ngFor="let availableOption of bookAvailabilityOptions"
+                                    [value]="availableOption">{{availableOption | titlecase}}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div class="col-6">
+                    <mat-form-field class="w-100">
+                      <mat-label>Popularity</mat-label>
+                      <input matInput formControlName="popularity">
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <div class="row mt-5 mb-5">
+                  <div class="col-3">
+                    <mat-slide-toggle formControlName="editorsPick">Editor's Pick</mat-slide-toggle>
+                  </div>
+                  <div class="col-3">
+                    <mat-slide-toggle formControlName="bestSeller">Best Seller</mat-slide-toggle>
+                  </div>
+                  <div class="col-3">
+                    <mat-slide-toggle formControlName="newRelease">Is New Release</mat-slide-toggle>
+                  </div>
+                </div>
+
+                <mat-form-field class="w-100">
+                  <mat-label>Message</mat-label>
+                  <textarea matInput
+                            cdkTextareaAutosize
+                            #autosize="cdkTextareaAutosize"
+                            cdkAutosizeMinRows="5"
+                            cdkAutosizeMaxRows="15"
+                            formControlName="message"></textarea>
+                </mat-form-field>
+
+                <mat-form-field class="w-100">
+                  <mat-label>Description</mat-label>
+                  <textarea matInput
+                            cdkTextareaAutosize
+                            #autosize="cdkTextareaAutosize"
+                            cdkAutosizeMinRows="5"
+                            cdkAutosizeMaxRows="15"
+                            formControlName="description"></textarea>
+                </mat-form-field>
+
+              </div>
+            </div>
+          </div>
+        </form>
+      </mat-step>
+      <mat-step>
+        <ng-template matStepLabel>Stock & Pricing</ng-template>
+        <form [formGroup]="pricingFormGroup">
+          <div class="mb-5 bg-body rounded form-card">
+            <div class="row mb-5">
+              <div class="col-12">
+                <h3 class="mb-1">Prices</h3>
+              </div>
+              <div class="col-3">
+                <mat-form-field class="w-100">
+                  <mat-label>Price</mat-label>
+                  <input matInput formControlName="price" (blur)="calculateAmounts()">
+                </mat-form-field>
+              </div>
+              <div class="col-3">
+                <mat-form-field class="w-100">
+                  <mat-label>Rent Amount</mat-label>
+                  <input matInput formControlName="rentPrice">
+                </mat-form-field>
+              </div>
+              <div class="col-3">
+                <mat-form-field class="w-100">
+                  <mat-label>Member's Price</mat-label>
+                  <input matInput formControlName="membersPrice">
+                </mat-form-field>
+              </div>
+              <div class="col-3">
+                <mat-form-field class="w-100">
+                  <mat-label>Member's Rent Amount</mat-label>
+                  <input matInput formControlName="membersRentPrice">
+                </mat-form-field>
+              </div>
+            </div>
+            <div class="row mb-5">
+              <div class="col-12">
+                <h3 class="mb-1">Warehouse</h3>
+              </div>
+              <div class="col-3">
+                <mat-form-field class="w-100">
+                  <mat-label>Wholesale Price</mat-label>
+                  <input matInput formControlName="wholeSalePriceHistory">
+                </mat-form-field>
+              </div>
+              <div class="col-3">
+                <mat-form-field class="w-100">
+                  <mat-label>Inventory</mat-label>
+                  <input matInput formControlName="inventory">
+                </mat-form-field>
+              </div>
+            </div>
+
+            <div class="row mb-5">
+              <div class="col-12">
+                <h3 class="mb-1">Discounts & Offers</h3>
+              </div>
+              <div class="col-3">
+                <mat-form-field class="w-100">
+                  <mat-label>Current Discount (If any)</mat-label>
+                  <input matInput formControlName="currentDiscount">
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </form>
+      </mat-step>
+      <mat-step>
+        <ng-template matStepLabel>Shipping Information</ng-template>
+        <form [formGroup]="shippingFormGroup">
+          <div class="mb-5 bg-body rounded form-card">
+            <div class="row">
+              <div class="col-3">
+                <mat-form-field class="w-100">
+                  <mat-label>Dimensions (L x W x H)</mat-label>
+                  <input matInput formControlName="dimensions">
+                </mat-form-field>
+              </div>
+              <div class="col-3">
+                <mat-form-field class="w-100">
+                  <mat-label>Weight (in Grams)</mat-label>
+                  <input matInput formControlName="weight">
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </form>
+      </mat-step>
+      <mat-step>
+        <ng-template matStepLabel>Relations</ng-template>
+        <form [formGroup]="relatedInfoFormGroup">
+          <div class="mb-5 bg-body rounded form-card">
+            <div class="row">
+              <div class="col-12">
+                <h3 class="mb-1">Categorization</h3>
+              </div>
+            </div>
+            <div class="row mb-5">
+              <div class="col-6">
+                <div class="mb-3">
+                  <angular2-multiselect [data]="categories" formControlName="categories"
+                                        [settings]="categoryDropdownSettings">
+                    <c-badge>
+                      <ng-template let-item="item">
+                        <span class="m-0">{{item.title | titlecase}}</span>
+                      </ng-template>
+                    </c-badge>
+                    <c-search>
+                      <ng-template>
+                        <input type="text" [formControl]="searchCategoriesCtrl"
+                               placeholder="Search categories..."
+                               style="border: none;width: 100%; height: 100%;outline: none;"/>
+                      </ng-template>
+                    </c-search>
+                    <c-item>
+                      <ng-template let-item="item">
+                    <span class="m-0">
+                      {{item.title | titlecase}}
+                    </span>
+                      </ng-template>
+                    </c-item>
+                  </angular2-multiselect>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12">
+                <h3 class="mb-1">Related Entities</h3>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-4">
+                <div class="mb-3">
+                  <angular2-multiselect [data]="books" formControlName="relatedBooks"
+                                        [settings]="booksDropdownSettings">
+                    <c-badge>
+                      <ng-template let-item="item">
+                        <span class="m-0">{{item.title | titlecase}}</span>
+                      </ng-template>
+                    </c-badge>
+                    <c-search>
+                      <ng-template>
+                        <input type="text" [formControl]="searchBooksCtrl"
+                               placeholder="Search similar books..."
+                               style="border: none;width: 100%; height: 100%;outline: none;"/>
+                      </ng-template>
+                    </c-search>
+                    <c-item>
+                      <ng-template let-item="item">
+                    <span class="m-0">
+                      {{item.title | titlecase}}
+                    </span>
+                      </ng-template>
+                    </c-item>
+                  </angular2-multiselect>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="mb-3">
+                  <angular2-multiselect [data]="collections" formControlName="relatedCollections"
+                                        [settings]="collectionsDropdownSettings">
+                    <c-badge>
+                      <ng-template let-item="item">
+                        <span class="m-0">{{item.title | titlecase}}</span>
+                      </ng-template>
+                    </c-badge>
+                    <c-search>
+                      <ng-template>
+                        <input type="text" [formControl]="searchCollectionsCtrl"
+                               placeholder="Search collections..."
+                               style="border: none;width: 100%; height: 100%;outline: none;"/>
+                      </ng-template>
+                    </c-search>
+                    <c-item>
+                      <ng-template let-item="item">
+                    <span class="m-0">
+                      {{item.title | titlecase}}
+                    </span>
+                      </ng-template>
+                    </c-item>
+                  </angular2-multiselect>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="mb-3">
+                  <angular2-multiselect [data]="bundles" formControlName="relatedBundles"
+                                        [settings]="bundleDropdownSettings">
+                    <c-badge>
+                      <ng-template let-item="item">
+                        <span class="m-0">{{item.title | titlecase}}</span>
+                      </ng-template>
+                    </c-badge>
+                    <c-search>
+                      <ng-template>
+                        <input type="text" [formControl]="searchBundlesCtrl"
+                               placeholder="Search bundles..."
+                               style="border: none;width: 100%; height: 100%;outline: none;"/>
+                      </ng-template>
+                    </c-search>
+                    <c-item>
+                      <ng-template let-item="item">
+                    <span class="m-0">
+                      {{item.title | titlecase}}
+                    </span>
+                      </ng-template>
+                    </c-item>
+                  </angular2-multiselect>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </mat-step>
+    </mat-stepper>
+  </div>
+</div>
+
+<div class="action-button-row">
+  <button class="me-3" mat-fab color="warn" (click)="goBack()">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+
+  <button mat-fab color="primary" (click)="onSubmit()">
+    <mat-icon>check</mat-icon>
+  </button>
+</div>

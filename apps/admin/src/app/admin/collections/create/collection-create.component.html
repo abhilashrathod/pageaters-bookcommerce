@@ -1,0 +1,183 @@
+<form [formGroup]="collectionFormGroup">
+  <div class="row">
+    <div class="col-12">
+      <h1>Create Collection</h1>
+    </div>
+  </div>
+
+  <div class="shadow-sm mb-5 bg-body rounded form-card">
+    <div class="row">
+      <div class="col-5">
+        <div class="mb-4">
+          <div *ngIf="!poster" class="image-upload-thumbnail" (click)="profileImage.click()">Collection Poster</div>
+          <img *ngIf="poster" class="pointer img-fluid img-thumbnail" [src]="poster" (click)="profileImage.click()"/>
+          <input #profileImage class="d-none" type="file" (change)="previewImage($event)">
+        </div>
+        <p class="text-center">
+          <button mat-stroked-button [color]="'accent'" (click)="uploadImage()">
+            Upload
+          </button>
+        </p>
+      </div>
+      <div class="col-7">
+        <div class="mb-3">
+          <mat-form-field class="w-100">
+            <mat-label>Title</mat-label>
+            <input matInput formControlName="title">
+          </mat-form-field>
+        </div>
+
+        <div class="mb-3">
+          <angular2-multiselect [data]="books" formControlName="books" [settings]="booksDropdownSettings">
+            <c-badge>
+              <ng-template let-item="item">
+                <span class="m-0">{{item.title | titlecase}}</span>
+              </ng-template>
+            </c-badge>
+            <c-search>
+              <ng-template>
+                <input type="text" [formControl]="searchBooksCtrl"
+                       placeholder="Search books"
+                       style="border: none;width: 100%; height: 100%;outline: none;"/>
+              </ng-template>
+            </c-search>
+            <c-item>
+              <ng-template let-item="item">
+                    <span class="m-0">
+                      {{item.title | titlecase}}
+                    </span>
+              </ng-template>
+            </c-item>
+          </angular2-multiselect>
+        </div>
+
+        <div class="mb-3">
+          <angular2-multiselect [data]="collections" formControlName="relatedCollections" [settings]="collectionsDropdownSettings">
+            <c-badge>
+              <ng-template let-item="item">
+                <span class="m-0">{{item.title | titlecase}}</span>
+              </ng-template>
+            </c-badge>
+            <c-search>
+              <ng-template>
+                <input type="text" [formControl]="searchCollectionsCtrl"
+                       placeholder="Search collections..."
+                       style="border: none;width: 100%; height: 100%;outline: none;"/>
+              </ng-template>
+            </c-search>
+            <c-item>
+              <ng-template let-item="item">
+                    <span class="m-0">
+                      {{item.title | titlecase}}
+                    </span>
+              </ng-template>
+            </c-item>
+          </angular2-multiselect>
+        </div>
+
+        <div class="mb-3">
+          <angular2-multiselect [data]="authors" formControlName="featuredAuthors" [settings]="authorDropdownSettings">
+            <c-badge>
+              <ng-template let-item="item">
+                <span class="m-0">{{item.name | titlecase}}</span>
+              </ng-template>
+            </c-badge>
+            <c-search>
+              <ng-template>
+                <input type="text" [formControl]="searchAuthorsCtrl"
+                       placeholder="Search authors..."
+                       style="border: none;width: 100%; height: 100%;outline: none;"/>
+              </ng-template>
+            </c-search>
+            <c-item>
+              <ng-template let-item="item">
+                    <span class="m-0">
+                      {{item.name | titlecase}}
+                    </span>
+              </ng-template>
+            </c-item>
+          </angular2-multiselect>
+        </div>
+
+        <div class="mb-3">
+          <angular2-multiselect [data]="categories" formControlName="relatedCategories" [settings]="categoryDropdownSettings">
+            <c-badge>
+              <ng-template let-item="item">
+                <span class="m-0">{{item.title | titlecase}}</span>
+              </ng-template>
+            </c-badge>
+            <c-search>
+              <ng-template>
+                <input type="text" [formControl]="searchCategoriesCtrl"
+                       placeholder="Search categories..."
+                       style="border: none;width: 100%; height: 100%;outline: none;"/>
+              </ng-template>
+            </c-search>
+            <c-item>
+              <ng-template let-item="item">
+                    <span class="m-0">
+                      {{item.title | titlecase}}
+                    </span>
+              </ng-template>
+            </c-item>
+          </angular2-multiselect>
+        </div>
+
+        <div class="mb-3">
+          <mat-form-field class="w-100">
+            <mat-chip-list #chipList formControlName="tags">
+              <mat-chip *ngFor="let tag of tags.value; let idx = index;" (removed)="remove(idx);">
+                {{tag }}
+                <mat-icon matChipRemove>cancel</mat-icon>
+              </mat-chip>
+
+              <input matInput
+                     [matChipInputFor]="chipList"
+                     placeholder="Tags"
+                     (matChipInputTokenEnd)="add($event)">
+            </mat-chip-list>
+          </mat-form-field>
+        </div>
+
+        <div class="mb-3">
+          <mat-form-field class="w-100">
+            <mat-label>Description</mat-label>
+            <textarea matInput
+                      cdkTextareaAutosize
+                      #autosize="cdkTextareaAutosize"
+                      cdkAutosizeMinRows="5"
+                      cdkAutosizeMaxRows="15"
+                      formControlName="description"></textarea>
+          </mat-form-field>
+        </div>
+
+        <div class="row">
+          <div class="col-6">
+            <mat-form-field class="w-100">
+              <mat-label>Popularity</mat-label>
+              <input matInput formControlName="popularity">
+            </mat-form-field>
+          </div>
+          <div class="col-6">
+            <mat-form-field class="w-100">
+              <mat-label>Priority</mat-label>
+              <input matInput formControlName="priority">
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</form>
+
+<div class="action-button-row">
+  <button class="me-3" mat-fab color="warn" [routerLink]="['/', 'admin', 'collections']">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+
+  <button mat-fab color="primary" (click)="onSubmit()">
+    <mat-icon>check</mat-icon>
+  </button>
+</div>
+

@@ -1,0 +1,15 @@
+<div class="row">
+  <div class="col-12">
+    <h1>Orders</h1>
+  </div>
+  <div class="col-12">
+    <app-entity-table
+      [columns]="resourceColumns"
+      [getResource]="getAllBaseUrl"
+      [showStatuses]="true"
+      [viewResource]="viewResourceUrl"
+      [searchResource]="searchResourceUrl">
+    </app-entity-table>
+  </div>
+</div>
+

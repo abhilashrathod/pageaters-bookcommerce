@@ -1,0 +1,17 @@
+<form [formGroup]="cancelFormGroup" (ngSubmit)="handleShipmentSubmit()">
+  <h1 mat-dialog-title>Cancel Order</h1>
+  <div mat-dialog-content>
+    <mat-form-field class="w-100">
+      <mat-label>Reason</mat-label>
+      <input matInput placeholder="Cancellation Reason" formControlName="reason" required>
+    </mat-form-field>
+    <div class="w-100">
+      <mat-label>Notify Customer? </mat-label>
+      <mat-slide-toggle formControlName="notify"></mat-slide-toggle>
+    </div>
+  </div>
+  <div mat-dialog-actions>
+    <button class="me-3" type="submit" mat-stroked-button color="primary">Confirm Cancellation</button>
+    <button type="button" mat-stroked-button color="danger" (click)="dialogRef.close()">Close Dialog</button>
+  </div>
+</form>

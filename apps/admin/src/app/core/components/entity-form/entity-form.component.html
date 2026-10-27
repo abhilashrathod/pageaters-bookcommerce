@@ -1,0 +1,57 @@
+<form [formGroup]="controlsFormGroup" #controlsForm="ngForm">
+  <ng-container *ngFor="let control of formSchema">
+    <div [ngSwitch]="control.type" class="form-group col-lg-12">
+      <mat-form-field *ngSwitchCase="'textarea'">
+      <textarea matInput
+                cdkTextareaAutosize
+                #autosize="cdkTextareaAutosize"
+                [placeholder]="control.ui.placeholder"
+                [formControlName]="control.name"
+                [required]="control.isRequired"
+                cdkAutosizeMinRows="1"
+                cdkAutosizeMaxRows="5"></textarea>
+        <mat-error *ngIf="!controlsFormGroup.get(control.name).valid">
+          {{'Please enter a value for ' + startCase(control.ui.placeholder) }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field *ngSwitchCase="'text'">
+        <input matInput
+               cdkTextareaAutosize
+               [placeholder]="control.ui.placeholder"
+               [formControlName]="control.name"
+               [required]="control.isRequired">
+        <mat-error *ngIf="!controlsFormGroup.get(control.name).valid">
+          {{'Please enter a value for ' + startCase(control.ui.placeholder) }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field *ngSwitchCase="'password'">
+        <input matInput
+               cdkTextareaAutosize
+               [placeholder]="control.ui.placeholder"
+               [type]="control.type"
+               [formControlName]="control.name"
+               [required]="control.isRequired">
+        <mat-error *ngIf="!controlsFormGroup.get(control.name).valid">
+          {{'Please enter a value for ' + startCase(control.ui.placeholder) }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field *ngSwitchCase="'dropdown'">
+        <mat-select [placeholder]="control.ui.placeholder"
+                    [formControlName]="control.name"
+                    [required]="control.isRequired">
+          <mat-option *ngFor="let type of control.source" [value]="type.value">
+            {{type.label}}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="!controlsFormGroup.get(control.name).valid">
+          {{'Please enter a value for ' + startCase(control.ui.placeholder) }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+  </ng-container>
+  <div class="page-actions">
+    <button mat-fab matTooltip="Submit" [disabled]="!controlsForm.valid" (click)="doSubmitForm(controlsForm.value)">
+      <mat-icon>check</mat-icon>
+    </button>
+  </div>
+</form>

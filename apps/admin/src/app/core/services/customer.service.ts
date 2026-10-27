@@ -1,0 +1,28 @@
+import {Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {Observable, throwError} from 'rxjs';
+import {catchError, map} from 'rxjs/operators';
+import {IResponse} from '../schema/responses';
+import {environment} from '../../../environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CustomerService {
+
+  constructor(private _http: HttpClient) {
+  }
+
+  getById(id): Observable<any> {
+    const url = `${environment.BASE_PATH}/users/${id}`;
+    return this._http.get(url)
+      .pipe(
+        map((dt: IResponse) => dt.data),
+        catchError((err) => this.handleError(err))
+      );
+  }
+
+  handleError(err: any): any {
+    return throwError(err.error);
+  }
+}

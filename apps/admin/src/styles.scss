@@ -1,0 +1,39 @@
+/* You can add global styles to this file, and also import other style files */
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background: #f1f5f9;
+}
+
+.page-actions {
+  position: fixed;
+  bottom: 1rem;
+  right: 2rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  flex-direction: row-reverse;
+
+  button {
+    & + button {
+      margin-right: 10px;
+    }
+  }
+}
+
+.c-pointer {
+  cursor: pointer;
+}
+
+.c-handle {
+  cursor: grab;
+}
+
+/* APP STYLES */
+
+@import "assets/styles/index";

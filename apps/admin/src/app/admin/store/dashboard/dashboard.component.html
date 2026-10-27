@@ -1,0 +1,72 @@
+<div class="row">
+  <div class="col-12">
+    <h1>Pageaters Store Dashboard</h1>
+  </div>
+  <div class="col-12">
+    <mat-form-field class="w-100">
+      <mat-label>Announcement</mat-label>
+      <input matInput [(ngModel)]="announcement">
+    </mat-form-field>
+  </div>
+  <div class="col-4">
+    <mat-form-field class="w-100">
+      <mat-label>Email</mat-label>
+      <input matInput [(ngModel)]="email">
+    </mat-form-field>
+  </div>
+  <div class="col-4">
+    <mat-form-field class="w-100">
+      <mat-label>Contact No</mat-label>
+      <input matInput [(ngModel)]="contactNo">
+    </mat-form-field>
+  </div>
+  <div class="col-4">
+    <mat-form-field class="w-100">
+      <mat-label>Address</mat-label>
+      <input matInput [(ngModel)]="address">
+    </mat-form-field>
+  </div>
+  <div class="col-12 mt-5">
+    <h1>Store Sections</h1>
+  </div>
+  <div class="col-3">
+    <mat-card class="mb-4" [routerLink]="['/', 'admin', 'store', 'deals']">
+      <mat-card-title>Deals: {{dealsStat}}</mat-card-title>
+      <mat-card-content>
+        <p>Deals specific to event, group or holidays</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  <div class="col-3">
+    <mat-card class="mb-4">
+      <mat-card-title>Static Content: {{1}}</mat-card-title>
+      <mat-card-content>
+        <p>Privacy policy, terms and conditions etc..</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  <div class="col-3">
+    <mat-card class="mb-4">
+      <mat-card-title>FAQs: {{1}}</mat-card-title>
+      <mat-card-content>
+        <p>FAQs throughout site</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  <div class="col-3">
+    <mat-card class="mb-4">
+      <mat-card-title>Banners: {{1}}</mat-card-title>
+      <mat-card-content>
+        <p>Landing page, subscription banner etc..</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  <div class="col-3">
+    <mat-card class="mb-4">
+      <mat-card-title>Featured Products: {{1}}</mat-card-title>
+      <mat-card-content>
+        <p>General Featured Products</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

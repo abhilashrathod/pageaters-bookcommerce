@@ -1,0 +1,240 @@
+<div *ngIf="isReady">
+  <div class="row">
+    <div class="col-12">
+      <h1>{{order?.orderId}} ({{order?.orderStatus}})</h1>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-9">
+      <div class="row">
+        <div class="col-4">
+          <mat-card class="mb-4">
+            <mat-card-title>{{order.deliveryAddress.fullName}}</mat-card-title>
+            <mat-card-subtitle>Ship To:</mat-card-subtitle>
+            <mat-card-content>
+              <p>
+                <span>Contact No: {{order.deliveryAddress.contactNo}}</span><br/>
+                <span>Email: {{order.deliveryAddress.email}}</span><br/>
+              </p>
+              <p>
+                <span class="fw-bold">Delivery Address:</span> <br/>
+                <span>{{order.deliveryAddress.addressLine1 + ', '}} {{order.deliveryAddress.addressLine2 + ', '}} {{order.deliveryAddress.landmark}}</span>
+                <span>{{order.deliveryAddress.city + ', '}} {{order.deliveryAddress.state + ' - '}}{{order.deliveryAddress.pinCode}}</span>
+              </p>
+              <p *ngIf="order.deliveryInstructions">
+                <span class="fw-bold">Instructions</span><br/>
+                {{order.deliveryInstructions}}
+              </p>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        <div class="col-4">
+          <mat-card class="mb-4">
+            <mat-card-title>Shipment</mat-card-title>
+            <mat-card-subtitle>Update this when shipment is prepared</mat-card-subtitle>
+            <mat-card-content>
+              <form [formGroup]="shipmentFormGroup" (ngSubmit)="handleShipmentSubmit()">
+                <mat-form-field class="w-100">
+                  <mat-label>Shipment ID</mat-label>
+                  <input matInput placeholder="Enter Shipment ID From Delhivery" formControlName="shipmentTrackingId"
+                         required>
+                </mat-form-field>
+                <p>
+                  <button [disabled]="order.shipmentTrackingId !== ''" type="submit" mat-stroked-button color="primary"
+                          class="me-3">
+                    {{order.shipmentTrackingId ? 'Shipped' : 'Ship'}}
+                  </button>
+                  <button type="button" [disabled]="order.orderStatus === 'fulfilled'" mat-stroked-button
+                          color="primary" (click)="markAsDelivered()">
+                    {{order.orderStatus === 'fulfilled' ? 'Order Closed' : 'Mark As Delivered'}}
+                  </button>
+                </p>
+              </form>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        <div class="col-4">
+          <mat-card class="mb-4">
+            <mat-card-title>Important IDs</mat-card-title>
+            <mat-card-subtitle>These are the list of IDs which is needed for refund or shipment</mat-card-subtitle>
+            <mat-card-content>
+              <p>System Order ID: <strong>{{order._id}}</strong></p>
+              <p>Shipment / Waybill ID: <strong>{{order.shipmentTrackingId}}</strong></p>
+              <p>Razorpay Order ID: <strong>{{order.razorOrderId}}</strong></p>
+              <p>Razorpay Payment ID: <strong>{{order.razorPaymentId}}</strong></p>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-8">
+          <mat-card class="mb-4">
+            <mat-card-title>Order Request(s)</mat-card-title>
+            <mat-card-subtitle>This will check if this order is returned, replaced or cancelled by the customer
+            </mat-card-subtitle>
+            <mat-card-content>
+              <ul class="list-group">
+                <li *ngFor="let request of order.requests" class="list-group-item d-flex align-items-start flex-column">
+                  <p>
+                    <span>Request Type: {{request.type | titlecase}}</span> | <span>Status: {{request.status}}</span>
+                  </p>
+                  <div class="d-flex justify-content-between w-100">
+                    <span class="fw-bold">Reason: {{request.info.reason}}</span>
+                    <span class="badge bg-primary rounded-pill">{{request.date | date:'shortDate'}}</span>
+                  </div>
+                  <p>Details: {{request.info.comments}}</p>
+
+                  <span>Return Items:</span>
+                  <ul class="list-group list-group-flush mb-3">
+                    <li *ngFor="let book of request.books" class="list-group-item">
+                      {{book}}
+                    </li>
+                    <li *ngFor="let bundle of request.bundles" class="list-group-item">
+                      {{bundle}}
+                    </li>
+                  </ul>
+
+                  <div *ngIf="request.type === 'cancel'">
+                    <button class="me-3" (click)="cancelShipment()" mat-stroked-button>
+                      Cancel Shipment
+                    </button>
+                  </div>
+
+                  <div *ngIf="request.type === 'return'">
+                    <button class="me-3" [disabled]="request.shipment !== ''" (click)="alignReturn(request._id)"
+                            mat-stroked-button>
+                      {{request.shipment ? 'Shipment Aligned' : 'Align Shipment'}}
+                    </button>
+                    <button class="me-3" (click)="closeReturnRequest(request._id)" mat-stroked-button>
+                      Close Return
+                    </button>
+                  </div>
+
+                  <div *ngIf="request.type === 'replace' && request.status === 'open'">
+                    <button class="me-3" [disabled]="request.shipment !== ''" (click)="alignReturn(request._id)"
+                            mat-stroked-button>
+                      {{request.shipment ? 'Shipment Aligned' : 'Dispatch Books'}}
+                    </button>
+                    <button class="me-3" (click)="closeReplaceRequest(request._id)" mat-stroked-button>
+                      Close Replacement
+                    </button>
+                  </div>
+                </li>
+              </ul>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="mb-4">
+            <mat-card-title>Products</mat-card-title>
+            <mat-card-subtitle>
+              Total:<strong>{{order.total | currency:'INR'}}</strong>&nbsp;|
+              Shipping: <strong>{{order.shipping | currency:'INR'}}</strong>&nbsp;|
+              Weight: <strong>{{order.weight | number}} Grams</strong>
+            </mat-card-subtitle>
+            <mat-card-content>
+              <ol class="list-group list-group-numbered">
+                <li *ngFor="let productItem of order.products"
+                    class="list-group-item d-flex justify-content-between align-items-start">
+                  <div class="ms-2 me-auto">
+                    <div class="fw-bold">{{productItem.product.title}} x {{productItem.quantity}}</div>
+                    <p>MRP: {{productItem.price|currency:'INR'}}&nbsp;|&nbsp;Discount:{{productItem.discount | number}}&nbsp;|&nbsp;Weight: {{productItem.weight * productItem.quantity | number}}</p>
+                  </div>
+                  <span class="badge bg-primary rounded-pill">{{productItem.productTotal | currency:'INR'}}</span>
+                </li>
+                <li *ngFor="let bundleItem of order.bundles"
+                    class="list-group-item d-flex justify-content-between align-items-start">
+                  <div class="ms-2 me-auto">
+                    <div class="fw-bold">{{bundleItem.bundle.title}} x {{bundleItem.quantity}}</div>
+                    <p>MRP: {{bundleItem.price|currency:'INR'}}&nbsp;|&nbsp;Discount:{{bundleItem.discount | number}}&nbsp;|&nbsp;Weight: {{bundleItem.weight * bundleItem.quantity | number}}</p>
+                  </div>
+                  <span class="badge bg-primary rounded-pill">{{bundleItem.total | currency:'INR'}}</span>
+                </li>
+                <li *ngFor="let addonItem of order.addOns"
+                    class="list-group-item d-flex justify-content-between align-items-start">
+                  <div class="ms-2 me-auto">
+                    <div class="fw-bold">{{addonItem.addOn.name}} x {{addonItem.quantity}}</div>
+                    <p>MRP: {{addonItem.price | currency:'INR'}}&nbsp;|&nbsp;Discount:{{addonItem.discount | number}}</p>
+                  </div>
+                  <span class="badge bg-primary rounded-pill">{{addonItem.total | currency:'INR'}}</span>
+                </li>
+                <li *ngFor="let mysteryBoxItem of order.boxes"
+                    class="list-group-item d-flex justify-content-between align-items-start">
+                  <div class="ms-2 me-auto">
+                    <div class="fw-bold">{{mysteryBoxItem.box.title}} x {{mysteryBoxItem.quantity}}</div>
+                    <p>
+                      MRP: {{mysteryBoxItem.price|currency:'INR'}}&nbsp;|&nbsp;Discount:{{mysteryBoxItem.discount | number}}&nbsp;|&nbsp;Weight: {{mysteryBoxItem.weight * mysteryBoxItem.quantity | number}}</p>
+
+                    <ul>
+                      <li><strong>Favorite
+                        Books:</strong> {{mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.favoriteBooks : 'n/a'}}
+                      </li>
+                      <li><strong>Books to
+                        Ignore:</strong> {{mysteryBoxItem.preferences.ignoredBooks ? mysteryBoxItem.preferences.ignoredBooks : 'n/a'}}
+                      </li>
+                      <li><strong>Favorite
+                        Authors:</strong> {{mysteryBoxItem.preferences.preferredAuthors ? mysteryBoxItem.preferences.preferredAuthors : 'n/a'}}
+                      </li>
+                      <li><strong>Favorite
+                        Genres:</strong> {{mysteryBoxItem.preferences.preferredGenres ? mysteryBoxItem.preferences.preferredGenres : 'n/a'}}
+                      </li>
+                    </ul>
+
+                  </div>
+                  <span class="badge bg-primary rounded-pill">{{mysteryBoxItem.total | currency:'INR'}}</span>
+                </li>
+              </ol>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        <div class="col-4">
+          <mat-card class="mb-4" *ngIf="order.giftOptions.isGift">
+            <mat-card-title>Order Gift Options</mat-card-title>
+            <mat-card-subtitle>Gift: {{order.giftOptions.isGift ? 'Yes' : 'No'}}</mat-card-subtitle>
+            <mat-card-content *ngIf="order.giftOptions.isGift">
+              <p><strong>From:</strong> {{order.giftOptions.details.from}}<br/>
+              <strong>Cost:</strong> {{order.giftOptions.details.cost}}<br/>
+                <strong>̦Package:</strong> {{order.giftOptions.details.package}}<br/>
+                <strong>Message:</strong> {{order.giftOptions.details.message}}</p>
+            </mat-card-content>
+          </mat-card>
+          <mat-card class="mb-4">
+            <mat-card-title>Order History</mat-card-title>
+            <mat-card-subtitle>All the events that had been completed on this order</mat-card-subtitle>
+            <mat-card-content>
+              <div *ngFor="let item of order.orderHistory">
+                <p><strong>Order {{item.title | titlecase}}</strong></p>
+                <small>{{item.time | date:'fullDate'}}</small>
+                <p>
+                  {{item.description}}
+                </p>
+                <hr>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </div>
+    <div class="col-3">
+      <mat-card class="mb-4">
+        <mat-card-subtitle>Order Raw Info</mat-card-subtitle>
+        <mat-card-content style="max-height: 80vh; overflow-y: scroll">
+          <pre>{{dumpRecord()}}</pre>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+</div>
+
+
+<div class="action-button-row">
+  <button mat-fab color="warn" class="me-2" (click)="cancelShipmentConfirmation()" [matTooltip]="'Cancel Order'">
+    <mat-icon>close</mat-icon>
+  </button>
+  <button mat-fab class="me-2" color="primary" (click)="openStoreCreditDialog()" [matTooltip]="'Send Store Credit'">
+    <mat-icon>card_giftcard</mat-icon>
+  </button>
+  <button mat-fab color="accent" (click)="openShipmentDialog()" [matTooltip]="'Prepare Shipment'">
+    <mat-icon>local_shipping</mat-icon>
+  </button>
+</div>
