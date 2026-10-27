@@ -1,4 +1,5 @@
 import { authors, categories, productSets, specs, storeBooks, type CollectionSpec } from './collections.ts';
+import { normaliseIsbn } from './isbn.ts';
 import { generateStock } from './stock.ts';
 
 // Documents stay in MongoDB Extended JSON (`{ $oid }`, `{ $date }`) as exported, so the loader keeps types.
@@ -89,6 +90,7 @@ export function sanitise(dump: Dump): { data: Dump; report: Report } {
   for (const book of books) {
     if (!isLive(authors.dumpName, book.author)) throw new Error(`store book ${String(book.bookId)} has no live author`);
     if (book.language === 'EN') book.language = 'English';
+    book.ISBN = normaliseIsbn(typeof book.ISBN === 'string' ? book.ISBN : '');
     book.inventory = generateStock(idOf(book._id) ?? '');
   }
 

@@ -5,6 +5,7 @@ The raw dump stays outside the repo (`../pageaters-data-dump`) and is never comm
 
 ```sh
 pnpm --filter @pageaters/seed sanitise [dump-dir]   # default: $SEED_DUMP_DIR or ../pageaters-data-dump
+pnpm --filter @pageaters/seed covers                # after sanitise; needs network (~10 min)
 ```
 
 Writes `data/{authors,bundles,categories,collections,product-sets,store-books}.json` in MongoDB Extended JSON.
@@ -19,15 +20,25 @@ What the pipeline does:
 - Drops soft-deleted documents and prunes every reference to them, checked against the target collection. Inactive product sets are kept.
 - Generates stock from each document ID (`src/stock.ts`): about 5% of books out of stock, the rest 1–1000. The
   demo is seeded once and never reset, so stock must outlast the occasional demo order.
-- Recounts `numberOfBooks` per category, clears legacy canonical URLs, and normalises `EN` to `English`.
+- Recounts `numberOfBooks` per category, clears legacy canonical URLs, normalises `EN` to `English` and cleans
+  ISBNs (digits only, first ISBN when several were typed).
 - Scans the output for sensitive data before writing it (`src/scan.ts`): emails, UPI IDs, phone numbers, Aadhaar,
   card and account numbers, GSTIN/PAN/IFSC, the old store's domains and handles, links, social handles and business
   terms. Findings are printed masked. Any finding outside the reviewed list, or a reviewed count that changes, fails
   the run and leaves `data/` untouched.
 
-| Script      | Purpose                      |
-| ----------- | ---------------------------- |
-| `sanitise`  | Dump → `data/`               |
-| `test`      | Unit tests on synthetic data |
-| `lint`      | ESLint                       |
-| `typecheck` | `tsc --noEmit`               |
+| Script      | Purpose                                     |
+| ----------- | ------------------------------------------- |
+| `sanitise`  | Dump → `data/`                              |
+| `covers`    | Open Library covers → `data/images/covers/` |
+| `test`      | Unit tests on synthetic data                |
+| `lint`      | ESLint                                      |
+| `typecheck` | `tsc --noEmit`                              |
+
+## Covers
+
+`covers` downloads book covers from Open Library, always anchored on the book's ISBN (`src/covers.ts`): first the
+cover of that exact edition (Books API, 50 ISBNs per request), then the cover of the whole work (search by ISBN, one
+request a second). A cover is used only when Open Library's title matches ours, or the mismatch was reviewed and
+listed in `acceptedTitleMismatches`. Writes `data/images/covers/<bookId>-<coverId>.jpg`, `data/covers.json` and
+`data/cover-misses.json` (with a reason per book). Reruns keep files already on disk and remove ones no longer used.

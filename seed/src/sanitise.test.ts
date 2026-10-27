@@ -53,7 +53,7 @@ function fixture(): Dump {
     ],
     collections: [{ _id: oid(300), title: 'Picks', books: [oid(1), oid(2), oid(999)], featuredAuthors: [oid(101)], isDeleted: false }],
     product_sets: [{ _id: oid(400), title: 'Set', isActive: false, products: [{ product: oid(1) }, { product: oid(2) }] }],
-    storebooks: [book(1, { relatedBooks: [oid(2)] }), book(2, { isDeleted: true }), book(3)],
+    storebooks: [book(1, { relatedBooks: [oid(2)], ISBN: '\u200e 978-0-7475-3274-3 ' }), book(2, { isDeleted: true }), book(3)],
   };
 }
 
@@ -106,8 +106,9 @@ void describe('sanitise', () => {
     assert.equal(data.authors?.[0]?.deletedAt, '');
   });
 
-  void it('normalises language codes', () => {
+  void it('normalises language codes and ISBNs', () => {
     assert.equal(books[0]?.language, 'English');
+    assert.equal(books[0]?.ISBN, '9780747532743');
   });
 
   void it('reports fields that are not allowlisted instead of copying them', () => {

@@ -90,8 +90,8 @@ export function mask(kind: string, value: string): string {
 const STRUCTURAL_KEYS = new Set(['_id', '$oid', '$date']);
 const IDENTIFIERS: readonly { key: RegExp; value: RegExp }[] = [
   { key: /^\w+Id$/, value: /^[A-Za-z]+-\d+$/ },
-  // ISBNs as typed in the old admin: digits, dashes, whitespace, invisible marks, `n/a`.
-  { key: /^ISBN$/, value: /^(?:[\d\s\u200e-]*|n\/a)$/i },
+  // Normalised by the pipeline: digits and a trailing X.
+  { key: /^ISBN$/, value: /^(?:\d{9,12}[\dX])?$/ },
 ];
 // Uploaded image names end in `-<10-char random id>-<13-digit upload time>.<ext>`; only the title slug is scanned.
 const IMAGE_KEYS = /^(?:poster|images|avatar|thumbnail|imageUrl)$/;

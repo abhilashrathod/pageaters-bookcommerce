@@ -75,7 +75,7 @@ void describe('scan', () => {
   });
 
   void it('skips identifiers with the expected shape and flags any other value', () => {
-    const docs = [{ _id: { $oid: 'a' }, bookId: 'PEB-4123', ISBN: '\u200e 978-9390351602', createdAt: { $date: '2023-01-01' } }];
+    const docs = [{ _id: { $oid: 'a' }, bookId: 'PEB-4123', ISBN: '9789390351602', createdAt: { $date: '2023-01-01' } }];
     assert.deepEqual(scan('store-books', docs), []);
     const odd = scan('store-books', [{ _id: { $oid: 'a' }, emailId: 'jane@example.org' }]).map((f) => f.kind);
     assert.deepEqual(odd, ['unexpected-identifier', 'email']);
