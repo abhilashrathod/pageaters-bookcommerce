@@ -4,7 +4,9 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 ## Development server
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Run `pnpm --filter admin dev` (or `pnpm dev` from the repo root to run every app) for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+
+The scripts start the Angular CLI with `node --openssl-legacy-provider`: this legacy Angular 12 / webpack 4 toolchain hashes with MD4, which OpenSSL 3 on Node 22 rejects. The flag is a stopgap until the Angular upgrade.
 
 ## Configuration
 
@@ -17,20 +19,20 @@ There are no secrets in the admin.
 
 ## Code scaffolding
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Run `pnpm --filter admin ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+Run `pnpm --filter admin build` for a development build, or `pnpm --filter admin build:prod` for a production build (`--configuration production`). The build artifacts will be stored in the `dist/` directory.
 
 ## Running unit tests
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Run `pnpm --filter admin test` to execute the unit tests via [Karma](https://karma-runner.github.io).
 
 ## Running end-to-end tests
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+Run `pnpm --filter admin e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
 
 ## Further help
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+To get more help on the Angular CLI use `pnpm --filter admin ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
