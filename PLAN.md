@@ -51,6 +51,10 @@ This file is temporary: when every phase is done, archive the decision log into 
   - Done 2026-10-27: empty root commit + three `--no-ff` import merges → 329 commits on `main`. Per-app counts and author/committer/date/message metadata verified identical
 - [x] Run gitleaks on the merged full history — must be clean
   - Clean 2026-10-27 (all commits incl. merges). `.gitleaks.toml` extends default rules and allowlists only `data-key="…"` attributes in `apps/api/src/templates/email/*/*.ejs` (6 false positives, verified against a default-rules-only scan)
+- [x] **Personal/business data scrub** (owner-approved one-time exception, 2026-10-27; force-pushed once with `--force-with-lease`)
+  - Full-history sweep for emails, phone numbers, addresses, GST/PAN/bank details. Replaced in every commit: owner's personal email → `owner@example.com`; business contact emails → `support@demo.pageaters.com`; all real phone numbers → `9000000000`; supplier name/address, warehouse pickup name/street and the business street address in storefront footer/privacy policy → fake values (city and pincode kept). JVM crash log removed from history
+  - `mainAddress` (Delhivery pickup) is now `PAGEATERS DEMO WAREHOUSE`, fake street and phone, real city/pincode — shipping flows keep working
+  - Verified: 334 commits, authorship/dates/messages identical, zero old values in file contents, gitleaks clean. Commit-author emails intentionally untouched (authorship)
 - [x] Initialise pnpm workspace + Turborepo (`turbo.json`: build, dev, lint, typecheck, test, test:e2e)
   - Root `package.json` (pnpm 12.4.1 pinned, Node 22, turbo 2.11.10), `pnpm-workspace.yaml` (`apps/*`, `packages/*`), `turbo.json`. App packages renamed `admin` / `api` / `storefront`. Verified with `turbo --dry` on Node 22. Missing legacy scripts (`dev`, `typecheck`…), `pnpm install`, lockfile and removal of per-app `package-lock.json` belong to the "Each app installs and runs" step
 - [x] `packages/config` (tsconfig bases, ESLint flat config, Prettier, Tailwind preset), `.nvmrc`, `.editorconfig`, root `.gitignore`
