@@ -68,7 +68,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Legacy config reads from env: new committed `config/*.js` (backend) / `environment*.ts` (admin) with no values, plus `.env.example` listing **only the vars the running code needs** (no keys for removed or mocked services)
 - [ ] Remove Amplitude and Brevo/Sendinblue entirely: ~~backend `@amplitude/node` dep, `AMPLITUDE` config, usage in `subscription.controller.js`~~ (done in junk-removal step); storefront Brevo script in `pages/_app.tsx`, `NEXT_PUBLIC_AMPLITUDE_API_KEY`, Amplitude mention in `pages/privacy-policy.tsx`
 - [x] Husky + lint-staged + commitlint + gitleaks pre-commit
-  - `pre-commit`: gitleaks on staged changes (fails if gitleaks is missing) → lint-staged (Prettier). `commit-msg`: commitlint, Conventional Commits with a scope list. Legacy apps are in `.prettierignore` until migrated. Verified: bad messages/scopes and a staged fake key are rejected
+  - `pre-commit`: gitleaks on staged changes (fails if gitleaks is missing) → lint-staged (Prettier). Hooks call `node_modules/.bin` directly: `pnpm exec` auto-installs the whole workspace when a `package.json` changes. `commit-msg`: commitlint, Conventional Commits with a scope list. Legacy apps are in `.prettierignore` until migrated. Verified: bad messages/scopes and a staged fake key are rejected
   - pnpm 12 `minimumReleaseAge` guard kept on: typescript-eslint pinned to 8.72.0 instead of adding release-age exemptions. Root-only install (`pnpm --filter pageaters install`); full workspace install is the "Each app installs" step
 - [ ] LICENSE (All Rights Reserved) + notice in README
 - [ ] Each app installs and runs (legacy code, pre-upgrade) under the workspace on Node 22
