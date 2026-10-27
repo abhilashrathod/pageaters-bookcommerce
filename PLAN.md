@@ -73,13 +73,19 @@ This file is temporary: when every phase is done, archive the decision log into 
   - admin: no runtime env; `CLIENT_ID` and `X-CLIENT-ID` header removed (API no longer checks them); staging env/config/script removed; prod API → `api.demo.pageaters.com`
   - storefront: `.env.example` with the 5 `NEXT_PUBLIC_*` vars it reads (copy to `.env.local`)
   - Follow-ups found: per-app npm `package-lock.json` files and the stale api `Dockerfile`/`docker-compose.yml` (Node 12) → "Each app installs" step; hard-coded GA and Facebook Pixel IDs and a Brevo client key in storefront `_app.tsx`/`core/_analytics.ts` → Amplitude/Brevo removal step and Phase 7; hard-coded legacy S3 bucket names in api `constants/enums.js` → Phase 4 storage adapter
-- [ ] Remove Amplitude and Brevo/Sendinblue entirely: ~~backend `@amplitude/node` dep, `AMPLITUDE` config, usage in `subscription.controller.js`~~ (done in junk-removal step); storefront Brevo script in `pages/_app.tsx`, `NEXT_PUBLIC_AMPLITUDE_API_KEY`, Amplitude mention in `pages/privacy-policy.tsx`
+- [x] Remove Amplitude and Brevo/Sendinblue entirely: ~~backend `@amplitude/node` dep, `AMPLITUDE` config, usage in `subscription.controller.js`~~ (done in junk-removal step); storefront Brevo script in `pages/_app.tsx`, `NEXT_PUBLIC_AMPLITUDE_API_KEY`, Amplitude mention in `pages/privacy-policy.tsx`
+  - Done 2026-10-27 (storefront-engineer): Brevo tracker and Facebook Pixel removed from `_app.tsx`; privacy policy now names only Google Analytics and cookies. No Amplitude/Brevo/Pixel code left anywhere. Owner decisions: remove the Facebook Pixel too, **keep Google Analytics**, no history scrub for these IDs
 - [x] Husky + lint-staged + commitlint + gitleaks pre-commit
   - `pre-commit`: gitleaks on staged changes (fails if gitleaks is missing) → lint-staged (Prettier). Hooks call `node_modules/.bin` directly: `pnpm exec` auto-installs the whole workspace when a `package.json` changes. `commit-msg`: commitlint, Conventional Commits with a scope list. Legacy apps are in `.prettierignore` until migrated. Verified: bad messages/scopes and a staged fake key are rejected
   - pnpm 12 `minimumReleaseAge` guard kept on: typescript-eslint pinned to 8.72.0 instead of adding release-age exemptions. Root-only install (`pnpm --filter pageaters install`); full workspace install is the "Each app installs" step
 - [x] LICENSE (All Rights Reserved) + notice in README
   - `LICENSE` (view-for-evaluation only; no copying, deployment, derivatives or ML training), interim root `README.md` with notice, every `package.json` set to `"license": "UNLICENSED"` (api previously declared ISC)
-- [ ] Each app installs and runs (legacy code, pre-upgrade) under the workspace on Node 22
+- [x] Each app installs and runs (legacy code, pre-upgrade) under the workspace on Node 22
+  - Done 2026-10-27 (api/admin/storefront engineers in parallel, reviewed + audited). Per-app npm lockfiles removed; one `pnpm-lock.yaml`; unneeded install scripts denied in `pnpm-workspace.yaml` (`allowBuilds`). Verified together on Node 22.23: API boots against Atlas `pageaters_api` and serves catalog GETs; storefront `build` (needs the API up for `getStaticPaths`) and `start` serve 200; admin `build:prod` passes and `dev` serves 200
+  - Fresh resolution drifted from the old npm locks, so a few deps are pinned to their legacy versions until the upgrade phases: api `mongoose-paginate-v2` 1.7.1 (newer breaks on mongoose 5); admin `typescript` 4.2.3, `@angular/compiler-cli` 12.1.1, `@types/lodash`; storefront `@types/styled-components`, `@types/lodash`
+  - Stopgaps: admin `ng` runs with `--openssl-legacy-provider` (webpack 4 md4), removed in Phase 8; api scripts pass `--disable-warning=DEP0170` because Node 22 prints the full DB URI in that warning (mongodb 3.x driver), removed in Phase 4. Stale api Docker files deleted
+  - Known red gates until their phases: admin `lint` (TSLint, 114 legacy errors) and `test` (Karma, no specs) exit 1 → Phase 8; storefront `lint` passes with 18 warnings; api has no gates yet → Phase 4
+  - Follow-up (Phase 7): storefront copy/metadata still names the root domain `pageaters.com` (`core/_variables.ts`, `_app.tsx` og:site_name, `pages/index.tsx`, privacy policy, terms)
 - [x] **Owner:** create an empty **private** repo on personal GitHub (no README, license or .gitignore)
   - `github.com/abhilashrathod/pageaters-bookcommerce` (private)
 - [x] Push to that private GitHub repo
@@ -154,7 +160,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Header/nav/footer/announcement from CMS globals
 - [ ] Caching with tags + revalidation route; draft mode for CMS preview
 - [ ] SEO: metadata API, sitemap, robots (noindex for demo), product feed
-- [ ] Demo banner; remove GA production IDs
+- [ ] Demo banner; move the GA measurement ID to env (owner keeps GA; decide whether the demo uses the old property)
 - **Checkpoint:** visual comparison with original store
 
 ## Phase 8 — Admin upgrade (Angular)
