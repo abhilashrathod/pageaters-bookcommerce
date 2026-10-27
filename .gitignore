@@ -23,6 +23,9 @@ blob-report/
 .env.*
 !.env.example
 
+# Subagent worktrees
+.claude/worktrees/
+
 # Logs
 *.log
 hs_err_pid*
