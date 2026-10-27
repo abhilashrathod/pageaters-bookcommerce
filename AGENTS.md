@@ -58,15 +58,15 @@ pageaters/
 - Node **22 LTS** (`.nvmrc`), **pnpm** (version pinned via `packageManager`). Never use npm or yarn; never commit another lockfile.
 - All tasks run through Turbo from the repo root:
 
-| Command | Purpose |
-|---|---|
-| `pnpm install` | Install all workspaces |
-| `pnpm dev` | Run all apps (or `pnpm dev --filter=storefront`) |
-| `pnpm build` | Build everything (cached) |
-| `pnpm lint` / `pnpm typecheck` / `pnpm test` | Quality gates — all must pass before a commit |
-| `pnpm test:e2e` | Playwright end-to-end suite |
-| `pnpm seed` | Load `seed/` into the configured MongoDB (idempotent) |
-| `pnpm demo:reset` | Wipe demo writes and reseed (same job the nightly cron runs) |
+| Command                                      | Purpose                                                      |
+| -------------------------------------------- | ------------------------------------------------------------ |
+| `pnpm install`                               | Install all workspaces                                       |
+| `pnpm dev`                                   | Run all apps (or `pnpm dev --filter=storefront`)             |
+| `pnpm build`                                 | Build everything (cached)                                    |
+| `pnpm lint` / `pnpm typecheck` / `pnpm test` | Quality gates — all must pass before a commit                |
+| `pnpm test:e2e`                              | Playwright end-to-end suite                                  |
+| `pnpm seed`                                  | Load `seed/` into the configured MongoDB (idempotent)        |
+| `pnpm demo:reset`                            | Wipe demo writes and reseed (same job the nightly cron runs) |
 
 Add new scripts to the relevant `package.json` and register them in `turbo.json`; don't run ad-hoc tooling that others can't reproduce.
 
@@ -100,6 +100,7 @@ Add new scripts to the relevant `package.json` and register them in `turbo.json`
 ## 5. Per-app conventions
 
 ### apps/api
+
 - Layers: `routes → controllers (thin: parse, call, respond) → services (business logic) → models/repositories`.
   Controllers must not contain business logic or touch Mongoose directly.
 - Keep files focused; if a file passes ~300 lines, split by responsibility (pricing, payments, shipping, notifications…).
@@ -111,6 +112,7 @@ Add new scripts to the relevant `package.json` and register them in `turbo.json`
   size limits, uploads disabled in demo, helmet, auth on every non-public route.
 
 ### apps/storefront
+
 - Next.js App Router. **Server Components by default**; `"use client"` only for interactive leaves (cart
   buttons, forms, carousels).
 - Styling: Tailwind CSS + shadcn/ui only. No styled-components, emotion or Mantine. Theme tokens arrive from
@@ -123,11 +125,13 @@ Add new scripts to the relevant `package.json` and register them in `turbo.json`
 - Code-owned pages (not CMS-editable): cart, checkout, account/profile, auth.
 
 ### apps/admin
+
 - Angular latest stable: standalone components, new control flow, signals where state is local.
 - Services return typed `Observable<T>` using `packages/shared` types — never `Observable<any>`.
 - ESLint via angular-eslint; tests with Jest or Vitest. No TSLint, Karma or Protractor.
 
 ### apps/cms (Payload)
+
 - **Pages** collection: free-form block pages (home, campaign landing pages) addressed by slug.
 - **Templates** collection: one per page type — Product, Collection, Category, Bundle, Book Box. Each has
   **locked core blocks** (e.g. product info + buy box) that can be reordered but not removed, plus free blocks.
@@ -176,10 +180,12 @@ it to the user immediately** (file path + what kind of data, value redacted):
 - Analytics/tracking IDs belonging to the old production setup (GA, Amplitude, etc.).
 
 Removed integrations — never reintroduce them (code, packages, scripts, config keys or env vars):
+
 - **Amplitude** (analytics) and **Brevo / Sendinblue** (marketing automation tracker). Remove any remnant you find,
   including mentions in privacy-policy copy.
 
 Rules:
+
 - Secrets only in Vercel environment variables or local `.env` (gitignored). Only `.env.example` is committed.
 - Env vars are minimal: add one only when running code reads it. Don't carry over legacy config keys for
   services that are removed, mocked or unused.
@@ -200,6 +206,7 @@ Rules:
 - Accessibility: semantic HTML, labelled controls, keyboard-reachable interactions, alt text on images.
 
 ### Commits
+
 - Conventional Commits (`feat(storefront): …`, `fix(api): …`, `chore(repo): …`), enforced by commitlint.
 - Small, focused commits. One logical change per commit; at least one commit per PLAN.md step.
 - Never force-push `main`.
