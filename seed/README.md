@@ -7,6 +7,7 @@ The raw dump stays outside the repo (`../pageaters-data-dump`) and is never comm
 pnpm --filter @pageaters/seed sanitise [dump-dir]   # default: $SEED_DUMP_DIR or ../pageaters-data-dump
 pnpm --filter @pageaters/seed covers                # after sanitise; needs network (~10 min)
 pnpm --filter @pageaters/seed authors               # after sanitise; needs network (~10 min)
+pnpm --filter @pageaters/seed artwork               # after covers; offline, instant
 ```
 
 Writes `data/{authors,bundles,categories,collections,product-sets,store-books}.json` in MongoDB Extended JSON.
@@ -33,6 +34,7 @@ What the pipeline does:
 | `sanitise`  | Dump → `data/`                                     |
 | `covers`    | Open Library covers → `data/images/covers/`        |
 | `authors`   | Author photos or initials → `data/images/authors/` |
+| `artwork`   | Brand artwork → `data/images/artwork/`             |
 | `test`      | Unit tests on synthetic data                       |
 | `lint`      | ESLint                                             |
 | `typecheck` | `tsc --noEmit`                                     |
@@ -54,3 +56,12 @@ Everyone else gets a branded initials avatar (SVG, accent background). Writes
 `data/images/authors/<authorId>-<photoId>.jpg` or `<authorId>.svg` and `data/author-images.json` (with the match
 method, or why initials were used). Shared Open Library plumbing (retries, throttling, atomic writes, the guarded
 clean-up of unused files) is in `src/openlibrary.ts`.
+
+## Brand artwork
+
+`artwork` generates SVG artwork in the brand colours (`src/artwork.ts`) for every book without a usable cover (it
+reads `data/covers.json`), and for every bundle, collection and category. Books get a cover with a coloured spine,
+title, series line and author; bundles a stack of books with their count; collections a shelf of spines; categories
+an open book. Text sits in the middle because cards crop images to fit. Writes
+`data/images/artwork/<kind>/<id>.svg` and `data/artwork.json`; reruns give identical files. Real images can replace
+any of these later through super-admin uploads.

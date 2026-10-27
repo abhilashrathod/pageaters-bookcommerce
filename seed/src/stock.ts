@@ -2,8 +2,8 @@
 // run produces the same seed. About 5% of books are out of stock so the storefront shows that state; the rest
 // get 1–1000 copies, enough that occasional demo orders (which still deduct stock) never empty them.
 
-// FNV-1a: stable 32-bit hash of the document ID.
-function hash(value: string): number {
+// FNV-1a: stable 32-bit hash of a document ID (also picks artwork variants).
+export function hash(value: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < value.length; i++) {
     h ^= value.charCodeAt(i);
