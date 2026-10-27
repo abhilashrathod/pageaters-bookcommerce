@@ -1,5 +1,5 @@
 {
-  "name": "pageaters-node",
+  "name": "api",
   "version": "1.0.0",
   "types": "module",
   "description": "",
@@ -65,5 +65,6 @@
     "eslint": "^6.8.0",
     "prettier": "^1.19.1",
     "string-strip-html": "^9.1.12"
-  }
+  },
+  "private": true
 }

@@ -1,5 +1,5 @@
 {
-  "name": "pageaters-storefront",
+  "name": "storefront",
   "private": true,
   "scripts": {
     "dev": "next dev",
