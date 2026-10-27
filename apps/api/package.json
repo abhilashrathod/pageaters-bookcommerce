@@ -5,8 +5,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node --watch --env-file-if-exists=.env index.js",
-    "start": "node --env-file-if-exists=.env index.js"
+    "dev": "node --watch --disable-warning=DEP0170 --env-file-if-exists=.env index.js",
+    "start": "node --disable-warning=DEP0170 --env-file-if-exists=.env index.js"
   },
   "keywords": [],
   "author": "",
