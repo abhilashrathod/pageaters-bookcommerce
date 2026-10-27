@@ -102,7 +102,6 @@ function MyApp({Component, pageProps}: AppProps) {
             strategy="afterInteractive"
             src={`https://www.googletagmanager.com/gtag/js?id=${gtag.GA_TRACKING_ID}`}
         />
-        <noscript><img height="1" width="1" style={{display: 'none'}} src="https://www.facebook.com/tr?id=243894680471127&ev=PageView&noscript=1"/></noscript>
         <Script
             id="gtag-init"
             strategy="afterInteractive"
@@ -117,55 +116,6 @@ function MyApp({Component, pageProps}: AppProps) {
           `,
           }}
         />
-        <Script strategy={'afterInteractive'}
-                id="fpixel-init"
-                dangerouslySetInnerHTML={{
-          __html: `
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '243894680471127');
-            fbq('track', 'PageView');
-          `
-        }}>
-        </Script>
-        <Script strategy={'afterInteractive'}
-                id="brevo-init"
-                dangerouslySetInnerHTML={{
-                  __html: `(function() {
-                    window.sib = {
-                        equeue: [],
-                        client_key: "***REMOVED***"
-                    };
-                    /* OPTIONAL: email for identify request*/
-                    // window.sib.email_id = 'example@domain.com';
-                    window.sendinblue = {};
-                    for (var j = ['track', 'identify', 'trackLink', 'page'], i = 0; i < j.length; i++) {
-                    (function(k) {
-                        window.sendinblue[k] = function() {
-                            var arg = Array.prototype.slice.call(arguments);
-                            (window.sib[k] || function() {
-                                    var t = {};
-                                    t[k] = arg;
-                                    window.sib.equeue.push(t);
-                                })(arg[0], arg[1], arg[2]);
-                            };
-                        })(j[i]);
-                    }
-                    var n = document.createElement("script"),
-                        i = document.getElementsByTagName("script")[0];
-                        n.type = "text/javascript", n.id = "sendinblue-js",
-                        n.async = !0, n.src = "https://sibautomation.com/sa.js?key="+ window.sib.client_key,
-                        i.parentNode.insertBefore(n, i), window.sendinblue.page();
-                })();`
-                }}>
-        
-        </Script>
       </>
   )
 }

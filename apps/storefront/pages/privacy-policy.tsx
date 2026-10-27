@@ -90,8 +90,8 @@ const PrivacyPolicy: NextPage = () => {
                   comment on our websites or ask us a question through phone or email.
                 </p>
                 <p>
-                  <strong>We collect information from you passively.</strong> We use tracking tools like Google Analytics,
-                  Facebook Pixel, Amplitude analytics and browser cookies for collecting information about your usage of our website.
+                  <strong>We collect information from you passively.</strong> We use tracking tools like Google Analytics
+                  and browser cookies for collecting information about your usage of our website.
                 </p>
                 <p>
                   <strong>We get information about you from third parties.</strong> For example, if you use an
