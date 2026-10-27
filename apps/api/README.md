@@ -4,6 +4,22 @@ Pageaters REST API — Node + Express + MongoDB (Mongoose).
 
 Legacy JavaScript codebase, to be migrated to TypeScript in PLAN.md Phase 4.
 
+## Setup
+
+Configuration comes from environment variables only (see `src/appConfig.js`).
+
+```sh
+cp .env.example .env   # then fill in the values
+pnpm dev               # node --watch, loads .env if present
+pnpm start             # same without watch
+```
+
+`.env.example` documents every variable and marks which are required to boot
+(`MONGODB_URI`, `RAZORPAY_KEY_ID`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`).
+Use Razorpay test-mode keys only (`rzp_test_…`). Requires Node 22.9+ for `--env-file-if-exists`.
+Never set `APP_ENV=production` for a deployed demo: it sends real SMS and order emails to visitor-typed
+numbers/addresses (AGENTS.md §6). Valid values: `development` | `staging` | `production` | `test`.
+
 ## Structure
 
 ```
