@@ -33,5 +33,6 @@
     "tailwindcss": {
       "optional": true
     }
-  }
+  },
+  "license": "UNLICENSED"
 }

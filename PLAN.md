@@ -70,7 +70,8 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [x] Husky + lint-staged + commitlint + gitleaks pre-commit
   - `pre-commit`: gitleaks on staged changes (fails if gitleaks is missing) → lint-staged (Prettier). Hooks call `node_modules/.bin` directly: `pnpm exec` auto-installs the whole workspace when a `package.json` changes. `commit-msg`: commitlint, Conventional Commits with a scope list. Legacy apps are in `.prettierignore` until migrated. Verified: bad messages/scopes and a staged fake key are rejected
   - pnpm 12 `minimumReleaseAge` guard kept on: typescript-eslint pinned to 8.72.0 instead of adding release-age exemptions. Root-only install (`pnpm --filter pageaters install`); full workspace install is the "Each app installs" step
-- [ ] LICENSE (All Rights Reserved) + notice in README
+- [x] LICENSE (All Rights Reserved) + notice in README
+  - `LICENSE` (view-for-evaluation only; no copying, deployment, derivatives or ML training), interim root `README.md` with notice, every `package.json` set to `"license": "UNLICENSED"` (api previously declared ISC)
 - [ ] Each app installs and runs (legacy code, pre-upgrade) under the workspace on Node 22
 - [ ] **Owner:** create an empty **private** repo on personal GitHub (no README, license or .gitignore)
 - [ ] Push to that private GitHub repo
