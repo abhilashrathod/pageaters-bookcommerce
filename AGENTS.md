@@ -162,7 +162,7 @@ The public demo is a sandbox. These guards are enforced **server-side in the API
 - **Email/SMS**: mock adapters only; messages go to an in-app outbox view. The demo must never send a message
   to an address or number a visitor typed.
 - **Seeded once, never reset.** `pnpm seed` loads the final catalog, demo accounts and sample orders once; the deployed
-  demo keeps that data. Stock is high (500–1000 per book), so orders deduct it without the demo running out.
+  demo keeps that data. Stock is 1–1000 per book (about 5% deliberately out of stock), so orders deduct it without the demo running out.
 - Rate limiting on all public endpoints.
 
 ---

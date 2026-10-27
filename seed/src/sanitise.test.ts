@@ -146,10 +146,10 @@ void describe('generateStock', () => {
     assert.equal(generateStock('abc'), generateStock('abc'));
   });
 
-  void it('stocks every book with 500–1000 copies', () => {
-    for (let n = 0; n < 500; n++) {
-      const stock = generateStock(`id${n}`);
-      assert.ok(stock >= 500 && stock <= 1000);
-    }
+  void it('stays within 0–1000 and leaves some books out of stock', () => {
+    const stocks = Array.from({ length: 1000 }, (_, n) => generateStock(`id${n}`));
+    assert.ok(stocks.every((stock) => stock >= 0 && stock <= 1000));
+    const outOfStock = stocks.filter((stock) => stock === 0).length;
+    assert.ok(outOfStock > 20 && outOfStock < 100);
   });
 });

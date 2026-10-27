@@ -1,6 +1,6 @@
 // Generated stock levels. The real inventory is never read: values depend only on the document ID, so every
-// run produces the same seed. Stock is high enough that a portfolio demo never runs out, while orders still
-// deduct it as in the real store.
+// run produces the same seed. About 5% of books are out of stock so the storefront shows that state; the rest
+// get 1–1000 copies, enough that occasional demo orders (which still deduct stock) never empty them.
 
 // FNV-1a: stable 32-bit hash of the document ID.
 function hash(value: string): number {
@@ -29,5 +29,6 @@ function between(next: () => number, min: number, max: number): number {
 }
 
 export function generateStock(id: string): number {
-  return between(random(hash(id)), 500, 1000);
+  const next = random(hash(id));
+  return next() < 0.05 ? 0 : between(next, 1, 1000);
 }
