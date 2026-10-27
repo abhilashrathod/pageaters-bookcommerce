@@ -25,7 +25,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 | Images                 | Book covers from Open Library by ISBN (665/669); author photos from Open Library only on confident name match, else branded initials avatar; collections, bundles, categories and the 4 ISBN-less books get generated brand artwork. All stored on Vercel Blob |
 | Payments               | Razorpay **test mode only**; boot guard rejects `rzp_live_` keys in demo                                                                                                                                                                                       |
 | Email / SMS / Shipping | Mock adapters; in-app outbox                                                                                                                                                                                                                                   |
-| Demo access            | Storefront: one-click demo shopper; cart/address/orders/search only. Admin: catalog read-only, order lifecycle actions allowed. CMS: read-only. No uploads anywhere. Seeded once, no reset                                                                     |
+| Demo access            | Storefront: one-click demo shopper; cart/address/orders/search only. Admin: catalog read-only, order lifecycle actions allowed. CMS: read-only. No uploads anywhere. Seeded once; weekly visitor cleanup                                                       |
 | Credentials            | Razorpay, Twilio, Delhivery, SendGrid revoked/rotated by owner; AWS and Cloudinary accounts closed; Vultr DB destroyed                                                                                                                                         |
 
 ---
@@ -104,7 +104,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Author photos: Open Library match by name with confidence threshold; fallback branded initials avatar
 - [ ] Generate brand artwork for collections, bundles, categories and ISBN-less books
 - [ ] Upload images to Vercel Blob; write image manifest; rewrite seed image fields to Blob URLs
-- [ ] Demo accounts: demo shopper, demo admin (read-only catalog role), CMS read-only user; sample orders across the order lifecycle
+- [ ] Demo accounts: demo shopper, demo admin (read-only catalog role), CMS read-only user (sample orders come from the Phase 5 generator)
 - [ ] **Owner:** in Atlas, create a DB user for the demo, allow network access `0.0.0.0/0` (Vercel has no fixed IPs on free tiers), put the connection strings for databases `pageaters_api` and `pageaters_cms` into local `.env`
 - [ ] `pnpm seed` (idempotent) against Atlas
 - **Checkpoint:** owner spot-checks catalog data and images
@@ -138,6 +138,8 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] `rzp_live_` boot guard; Razorpay test-mode checkout
 - [ ] Mock email/SMS → outbox collection + outbox view
 - [ ] Uploads disabled; rate limits on public endpoints
+- [ ] Sample-order generator: random orders across the lifecycle through the order services (realistic pricing, discounts, stock deduction)
+- [ ] Weekly cleanup endpoint (protected, `DEMO_MODE` only): wipe visitor carts/addresses/favourites/orders/outbox, restore their stock, regenerate sample orders
 - [ ] Tests for every guard
 
 ## Phase 6 — CMS (Payload)
@@ -187,6 +189,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Renovate
 - [ ] Vercel projects ×4 with root directories, `turbo-ignore`, preview deploys per PR
 - [ ] Environment variables per project (test-mode Razorpay, Atlas, Blob, CMS secret, `DEMO_MODE=true`)
+- [ ] Vercel Cron: weekly demo cleanup
 - [ ] DNS for the four `*.demo.pageaters.com` hosts
 - [ ] Multi-stage Dockerfile for API (`turbo prune`) as alternate target
 - **Checkpoint:** all four apps live, E2E passing against production demo

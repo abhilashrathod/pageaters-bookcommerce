@@ -161,8 +161,12 @@ The public demo is a sandbox. These guards are enforced **server-side in the API
   key starts with `rzp_live_`. This account is used for real money elsewhere — treat this guard as critical.
 - **Email/SMS**: mock adapters only; messages go to an in-app outbox view. The demo must never send a message
   to an address or number a visitor typed.
-- **Seeded once, never reset.** `pnpm seed` loads the final catalog, demo accounts and sample orders once; the deployed
-  demo keeps that data. Stock is 1–1000 per book (about 5% deliberately out of stock), so orders deduct it without the demo running out.
+- **Seeded once.** `pnpm seed` loads the final catalog and demo accounts once; the catalog is never reloaded. Stock is
+  1–1000 per book (about 5% deliberately out of stock).
+- **Weekly cleanup** (Vercel Cron → protected endpoint, `DEMO_MODE=true` only): delete visitor carts, addresses,
+  favourites, orders and outbox messages; put back the stock those orders took; generate a fresh set of random sample
+  orders across the order lifecycle through the API's own order services. It touches only an explicit list of
+  visitor-data collections, never the catalog.
 - Rate limiting on all public endpoints.
 
 ---
