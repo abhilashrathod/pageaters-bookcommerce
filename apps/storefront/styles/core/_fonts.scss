@@ -1,0 +1,9 @@
+/* FONT_FAMILY */
+@font-face {
+  font-family: 'Metropolis Regular';
+  font-style: normal;
+  src: url("../../public/fonts/Metropolis-Regular.otf") format("opentype");
+  font-display: swap;
+}
+
+$font-family-regular: 'Metropolis Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Cantarell, 'Helvetica Neue', Ubuntu, sans-serif;

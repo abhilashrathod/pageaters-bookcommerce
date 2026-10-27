@@ -1,0 +1,38 @@
+/* APP STYLES */
+@import "mixins";
+@import "core";
+
+/* BASE */
+@import "normalize";
+@import "skeleton";
+@import "nprogress";
+
+/* SLIDER */
+@import '../node_modules/keen-slider/keen-slider.min.css';
+
+.categories-list-container {
+  margin: 0 auto;
+  flex-wrap: nowrap;
+  scroll-snap-type: x mandatory;
+  max-width: 100%;
+
+  @media (max-width: 991px) {
+    max-width: 768px;
+  }
+
+  @media (max-width: 991px) {
+    max-width: 500px;
+  }
+}
+
+// for slider
+
+.keen-slider {
+  height: 100%;
+}
+
+// for image viewer 
+
+.fslightboxs {
+  object-fit: cover !important;
+}
