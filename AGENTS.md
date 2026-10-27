@@ -42,7 +42,7 @@ pageaters/
 ├─ seed/            Sanitised demo seed data + image manifest (committed)
 ├─ docs/            Feature, site and architecture explanations (see §9)
 │  └─ adr/          Architecture Decision Records
-├─ agents/          Subagent definitions (see §9)
+├─ agents/          Subagent definitions (see §9); `.claude/agents` symlinks here
 ├─ AGENTS.md        This file
 ├─ CLAUDE.md        Imports AGENTS.md for Claude Code
 ├─ PLAN.md          Phased migration plan with checkboxes
@@ -223,7 +223,7 @@ Rules:
   accepted ADR's decision; supersede it with a new one.
 - **`agents/*.md`** — subagent definitions. Each file has YAML frontmatter (`name`, `description` saying when to use
   it, `tools`) followed by the agent's instructions. Subagents must follow this AGENTS.md; their files may narrow
-  these rules but never relax them.
+  these rules but never relax them. `.claude/agents` is a symlink to `agents/` so Claude Code loads them.
 - **READMEs** — root README for reviewers (what, architecture diagram, live links, demo logins, local setup);
   each app has a short README with its own commands and env vars.
 
@@ -247,6 +247,29 @@ and ask for exactly that — never invent credentials or create accounts. Secret
 - Tick checkboxes in PLAN.md as steps complete, in the same commit as the work.
 - At each **Checkpoint**, stop and report to the user before continuing.
 - If a step turns out wrong or impossible, say so and propose a change to PLAN.md — don't silently deviate.
+
+### Subagent workflow
+
+The main session is the **orchestrator**; the subagents in `agents/` do the work. The one-checkbox-at-a-time rule
+above still applies — subagents split a checkbox, they don't widen it.
+
+| Agent                                                   | Scope         | Edits                             |
+| ------------------------------------------------------- | ------------- | --------------------------------- |
+| `api-engineer`, `storefront-engineer`, `admin-engineer` | Their own app | Only `apps/<app>/`                |
+| `docs-writer`                                           | Whole repo    | `docs/**`, app/package READMEs    |
+| `test-writer`                                           | Whole repo    | Test files and test config only   |
+| `lint-fixer`                                            | Whole repo    | Style and formatting, never logic |
+| `deploy-engineer`                                       | Whole repo    | CI, Vercel and build config       |
+| `code-reviewer`, `security-auditor`                     | Whole repo    | Nothing (read-only)               |
+
+- **Orchestrator owns** `PLAN.md`, `AGENTS.md`, root files, `pnpm-lock.yaml`, merging into `main` and pushing. It
+  briefs each subagent with one checkbox (or sub-task), its allowed files and the gates to run.
+- **Parallel work** runs in separate git worktrees, one branch per subagent (`<agent>/<short-task>`), so agents never
+  share a working tree. Agents commit on their branch with hooks enforced and never push or rewrite history.
+- **Before merge**, every branch passes `code-reviewer` (verdict merge) and `security-auditor` (verdict clear).
+  The orchestrator then merges, runs the root gates, regenerates the lockfile if needed, ticks PLAN.md and pushes.
+- Changes a subagent needs outside its scope go in its report; the orchestrator makes them or briefs the owner agent.
+- Deployments to production, domain changes and anything needing an account or secret still stop for the owner.
 
 ---
 

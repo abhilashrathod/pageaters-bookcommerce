@@ -57,6 +57,8 @@ This file is temporary: when every phase is done, archive the decision log into 
   - Full-history sweep for emails, phone numbers, addresses, GST/PAN/bank details. Replaced in every commit: owner's personal email → `owner@example.com`; business contact emails → `support@demo.pageaters.com`; all real phone numbers → `9000000000`; supplier name/address, warehouse pickup name/street and the business street address in storefront footer/privacy policy → fake values (city and pincode kept). JVM crash log removed from history
   - `mainAddress` (Delhivery pickup) is now `PAGEATERS DEMO WAREHOUSE`, fake street and phone, real city/pincode — shipping flows keep working
   - Verified: 334 commits, authorship/dates/messages identical, zero old values in file contents, gitleaks clean. Commit-author emails intentionally untouched (authorship)
+- [x] **Authorship fix** (owner-approved one-time exception, 2026-10-27; force-pushed once with `--force-with-lease`)
+  - 17 commits made by the owner under a former employer's username (`ta61`) reassigned to the owner's own identity via `git filter-repo --mailmap`. Verified: 339 commits, identical tree, dates and messages; no other author changed
 - [x] Initialise pnpm workspace + Turborepo (`turbo.json`: build, dev, lint, typecheck, test, test:e2e)
   - Root `package.json` (pnpm 12.4.1 pinned, Node 22, turbo 2.11.10), `pnpm-workspace.yaml` (`apps/*`, `packages/*`), `turbo.json`. App packages renamed `admin` / `api` / `storefront`. Verified with `turbo --dry` on Node 22. Missing legacy scripts (`dev`, `typecheck`…), `pnpm install`, lockfile and removal of per-app `package-lock.json` belong to the "Each app installs and runs" step
 - [x] `packages/config` (tsconfig bases, ESLint flat config, Prettier, Tailwind preset), `.nvmrc`, `.editorconfig`, root `.gitignore`
@@ -73,8 +75,10 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [x] LICENSE (All Rights Reserved) + notice in README
   - `LICENSE` (view-for-evaluation only; no copying, deployment, derivatives or ML training), interim root `README.md` with notice, every `package.json` set to `"license": "UNLICENSED"` (api previously declared ISC)
 - [ ] Each app installs and runs (legacy code, pre-upgrade) under the workspace on Node 22
-- [ ] **Owner:** create an empty **private** repo on personal GitHub (no README, license or .gitignore)
-- [ ] Push to that private GitHub repo
+- [x] **Owner:** create an empty **private** repo on personal GitHub (no README, license or .gitignore)
+  - `github.com/abhilashrathod/pageaters-bookcommerce` (private)
+- [x] Push to that private GitHub repo
+  - `main` pushed and kept in sync after each step since 2026-10-27
 - **Checkpoint:** owner verifies history on GitHub; repo stays private until Phase 11
 
 ## Phase 2 — Seed data & images
@@ -179,7 +183,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Root README: story (real business, ~10k customers, hand-built 2022–24, re-architected 2026), Mermaid architecture diagram, live links, demo logins, screenshots, 3-command local setup
 - [ ] `docs/*.md` per AGENTS.md §9
 - [ ] ADRs: monorepo, Payload CMS & content/commerce boundary, App Router + Tailwind/shadcn, serverless API & adapters, demo-mode sandbox, history preservation
-- [ ] `agents/*.md` subagents (proposed: `code-reviewer`, `security-auditor` (secrets/PII scan), `test-writer`, `docs-writer`, `cms-block-builder`, `angular-upgrader`)
+- [ ] `agents/*.md` subagents — final review of the roster. Added early (2026-10-27, workflow in AGENTS.md §10): `api-engineer`, `storefront-engineer`, `admin-engineer`, `code-reviewer`, `security-auditor`, `docs-writer`, `test-writer`, `lint-fixer`, `deploy-engineer`. Still to add in their phases: `cms-engineer` (Phase 6)
 - [ ] Final gitleaks + manual sensitive-data sweep
 - [ ] Make GitHub repo public
 - [ ] Archive decision log to `docs/adr/`, delete PLAN.md
