@@ -6,6 +6,7 @@ The raw dump stays outside the repo (`../pageaters-data-dump`) and is never comm
 ```sh
 pnpm --filter @pageaters/seed sanitise [dump-dir]   # default: $SEED_DUMP_DIR or ../pageaters-data-dump
 pnpm --filter @pageaters/seed covers                # after sanitise; needs network (~10 min)
+pnpm --filter @pageaters/seed authors               # after sanitise; needs network (~10 min)
 ```
 
 Writes `data/{authors,bundles,categories,collections,product-sets,store-books}.json` in MongoDB Extended JSON.
@@ -27,13 +28,14 @@ What the pipeline does:
   terms. Findings are printed masked. Any finding outside the reviewed list, or a reviewed count that changes, fails
   the run and leaves `data/` untouched.
 
-| Script      | Purpose                                     |
-| ----------- | ------------------------------------------- |
-| `sanitise`  | Dump → `data/`                              |
-| `covers`    | Open Library covers → `data/images/covers/` |
-| `test`      | Unit tests on synthetic data                |
-| `lint`      | ESLint                                      |
-| `typecheck` | `tsc --noEmit`                              |
+| Script      | Purpose                                            |
+| ----------- | -------------------------------------------------- |
+| `sanitise`  | Dump → `data/`                                     |
+| `covers`    | Open Library covers → `data/images/covers/`        |
+| `authors`   | Author photos or initials → `data/images/authors/` |
+| `test`      | Unit tests on synthetic data                       |
+| `lint`      | ESLint                                             |
+| `typecheck` | `tsc --noEmit`                                     |
 
 ## Covers
 
@@ -42,3 +44,13 @@ cover of that exact edition (Books API, 50 ISBNs per request), then the cover of
 request a second). A cover is used only when Open Library's title matches ours, or the mismatch was reviewed and
 listed in `acceptedTitleMismatches`. Writes `data/images/covers/<bookId>-<coverId>.jpg`, `data/covers.json` and
 `data/cover-misses.json` (with a reason per book). Reruns keep files already on disk and remove ones no longer used.
+
+## Author images
+
+`authors` gives every author an image (`src/authors.ts`). An Open Library photo is used only when the author is
+matched with confidence: listed on the Open Library edition of one of their own books (by ISBN) with the same
+surname and first initial, or found by search with exactly our name and a best-known work among our titles for them.
+Everyone else gets a branded initials avatar (SVG, accent background). Writes
+`data/images/authors/<authorId>-<photoId>.jpg` or `<authorId>.svg` and `data/author-images.json` (with the match
+method, or why initials were used). Shared Open Library plumbing (retries, throttling, atomic writes, the guarded
+clean-up of unused files) is in `src/openlibrary.ts`.

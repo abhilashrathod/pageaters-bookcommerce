@@ -6,6 +6,7 @@
   "scripts": {
     "sanitise": "node src/cli.ts",
     "covers": "node src/covers-cli.ts",
+    "authors": "node src/authors-cli.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --test 'src/**/*.test.ts'"
