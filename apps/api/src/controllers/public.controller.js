@@ -1,4 +1,3 @@
-const { CONTACT_US_EMAIL } = require('./../appConfig');
 
 const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 const { returnProductImage, returnBundleImage } = require('../helpers/order.helper');

@@ -48,7 +48,6 @@ export class BookViewComponent implements OnInit {
       this.book = res;
       this.book.poster = `${BUCKETS.BOOKS}/${this.book.poster}`;
       this.isReady = true;
-      // this.buildForms(res);
     }, err => {
       this.snackBar.open(err.message, 'OKAY', {duration: 5000});
     });

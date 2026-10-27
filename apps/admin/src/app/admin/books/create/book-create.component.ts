@@ -31,7 +31,6 @@ export class BookCreateComponent implements OnInit {
 
   poster;
   images: any[] = [];
-  // selectedFile: File;
 
   filters = {
     limit: 25,

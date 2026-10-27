@@ -3,9 +3,8 @@ const { get } = require('lodash');
 
 const { models, enums } = require('../constants');
 
-const { writeFile, generateRandomNumber } = require('./../helpers/utils.helper');
+const { generateRandomNumber } = require('./../helpers/utils.helper');
 const sendMailQueue = require('./../helpers/sendMailQueue.helper');
-const moment = require('moment/moment');
 
 const User = mongoose.model(models.USER);
 const CreditTransactions = mongoose.model(models.STORE_CREDIT_TRANSACTIONS);

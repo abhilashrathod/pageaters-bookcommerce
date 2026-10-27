@@ -1,14 +1,12 @@
 const mongoose = require('mongoose');
 const moment = require('moment');
-const path = require('path');
-const Razorpay = require('razorpay');
 const { get } = require('lodash');
 
-const { HOST, PROJECT_ROOT, TWILIO, RAZOR_PAY, ENVIRONMENT } = require('./../appConfig');
+const { HOST, TWILIO } = require('./../appConfig');
 const { models, enums } = require('../constants');
 
 const { encrypt, decrypt, generateJwtToken } = require('../helpers/encryption.helper');
-const { writeFile, generateRandomNumber } = require('./../helpers/utils.helper');
+const { generateRandomNumber } = require('./../helpers/utils.helper');
 const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const User = mongoose.model(models.USER);
@@ -17,11 +15,6 @@ const Cart = mongoose.model(models.CART);
 const Favorites = mongoose.model(models.FAVORITES);
 
 const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
-
-const REFRESH_TOKEN_OPTIONS = {
-  httpOnly: true,
-  expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
-};
 
 const ACCESS_TOKEN_OPTIONS = {
   httpOnly: true,
@@ -36,7 +29,6 @@ module.exports.register = async (req, res) => {
   try {
     let { email, password } = req.allParams();
     const ipAddress = req.ip;
-    let razorPayCustomer;
 
     const isEmailAvailable = await User.isEmailAvailable(email);
 
@@ -45,13 +37,6 @@ module.exports.register = async (req, res) => {
     }
 
     const user = await User.create({ email, role: enums.USER_ROLES.USER });
-
-    // if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
-    //   razorPayCustomer = await razorPayInstance.customers.create({ email, contact: '', notes: {} });
-    // }
-    // if (ENVIRONMENT === enums.ENVIRONMENTS.PRODUCTION) {
-    //   user.razorPayCustId = razorPayCustomer.id;
-    // }
 
     await user.setPassword(password);
     const verifyToken = await user.generateVerifyEmailToken();
@@ -65,23 +50,9 @@ module.exports.register = async (req, res) => {
     await Favorites.create({ userId: user._id });
 
     const { payload, token } = generateJwtToken(user, ipAddress);
-    // const refreshToken = generateRefreshToken(user, ipAddress);
 
     await AccessTokens.create({ ...payload, token });
     // const profile = await User.getProfile(user._id); // TODO: Improvement could be made
-
-    // sendMailQueue.add({
-    //   emailModule: 'REGISTRATION',
-    //   to: user.email,
-    //   subject: 'Pageaters Account - Greetings from Pageaters!',
-    //   data: {
-    //     FULL_NAME: returnAddressName('', user.email),
-    //     LINK: `${HOST}/auth/verify?token=${verifyToken}&email=${encodeURIComponent(user.email)}`,
-    //   },
-    // });
-
-    // create a refresh token cookie that will also expires in 7 days
-    // res.cookie(enums.TOKEN_ID.REFRESH_TOKEN_COOKIE, refreshToken.token, REFRESH_TOKEN_OPTIONS);
 
     // create an access token cookie that will also expires in 7 days
     res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
@@ -116,15 +87,11 @@ module.exports.login = async (req, res) => {
 
     // generate necessary token
     const { token, payload } = generateJwtToken(user, ipAddress);
-    // const refreshToken = generateRefreshToken(user, ipAddress);
     await AccessTokens.create({ ...payload, token });
 
     // get user profile
     user = await User.getProfile(user._id);
     const cartRes = await Cart.findOne({ user: user._id });
-
-    // create a refresh token cookie that will also expires in 7 days
-    // res.cookie(enums.TOKEN_ID.REFRESH_TOKEN_COOKIE, refreshToken.token, REFRESH_TOKEN_OPTIONS);
 
     // create an access token cookie that will also expires in 7 days
     res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
@@ -137,14 +104,6 @@ module.exports.login = async (req, res) => {
     }
 
     return res.ok({ message: 'LOGIN_SUCCESS', data: user });
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-module.exports.refreshToken = async (req, res) => {
-  try {
-    console.info('in progress');
   } catch (e) {
     return res.internalServerError(e);
   }
@@ -177,7 +136,6 @@ module.exports.revokeToken = async (req, res) => {
       expires: 0,
     };
 
-    // res.cookie(enums.TOKEN_ID.REFRESH_TOKEN_COOKIE, '', cookieOptions);
     res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, '', cookieOptions);
     res.cookie(enums.TOKEN_ID.CART_COOKIE, '', cookieOptions);
 
@@ -243,7 +201,7 @@ module.exports.adminRegister = async (req, res) => {
 
 module.exports.updateProfile = async (req, res) => {
   try {
-    const { fullName, contactNo } = req.allParams();
+    const { fullName } = req.allParams();
     let { user } = req;
 
     const fieldsToUpdate = {};
@@ -427,10 +385,6 @@ module.exports.sendContactVerification = async (req, res) => {
 
     const loggedInUser = await User.findOne({ _id: userId });
 
-    // if (loggedInUser.contactVerified) {
-    //   return res.error('CONTACT_VERIFICATION_EXIST');
-    // }
-
     loggedInUser.lastMessageSentOn = new Date().toISOString();
     loggedInUser.contactOtp = verificationCode;
     loggedInUser.contactNo = contactNo;
@@ -456,10 +410,6 @@ module.exports.resendContactVerification = async (req, res) => {
     const userId = get(req, 'user.userId', '');
 
     const user = await User.findOne({ _id: userId });
-
-    // if (user.contactVerified) {
-    //   return res.error('CONTACT_VERIFICATION_EXIST');
-    // }
 
     if (!user.contactOtp) {
       return res.error('CONTACT_VERIFICATION_NOT_EXIST');
@@ -502,10 +452,6 @@ module.exports.verifyContact = async (req, res) => {
     const userId = get(req, 'user.userId', '');
 
     const user = await User.findOne({ _id: userId });
-
-    // if (user.contactVerified) {
-    //   return res.error('CONTACT_VERIFICATION_EXIST');
-    // }
 
     if (!user.contactOtp) {
       return res.error('CONTACT_VERIFICATION_NOT_EXIST');
@@ -609,121 +555,6 @@ module.exports.recoverAccount = async (req, res) => {
     const token = encrypt(JSON.stringify({ userId: user._id, createdAt: Date.now() }));
 
     return res.ok({ message: 'ACCOUNT_RECOVERED', data: { user, token } });
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-module.exports.updateAvatar = async (req, res) => {
-  try {
-    let { user } = req;
-
-    const file = req.files[0];
-
-    if (!file) {
-      return res.error('NO_FILE_PRESENT');
-    }
-
-    const ext = file.originalname.split('.').pop();
-
-    if (!ext || !['jpg', 'png', 'jpeg'].includes(ext)) {
-      return res.error('INVALID_FILE');
-    }
-
-    if (!file.mimetype.startsWith('image/')) {
-      return res.error('INVALID_FILE');
-    }
-
-    if (file.size / 1024 / 1024 > 2) {
-      // Should not be greater than 2 MB
-      return res.error('FILE_TOO_LARGE');
-    }
-
-    const fileName = `avatar-${Date.now()}.${ext}`;
-    const avatarFolder = path.join(PROJECT_ROOT, 'resources', user._id.toString(), 'avatar');
-
-    await writeFile(avatarFolder, fileName, file.buffer);
-
-    // update user
-    await User.findByIdAndUpdate(user._id, {
-      avatar: { src: fileName, mimeType: file.mimetype },
-      socialImage: false,
-    });
-
-    // get updated user
-    user = await User.getProfile(user._id);
-
-    return res.ok({ message: 'PROFILE_UPDATED', data: { user } });
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-module.exports.updateFcmToken = async (req, res) => {
-  try {
-    const { fcmToken, deviceId, source } = req.allParams();
-    const { user } = req;
-
-    // delete other tokens for this deviceId.
-    await Device.deleteMany({ deviceId });
-
-    // add new token.
-    await Device.create({ deviceId, fcmToken, source, userId: user._id });
-
-    return res.ok('TOKEN_UPDATED');
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-/* TEMMO */
-
-module.exports.sms = async (req, res) => {
-  try {
-    let { fullName, email, contact, notes = {} } = req.allParams();
-
-    // const payload = { name: fullName, email, contact, notes };
-
-    // const razorPayCustomer = await razorPayInstance.customers.create(payload);
-
-    const success = await twilioClient.messages.create(payload);
-
-    // {
-    //   "id": "cust_IIHBr2RHTMWmuc",
-    //   "entity": "customer",
-    //   "name": "Abhilash Rathod",
-    //   "email": "owner@example.com",
-    //   "contact": "+91-9876543210",
-    //   "gstin": null,
-    //   "notes": [],
-    //   "created_at": 1636192620
-    // }
-    //
-    // sendMailQueue.add({
-    //   emailModule: 'REGISTRATION',
-    //   to: "support@demo.pageaters.com",
-    //   data: {
-    //     NAME: `Abhilash Rathore`
-    //   },
-    // });
-
-    const query = {
-      _id: '61993d8f6cd124042837359d',
-      'subscription.razorPayPlanId': '',
-      'subscription.plan': null,
-      'subscription.isActive': false,
-      $or: [
-        { 'subscription.currentStatus': enums.SUBSCRIPTION_STATUSES.AUTHENTICATED },
-        { 'subscription.currentStatus': enums.SUBSCRIPTION_STATUSES.NEW },
-        { 'subscription.currentStatus': enums.SUBSCRIPTION_STATUSES.ACTIVE },
-      ],
-    };
-
-
-    const userRes = await User.findOne(query);
-
-
-    return res.ok({ message: 'ME_SUCCESS', data: userRes });
   } catch (e) {
     return res.internalServerError(e);
   }

@@ -13,7 +13,6 @@ module.exports = (...permissionsRequired) => {
   return [
     // step 1:
     (req, res, next) => {
-      // const refreshToken = req.cookies[enums.TOKEN_ID.REFRESH_TOKEN_COOKIE];
       const accessToken = req.cookies[enums.TOKEN_ID.ACCESS_TOKEN_COOKIE];
 
       if (!accessToken) {
@@ -35,8 +34,7 @@ module.exports = (...permissionsRequired) => {
       });
     },
     async (req, res, next) => {
-      const { userId, createdByIp } = req.user;
-      const ipAddress = req.ip;
+      const { userId } = req.user;
 
       const user = await User.findOne({ _id: userId, status: enums.USER_STATUS.ACTIVE, isDeleted: false }).select(SELECTION_STRING);
 
@@ -44,12 +42,6 @@ module.exports = (...permissionsRequired) => {
       if (!user) {
         return res.unauthorized('INVALID_USER');
       }
-
-      // if the token is accessed via another IP address then issued one
-      // if (createdByIp !== ipAddress) {
-      //   console.error('Ip mismatch');
-      //   return res.unauthorized('INVALID_TOKEN');
-      // }
 
       // if scheduled for deletion send back
       if (user.scheduledForDeletion) {

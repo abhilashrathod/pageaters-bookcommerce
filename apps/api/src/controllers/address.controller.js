@@ -5,7 +5,6 @@ const axios = require('axios');
 const colors = require('colors');
 const Address = mongoose.model(models.ADDRESS);
 
-const { generateRandomNumber, getId } = require('../helpers/utils.helper');
 const { checkServiceabilityInternal } = require('../helpers/order.helper');
 const { DELHIVERY } = require('../appConfig');
 

@@ -1,4 +1,3 @@
-const fs = require('fs');
 const { Schema, model } = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 

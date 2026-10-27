@@ -1,6 +1,6 @@
 node_modules
 output.log
-*.sqlite
+data/
 *.png
 package-lock.json
 
@@ -12,5 +12,5 @@ package-lock.json
 # File Uploads
 resources/
 
-# for web scrapping
+# Local seed files (scripts/seedData.js)
 seedData/

@@ -4,7 +4,6 @@ const router = new Router();
 const { USER_ROLES } = require('./../constants/enums');
 
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
-const requestValidator = require('../middlewares/requestValidator.middleware');
 
 const controller = require('./../controllers/storeCredit.controller');
 
@@ -12,8 +11,6 @@ const controller = require('./../controllers/storeCredit.controller');
 router.get('/', permissionValidator(USER_ROLES.USER), controller.getStoreCredit);
 router.get('/history', permissionValidator(USER_ROLES.USER), controller.getCreditHistory);
 
-// For Admin
-// router.get('/', permissionValidator(USER_ROLES.ADMIN), controller.getAll);
 router.post('/', permissionValidator(USER_ROLES.ADMIN), controller.issueCredit);
 
 

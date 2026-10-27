@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { generateRandomNumber, getId } = require('../helpers/utils.helper');
 
-const { models, enums } = require('../constants');
+const { models } = require('../constants');
 
 const Collection = mongoose.model(models.COLLECTION);
 const Book = mongoose.model(models.STORE_BOOK);

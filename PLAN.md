@@ -55,9 +55,12 @@ This file is temporary: when every phase is done, archive the decision log into 
   - Root `package.json` (pnpm 12.4.1 pinned, Node 22, turbo 2.11.10), `pnpm-workspace.yaml` (`apps/*`, `packages/*`), `turbo.json`. App packages renamed `admin` / `api` / `storefront`. Verified with `turbo --dry` on Node 22. Missing legacy scripts (`dev`, `typecheck`…), `pnpm install`, lockfile and removal of per-app `package-lock.json` belong to the "Each app installs and runs" step
 - [x] `packages/config` (tsconfig bases, ESLint flat config, Prettier, Tailwind preset), `.nvmrc`, `.editorconfig`, root `.gitignore`
   - TypeScript 6.0.3 (typescript-eslint doesn't support TS 7 yet), ESLint 9.39 (react-hooks plugin not on ESLint 10 yet), Prettier 3.9 (legacy style: single quotes, width 140), Tailwind 4.3 theme CSS with the original colours, Metropolis font, 1rem radius and 576/768/992/1200 breakpoints. Verified in a sandbox: all tsconfigs compile, ESLint presets catch planted `any`/`console`/floating-promise/`<img>` issues, Tailwind emits `bg-accent → var(--accent)`
-- [ ] Remove junk: `.idea/`, `.DS_Store`, `hs_err_pid*.log`, empty `admin.controller.js`, `modified/sqlite.js`, `data/db`, `queueData`, `info`, `bitbucket-pipelines.yml`, commented-out routes, unreachable code
+- [x] Remove junk: `.idea/`, `.DS_Store`, `hs_err_pid*.log`, empty `admin.controller.js`, `modified/sqlite.js`, `data/db`, `queueData`, `info`, `bitbucket-pipelines.yml`, commented-out routes, unreachable code
+  - Junk: crash log, `bitbucket-pipelines.yml`, `modified/sqlite.js`, `data/db`/`info`/`queueData` placeholders, `public/foo.json`, empty files, unused email template variants, boilerplate README (`.idea/`, `.DS_Store` were never tracked)
+  - Dead api modules (static `require` trace from `index.js`): unmounted private/books/subscription/subscription-plan/page routes + controllers, unused models (apiClient, device, discount, log_pushNotification, page, store, subscriptionPlan), push-notification and static-file helpers, unrouted handlers, dev-only unauthenticated `POST /store-books/bulk/create` scraper, unused exports, imports, config keys and 13 npm deps
+  - Commented-out code removed in api and admin. Storefront skipped (rebuilt in Phase 7). Kept: unmounted `apiLimiter`/`speedLimiter` (mounted in Phase 4)
 - [ ] Legacy config reads from env: new committed `config/*.js` (backend) / `environment*.ts` (admin) with no values, plus `.env.example` listing **only the vars the running code needs** (no keys for removed or mocked services)
-- [ ] Remove Amplitude and Brevo/Sendinblue entirely: backend `@amplitude/node` dep, `AMPLITUDE` config, usage in `subscription.controller.js`; storefront Brevo script in `pages/_app.tsx`, `NEXT_PUBLIC_AMPLITUDE_API_KEY`, Amplitude mention in `pages/privacy-policy.tsx`
+- [ ] Remove Amplitude and Brevo/Sendinblue entirely: ~~backend `@amplitude/node` dep, `AMPLITUDE` config, usage in `subscription.controller.js`~~ (done in junk-removal step); storefront Brevo script in `pages/_app.tsx`, `NEXT_PUBLIC_AMPLITUDE_API_KEY`, Amplitude mention in `pages/privacy-policy.tsx`
 - [ ] Husky + lint-staged + commitlint + gitleaks pre-commit
 - [ ] LICENSE (All Rights Reserved) + notice in README
 - [ ] Each app installs and runs (legacy code, pre-upgrade) under the workspace on Node 22
@@ -91,6 +94,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Security fixes: single CORS allowlist (remove reflect-any-origin), mount rate limiters, per-route body limits (drop global 100 MB + `multer().any()`), protect `/re-index`, auth audit on every route
 - [ ] Replace lunr in-memory index with MongoDB text index / Atlas Search; replace sqlite mail queue with direct sends via adapter
 - [ ] Central error handler, pino logging, request IDs, `/health`
+- [ ] Fix legacy bugs found in Phase 1 cleanup: `add-on.controller` `update` (undefined `id`/`addOnId`) and `getById` (returns undefined `bundles`), `getByProductId` ignores `productId`; `jobs/index.js` undefined `logError`; `STOCK_ALERT` email has only `en.html` but renderer loads `en.ejs`
 - [ ] OpenAPI from zod at `/docs`
 - [ ] Remove `page.controller` / page & banner models (moved to CMS); move sitemap + Google product feed to storefront
 - **Checkpoint:** API runs locally, all routes reachable, typecheck clean

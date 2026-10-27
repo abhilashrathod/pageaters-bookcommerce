@@ -12,10 +12,6 @@ router.get('/', async (req, res) => {
 router.use('/admin', require('./admin.routes'));
 
 router.use('/public', require('./public.routes'));
-// router.use('/private', require('./private.routes'));
-// router.use('/books', require('./book.routes'));
-// router.use('/subscription-plan', require('./subscriptionPlan.routes'));
-// router.use('/subscription', require('./subscription.routes'));
 router.use('/auth', require('./auth.routes'));
 router.use('/file', require('./file.routes'));
 router.use('/add-ons', require('./add-on.routes'));

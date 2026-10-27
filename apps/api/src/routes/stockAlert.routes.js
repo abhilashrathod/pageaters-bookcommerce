@@ -4,10 +4,8 @@ const router = new Router();
 const { USER_ROLES } = require('./../constants/enums');
 
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
-const requestValidator = require('../middlewares/requestValidator.middleware');
 
 const controller = require('./../controllers/stockAlert.controller');
-// const validator = require('./../validators/auth.validator');
 
 
 // for Users

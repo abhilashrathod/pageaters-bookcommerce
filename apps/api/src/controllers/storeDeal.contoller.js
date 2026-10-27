@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const { kebabCase, sortBy } = require('lodash');
-const { generateRandomNumber, getId } = require('../helpers/utils.helper');
+const { sortBy } = require('lodash');
+const { generateRandomNumber } = require('../helpers/utils.helper');
 
 const { models } = require('../constants');
 

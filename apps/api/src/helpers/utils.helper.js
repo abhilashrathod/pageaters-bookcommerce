@@ -20,20 +20,6 @@ module.exports.writeFile = async (folder, fileName, buffer) => {
   });
 };
 
-module.exports.moveFile = async (oldPath, newFolderPath, newPath) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      await mkdirp(newFolderPath, { recursive: true });
-
-      fs.renameSync(oldPath, newPath);
-
-      return resolve();
-    } catch (e) {
-      return reject(e);
-    }
-  });
-};
-
 module.exports.checkEnvVariables = async () => {
   try {
     for (const variable of Object.keys(appConfig)) {
@@ -79,8 +65,4 @@ module.exports.arrayDifference = (a1, a2) => {
     diff.push(k);
   }
   return diff;
-};
-
-module.exports.returnUnixTimestamp = (dateObj) => {
-  return Math.round(dateObj.getTime() / 1000);
 };

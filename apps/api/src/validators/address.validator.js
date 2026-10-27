@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-const { email, fullName, phone, objectId } = require('./common.validator');
+const { email, phone, objectId } = require('./common.validator');
 const { enums } = require('../constants');
 
 const name = Joi.string().required().trim().description('Name for Address').error(new Error('INVALID_NAME'));
@@ -15,21 +15,6 @@ const type = Joi.string().valid(...Object.values(enums.ADDRESS_TYPES));
 
 module.exports.createPayload = Joi.object({
   fullName: name,
-  contactNo: phone,
-  email,
-  city,
-  state,
-  pinCode,
-  isDefault,
-  addressLine1,
-  addressLine2,
-  landmark,
-  type,
-});
-
-module.exports.updatePayload = Joi.object({
-  id: objectId,
-  fullName,
   contactNo: phone,
   email,
   city,

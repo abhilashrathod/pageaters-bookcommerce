@@ -51,15 +51,6 @@ module.exports.resetPassword = Joi.object({
   confirmPassword: password,
 });
 
-module.exports.verifyForgotPasswordToken = Joi.object({
-  token: Joi.string()
-    .required()
-    .trim()
-    .description('Reset Password token')
-    .error(new Error('INVALID_RESET_PASSWORD_TOKEN')),
-  email,
-});
-
 module.exports.updateProfile = Joi.object({
   fullName,
   contactNo: Joi.string()
@@ -83,19 +74,4 @@ module.exports.deleteAccount = Joi.object({
   password: Joi.string()
     .required()
     .error(new Error('INVALID_PASSWORD')),
-});
-
-module.exports.updateFcmToken = Joi.object({
-  fcmToken: Joi.string()
-    .required()
-    .description('Fcm Token')
-    .error(new Error('INVALID_FCM_TOKEN')),
-  deviceId: Joi.string()
-    .required()
-    .description('Device identifier')
-    .error(new Error('INVALID_DEVICE_ID')),
-  source: Joi.string()
-    .required()
-    .description('Source')
-    .error(new Error('INVALID_SOURCE')),
 });

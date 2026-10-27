@@ -1,10 +1,8 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const { v4 } = require('uuid');
 
 const algorithm = 'aes-256-cbc';
 const { ENCRYPTION_KEY } = require('./../appConfig');
-const { models } = require('../constants');
 const { USER_ROLES } = require('../constants/enums');
 
 module.exports.generateJwtToken = (account, ipAddress) => {
@@ -24,19 +22,6 @@ module.exports.generateJwtToken = (account, ipAddress) => {
   };
 };
 
-module.exports.generateRefreshToken = (account, ipAddress) => {
-  // create a refresh token that expires in 7 days
-  return {
-    account: account.id,
-    token: randomTokenString(),
-    expires: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
-    createdByIp: ipAddress,
-  };
-};
-
-function randomTokenString() {
-  return crypto.randomBytes(40).toString('hex');
-}
 
 
 // ===================================================
@@ -56,11 +41,6 @@ module.exports.hashString = (value, salt) => {
 
   return hashString;
 };
-
-module.exports.secureRandom = (length = 32) => `${crypto.randomBytes(length).toString('hex')}-${process.pid}-${v4()}`;
-
-module.exports.randomHex = (length = 32) => crypto.randomBytes(length).toString('hex');
-
 
 module.exports.encrypt = text => {
   const iv = crypto.randomBytes(16);

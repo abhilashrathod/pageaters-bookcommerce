@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const { models, enums } = require('../constants');
+const { models } = require('../constants');
 const sendMailQueue = require('./../helpers/sendMailQueue.helper');
 
 const StockAlert = mongoose.model(models.STOCK_ALERT);
@@ -9,8 +9,6 @@ const StockAlert = mongoose.model(models.STOCK_ALERT);
 module.exports.getAll = async (req, res) => {
   try {
     let { page, limit } = req.allParams();
-
-    const query = { isDeleted: false };
 
     const options = {
       page,

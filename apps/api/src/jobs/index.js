@@ -17,31 +17,10 @@ const { clearResources } = require('./clearResources');
 //   when: ''         // description for when the cron job should run. describing the cron time.
 //   CRON_TIME: '',   // valid cron time format
 //   JOBS_TO_RUN: [{  // array of jobs to be executed.
-//     func: func,    // Actual function to execute. Refer below template
+//     func: func,    // Function returning a promise; takes params as its first argument.
 //     params: '',    // Parameters to pass if any.
 //     blocked: false,// Set to true if want to block this notification.
 //   }],
-// }
-
-// Function 'func' should be in this format.
-// function func(params = {}) {
-//   logInfo('func start');
-//   let { lang = utils.defaultLanguage } = params;
-//   let sentCounter = 0;
-//   return new Promise(async (resolve, reject) => {
-//     try {
-
-//       // your logic here.
-
-//       // execution completed.
-//       logInfo('func completed.');
-//       logInfo(`sent ${sentCounter} notifications`);
-//       resolve();
-//     } catch (e) {
-//       logError(e)
-//       reject(e);
-//     }
-//   });
 // }
 
 const SCHEDULES = [
@@ -113,15 +92,4 @@ module.exports.schedule = async () => {
     // log a message if cron job are disabled.
     console.log('Not running cron jobs. To enable, set ENABLE_CRON to true in config.');
   }
-};
-
-module.exports.trigger = async reference => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      await eval(reference)({});
-      resolve();
-    } catch (e) {
-      reject(e);
-    }
-  });
 };

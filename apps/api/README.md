@@ -1,75 +1,27 @@
-# nodejs-express-boilerplate
+# api
 
-Boilerplate for NodeJS + Express + MongoDB + Mongoose
+Pageaters REST API — Node + Express + MongoDB (Mongoose).
 
-## Tech Stack
-
-- Node - 12.15.0
-- NPM - 6.14.2
-- MongoDB - 4.x (tested on 4.2.0)
-
-## Key features
-
-- REST API (express)
-- MongoDB (mongoose)
-- Environment specific config (config)
-- Encryption/Decryption (crypto)
-- Validation (joi)
-- Localization (i18n)
-- Push Notification (FCM)
-- Mail Sender (Sendgrid)
-- CronJobs (cron)
-
-## Use this template
-
-- Clone this repo.
-- Remove git folder with `rm -r .git`.
-- Search and replace `nodejs-express-boilerplate` with your project name.
-- Initialize git using `git init`.
+Legacy JavaScript codebase, to be migrated to TypeScript in PLAN.md Phase 4.
 
 ## Structure
 
-```bash
-.
-├── bitbucket-pipelines.yml
-├── config # Environment specific config are here
-│   ├── default.js
-├── index.js # entry point
-├── package.json
-├── package-lock.json
-├── public # static file served from here
-│   └── foo.json
-├── README.md
-└── src
-    ├── app.js # Express app is loaded here
-    ├── config.js # Config variables should be imported from here
-    ├── controllers
-    │   └── auth.controller.js
-    ├── cron
-    │   ├── index.js # cron jobs are loaded from here
-    │   └── logTime.js
-    ├── helpers
-    │   ├── connectToDb.helper.js
-    │   ├── excryption.helper.js
-    │   ├── pushNotification.helper.js
-    │   └── sendMail.helper.js
-    ├── locales # locales are generated here
-    │   ├── de.json
-    │   └── en.json
-    ├── middlewares
-    │   ├── extendReq.middleware.js
-    │   └── requestValidator.middleware.js
-    ├── models
-    │   ├── index.js # models are loaded from here
-    │   └── user.model.js
-    ├── routes
-    │   ├── auth.routes.js
-    │   └── index.js # routes are loaded from here
-    └── validators
-        └── auth.validator.js
+```
+index.js          entry point
+src/app.js        Express app setup and server start
+src/routes/       route definitions
+src/controllers/  request handlers
+src/models/       Mongoose models
+src/validators/   Joi request schemas
+src/middlewares/  auth, validation, response helpers
+src/helpers/      shared logic (orders, mail, encryption)
+src/jobs/         scheduled jobs
+src/libs/         search index, sitemap, Google product feed
+src/templates/    email templates (EJS)
+src/notes/        domain notes on orders, payments and refunds
 ```
 
-## Response Format
+## Response format
 
 ```js
 {
@@ -79,13 +31,3 @@ Boilerplate for NodeJS + Express + MongoDB + Mongoose
   "data": {} // Any data that is to be returned by API
 }
 ```
-
-## Recommended Tools
-
-- VSCode
-  - Eslint
-  - Prettier - Code formatter
-- NoSQL Booster
-- Postman
-
-## Todo

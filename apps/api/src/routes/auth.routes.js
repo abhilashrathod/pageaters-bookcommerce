@@ -33,7 +33,4 @@ router.put('/password', permissionValidator(), requestValidator(validator.update
 
 router.get('/recoverAccount', permissionValidator(), controller.recoverAccount);
 
-/* SUBSCRIPTION */
-
-
 module.exports = router;

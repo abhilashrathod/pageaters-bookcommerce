@@ -13,8 +13,3 @@ module.exports.cartItemAddPayload = Joi.object({
   product: objectId,
   quantity: quantityField,
 });
-
-module.exports.cartItemUpdatePayload = Joi.object({
-  id: objectId,
-  quantity: quantityField,
-});

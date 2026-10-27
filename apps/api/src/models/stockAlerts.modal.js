@@ -1,7 +1,7 @@
 const { Schema, model } = require('mongoose');
 const aggregatePaginate = require("mongoose-aggregate-paginate-v2");
 
-const { enums, models } = require('./../constants');
+const { models } = require('./../constants');
 
 const schema = new Schema({
     user: { type: Schema.Types.ObjectId, ref: models.USER },

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const colors = require('colors');
 const lunr = require('lunr');
 
-const { models, enums } = require('../constants');
+const { models } = require('../constants');
 const { ENVIRONMENT } = require('../appConfig');
 
 const Books = mongoose.model(models.STORE_BOOK);

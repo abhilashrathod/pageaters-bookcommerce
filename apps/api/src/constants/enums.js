@@ -1,9 +1,4 @@
 module.exports = {
-  ENVIRONMENTS: {
-    DEVELOPMENT: 'development',
-    STAGING: 'staging',
-    PRODUCTION: 'production'
-  },
   TOKEN_ID: {
     REFRESH_TOKEN_COOKIE: '_RID',
     CART_COOKIE: '_CID',

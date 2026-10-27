@@ -1,18 +1,11 @@
-const mongoose = require('mongoose');
 const axios = require('axios');
 const Buffer = require('buffer');
 const colors = require('colors');
 const { sumBy, get } = require('lodash');
 const { ENVIRONMENT, DELHIVERY, AWS } = require('../appConfig');
 
-const { models, enums } = require('../constants');
-const Book = mongoose.model(models.STORE_BOOK);
+const { enums } = require('../constants');
 
-const DELIVERY_MODE = `S`;
-const STATUS_OF_SHIPMENT = `Delivered`;
-const ORIGIN_PIN_CODE = `382016`;
-
-const AUTH_TOKEN = `***REMOVED***`;
 
 module.exports.checkServiceabilityInternal = async function(pincode) {
   return new Promise(async (resolve, reject) => {
@@ -48,29 +41,6 @@ module.exports.calculateTotalWeight = async function(products, bundles, mysteryB
       const totalWeight = Number(finalProductsWeight) + Number(finalBundleWeight) + Number(finalBoxWeight);
 
       resolve(totalWeight);
-    } catch (e) {
-      console.log(colors.red('ERROR'), JSON.stringify(e));
-      resolve(0);
-    }
-  });
-};
-
-module.exports.calculateConvenienceFees = async function(subtotal) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      if (subtotal < 500) {
-        resolve(30);
-      }
-
-      if (subtotal >= 500 && subtotal <= 999) {
-        resolve(40);
-      }
-
-      if (subtotal >= 1000) {
-        resolve(50);
-      }
-
-      resolve(0);
     } catch (e) {
       console.log(colors.red('ERROR'), JSON.stringify(e));
       resolve(0);
@@ -119,15 +89,6 @@ module.exports.returnPickupAddress = function() {
     country: 'India',
     phone: '9000000000',
   };
-
-  const NimawatMarketingAddress = {
-    name: "Demo Supplier",
-    add: "Unit 1, Demo Logistics Park, Sector 1",
-    city: "Udaipur",
-    pin_code: "313001",
-    country: "India",
-    phone: "9000000000",
-  }
 
   const mainAddress = {
     name: 'PAGEATERS DEMO WAREHOUSE',

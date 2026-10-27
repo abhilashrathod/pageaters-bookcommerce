@@ -26,7 +26,6 @@ export class BookUpdateComponent implements OnInit {
   images: any[] = [];
   isReady = false;
   avatar;
-  // selectedFile: File;
 
   filters = {
     limit: 25,

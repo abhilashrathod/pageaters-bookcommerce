@@ -51,16 +51,6 @@ module.exports.password = Joi.string()
   .description('Password')
   .error(new Error('INVALID_PASSWORD'));
 
-module.exports.firstName = Joi.string()
-  .max(50)
-  .allow('')
-  .error(new Error('INVALID_FIRST_NAME'));
-
-module.exports.lastName = Joi.string()
-  .max(50)
-  .allow('')
-  .error(new Error('INVALID_LAST_NAME'));
-
 module.exports.fullName = Joi.string()
   .max(50)
   .allow('')
@@ -90,13 +80,6 @@ module.exports.sortBy = Joi.string()
   .optional()
   .allow('')
   .error(new Error('INVALID_SORT_BY'));
-
-module.exports.sortMode = Joi.string()
-  .default('desc')
-  .valid('', 'asc', 'desc')
-  .optional()
-  .allow('')
-  .error(new Error('INVALID_SORT_MODE'));
 
 module.exports.q = Joi.string()
   .max(50)

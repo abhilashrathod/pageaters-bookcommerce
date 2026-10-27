@@ -1,14 +1,13 @@
 const mongoose = require('mongoose');
-const { generateRandomNumber, getId } = require('../helpers/utils.helper');
+const { generateRandomNumber } = require('../helpers/utils.helper');
 const { models } = require('../constants');
 
 const Addon = mongoose.model(models.ADD_ON);
-const Book = mongoose.model(models.STORE_BOOK);
 
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit, sortBy, sortOrder, category } = req.allParams();
+    let { page, limit, sortBy, sortOrder } = req.allParams();
 
     const query = { isDeleted: false };
 
@@ -119,8 +118,6 @@ module.exports.getById = async (req, res) => {
 
 module.exports.getByProductId = async (req, res) => {
   try {
-    let { productId } = req.allParams();
-
     const pipeline = [
       {
         $group: {

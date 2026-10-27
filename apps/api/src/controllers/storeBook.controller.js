@@ -1,12 +1,10 @@
 const mongoose = require('mongoose');
-const csv = require('csv');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const fs = require('fs');
 const path = require('path');
 const { toArray, kebabCase } = require('lodash');
 
 const { generateRandomNumber, getId, arrayDifference } = require('../helpers/utils.helper');
-const { scrapeData } = require('../helpers/scrapping.helpers');
 
 const { models } = require('../constants');
 const { PROJECT_ROOT } = require('../appConfig');
@@ -55,7 +53,7 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    let { type, title, tagline, eyebrow, author, description, message, tags, language, popularity, pages, readingLevel, version, availability, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bookOfTheMonth, bestSeller, preOrder, poster, images, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
+    let { type, title, tagline, eyebrow, author, description, message, tags, language, popularity, pages, readingLevel, version, availability, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick, newRelease, bestSeller, preOrder, poster, images, wholeSalePriceHistory, inventory, currentDiscount, relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = req.allParams();
 
     let bookId = `BK-${generateRandomNumber(10)}`;
     const payload = {
@@ -291,28 +289,6 @@ module.exports.destroy = async (req, res) => {
     } else {
       return res.error('BOOK_NOT_EXIST');
     }
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-// FOR DEV PURPOSES ONLY
-module.exports.bulkCreate = async (req, res) => {
-  try {
-    const parser = csv.parse({columns: true},async function(err, records) {
-      if (!err) {
-        for (const record of records) {
-          const payload = await scrapeData(record.title, record.tagLine, record.pageUrl);
-          // await Book.create(payload);
-        }
-
-        return res.ok();
-      }
-
-      return res.error(err);
-    });
-    fs.createReadStream(PROJECT_ROOT + `\\seedData\\products.csv`).pipe(parser);
-
   } catch (e) {
     return res.internalServerError(e);
   }

@@ -8,7 +8,6 @@ const multer = require('multer');
 const i18n = require('i18n');
 const helmet = require('helmet');
 const morgan = require('morgan');
-// const cron = require('node-cron');
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 
@@ -147,12 +146,6 @@ this.app.get('/re-index', (req, res) => {
 // It works route
 this.app.get('/', (req, res) => {
   return res.render('index', { PROJECT_NAME });
-
-  return res.send({
-    name: PROJECT_NAME,
-    status: 'IT_WORKS',
-    message: 'API basepath works!',
-  });
 });
 
 /**
@@ -165,11 +158,6 @@ module.exports.startServer = async () => {
 
     // load seed data.
     await require('../scripts/seedData').initSeedData();
-
-    // cron for google products feed
-    // cron.schedule('0 21 * * mon', async () => {
-    //   await writeGoogleData();
-    // });
 
     this.app.listen(PORT, async () => {
       console.log(`Listening on port ${PORT}`);

@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-const { models } = require('./../src/constants');
 
 require('../src/models');
 

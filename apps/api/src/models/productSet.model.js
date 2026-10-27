@@ -1,7 +1,7 @@
 const { Schema, model } = require('mongoose');
 const paginate = require("mongoose-paginate-v2");
 
-const { enums, models } = require('./../constants');
+const { models } = require('./../constants');
 
 const schema = new Schema({
     setId: { type: String, default: '' },

@@ -3,7 +3,6 @@ const { get, map } = require('lodash');
 const Razorpay = require('razorpay');
 const axios = require('axios');
 const moment = require('moment');
-const { parallel } = require('async');
 
 const { models, enums } = require('../constants');
 const { RAZOR_PAY, RAZOR_PAY_WEBHOOKS, TWILIO, DELHIVERY, ENVIRONMENT } = require('../appConfig');
@@ -92,7 +91,6 @@ module.exports.attempt = async (req, res) => {
     }
 
     const subTotal = await calculateTotal(cartResponse.products, cartResponse.bundles, cartResponse.mysteryBoxes, cartResponse.addOns);
-    const totalWeight = await calculateTotalWeight(cartResponse.products, cartResponse.bundles, cartResponse.mysteryBoxes);
 
     const addressRes = await Address.findOne({ _id: address, userId, isDeleted: false });
 
@@ -138,8 +136,6 @@ module.exports.create = async (req, res) => {
 
     let total;
     let shipping;
-    let discount = 0;
-    let giftCard = 0;
     let storeCredit = 0;
     let giftCharges = giftOptions.isGift ? get(giftOptions, 'details.cost', 0) : 0;
 
@@ -1200,7 +1196,7 @@ module.exports.completeRefund = async (req, res) => {
 
 module.exports.createShipmentForDelhivery = async (req, res) => {
   try {
-    let { orderId, address, dimensions } = req.allParams();
+    let { orderId, dimensions } = req.allParams();
 
     const populateOptions = [{
       path: 'deliveryAddress',
