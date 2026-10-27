@@ -1,3 +1,13 @@
 packages:
   - apps/*
   - packages/*
+
+# Install scripts are denied unless a package needs one to work.
+allowBuilds:
+  '@angular/cli': false # analytics prompt
+  '@parcel/watcher': false # prebuilt binary via optional deps
+  aws-sdk: false # maintenance notice
+  core-js: false # funding notice
+  es5-ext: false # postinstall message
+  fsevents: false # optional native watcher (legacy chokidar)
+  unrs-resolver: false # prebuilt binary via optional deps
