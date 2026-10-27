@@ -14,12 +14,16 @@ development only and is never committed or deployed.
 What the pipeline does:
 
 - Copies only allowlisted fields per collection, nested keys included (`src/collections.ts`). Fields not on the list are dropped and
-  reported, and the run exits 1 until someone reviews them.
+  reported, and the run exits 1 without writing until someone reviews them.
 - Never copies `wholeSalePriceHistory` (supplier prices), `inventory` (real stock) or `__v`.
 - Drops soft-deleted documents and prunes every reference to them, checked against the target collection. Inactive product sets are kept.
 - Generates stock from each document ID (`src/stock.ts`): mostly 5–40, a few standalone books low or out of stock;
   books in a bundle and procurement, import and pre-order books are always orderable.
 - Recounts `numberOfBooks` per category, clears legacy canonical URLs, and normalises `EN` to `English`.
+- Scans the output for sensitive data before writing it (`src/scan.ts`): emails, UPI IDs, phone numbers, Aadhaar,
+  card and account numbers, GSTIN/PAN/IFSC, the old store's domains and handles, links, social handles and business
+  terms. Findings are printed masked. Any finding outside the reviewed list, or a reviewed count that changes, fails
+  the run and leaves `data/` untouched.
 
 | Script      | Purpose                      |
 | ----------- | ---------------------------- |
