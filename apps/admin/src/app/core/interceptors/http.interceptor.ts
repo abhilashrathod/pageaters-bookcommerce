@@ -4,7 +4,6 @@ import {Router} from '@angular/router';
 
 import {Observable, throwError} from 'rxjs';
 import {catchError, map} from 'rxjs/operators';
-import {environment} from '../../../environments/environment';
 
 
 @Injectable()
@@ -19,7 +18,6 @@ export class Interceptor implements HttpInterceptor {
     // setting default headers
     let headers = req.headers;
     headers = headers.append('Content-Type', 'application/json');
-    headers = headers.append('X-CLIENT-ID', environment.CLIENT_ID);
 
     // making the request changes
     const request = req.clone({headers, withCredentials: true});
