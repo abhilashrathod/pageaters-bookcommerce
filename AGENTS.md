@@ -155,8 +155,12 @@ The public demo is a sandbox. These guards are enforced **server-side in the API
   customers) are **read-only** — forms render, saving is rejected with a clear demo message.
   **Order lifecycle actions are allowed** (confirm, ship, deliver, cancel, refund) through mock shipping.
   The demo admin cannot change its password or touch other accounts.
+- **Super-admin** (the owner's own account; never shared, never listed in demo logins): exempt from the catalog
+  read-only and no-upload guards, so the owner can fix records and upload images (Vercel Blob) on the live demo.
+  Its password is set by the owner through local `.env` at seed time. Every guard checks the role **server-side**;
+  the login is rate-limited.
 - **CMS**: demo login is read-only.
-- **No uploads** anywhere in demo mode.
+- **No uploads** in demo mode for visitors and the demo admin; only the super-admin can upload.
 - **Payments**: Razorpay **test-mode keys only**. The API must refuse to boot when `DEMO_MODE=true` and any
   key starts with `rzp_live_`. This account is used for real money elsewhere — treat this guard as critical.
 - **Email/SMS**: mock adapters only; messages go to an in-app outbox view. The demo must never send a message

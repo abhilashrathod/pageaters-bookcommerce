@@ -25,7 +25,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 | Images                 | Book covers from Open Library by ISBN (515/618); author photos from Open Library only on confident name match, else branded initials avatar; collections, bundles, categories and the 4 ISBN-less books get generated brand artwork. All stored on Vercel Blob |
 | Payments               | Razorpay **test mode only**; boot guard rejects `rzp_live_` keys in demo                                                                                                                                                                                       |
 | Email / SMS / Shipping | Mock adapters; in-app outbox                                                                                                                                                                                                                                   |
-| Demo access            | Storefront: one-click demo shopper; cart/address/orders/search only. Admin: catalog read-only, order lifecycle actions allowed. CMS: read-only. No uploads anywhere. Seeded once; weekly visitor cleanup                                                       |
+| Demo access            | Storefront: one-click demo shopper; cart/address/orders/search only. Admin: catalog read-only, order lifecycle actions allowed. CMS: read-only. Uploads: super-admin only. Seeded once; weekly visitor cleanup                                                 |
 | Credentials            | Razorpay, Twilio, Delhivery, SendGrid revoked/rotated by owner; AWS and Cloudinary accounts closed; Vultr DB destroyed                                                                                                                                         |
 
 ---
@@ -104,9 +104,9 @@ This file is temporary: when every phase is done, archive the decision log into 
   - Done 2026-10-28: `pnpm --filter @pageaters/seed covers` (~10 min, needs network). Always anchored on the ISBN: the exact edition's cover (Books API, 50 ISBNs a request), else the work's cover (search by ISBN, one a second). A cover is used only when Open Library's title matches ours or the exact title was reviewed (`acceptedTitleMismatches`, 7). Retries with backoff; a failed lookup keeps the old file; a sharp drop in covers deletes nothing. Output (gitignored): `seed/data/images/covers/<bookId>-<coverId>.jpg`, `covers.json`, `cover-misses.json`. ISBNs now cleaned in `sanitise` (digits only, first of several). Reviewed + audited
   - Result: **515/618** (395 edition, 120 work). 103 misses: 67 not in Open Library, 25 no cover, 4 wrong book or foreign edition (Heartstopper Vol 3, Yours Truly, Where Mayflies Live Forever, Kafka on the Shore), 6 no ISBN, 1 broken ISBN. How misses are covered is an owner decision (generated artwork in the artwork step, or a second cover source)
 - [ ] Author photos: Open Library match by name with confidence threshold; fallback branded initials avatar
-- [ ] Generate brand artwork for collections, bundles, categories and ISBN-less books
+- [ ] Generate brand artwork for collections, bundles, categories and every book without a usable cover (103 after the covers step): a book illustration in accent `#ff5f25` and primary `#222222` (owner, 2026-10-28; real covers can be uploaded later via admin)
 - [ ] Upload images to Vercel Blob; write image manifest; rewrite seed image fields to Blob URLs
-- [ ] Demo accounts: demo shopper, demo admin (read-only catalog role), CMS read-only user (sample orders come from the Phase 5 generator)
+- [ ] Demo accounts: demo shopper, demo admin (read-only catalog role), CMS read-only user, super-admin (owner; password from local `.env`, never committed) (sample orders come from the Phase 5 generator)
 - [ ] **Owner:** in Atlas, create a DB user for the demo, allow network access `0.0.0.0/0` (Vercel has no fixed IPs on free tiers), put the connection strings for databases `pageaters_api` and `pageaters_cms` into local `.env`
 - [ ] `pnpm seed` (idempotent) against Atlas
 - **Checkpoint:** owner spot-checks catalog data and images
@@ -139,7 +139,8 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Admin catalog read-only; order lifecycle via mock shipping allowed
 - [ ] `rzp_live_` boot guard; Razorpay test-mode checkout
 - [ ] Mock email/SMS → outbox collection + outbox view
-- [ ] Uploads disabled; rate limits on public endpoints
+- [ ] Super-admin role exempt from catalog read-only and upload guards (server-side role checks, rate-limited login)
+- [ ] Uploads for super-admin only (Vercel Blob); rate limits on public endpoints
 - [ ] Sample-order generator: random orders across the lifecycle through the order services (realistic pricing, discounts, stock deduction)
 - [ ] Weekly cleanup endpoint (protected, `DEMO_MODE` only): wipe visitor carts/addresses/favourites/orders/outbox, restore their stock, regenerate sample orders
 - [ ] Tests for every guard
@@ -176,6 +177,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Fix devkit/CLI mismatch; TSLint → angular-eslint; remove Protractor; Karma → Jest/Vitest
 - [ ] Standalone components, new control flow; typed services via `packages/api-client`
 - [ ] Demo-mode UX: read-only notices on catalog forms; outbox view
+- [ ] Super-admin catalog editing: update any record (fix inconsistent or generated data) and upload covers/author photos
 - **Checkpoint:** every admin route renders against the new API
 
 ## Phase 9 — Tests
