@@ -49,7 +49,8 @@ This file is temporary: when every phase is done, archive the decision log into 
   - Done 2026-10-27 in `../.migration/{admin,api,storefront}` (fresh default-branch clones; originals untouched). 29 unique secret values replaced; empty commits kept. Verified: counts 49/137/139, authorship + dates identical, all paths under `apps/<name>`, zero scrubbed values in history, HEAD differs only in scrubbed lines. gitleaks: only 6 `data-key` false positives (api email templates) — allowlist them in `.gitleaks.toml`
 - [x] Merge the three histories into one repo (`--allow-unrelated-histories`); verify commit counts (admin 49, backend 137, storefront 139; default branches only) and authorship preserved
   - Done 2026-10-27: empty root commit + three `--no-ff` import merges → 329 commits on `main`. Per-app counts and author/committer/date/message metadata verified identical
-- [ ] Run gitleaks on the merged full history — must be clean
+- [x] Run gitleaks on the merged full history — must be clean
+  - Clean 2026-10-27 (all commits incl. merges). `.gitleaks.toml` extends default rules and allowlists only `data-key="…"` attributes in `apps/api/src/templates/email/*/*.ejs` (6 false positives, verified against a default-rules-only scan)
 - [ ] Initialise pnpm workspace + Turborepo (`turbo.json`: build, dev, lint, typecheck, test, test:e2e)
 - [ ] `packages/config` (tsconfig bases, ESLint flat config, Prettier, Tailwind preset), `.nvmrc`, `.editorconfig`, root `.gitignore`
 - [ ] Remove junk: `.idea/`, `.DS_Store`, `hs_err_pid*.log`, empty `admin.controller.js`, `modified/sqlite.js`, `data/db`, `queueData`, `info`, `bitbucket-pipelines.yml`, commented-out routes, unreachable code

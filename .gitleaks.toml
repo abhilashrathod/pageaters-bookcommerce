@@ -1,0 +1,11 @@
+title = "pageaters gitleaks config"
+
+[extend]
+useDefault = true
+
+# Email template builder emits `data-key="<id>"` attributes on headings; these are layout ids, not secrets.
+[[allowlists]]
+description = "data-key attributes in email templates"
+regexTarget = "match"
+regexes = ['''data-key="[^"]*"''']
+paths = ['''^apps/api/src/templates/email/[A-Z_]+/[a-z]{2}\.ejs$''']
