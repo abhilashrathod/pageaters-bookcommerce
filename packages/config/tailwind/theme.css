@@ -1,0 +1,49 @@
+/*
+ * Shared Tailwind v4 theme. Defaults match the original Pageaters storefront;
+ * the CMS Theme global overrides the :root variables at runtime.
+ */
+:root {
+  --background: #ffffff;
+  --foreground: #151414;
+  --primary: #222222;
+  --primary-foreground: #ffffff;
+  --accent: #ff5f25;
+  --accent-foreground: #ffffff;
+  --muted: #f1f1f1;
+  --muted-foreground: #717171;
+  --border: #dddddd;
+  --input: #dddddd;
+  --ring: #ff5f25;
+  --destructive: #e55039;
+  --success: #009432;
+  --radius: 1rem;
+  --font-body: 'Metropolis', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Ubuntu, sans-serif;
+}
+
+@theme {
+  --breakpoint-*: initial;
+  --breakpoint-xs: 36rem;
+  --breakpoint-sm: 48rem;
+  --breakpoint-md: 62rem;
+  --breakpoint-lg: 75rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
+  --font-sans: var(--font-body);
+}
