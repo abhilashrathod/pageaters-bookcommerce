@@ -31,7 +31,6 @@ import { currencyFormat } from "../../core/_helpers";
 
 import { ICreditTransaction } from "../../schemas/credit-transaction";
 import {parseUrl} from "query-string";
-import {func} from "prop-types";
 
 
 const BREADCRUMBS_ITEMS = [
