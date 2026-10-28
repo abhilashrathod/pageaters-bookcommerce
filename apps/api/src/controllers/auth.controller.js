@@ -165,40 +165,6 @@ module.exports.logout = async (req, res) => {
   }
 };
 
-module.exports.adminRegister = async (req, res) => {
-  try {
-    let { email, password } = req.allParams();
-    const ipAddress = req.ip;
-
-    const isEmailAvailable = await User.isEmailAvailable(email);
-
-    if (!isEmailAvailable) {
-      return res.error('EMAIL_UNAVAILABLE');
-    }
-
-    const user = await User.create({
-      email,
-      fullName: 'Pageaters Admin',
-      role: enums.USER_ROLES.ADMIN,
-      emailVerified: true,
-      contactVerified: true,
-    });
-
-    await user.setPassword(password);
-
-    const { payload, token } = generateJwtToken(user, ipAddress);
-
-    await AccessTokens.create({ ...payload, token });
-
-    // create an access token cookie that will also expires in 30 days
-    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
-
-    return res.ok({ message: 'REGISTRATION_SUCCESS', data: {} });
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
 module.exports.updateProfile = async (req, res) => {
   try {
     const { fullName } = req.allParams();

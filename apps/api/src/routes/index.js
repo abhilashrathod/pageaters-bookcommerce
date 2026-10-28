@@ -9,8 +9,6 @@ router.get('/', async (req, res) => {
   });
 });
 
-router.use('/admin', require('./admin.routes'));
-
 router.use('/public', require('./public.routes'));
 router.use('/auth', require('./auth.routes'));
 router.use('/file', require('./file.routes'));
