@@ -9,6 +9,7 @@ pnpm --filter @pageaters/seed covers                # after sanitise; needs netw
 pnpm --filter @pageaters/seed authors               # after sanitise; needs network (~10 min)
 pnpm --filter @pageaters/seed artwork               # after covers; offline, seconds
 pnpm --filter @pageaters/seed upload                # last; needs BLOB_READ_WRITE_TOKEN in apps/api/.env (~7 min first time)
+pnpm --filter @pageaters/seed accounts              # checks SUPER_ADMIN_* in apps/api/.env
 ```
 
 Writes `data/{authors,bundles,categories,collections,product-sets,store-books}.json` in MongoDB Extended JSON.
@@ -80,3 +81,11 @@ left as they were and the successful uploads are kept in `data/image-manifest.js
 
 Run order: `sanitise` → `covers` → `authors` → `artwork` → `upload`. Rerun `upload` after `sanitise`, which
 rewrites the seed files without URLs.
+
+## Demo accounts
+
+`src/accounts.ts` builds the API's demo accounts when the seed is loaded; they are never written to `data/`:
+demo shopper (`USER`, with one saved address), demo admin and super-admin (both `ADMIN` until Phase 5 adds the
+demo roles). The super-admin comes from `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` in `apps/api/.env`; only a
+salted hash is stored, the same way the API hashes passwords. `pnpm --filter @pageaters/seed accounts` checks those
+settings without printing them.

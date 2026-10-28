@@ -112,7 +112,8 @@ This file is temporary: when every phase is done, archive the decision log into 
   - Done 2026-10-28: `pnpm --filter @pageaters/seed upload` (token from `apps/api/.env`, documented in its `.env.example`; the Phase 4 storage adapter uses the same token). **1002 images, 33 MB**: 618 books (515 covers + 103 artwork), 309 authors (157 photos + 152 initials), 52 bundles, 11 collections, 12 categories. Public, `cache-control: max-age=31536000`; content-hashed paths under `catalog/`, so reruns upload nothing (verified: 0 uploaded, 1002 unchanged) and a changed image gets a new URL. Manifest: `seed/data/image-manifest.json` (gitignored). Fails rather than leave a document without an image
   - Owner, 2026-10-28: artwork and initials avatars are PNG, rendered with Metropolis embedded (`@fontsource/metropolis` + `@resvg/resvg-js`; resvg ignores in-memory fonts, so they are unpacked to `seed/data/fonts/` and loaded as files; a test fails if text falls back to a system font)
   - Image fields now hold full URLs; the legacy storefront and admin build image URLs from file names, so they show broken images until Phases 7–8 (or until pointed at full URLs). Reviewed + audited
-- [ ] Demo accounts: demo shopper, demo admin (read-only catalog role), CMS read-only user, super-admin (owner; password from local `.env`, never committed) (sample orders come from the Phase 5 generator)
+- [x] Demo accounts: demo shopper, demo admin (read-only catalog role), super-admin (owner; password from local `.env`, never committed). CMS read-only user moved to Phase 6 (Payload doesn't exist yet)
+  - Done 2026-10-28: `seed/src/accounts.ts`, built when the seed is loaded (step 9), never written to `seed/data`. Demo shopper (`USER`, `shopper@demo.pageaters.com`, phone `9000000000`, one fictional Bengaluru address, an empty cart and favourites as signup creates), demo admin (`ADMIN`, `admin@demo.pageaters.com`) and super-admin (`ADMIN`, from `SUPER_ADMIN_EMAIL`/`SUPER_ADMIN_PASSWORD` in `apps/api/.env`). Fixed IDs so re-seeding updates the same documents; passwords hashed like the API (HMAC-SHA512, random salt); demo accounts get random passwords nobody uses (one-click login in Phase 5). The API only has `USER`/`ADMIN` until Phase 5, so the demo admin has full admin rights until then (nothing is deployed before Phase 10). `pnpm --filter @pageaters/seed accounts` checks the owner settings without printing them. Reviewed + audited
 - [ ] **Owner:** in Atlas, create a DB user for the demo, allow network access `0.0.0.0/0` (Vercel has no fixed IPs on free tiers), put the connection strings for databases `pageaters_api` and `pageaters_cms` into local `.env`
 - [ ] `pnpm seed` (idempotent) against Atlas
   - Must refuse to load unless every image field is a Vercel Blob URL (a `sanitise` rerun without `upload` restores legacy file names)
@@ -131,10 +132,10 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Layering: routes → controllers → services → models. Split `order.controller` (1,609 lines), `auth` (738), `cart` (570), `storeBook` (411) into services
 - [ ] Replace Joi with shared zod schemas + `validate()` middleware
 - [ ] Adapters: payments (Razorpay + mock), sms, email, shipping (Delhivery + mock), storage (Vercel Blob)
-- [ ] Security fixes: single CORS allowlist (remove reflect-any-origin), mount rate limiters, per-route body limits (drop global 100 MB + `multer().any()`), protect `/re-index`, auth audit on every route
+- [ ] Security fixes: single CORS allowlist (remove reflect-any-origin), mount rate limiters, per-route body limits (drop global 100 MB + `multer().any()`), protect `/re-index`, auth audit on every route; **remove `POST /admin/banavo` (`adminRegister`): it creates an `ADMIN` account with no authentication** (found 2026-10-28; admins now come from the seed); move password hashing from a single HMAC-SHA512 to scrypt/argon2 (rehash on next login)
 - [ ] Replace lunr in-memory index with MongoDB text index / Atlas Search; replace sqlite mail queue with direct sends via adapter
 - [ ] Central error handler, pino logging, request IDs, `/health`
-- [ ] Fix legacy bugs found in Phase 1 cleanup: `add-on.controller` `update` (undefined `id`/`addOnId`) and `getById` (returns undefined `bundles`), `getByProductId` ignores `productId`; `jobs/index.js` undefined `logError`; `STOCK_ALERT` email has only `en.html` but renderer loads `en.ejs`
+- [ ] Fix legacy bugs found in Phase 1 cleanup: `add-on.controller` `update` (undefined `id`/`addOnId`) and `getById` (returns undefined `bundles`), `getByProductId` ignores `productId`; `jobs/index.js` undefined `logError`; `STOCK_ALERT` email has only `en.html` but renderer loads `en.ejs`; `auth.controller` `updatePassword` saves the old `password` instead of `newPassword`
 - [ ] OpenAPI from zod at `/docs`
 - [ ] Remove `page.controller` / page & banner models (moved to CMS); move sitemap + Google product feed to storefront
 - **Checkpoint:** API runs locally, all routes reachable, typecheck clean
@@ -142,7 +143,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 ## Phase 5 — Demo mode
 
 - [ ] `DEMO_MODE` flag; server-side write guards per AGENTS.md §6
-- [ ] Demo shopper one-click login (no signup/OTP)
+- [ ] Demo shopper one-click login (no signup/OTP); remove the email-OTP login too, which can sign into any account by email, the demo shopper included
 - [ ] Admin catalog read-only; order lifecycle via mock shipping allowed
 - [ ] `rzp_live_` boot guard; Razorpay test-mode checkout
 - [ ] Mock email/SMS → outbox collection + outbox view
@@ -155,7 +156,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 ## Phase 6 — CMS (Payload)
 
 - [ ] `apps/cms` scaffold: Payload 3, MongoDB adapter (separate DB), Vercel Blob storage adapter
-- [ ] Collections: Pages, Templates (Product, Collection, Category, Bundle, Book Box), Overrides, Media, Users (roles: admin, demo-readonly)
+- [ ] Collections: Pages, Templates (Product, Collection, Category, Bundle, Book Box), Overrides, Media, Users (roles: admin, demo-readonly); seed the CMS read-only demo user (moved from Phase 2)
 - [ ] Globals: Header, Navigation, Footer, Announcement Bar, Theme tokens, SEO defaults
 - [ ] Block configs mirroring existing components: Hero/GiantSquare/Landscape/PreOrder/FullBleed banners, Product Set row, Featured Books, Collections/Bundles/Categories/Deals carousels, Featured Category, Featured Deals, Authors, Rich text, Spacer; plus template core blocks (product info + buy box, collection header + grid, etc.) marked locked
 - [ ] Custom fields that pick commerce records from the API (product sets, collections, categories)

@@ -9,6 +9,7 @@
     "authors": "node src/authors-cli.ts",
     "artwork": "node src/artwork-cli.ts",
     "upload": "node --env-file-if-exists=../apps/api/.env src/upload-cli.ts",
+    "accounts": "node --env-file-if-exists=../apps/api/.env src/accounts-cli.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --test 'src/**/*.test.ts'"
