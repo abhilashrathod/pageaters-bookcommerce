@@ -5,6 +5,7 @@ import type { PopulatedCart, PopulatedCustomerOrder, ShopperCartAdd, User } from
 import { createApiClient } from '../../index.ts';
 import type { ApiClient } from '../../index.ts';
 import { mockFetch } from '../../testing/mock-fetch.ts';
+import { shopperEndpoints } from './index.ts';
 import { id } from '../../testing/shopper-fixtures.ts';
 
 const BASE = 'https://api.example.test/api/v1';
@@ -254,10 +255,9 @@ const rows: Row[] = [
 
 void describe('shopper endpoints: requests', () => {
   void it('covers every shopper endpoint exactly once', () => {
-    const { fetch } = mockFetch();
-    const client = createApiClient({ baseUrl: BASE, fetch });
-    const defined = Object.entries(client).flatMap(([resource, group]) =>
-      resource === 'request' ? [] : Object.keys(group as object).map((name) => `${resource}.${name}`),
+    // The shopper registry itself, so resources mounted beside it (`admin`, `request`) don't count.
+    const defined = Object.entries(shopperEndpoints).flatMap(([resource, group]) =>
+      Object.keys(group).map((name) => `${resource}.${name}`),
     );
     assert.deepEqual([...rows.map(([label]) => label)].sort(), defined.sort());
   });
