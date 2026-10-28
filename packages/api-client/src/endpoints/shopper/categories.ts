@@ -1,4 +1,11 @@
-import { categoryDetailResponseSchema, categoryListResponseSchema, paginationQuerySchema } from '@pageaters/shared';
+import {
+  categoryDetailResponseSchema,
+  categoryListResponseSchema,
+  categoryProductsResponseSchema,
+  paginationQuerySchema,
+  shopperCategoryOverviewResponseSchema,
+  shopperCategorySearchResponseSchema,
+} from '@pageaters/shared';
 
 import { defineEndpoint } from '../../core/endpoint.ts';
 
@@ -16,5 +23,28 @@ export const categories = {
     method: 'GET',
     path: '/categories/unique/:id',
     response: categoryDetailResponseSchema.shape.data,
+  }),
+  // GET /categories/:id/products — the category's plain books. Unlike `detail`, `id` is the category's ObjectId.
+  // `sortBy` must be one of title, createdAt, updatedAt, publicationYear, popularity, currentDiscount, price; the
+  // legacy API only sorts when both `sortBy` and `sortOrder` are sent.
+  products: defineEndpoint({
+    method: 'GET',
+    path: '/categories/:id/products',
+    query: paginationQuerySchema,
+    response: categoryProductsResponseSchema.shape.data,
+  }),
+  // GET /categories/:id/overview — trending, newest and most discounted in-stock books. `id` is the ObjectId;
+  // `page`/`limit` apply to each of the three lists.
+  overview: defineEndpoint({
+    method: 'GET',
+    path: '/categories/:id/overview',
+    query: paginationQuerySchema.pick({ page: true, limit: true, sortOrder: true }),
+    response: shopperCategoryOverviewResponseSchema.shape.data,
+  }),
+  // GET /categories/search/:q — prefix search, at most 10.
+  search: defineEndpoint({
+    method: 'GET',
+    path: '/categories/search/:q',
+    response: shopperCategorySearchResponseSchema.shape.data,
   }),
 };
