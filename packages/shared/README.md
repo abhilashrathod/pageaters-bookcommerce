@@ -15,13 +15,14 @@ first through `^build`.
 
 ## Layout
 
-| Path             | Holds                                                                                 |
-| ---------------- | ------------------------------------------------------------------------------------- |
-| `src/index.ts`   | The public barrel                                                                     |
-| `src/primitives` | ObjectId, ISO date, money, image URL, pagination query and page envelope, API wrapper |
-| `src/catalog/`   | Books, authors, categories, collections, bundles, product sets, deals…                |
-| `src/commerce/`  | Users, addresses, carts, favourites, orders, store credit…                            |
-| `src/requests/`  | Request payloads (replacing the API's Joi validators)                                 |
+| Path             | Holds                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| `src/index.ts`   | The public barrel                                                                        |
+| `src/primitives` | ObjectId, ISO date, money, image URL, pagination query and page envelope, API wrapper    |
+| `src/enums`      | Domain enums (roles, statuses, product, order and payment values) as the API stores them |
+| `src/catalog/`   | Books, authors, categories, collections, bundles, product sets, deals…                   |
+| `src/commerce/`  | Users, addresses, carts, favourites, orders, store credit…                               |
+| `src/requests/`  | Request payloads (replacing the API's Joi validators)                                    |
 
 ## Conventions
 
