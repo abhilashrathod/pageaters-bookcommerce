@@ -123,6 +123,14 @@ This file is temporary: when every phase is done, archive the decision log into 
 ## Phase 3 — Shared contracts
 
 - [ ] `packages/shared`: domain types + zod schemas, merging the 16 duplicated schema files from admin and storefront and backend `constants/enums.js` / Joi validators
+  - Split (owner-approved 2026-10-28). Source of truth for each field: the Mongoose model and the seed allowlists; frontend types are checked against them, never copied blindly. Types come from `z.infer`, never written by hand. Order: 1a+1b in one branch, then 1c, 1d, 1e in parallel worktrees; the orchestrator owns the package's `src/index.ts` and adds the populated cart/order variants at merge
+  - [ ] 1a. Scaffold `@pageaters/shared`: TypeScript strict, ESM, zod, `exports` map, `build`/`typecheck`/`lint`/`test` wired into turbo. Must import cleanly from Node 22 (the seed, and the API after Phase 4), Next.js and Angular. Shared primitives here too (`objectId`, money, image URL, pagination query and page envelope) so parallel steps don't redefine them
+  - [ ] 1b. Enums and constants from `constants/enums.js`: domain values only (roles, statuses, order/payment states, discount and address types…). Infrastructure values (cookie names, S3 buckets, file modules) stay in the API
+  - [ ] 1c. Catalog entities: book, author, category, collection, bundle, product set, add-on, mystery box, deal, meta, plus response envelopes. No `wholeSalePriceHistory`. Test: every document in `seed/data` parses (skipped when `seed/data` is absent, e.g. in CI)
+  - [ ] 1d. Customer and commerce entities: user (public shape, no password/salt), address, cart, favourites, order, store credit / credit transactions, gift card, subscriber, stock alert. Product references as IDs; populated variants added at merge
+  - [ ] 1e. Request payload schemas replacing the Joi validators (auth, cart, address, favourites, order, subscriber, common), keeping their error codes (`REQUIRED_QUANTITY`…) so the Phase 4 swap doesn't change API behaviour
+  - Banner and page types are not ported (they move to the CMS in Phase 6). No app imports `@pageaters/shared` yet: the API switches over in Phase 4, the storefront in Phase 7, the admin in Phase 8
+
 - [ ] `packages/api-client`: typed client (fetch-based, works in RSC and Angular)
 
 ## Phase 4 — API: TypeScript, architecture, security
