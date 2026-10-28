@@ -404,6 +404,12 @@ const cases: Case[] = [
     call: (a) => a.orders.ship({ orderId: id(30), shipmentTrackingId: 'https://tracking.example.test/1' }),
   },
   {
+    name: 'shipment booking (orders.createShipment)',
+    data: { success: true, packages: [{ waybill: '0000000000001', status: 'Success', refnum: 'OD-0000000001' }], rmk: '' },
+    call: (a) => a.orders.createShipment({ orderId: id(30), dimensions: { width: 20, height: 5, weight: 400 } }),
+    check: (result) => assert.deepEqual(result, { success: true, packages: [{ waybill: '0000000000001' }] }),
+  },
+  {
     name: 'best selling',
     data: [{ totalQuantity: 3, bookDetails: { _id: id(10), title: 'The Placeholder Atlas', author: id(11) } }],
     call: (a) => a.orders.bestSelling({ startDate: at, endDate: at }),

@@ -23,10 +23,16 @@ export interface FileUploadInput {
   fileModule: AdminFileModule;
 }
 
+// The API compares the extension case-sensitively with jpg/jpeg/png, so `COVER.JPG` would be rejected: lower-case it.
+function lowerCaseExtension(fileName: string): string {
+  const dot = fileName.lastIndexOf('.');
+  return dot < 0 ? fileName : fileName.slice(0, dot) + fileName.slice(dot).toLowerCase();
+}
+
 // The form as the API reads it: `file`, `title`, `fileModule`.
 export function fileUploadForm({ file, fileName, title, fileModule }: FileUploadInput): FormData {
   const form = new FormData();
-  form.append('file', file, fileName);
+  form.append('file', file, lowerCaseExtension(fileName));
   form.append('title', title);
   form.append('fileModule', fileModule);
   return form;

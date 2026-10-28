@@ -20,7 +20,12 @@ function client() {
 }
 type Admin = ReturnType<typeof client>['admin'];
 
-const bookCreate: AdminBookCreatePayload = { title: 'The Placeholder Atlas', categories: [id(2)], relatedBooks: [] };
+const bookCreate: AdminBookCreatePayload = {
+  title: 'The Placeholder Atlas',
+  poster: 'https://images.example.test/atlas.jpg',
+  categories: [id(2)],
+  relatedBooks: [],
+};
 const bookUpdate: Omit<AdminBookUpdatePayload, 'categories' | 'relatedBooks' | 'relatedBundles' | 'relatedCollections'> = {
   type: 'book',
   title: 'The Placeholder Atlas',
@@ -85,10 +90,10 @@ const cases: Case[] = [
   { name: 'authors.detail', call: (a) => a.authors.detail({ id: id(1) }), method: 'GET', url: `/authors/${id(1)}` },
   {
     name: 'authors.create',
-    call: (a) => a.authors.create({ name: 'A. Writer', books: [id(2)] }),
+    call: (a) => a.authors.create({ name: 'A. Writer', avatar: 'https://images.example.test/a.jpg', books: [id(2)] }),
     method: 'POST',
     url: '/authors',
-    body: { name: 'A. Writer', books: [id(2)] },
+    body: { name: 'A. Writer', avatar: 'https://images.example.test/a.jpg', books: [id(2)] },
   },
   {
     name: 'authors.update',
@@ -102,10 +107,10 @@ const cases: Case[] = [
   { name: 'categories.detail', call: (a) => a.categories.detail({ id: id(1) }), method: 'GET', url: `/categories/${id(1)}` },
   {
     name: 'categories.create',
-    call: (a) => a.categories.create({ title: 'Poetry' }),
+    call: (a) => a.categories.create({ title: 'Poetry', thumbnail: 'https://images.example.test/p.jpg' }),
     method: 'POST',
     url: '/categories',
-    body: { title: 'Poetry' },
+    body: { title: 'Poetry', thumbnail: 'https://images.example.test/p.jpg' },
   },
   {
     name: 'categories.update',
@@ -135,10 +140,11 @@ const cases: Case[] = [
   { name: 'collections.detail', call: (a) => a.collections.detail({ id: id(1) }), method: 'GET', url: `/collections/${id(1)}` },
   {
     name: 'collections.create',
-    call: (a) => a.collections.create({ title: 'Rainy days', books: [id(2)], relatedCollections: [] }),
+    call: (a) =>
+      a.collections.create({ title: 'Rainy days', poster: 'https://images.example.test/c.jpg', books: [id(2)], relatedCollections: [] }),
     method: 'POST',
     url: '/collections',
-    body: { title: 'Rainy days', books: [id(2)], relatedCollections: [] },
+    body: { title: 'Rainy days', poster: 'https://images.example.test/c.jpg', books: [id(2)], relatedCollections: [] },
   },
   {
     name: 'collections.update',
@@ -176,10 +182,11 @@ const cases: Case[] = [
   { name: 'bundles.detail', call: (a) => a.bundles.detail({ id: id(1) }), method: 'GET', url: `/bundles/${id(1)}` },
   {
     name: 'bundles.create',
-    call: (a) => a.bundles.create({ title: 'Starter pack', bundledBooks: [id(2), id(3)], price: 899 }),
+    call: (a) =>
+      a.bundles.create({ title: 'Starter pack', poster: 'https://images.example.test/b.jpg', bundledBooks: [id(2), id(3)], price: 899 }),
     method: 'POST',
     url: '/bundles',
-    body: { title: 'Starter pack', bundledBooks: [id(2), id(3)], price: 899 },
+    body: { title: 'Starter pack', poster: 'https://images.example.test/b.jpg', bundledBooks: [id(2), id(3)], price: 899 },
   },
   {
     name: 'bundles.update',
@@ -366,6 +373,13 @@ const cases: Case[] = [
     url: '/orders/ship',
     body: { orderId: id(1), shipmentTrackingId: 'https://tracking.example.test/1' },
   },
+  {
+    name: 'orders.createShipment',
+    call: (a) => a.orders.createShipment({ orderId: id(1), dimensions: { width: 20, height: 5, weight: 400 } }),
+    method: 'POST',
+    url: `/orders/create-shipment/${id(1)}`,
+    body: { dimensions: { width: 20, height: 5, weight: 400 } },
+  },
   { name: 'orders.deliver', call: (a) => a.orders.deliver({ id: id(1) }), method: 'PATCH', url: `/orders/ship/${id(1)}/complete` },
   {
     name: 'orders.alignReturnShipment',
@@ -501,7 +515,7 @@ void describe('file upload', () => {
     const request = createRequester({ baseUrl: BASE, fetch });
     const form = fileUploadForm({
       file: new Blob(['placeholder'], { type: 'image/jpeg' }),
-      fileName: 'atlas.jpg',
+      fileName: 'Atlas.Cover.JPG',
       title: 'The Placeholder Atlas',
       fileModule: 'STORE_BOOK',
     });
@@ -513,6 +527,11 @@ void describe('file upload', () => {
     assert.equal(calls[0]?.init.headers.get('content-type'), null);
     assert.equal(form.get('title'), 'The Placeholder Atlas');
     assert.equal(form.get('fileModule'), 'STORE_BOOK');
-    assert.equal((form.get('file') as File).name, 'atlas.jpg');
+    // The extension is lower-cased (the API checks it case-sensitively); the rest of the name is kept.
+    assert.equal((form.get('file') as File).name, 'Atlas.Cover.jpg');
+    assert.equal(
+      (fileUploadForm({ file: new Blob([]), fileName: 'noext', title: 't', fileModule: 'ASSETS' }).get('file') as File).name,
+      'noext',
+    );
   });
 });

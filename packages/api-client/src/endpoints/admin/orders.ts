@@ -12,6 +12,8 @@ import {
   adminReturnShipmentPayloadSchema,
   adminRevenueResponseSchema,
   adminSearchQuerySchema,
+  adminShipmentCreatePayloadSchema,
+  adminShipmentCreateResponseSchema,
 } from '@pageaters/shared';
 
 import { defineEndpoint } from '../../core/endpoint.ts';
@@ -32,21 +34,34 @@ export const orders = {
   // GET /orders/getById/:id — the whole order, lines and address populated. The legacy API sends the raw Razorpay
   // payment here; the contract is the summary (Phase 4).
   detail: defineEndpoint({ method: 'GET', path: '/orders/getById/:id', response: adminOrderResponseSchema.shape.data }),
-  // GET /orders/search?q= — orders whose `orderId` contains `q`; not paged.
+  // GET /orders/search?q= — orders whose `orderId` contains `q`; not paged. The legacy API sends the raw Razorpay
+  // payment, which fails validation against the summary contract until Phase 4.
   search: defineEndpoint({
     method: 'GET',
     path: '/orders/search',
     query: adminSearchQuerySchema,
     response: adminOrderSearchResponseSchema.shape.data,
   }),
-  // POST /orders/ship — paid/confirmed -> shipped; body `orderId` is the `_id`.
+  // POST /orders/ship — paid/confirmed -> shipped with a tracking reference the admin types in; body `orderId` is the
+  // `_id`. The legacy API sends the raw Razorpay payment, which fails validation until Phase 4.
   ship: defineEndpoint({
     method: 'POST',
     path: '/orders/ship',
     body: adminOrderShipPayloadSchema,
     response: adminOrderWithCustomerResponseSchema.shape.data,
   }),
-  // PATCH /orders/ship/:id/complete — shipped -> fulfilled.
+  // POST /orders/create-shipment/:orderId — paid/confirmed -> shipped by booking the parcel with the carrier
+  // (Delhivery; the mock shipping adapter from Phase 4), which sets the tracking URL. `orderId` is the order's `_id`.
+  // Guard bug (Phase 4): the route is guarded only as USER with no owner check, so any signed-in shopper can ship any
+  // paid order (IDOR); the admin app calls it and passes because ADMIN satisfies every role check.
+  createShipment: defineEndpoint({
+    method: 'POST',
+    path: '/orders/create-shipment/:orderId',
+    body: adminShipmentCreatePayloadSchema,
+    response: adminShipmentCreateResponseSchema.shape.data,
+  }),
+  // PATCH /orders/ship/:id/complete — shipped -> fulfilled. The legacy API sends the raw Razorpay payment, which fails
+  // validation until Phase 4.
   deliver: defineEndpoint({
     method: 'PATCH',
     path: '/orders/ship/:id/complete',
