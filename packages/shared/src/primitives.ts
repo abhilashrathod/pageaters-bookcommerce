@@ -56,8 +56,9 @@ export const paginationQuerySchema = z.object({
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 export type PaginationQueryInput = z.input<typeof paginationQuerySchema>;
 
-// mongoose-paginate-v2 (1.7.x) page envelope, without custom labels. `offset` appears only when the request
-// used one (the deals list does).
+// mongoose-paginate-v2 (1.7.x) page envelope, without custom labels. paginate-v2 also sends `offset` when a
+// request asked for one or for no page at all. The legacy deals list sends `page`/`offset` as null (Phase 4 bug);
+// this schema is the target contract and rejects that.
 const count = z.number().int().nonnegative();
 export const paginationMetaSchema = z.object({
   totalDocs: count,
@@ -76,6 +77,7 @@ export type PaginationMeta = z.infer<typeof paginationMetaSchema>;
 export function paginated<Item extends z.ZodType>(item: Item) {
   return paginationMetaSchema.extend({ docs: z.array(item) });
 }
+// Generic, so written out rather than inferred; `primitives.test.ts` checks it matches `paginated()`.
 export type Paginated<Item> = PaginationMeta & { docs: Item[] };
 
 // The API's success wrapper (`res.ok` / `res.created` in extendReq.middleware). `status` is the message key
@@ -89,6 +91,7 @@ const responseBase = z.object({
 export function apiResponse<Data extends z.ZodType>(data: Data) {
   return responseBase.extend({ data });
 }
+// Generic, so written out rather than inferred; `primitives.test.ts` checks it matches `apiResponse()`.
 export type ApiResponse<Data> = z.infer<typeof responseBase> & { data: Data };
 
 // The API's error wrapper (`res.error`, `res.unauthorized`, `res.forbidden`, `res.internalServerError`).

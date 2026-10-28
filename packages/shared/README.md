@@ -15,18 +15,18 @@ first through `^build`.
 
 ## Layout
 
-| Path             | Holds                                                                                    |
-| ---------------- | ---------------------------------------------------------------------------------------- |
-| `src/index.ts`   | The public barrel                                                                        |
-| `src/primitives` | ObjectId, ISO date, money, image URL, pagination query and page envelope, API wrapper    |
-| `src/enums`      | Domain enums (roles, statuses, product, order and payment values) as the API stores them |
-| `src/catalog/`   | Books, authors, categories, collections, bundles, product sets, deals…                   |
-| `src/commerce/`  | Users, addresses, carts, favourites, orders, store credit…                               |
-| `src/requests/`  | Request payloads (replacing the API's Joi validators)                                    |
+| Path                 | Holds                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| `src/index.ts`       | The public barrel                                                                        |
+| `src/primitives.ts`  | ObjectId, ISO date, money, image URL, pagination query and page envelope, API wrapper    |
+| `src/enums.ts`       | Domain enums (roles, statuses, product, order and payment values) as the API stores them |
+| `src/{d}/` (planned) | Books, authors, categories, collections, bundles, product sets, deals…                   |
+| `src/{d}/` (planned) | Users, addresses, carts, favourites, orders, store credit…                               |
+| `src/{d}/` (planned) | Request payloads (replacing the API's Joi validators)                                    |
 
 ## Conventions
 
-- A schema is `fooSchema`; its type is `type Foo = z.infer<typeof fooSchema>`. Types are never written by hand.
+- A schema is `fooSchema`; its type is `type Foo = z.infer<typeof fooSchema>`. Types are never written by hand, except the generic `Paginated<T>` and `ApiResponse<T>`, which a test checks against their schemas.
 - An enum is an `as const` object, a `z.enum` schema and the inferred type, all sharing the name:
   `UserRole.ADMIN`, `userRoleSchema`, `type UserRole`. Values are exactly what the API stores in MongoDB.
 - Relative imports use `.ts` specifiers. Tests run on the sources through Node's type stripping, and `tsc`

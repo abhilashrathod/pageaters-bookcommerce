@@ -12,6 +12,14 @@ import {
   paginationQuerySchema,
   sortOrderSchema,
 } from './primitives.ts';
+import type { ApiResponse, Paginated } from './primitives.ts';
+
+// Compile-time only: `typecheck` fails if the hand-written generic types drift from their schemas.
+type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+const _item = z.object({ title: z.string() });
+type Item = z.infer<typeof _item>;
+const _paginatedMatches: Same<Paginated<Item>, z.infer<ReturnType<typeof paginated<typeof _item>>>> = true;
+const _apiResponseMatches: Same<ApiResponse<Item>, z.infer<ReturnType<typeof apiResponse<typeof _item>>>> = true;
 
 void describe('objectIdSchema', () => {
   void it('accepts 24 hex characters in either case', () => {
