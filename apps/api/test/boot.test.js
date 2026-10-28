@@ -1,23 +1,22 @@
 const { after, before, test } = require('node:test');
 const assert = require('node:assert/strict');
-const { spawn, spawnSync } = require('node:child_process');
+const { spawnSync } = require('node:child_process');
+const net = require('node:net');
 const path = require('node:path');
 
-// Boot smoke test: load the whole Express app (every route, model and SDK client) in a child process with
-// placeholder config and no database, then hit routes that answer without MongoDB.
-// The child is killed afterwards, so nothing stays open (database queries would only buffer).
+// Boot smoke tests: load the whole Express app (every route, model and SDK client) in this process with placeholder
+// config and an unreachable database, then hit it over HTTP. No real database and no network: port 1 on 127.0.0.1
+// refuses at once. Loading the app queues no queries (search indexing waits for a connection), so nothing is left
+// pending when the tests end.
 
 const API_ROOT = path.join(__dirname, '..');
-const PORT = 5990 + Math.floor(Math.random() * 9);
-const BASE = `http://127.0.0.1:${PORT}`;
+const DB_HOST = '127.0.0.1:1';
 
 const STUB_ENV = {
-  PATH: process.env.PATH,
   APP_ENV: 'test',
-  ENABLE_CRON: 'false',
   ENCRYPTION_KEY: 'test-only-key-'.padEnd(32, '0'),
-  // Never connected to: the app is loaded without startServer().
-  MONGODB_URI: 'mongodb://127.0.0.1:1/pageaters_test',
+  // Unreachable on purpose; the short server selection timeout turns each connect attempt into a fast failure.
+  MONGODB_URI: `mongodb://${DB_HOST}/pageaters_test?serverSelectionTimeoutMS=300`,
   // Placeholders in the shape the SDKs check when they are constructed at import time.
   TWILIO_ACCOUNT_SID: `AC${'0'.repeat(32)}`,
   TWILIO_AUTH_TOKEN: 'test',
@@ -25,44 +24,54 @@ const STUB_ENV = {
   RAZORPAY_KEY_SECRET: 'test',
   SENDGRID_API_KEY: 'SG.test',
 };
+Object.assign(process.env, STUB_ENV);
 
-// Loading the app starts the search indexing, whose queries buffer while there is no connection. Mongoose
-// rejects buffered queries after 10 s and the indexing then exits the process, which a slow CI run could hit.
-// Only this test child raises the buffer timeout, so the queries just wait until the child is killed.
-const LISTEN = [
-  "require('mongoose').set('bufferTimeoutMS', 10 * 60 * 1000);",
-  `require('./src/app').app.listen(${PORT}, '127.0.0.1', () => console.log('READY'));`,
-].join('\n');
+const mongoose = require('mongoose');
 
-let child;
+// Record listen() and connect() calls made while the app module loads.
+const calls = { listen: 0, connect: 0 };
+const { listen } = net.Server.prototype;
+const { connect } = mongoose;
+net.Server.prototype.listen = function (...args) {
+  calls.listen += 1;
+  return listen.apply(this, args);
+};
+mongoose.connect = (...args) => {
+  calls.connect += 1;
+  return connect.apply(mongoose, args);
+};
+const app = require('../src/app');
+const atImport = { ...calls, readyState: mongoose.connection.readyState };
+net.Server.prototype.listen = listen;
+mongoose.connect = connect;
+
+const logs = [];
+const { error: logError } = console;
+console.error = (...args) => logs.push(args.join(' '));
+
+let server;
+let BASE;
 
 before(async () => {
-  child = spawn(process.execPath, ['-e', LISTEN], { cwd: API_ROOT, env: STUB_ENV, stdio: ['ignore', 'pipe', 'pipe'] });
-
-  let output = '';
-  await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`API did not start:\n${output}`)), 20_000);
-    const onData = (chunk) => {
-      output += chunk;
-      if (output.includes('READY')) {
-        clearTimeout(timer);
-        resolve();
-      }
-    };
-    child.stdout.on('data', onData);
-    child.stderr.on('data', (chunk) => (output += chunk));
-    child.once('exit', (code) => {
-      clearTimeout(timer);
-      reject(new Error(`API exited with code ${code}:\n${output}`));
-    });
+  server = await new Promise((resolve) => {
+    const started = app.listen(0, '127.0.0.1', () => resolve(started));
   });
+  BASE = `http://127.0.0.1:${server.address().port}`;
 });
 
-after(() => {
-  child?.kill();
+after(async () => {
+  console.error = logError;
+  await new Promise((resolve) => server.close(resolve));
+  await mongoose.disconnect();
 });
 
-test('GET /api/v1/ answers with the IT_WORKS envelope', async () => {
+test('loading src/app.js neither connects to MongoDB nor listens', () => {
+  assert.equal(typeof app, 'function');
+  assert.equal(typeof app.handle, 'function');
+  assert.deepEqual(atImport, { listen: 0, connect: 0, readyState: 0 });
+});
+
+test('GET /api/v1/ answers with the IT_WORKS envelope without the database', async () => {
   const res = await fetch(`${BASE}/api/v1/`);
   assert.equal(res.status, 200);
   assert.deepEqual(await res.json(), {
@@ -78,14 +87,6 @@ test('GET / renders the index page', async () => {
   assert.match(res.headers.get('content-type'), /text\/html/);
 });
 
-test('an authenticated route answers 401 without a session cookie', async () => {
-  const res = await fetch(`${BASE}/api/v1/auth/me`);
-  assert.equal(res.status, 401);
-  const body = await res.json();
-  assert.equal(body.statusCode, 401);
-  assert.equal(body.status, 'UNAUTHORIZED');
-});
-
 test('OPTIONS preflight is answered by the catch-all route', async () => {
   const res = await fetch(`${BASE}/api/v1/categories`, {
     method: 'OPTIONS',
@@ -95,16 +96,36 @@ test('OPTIONS preflight is answered by the catch-all route', async () => {
   assert.equal(res.headers.get('access-control-allow-origin'), 'http://localhost:3000');
 });
 
-test('unknown routes answer 404', async () => {
-  const res = await fetch(`${BASE}/api/v1/does-not-exist`);
+test('unknown routes outside the API answer 404', async () => {
+  const res = await fetch(`${BASE}/does-not-exist`);
   assert.equal(res.status, 404);
 });
 
-test('index.js exits non-zero with a clear message on invalid env, without echoing values', () => {
+test('database-backed routes answer 503 when MongoDB is unreachable, and retry on the next request', async () => {
+  for (const route of ['/api/v1/categories', '/api/v1/auth/me']) {
+    const res = await fetch(`${BASE}${route}`, { signal: AbortSignal.timeout(10_000) });
+    assert.equal(res.status, 503, route);
+    const body = await res.text();
+    assert.match(body, /Database unavailable/);
+    assert.doesNotMatch(body, new RegExp(DB_HOST.replaceAll('.', '\\.')));
+  }
+  // Each request made its own attempt (the failed one was not cached), and no log line names the URI.
+  const output = logs.join('\n');
+  assert.equal(output.match(/MongoDB connection failed/g)?.length, 2);
+  assert.doesNotMatch(output, /pageaters_test|serverSelectionTimeoutMS/);
+});
+
+test('unknown /api/v1/* paths answer 503 while MongoDB is down (404 once it is up)', async () => {
+  // Every /api/v1 path except the health route sits behind requireDb, so the 404 needs a connection first.
+  const res = await fetch(`${BASE}/api/v1/does-not-exist`, { signal: AbortSignal.timeout(10_000) });
+  assert.equal(res.status, 503);
+});
+
+test('src/server.js exits 1 with a clear message on invalid env, without echoing values', () => {
   const fakeLiveKey = 'rzp_live_BOOTFAKEzz9';
-  const result = spawnSync(process.execPath, ['index.js'], {
+  const result = spawnSync(process.execPath, ['src/server.js'], {
     cwd: API_ROOT,
-    env: { ...STUB_ENV, RAZORPAY_KEY_ID: fakeLiveKey, ENCRYPTION_KEY: 'BOOTSHORTzz9', MONGODB_URI: '' },
+    env: { ...STUB_ENV, PATH: process.env.PATH, RAZORPAY_KEY_ID: fakeLiveKey, ENCRYPTION_KEY: 'BOOTSHORTzz9', MONGODB_URI: '' },
     encoding: 'utf8',
     timeout: 20_000,
   });
@@ -115,5 +136,18 @@ test('index.js exits non-zero with a clear message on invalid env, without echoi
   assert.match(output, /ENCRYPTION_KEY: must be exactly 32 bytes/);
   assert.match(output, /MONGODB_URI: is required/);
   assert.doesNotMatch(output, /zz9|BOOT/);
-  assert.doesNotMatch(output, /starting app|\n\s+at /);
+  assert.doesNotMatch(output, /Listening|\n\s+at /);
+});
+
+test('src/server.js exits 1 without listening when MongoDB is unreachable', () => {
+  const result = spawnSync(process.execPath, ['src/server.js'], {
+    cwd: API_ROOT,
+    env: { ...STUB_ENV, PATH: process.env.PATH, PORT: '5999' },
+    encoding: 'utf8',
+    timeout: 20_000,
+  });
+  const output = result.stdout + result.stderr;
+  assert.equal(result.status, 1);
+  assert.match(output, /MongoDB connection failed/);
+  assert.doesNotMatch(output, /Listening|pageaters_test/);
 });

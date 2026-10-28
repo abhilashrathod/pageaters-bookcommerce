@@ -1,4 +1,6 @@
 const { Router } = require('express');
+const requireDb = require('../middlewares/requireDb.middleware');
+
 const router = new Router();
 
 router.get('/', async (req, res) => {
@@ -8,6 +10,9 @@ router.get('/', async (req, res) => {
     message: 'Yes, this is the correct basePath!',
   });
 });
+
+// Every route below reads or writes MongoDB; the health route above answers without it.
+router.use(requireDb);
 
 router.use('/public', require('./public.routes'));
 router.use('/auth', require('./auth.routes'));

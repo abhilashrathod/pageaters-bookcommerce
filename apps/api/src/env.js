@@ -47,14 +47,20 @@ const schema = z.object({
       'must be a comma-separated list of http(s) origins without a path or trailing slash, e.g. https://demo.pageaters.com',
     )
     .default(DEFAULT_ALLOWED_ORIGINS),
-  ENABLE_CRON: z
-    .enum(['true', 'false'], { error: 'must be true or false' })
-    .transform((value) => value === 'true')
-    .default(false),
 
   // Required: the database, auth, and the Razorpay and Twilio SDK clients, which are constructed when their modules
   // load and throw without credentials. The Phase 4 adapters (real + mock) will make the vendor keys optional.
-  MONGODB_URI: required(z.string().regex(/^mongodb(\+srv)?:\/\/\S+$/, 'must start with mongodb:// or mongodb+srv://')),
+  // A raw `@` in the password makes the driver read part of the password as a host name (and log it), so the
+  // credentials may hold only the one `@` that ends them.
+  MONGODB_URI: required(
+    z
+      .string()
+      .regex(/^mongodb(\+srv)?:\/\/\S+$/, 'must start with mongodb:// or mongodb+srv://')
+      .refine(
+        (value) => (value.replace(/^mongodb(\+srv)?:\/\//, '').split('?')[0].match(/@/g) ?? []).length <= 1,
+        'password must be URL-encoded (write @ as %40)',
+      ),
+  ),
   // AES-256 uses Buffer.from(key) (utf8) as the key, so the rule counts bytes: use 32 ASCII characters.
   ENCRYPTION_KEY: required(
     z.string().refine((value) => Buffer.byteLength(value, 'utf8') === 32, 'must be exactly 32 bytes (use 32 ASCII characters)'),

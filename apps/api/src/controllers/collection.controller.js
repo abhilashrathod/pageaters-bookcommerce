@@ -159,6 +159,11 @@ module.exports.search = async (req, res) => {
     let { q } = req.allParams();
     const collectionIndex = req.app.collectionIndex;
 
+    // The index is built once the first database connection opens; until then search finds nothing.
+    if (!collectionIndex) {
+      return res.ok({ message: 'COLLECTION_SEARCH_SUCCESS', data: [] });
+    }
+
 
     const lunrIdArray = [];
     collectionIndex.search(`${q}*`).forEach((id) => {

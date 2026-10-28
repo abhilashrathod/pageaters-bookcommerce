@@ -29,15 +29,14 @@ numbers/addresses (AGENTS.md §6). Valid values: `development` | `staging` | `pr
 ## Structure
 
 ```
-index.js          entry point
-src/app.js        Express app setup and server start
+src/app.js        builds and exports the Express app (no listen, no connect; serverless-importable)
+src/server.js     local entry: validates env, connects to MongoDB, listens on PORT
 src/routes/       route definitions
 src/controllers/  request handlers
 src/models/       Mongoose models
 src/validators/   Joi request schemas
 src/middlewares/  auth, validation, response helpers
 src/helpers/      shared logic (orders, mail, encryption)
-src/jobs/         scheduled jobs
 src/libs/         search index, sitemap, Google product feed
 src/templates/    email templates (EJS)
 src/notes/        domain notes on orders, payments and refunds

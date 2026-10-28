@@ -29,7 +29,6 @@ describe('parseEnv', () => {
     assert.equal(env.PORT, 5005);
     assert.equal(env.STOREFRONT_URL, 'http://localhost:3000');
     assert.deepEqual(env.ALLOWED_ORIGINS, ['http://localhost:3000', 'http://localhost:4200']);
-    assert.equal(env.ENABLE_CRON, false);
     assert.equal(env.DELHIVERY_BASE_URL, 'https://staging-express.delhivery.com');
     assert.equal(env.MAIL_FROM, 'no-reply@demo.pageaters.com');
     assert.equal(env.RAZORPAY_KEY_SECRET, undefined);
@@ -41,14 +40,15 @@ describe('parseEnv', () => {
     const env = parseEnv({
       ...MINIMAL,
       PORT: '8080',
-      ENABLE_CRON: 'true',
       ALLOWED_ORIGINS: ' https://demo.pageaters.com , http://localhost:4200 ',
       UNRELATED: 'x',
+      // Removed with the in-process cron; a leftover value in an old .env is ignored.
+      ENABLE_CRON: 'true',
     });
     assert.equal(env.PORT, 8080);
-    assert.equal(env.ENABLE_CRON, true);
     assert.deepEqual(env.ALLOWED_ORIGINS, ['https://demo.pageaters.com', 'http://localhost:4200']);
     assert.equal('UNRELATED' in env, false);
+    assert.equal('ENABLE_CRON' in env, false);
   });
 
   test('treats empty strings as unset', () => {
@@ -113,15 +113,32 @@ describe('parseEnv', () => {
     const error = failure({
       ...MINIMAL,
       APP_ENV: 'prod',
-      ENABLE_CRON: 'yes',
       MONGODB_URI: 'postgres://db',
       TWILIO_ACCOUNT_SID: 'XX123',
       TWILIO_PHONE: '98765 43210',
       MAIL_FROM: 'not-an-email',
       STOREFRONT_URL: 'javascript:alert(1)',
     });
-    for (const name of ['APP_ENV', 'ENABLE_CRON', 'MONGODB_URI', 'TWILIO_ACCOUNT_SID', 'TWILIO_PHONE', 'MAIL_FROM', 'STOREFRONT_URL']) {
+    for (const name of ['APP_ENV', 'MONGODB_URI', 'TWILIO_ACCOUNT_SID', 'TWILIO_PHONE', 'MAIL_FROM', 'STOREFRONT_URL']) {
       assert.match(error.message, new RegExp(`\\b${name}: `));
+    }
+  });
+
+  test('refuses a MONGODB_URI whose password has a raw @, without echoing it', () => {
+    for (const MONGODB_URI of [
+      'mongodb://dbuser:p@ss@127.0.0.1:27017/pageaters',
+      'mongodb+srv://dbuser:a@b@c@cluster.example.net/pageaters?retryWrites=true',
+    ]) {
+      const error = failure({ ...MINIMAL, MONGODB_URI });
+      assert.match(error.message, /MONGODB_URI: password must be URL-encoded/);
+      assert.doesNotMatch(error.message, /p@ss|a@b|dbuser/);
+    }
+    for (const MONGODB_URI of [
+      'mongodb://dbuser:p%40ss@127.0.0.1:27017/pageaters',
+      'mongodb+srv://dbuser:pass@cluster.example.net/pageaters?appName=x@y',
+      'mongodb://127.0.0.1:27017/pageaters',
+    ]) {
+      assert.equal(parseEnv({ ...MINIMAL, MONGODB_URI }).MONGODB_URI, MONGODB_URI);
     }
   });
 
@@ -138,7 +155,6 @@ describe('parseEnv', () => {
       MAIL_FROM: 'SECRETMAILqq7',
       TWILIO_PHONE: 'SECRETPHONEqq7',
       IMAGE_CDN_URL: 'SECRETCDNqq7',
-      ENABLE_CRON: 'SECRETCRONqq7',
     };
     const error = failure(bad);
     assert.doesNotMatch(error.message, /SECRET|qq7/);

@@ -163,6 +163,11 @@ module.exports.search = async (req, res) => {
     let { q } = req.allParams();
     const booksIndex = req.app.booksIndex;
 
+    // The index is built once the first database connection opens; until then search finds nothing.
+    if (!booksIndex) {
+      return res.ok({ message: 'BOOK_SEARCH_SUCCESS', data: [] });
+    }
+
     if (!q) {
       return res.ok({ message: 'BOOK_SEARCH_SUCCESS', data: [] });
     }

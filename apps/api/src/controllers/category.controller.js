@@ -75,6 +75,11 @@ module.exports.search = async (req, res) => {
     let { q } = req.allParams();
     const categoryIndex = req.app.categoryIndex;
 
+    // The index is built once the first database connection opens; until then search finds nothing.
+    if (!categoryIndex) {
+      return res.ok({ message: 'CATEGORY_SEARCH_SUCCESS', data: [] });
+    }
+
 
     const lunrIdArray = [];
     categoryIndex.search(`${q}*`).forEach((id) => {

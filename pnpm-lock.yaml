@@ -338,9 +338,6 @@ importers:
       cors:
         specifier: ^2.8.5
         version: 2.8.6
-      cron:
-        specifier: ^1.8.2
-        version: 1.8.3
       csv-writer:
         specifier: ^1.6.0
         version: 1.6.0
@@ -3540,10 +3537,6 @@ packages:
   create-hmac@1.1.7:
     resolution: {integrity: sha512-MJG9liiZ+ogc4TzUwuvbER1JRdgvUFSB5+VR/g5h82fGaIRWMWddtKBHi7/sVhfjQZ6SehlyhvQYrcYkaUIpLg==}
 
-  cron@1.8.3:
-    resolution: {integrity: sha512-JYR/QZFklJCIPndBLfd/2nU1nSlCMrUdtQ2mGLXSVM/qqqEK7DOrFR0gsEiyeqs0PdWrs0ve1ggH4V7XksDwXg==}
-    deprecated: Breaking dependency change (moved from moment to luxon). Please move to 2.0.0.
-
   cross-spawn@6.0.6:
     resolution: {integrity: sha512-VqCUuhcd1iB+dsv8gxPttb5iZh/D0iubSP21g36KXdEuf6I5JiioesUVjpCdHV9MZRUfVFlvwtIUyPfxo5trtw==}
     engines: {node: '>=4.8'}
@@ -5742,9 +5735,6 @@ packages:
 
   lunr@2.3.9:
     resolution: {integrity: sha512-zTU3DaZaF3Rt9rhN3uBMGQD3dD2/vFQqnvZCDv4dl5iOzq2IZQqTxu90r4E5J+nP70J3ilqVCrbho2eWaeW8Ow==}
-
-  luxon@1.28.1:
-    resolution: {integrity: sha512-gYHAa180mKrNIUJCbwpmD0aTu9kV0dREDrwNnuyFAsO1Wt0EVYSZelPnJlbj9HplzXX/YWXHFTL45kvZ53M0pw==}
 
   magic-string@0.25.7:
     resolution: {integrity: sha512-4CrMT5DOHTDk4HYDlzmwu4FVCcIYI8gauveasrdCu2IKIFOJ3f0v/8MDGJCDL9oD2ppz/Av1b0Nj345H9M+XIA==}
@@ -12223,10 +12213,6 @@ snapshots:
       safe-buffer: 5.2.1
       sha.js: 2.4.12
 
-  cron@1.8.3:
-    dependencies:
-      luxon: 1.28.1
-
   cross-spawn@6.0.6:
     dependencies:
       nice-try: 1.0.5
@@ -15052,8 +15038,6 @@ snapshots:
       yallist: 4.0.0
 
   lunr@2.3.9: {}
-
-  luxon@1.28.1: {}
 
   magic-string@0.25.7:
     dependencies:

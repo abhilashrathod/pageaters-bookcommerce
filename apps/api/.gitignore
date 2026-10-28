@@ -11,6 +11,3 @@ package-lock.json
 
 # File Uploads
 resources/
-
-# Local seed files (scripts/seedData.js)
-seedData/

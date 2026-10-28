@@ -20,7 +20,7 @@ export default defineConfig(
   },
   {
     // Legacy code patterns, reported as warnings until the Phase 4 services rewrite replaces this code.
-    files: ['src/**/*.js', 'scripts/**/*.js', 'index.js'],
+    files: ['src/**/*.js'],
     rules: {
       '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/no-this-alias': 'warn',

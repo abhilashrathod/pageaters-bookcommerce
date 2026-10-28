@@ -93,6 +93,11 @@ module.exports.search = async (req, res) => {
     let { q } = req.allParams();
     const authorIndex = req.app.authorIndex;
 
+    // The index is built once the first database connection opens; until then search finds nothing.
+    if (!authorIndex) {
+      return res.ok({ message: 'AUTHOR_SEARCH_SUCCESS', data: [] });
+    }
+
 
     const lunrIdArray = [];
     authorIndex.search(`${q}*`).forEach((id) => {
