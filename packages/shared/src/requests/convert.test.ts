@@ -48,7 +48,8 @@ void describe('joiNumber', () => {
       const started = performance.now();
       const result = joiNumber(input);
       const elapsed = performance.now() - started;
-      assert.ok(elapsed < 100, `${input.slice(0, 12)}… took ${elapsed.toFixed(1)} ms`);
+      // Linear takes well under 1 ms; the quadratic regex took 15 s or more. The bound leaves room for a loaded CI box.
+      assert.ok(elapsed < 1000, `${input.slice(0, 12)}… took ${elapsed.toFixed(1)} ms`);
       assert.equal(result, converted ?? input, input.slice(0, 12));
     }
   });
