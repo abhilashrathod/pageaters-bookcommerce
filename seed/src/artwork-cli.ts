@@ -1,5 +1,5 @@
 // Generates brand artwork for books without a usable cover (from seed/data/covers.json), bundles, collections and
-// categories into seed/data/images/artwork/<kind>/<id>.svg, and writes seed/data/artwork.json.
+// categories into seed/data/images/artwork/<kind>/<id>.png (rendered with the brand font), and writes seed/data/artwork.json.
 // Usage: pnpm --filter @pageaters/seed artwork   (after sanitise and covers)
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -7,6 +7,7 @@ import { join, resolve } from 'node:path';
 import { bookArtwork, bundleArtwork, categoryArtwork, collectionArtwork } from './artwork.ts';
 import type { Cover } from './covers.ts';
 import { safeName, sweep, tally, writeAtomic } from './openlibrary.ts';
+import { renderPng } from './render.ts';
 import type { Doc } from './sanitise.ts';
 
 const dataDir = resolve(import.meta.dirname, '../data');
@@ -52,14 +53,14 @@ const jobs: (Artwork & { svg: string })[] = [
     id: String(category.categoryId),
     svg: categoryArtwork(String(category.title)),
   })),
-].map((job) => ({ ...job, file: `${job.kind}/${safeName(job.id, '.svg')}` }));
+].map((job) => ({ ...job, file: `${job.kind}/${safeName(job.id, '.png')}` }));
 
 const removed: string[] = [];
 for (const kind of ['books', 'bundles', 'collections', 'categories'] as const) {
   const dir = join(artDir, kind);
   await mkdir(dir, { recursive: true });
   const mine = jobs.filter((job) => job.kind === kind);
-  for (const job of mine) await writeAtomic(join(artDir, job.file), job.svg);
+  for (const job of mine) await writeAtomic(join(artDir, job.file), await renderPng(job.svg));
   // Generated, not downloaded: nothing to protect, so the sweep never holds back.
   const stale = await sweep(dir, new Set(mine.map((job) => job.file.slice(kind.length + 1))), [], { previous: 0, current: 0 });
   removed.push(...(stale ?? []));

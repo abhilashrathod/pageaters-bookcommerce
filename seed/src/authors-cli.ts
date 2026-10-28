@@ -1,5 +1,5 @@
 // Author images for seed/data/authors.json: an Open Library photo when the author is matched with confidence
-// (seed/data/images/authors/<authorId>-<photoId>.jpg), else a branded initials avatar (<authorId>.svg). Writes
+// (seed/data/images/authors/<authorId>-<photoId>.jpg), else a branded initials avatar (<authorId>.png, rendered with the brand font). Writes
 // seed/data/author-images.json. Files already on disk are kept; files no longer referenced are removed.
 // Usage: pnpm --filter @pageaters/seed authors   (after sanitise; needs network)
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -24,6 +24,7 @@ import {
 import { booksApiUrl, chunk } from './covers.ts';
 import { isValidIsbn } from './isbn.ts';
 import { getJson, safeName, saveImage, sweep, tally, throttled, writeAtomic } from './openlibrary.ts';
+import { renderPng } from './render.ts';
 import type { Doc } from './sanitise.ts';
 
 const dataDir = resolve(import.meta.dirname, '../data');
@@ -50,10 +51,10 @@ async function imageFor(author: Doc): Promise<AuthorImage> {
   const authorId = String(author.authorId);
   const name = String(author.name);
   const own = booksByAuthor.get(oid(author._id)) ?? [];
-  const svg = safeName(authorId, '.svg');
+  const png = safeName(authorId, '.png');
   const initials = async (reason: InitialsReason): Promise<AuthorImage> => {
-    await writeAtomic(join(imageDir, svg), initialsAvatar(name));
-    return { authorId, name, file: svg, kind: 'initials', reason };
+    await writeAtomic(join(imageDir, png), await renderPng(initialsAvatar(name)));
+    return { authorId, name, file: png, kind: 'initials', reason };
   };
   try {
     let match = matchByIsbn(

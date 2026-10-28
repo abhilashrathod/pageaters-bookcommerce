@@ -7,7 +7,8 @@ The raw dump stays outside the repo (`../pageaters-data-dump`) and is never comm
 pnpm --filter @pageaters/seed sanitise [dump-dir]   # default: $SEED_DUMP_DIR or ../pageaters-data-dump
 pnpm --filter @pageaters/seed covers                # after sanitise; needs network (~10 min)
 pnpm --filter @pageaters/seed authors               # after sanitise; needs network (~10 min)
-pnpm --filter @pageaters/seed artwork               # after covers; offline, instant
+pnpm --filter @pageaters/seed artwork               # after covers; offline, seconds
+pnpm --filter @pageaters/seed upload                # last; needs BLOB_READ_WRITE_TOKEN in apps/api/.env (~7 min first time)
 ```
 
 Writes `data/{authors,bundles,categories,collections,product-sets,store-books}.json` in MongoDB Extended JSON.
@@ -35,6 +36,7 @@ What the pipeline does:
 | `covers`    | Open Library covers → `data/images/covers/`        |
 | `authors`   | Author photos or initials → `data/images/authors/` |
 | `artwork`   | Brand artwork → `data/images/artwork/`             |
+| `upload`    | Images → Vercel Blob; image fields → Blob URLs     |
 | `test`      | Unit tests on synthetic data                       |
 | `lint`      | ESLint                                             |
 | `typecheck` | `tsc --noEmit`                                     |
@@ -52,16 +54,29 @@ listed in `acceptedTitleMismatches`. Writes `data/images/covers/<bookId>-<coverI
 `authors` gives every author an image (`src/authors.ts`). An Open Library photo is used only when the author is
 matched with confidence: listed on the Open Library edition of one of their own books (by ISBN) with the same
 surname and first initial, or found by search with exactly our name and a best-known work among our titles for them.
-Everyone else gets a branded initials avatar (SVG, accent background). Writes
-`data/images/authors/<authorId>-<photoId>.jpg` or `<authorId>.svg` and `data/author-images.json` (with the match
+Everyone else gets a branded initials avatar (PNG rendered with the brand font, accent background). Writes
+`data/images/authors/<authorId>-<photoId>.jpg` or `<authorId>.png` and `data/author-images.json` (with the match
 method, or why initials were used). Shared Open Library plumbing (retries, throttling, atomic writes, the guarded
 clean-up of unused files) is in `src/openlibrary.ts`.
 
 ## Brand artwork
 
-`artwork` generates SVG artwork in the brand colours (`src/artwork.ts`) for every book without a usable cover (it
+`artwork` generates artwork in the brand colours (`src/artwork.ts`) for every book without a usable cover (it
 reads `data/covers.json`), and for every bundle, collection and category. Books get a cover with a coloured spine,
 title, series line and author; bundles a stack of books with their count; collections a shelf of spines; categories
-an open book. Text sits in the middle because cards crop images to fit. Writes
-`data/images/artwork/<kind>/<id>.svg` and `data/artwork.json`; reruns give identical files. Real images can replace
+an open book. Text sits in the middle because cards crop images to fit. The SVGs are rendered to PNG with the Metropolis font embedded (`src/render.ts`, from `@fontsource/metropolis`;
+system fonts are never used), so the look is the same everywhere. Writes `data/images/artwork/<kind>/<id>.png` and
+`data/artwork.json`; reruns give identical files. Real images can replace
 any of these later through super-admin uploads.
+
+## Upload to Vercel Blob
+
+`upload` puts every image on Vercel Blob (public, cached for a year) and rewrites the image fields in `data/*.json`:
+book `poster` (cover, else artwork; legacy extra `images` are cleared), author `avatar`, bundle and collection
+`poster`, category `thumbnail` and `meta.imageUrl`. Blob paths include a hash of the content
+(`catalog/covers/<bookId>-<coverId>-<hash>.jpg`), so unchanged images are never uploaded twice and a changed image
+gets a new URL. Every document must end up with an image, or the run fails. If an upload fails, the seed files are
+left as they were and the successful uploads are kept in `data/image-manifest.json` for the rerun.
+
+Run order: `sanitise` → `covers` → `authors` → `artwork` → `upload`. Rerun `upload` after `sanitise`, which
+rewrites the seed files without URLs.

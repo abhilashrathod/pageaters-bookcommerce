@@ -1,4 +1,4 @@
-// Generated brand artwork (SVG) for catalog items without an image: books without a usable cover, bundles,
+// Generated brand artwork (SVG, rendered to PNG by render.ts) for catalog items without an image: books without a usable cover, bundles,
 // collections and categories. Brand colours only (theme accent and primary). Output depends only on the item, so
 // reruns produce identical files. Images get cropped to fit their card, so text stays in the middle.
 import { hash } from './stock.ts';
