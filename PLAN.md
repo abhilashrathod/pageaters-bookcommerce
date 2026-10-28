@@ -139,6 +139,10 @@ This file is temporary: when every phase is done, archive the decision log into 
   - Banner and page types are not ported (they move to the CMS in Phase 6). No app imports `@pageaters/shared` yet: the API switches over in Phase 4, the storefront in Phase 7, the admin in Phase 8
 
 - [ ] `packages/api-client`: typed client (fetch-based, works in RSC and Angular)
+  - Split (owner-approved 2026-10-28): 2a first, then 2b and 2c in parallel worktrees. Responses are typed from `@pageaters/shared`; runtime zod parsing is off by default and opt-in per call or per client (the legacy API breaks some target contracts until Phase 4). Targets the API's 145 routes as they exist today; Phase 4 updates the client where routes change
+  - [ ] 2a. Core `@pageaters/api-client`: fetch wrapper (base URL, cookies/credentials in the browser, forwarded cookies on the Next server, Next cache tags/revalidate passed through without importing Next, timeout/abort), envelope unwrapping, typed `ApiError` carrying the API's error code, query serialisation, a declarative endpoint definition used by 2b/2c, one sample resource (categories) proving the pattern. Promise-based, no DOM- or Node-only APIs, so Angular can wrap it in `from()`. Tests with a mocked fetch
+  - [ ] 2b. Shopper and public endpoints (84 routes): catalog reads, auth, cart, favourites, addresses, customer orders, store credit, subscribers, stock alerts
+  - [ ] 2c. Admin endpoints (61 routes): catalog create/update/delete, order lifecycle, users, stock alerts, store credit issue. Write payloads without a shared request schema are typed locally and listed for Phase 4
 
 ## Phase 4 — API: TypeScript, architecture, security
 
