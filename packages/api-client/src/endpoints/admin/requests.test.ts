@@ -448,6 +448,12 @@ const cases: Case[] = [
   },
 ];
 
+// A JSON body as the requester sent it (a string; FormData is only used by the upload).
+function jsonBody(body: unknown): object {
+  assert.equal(typeof body, 'string');
+  return JSON.parse(body as string) as object;
+}
+
 function endpointNames(tree: EndpointTree, prefix = ''): string[] {
   return Object.entries(tree).flatMap(([name, node]) =>
     isEndpoint(node) ? [`${prefix}${name}`] : endpointNames(node, `${prefix}${name}.`),
@@ -471,7 +477,7 @@ void describe('admin endpoints', () => {
         assert.equal(call?.init.body, undefined);
       } else {
         assert.equal(call?.init.headers.get('content-type'), 'application/json');
-        assert.deepEqual(JSON.parse(String(call?.init.body)), c.body);
+        assert.deepEqual(jsonBody(call?.init.body), c.body);
       }
     });
   }
@@ -485,7 +491,7 @@ void describe('admin endpoints', () => {
     const { admin, calls } = client();
     await admin.storeBooks.create(bookCreate);
     await admin.storeBooks.update({ id: id(1), ...bookUpdateFull });
-    for (const call of calls) assert.equal('wholeSalePriceHistory' in JSON.parse(String(call.init.body)), false);
+    for (const call of calls) assert.equal('wholeSalePriceHistory' in jsonBody(call.init.body), false);
   });
 });
 
