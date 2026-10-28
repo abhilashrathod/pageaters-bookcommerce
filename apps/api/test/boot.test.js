@@ -4,6 +4,8 @@ const { spawnSync } = require('node:child_process');
 const net = require('node:net');
 const path = require('node:path');
 
+const { TEST_ENV } = require('./helpers/env');
+
 // Boot smoke tests: load the whole Express app (every route, model and SDK client) in this process with placeholder
 // config and an unreachable database, then hit it over HTTP. No real database and no network: port 1 on 127.0.0.1
 // refuses at once. Loading the app queues no queries (search indexing waits for a connection), so nothing is left
@@ -13,16 +15,9 @@ const API_ROOT = path.join(__dirname, '..');
 const DB_HOST = '127.0.0.1:1';
 
 const STUB_ENV = {
-  APP_ENV: 'test',
-  ENCRYPTION_KEY: 'test-only-key-'.padEnd(32, '0'),
+  ...TEST_ENV,
   // Unreachable on purpose; the short server selection timeout turns each connect attempt into a fast failure.
   MONGODB_URI: `mongodb://${DB_HOST}/pageaters_test?serverSelectionTimeoutMS=300`,
-  // Placeholders in the shape the SDKs check when they are constructed at import time.
-  TWILIO_ACCOUNT_SID: `AC${'0'.repeat(32)}`,
-  TWILIO_AUTH_TOKEN: 'test',
-  RAZORPAY_KEY_ID: 'rzp_test_placeholder',
-  RAZORPAY_KEY_SECRET: 'test',
-  SENDGRID_API_KEY: 'SG.test',
 };
 Object.assign(process.env, STUB_ENV);
 

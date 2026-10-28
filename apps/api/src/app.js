@@ -46,6 +46,9 @@ i18n.configure({
   locales: AVAILABLE_LOCALES,
   directory: path.join(PROJECT_ROOT, 'src', 'locales'),
   defaultLocale: DEFAULT_LANGUAGE,
+  // Never write to the locale files at runtime (an unknown key would be added to en.json): serverless-safe.
+  updateFiles: false,
+  syncFiles: false,
 });
 
 app.use(i18n.init);
