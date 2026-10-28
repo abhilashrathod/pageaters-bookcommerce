@@ -1,6 +1,6 @@
 const path = require('path');
 const Queue = require('better-queue');
-const colors = require('colors');
+const { styleText } = require('node:util');
 const ejs = require('ejs');
 
 const { PROJECT_ROOT, DEFAULT_LANGUAGE, ENVIRONMENT } = require('./../appConfig');
@@ -16,10 +16,10 @@ class SendMailQueue {
   add(mail) {
     this.queue.push(mail)
       .on('finish', function() {
-        console.log(colors.green('Task succeeded'));
+        console.log(styleText('green', 'Task succeeded'));
       })
       .on('failed', function() {
-        console.log(colors.red(' Task failed!'));
+        console.log(styleText('red', ' Task failed!'));
       });
   }
 

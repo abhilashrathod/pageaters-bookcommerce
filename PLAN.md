@@ -14,7 +14,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 | Hosting                | Everything on Vercel (storefront, admin, cms, api)                                                                                                                                                                                                             |
 | Domains                | `demo.pageaters.com`, `admin.demo.`, `cms.demo.`, `api.demo.pageaters.com`. Root domain untouched                                                                                                                                                              |
 | Storefront             | Migrate to Next.js **App Router**; UI moves to **Tailwind + shadcn/ui** (translate existing components)                                                                                                                                                        |
-| Backend                | Migrate to **TypeScript**; layered architecture; serverless-safe                                                                                                                                                                                               |
+| Backend                | Stays **JavaScript** (CommonJS; ADR 0001), validated with the shared zod schemas; layered architecture; serverless-safe                                                                                                                                        |
 | CMS                    | **Payload CMS 3** as `apps/cms`. Controls: Home + campaign pages (free-form), templates for Product, Collection, Category, Bundle, Book Box pages (locked core blocks + per-item overrides), Header, Nav, Footer, Announcement bar, Theme, SEO                 |
 | Code-owned pages       | Cart, checkout, profile/account, auth                                                                                                                                                                                                                          |
 | Git history            | **Keep** all three repos' history (Bitbucket → GitHub), scrubbed of secrets only                                                                                                                                                                               |
@@ -147,11 +147,31 @@ This file is temporary: when every phase is done, archive the decision log into 
   - [x] 2c. Admin endpoints (61 routes): catalog create/update/delete, order lifecycle, users, stock alerts, store credit issue. Write payloads without a shared request schema are typed locally and listed for Phase 4
     - Done 2026-10-28 (api-engineer, reviewed + audited): all 61 admin routes under `client.admin` (incl. `orders.createShipment`), except `PUT /users/:id` (a no-op that returns an arbitrary user); upload through `fileUploadForm`/`fileUploadRequest` + `client.request`. Admin payloads in `@pageaters/shared` `requests/admin/` (types-first, never `wholeSalePriceHistory`; every update key required because the legacy `$set` writes omitted fields as null; images required on create); admin responses in `responses/admin/`. The contract deliberately differs from today's API where the API leaks: users via `userSchema`, payment as the summary
 
-## Phase 4 — API: TypeScript, architecture, security
+## Phase 4 — API: architecture, upgrades, security
 
-- [ ] Convert to TypeScript (ESM, strict); upgrade Express, Mongoose 8, remaining deps
-- [ ] `env.ts` with zod; replace `config/*.js`; `.env.example`
-- [ ] Split `app.ts` (app setup) from server start; remove seed-on-boot and in-process cron
+- [x] Upgrade dependencies: Express 5, Mongoose 8 (+ both paginate plugins; replace `remove`/`count`/`update` and
+      callbacks), jsonwebtoken, helmet, express-rate-limit + express-slow-down, multer, axios, cookie-parser, compression,
+      Razorpay, Twilio, SendGrid; drop `body-parser`, `colors`, `mkdirp`, `random-base64-string` where Node/Express cover
+      them. Not upgraded (removed by later steps): lunr, better-queue, cron, node-cron, aws-sdk. Add `lint` (ESLint, JS
+      config from `@pageaters/config`) and `test` (`node --test`) scripts with a boot smoke test. Regression check: boot
+      against the Atlas demo data and rerun the api-client live read-only check from Phase 3
+  - 2026-10-28: the API stays JavaScript (CommonJS) — owner decision, ADR 0001. The TypeScript conversion was dropped
+    to avoid churn; CommonJS loads the ESM `@pageaters/shared` with `require()` on Node 22
+  - Done 2026-10-28 (api-engineer, reviewed + audited): express 5.3.0, mongoose 8.24.7, mongoose-paginate-v2 1.9.5,
+    jsonwebtoken 9.0.3, helmet 8.3.0, express-rate-limit 8.7.1, express-slow-down 3.1.1, multer 2.5.0, axios 1.21.0,
+    twilio 6.2.0, @sendgrid/mail 8.1.6; the rest pinned as resolved. Removed body-parser, colors, mkdirp,
+    random-base64-string and the unused node-cron; DEP0170 flag gone (the Mongoose 8 driver doesn't print the URI).
+    `src/helpers/mongooseCompat.helper.js` keeps three Mongoose 5 behaviours the legacy callers rely on — sort strings
+    (`'-1'`, `'DESC'`, missing → asc), `strictPopulate` off (deal `getById`), paginate `limit: undefined` → 0 — delete
+    it when the legacy-bugs step fixes those callers. Forced behaviour changes: updates now skip `undefined` keys
+    instead of writing null; async errors reach Express's default 500 page (shows a stack trace unless
+    `APP_ENV=production`) instead of crashing; helmet 8 default headers (CORP `same-origin`, stricter CSP). Gates:
+    `lint` (0 errors, 66 legacy warnings) and `test` (`node --test`: boot smoke test without a database + compat
+    unit tests). Regression check: ~40 read-only GETs against the Atlas demo data, incl. `sortOrder` -1/1/desc, give
+    the same statuses, counts and ids before and after. Found: `generateRandomNumber` (`Math.random`) makes the 6-digit
+    verification code and order/credit ids — use `crypto.randomInt` for any code that survives Phase 5
+- [ ] `env.js` with zod; replace `config/*.js`; `.env.example`
+- [ ] Split `app.js` (app setup) from server start; remove seed-on-boot and in-process cron
 - [ ] Layering: routes → controllers → services → models. Split `order.controller` (1,609 lines), `auth` (738), `cart` (570), `storeBook` (411) into services
 - [ ] Replace Joi with shared zod schemas + `validate()` middleware
 - [ ] Adapters: payments (Razorpay + mock), sms, email, shipping (Delhivery + mock), storage (Vercel Blob)
@@ -161,7 +181,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Fix legacy bugs found in Phase 1 cleanup: `add-on.controller` `update` (undefined `id`/`addOnId`) and `getById` (returns undefined `bundles`), `getByProductId` ignores `productId`; `jobs/index.js` undefined `logError`; `STOCK_ALERT` email has only `en.html` but renderer loads `en.ejs`; `auth.controller` `updatePassword` saves the old `password` instead of `newPassword`; list endpoints (e.g. `GET /categories`) return no documents without `page`/`limit` and sort on `undefined` without `sortBy` — add defaults; `category.controller` sorts on `Number('asc')` (NaN); `storeDeal.contoller` passes `offset: parseInt(undefined)` so the deals list returns `page`/`offset`/`pagingCounter` as null; `order.getByUniqueId` calls `orderPaymentInfo(null)` (500) for an order without payment; `deleteAccount`/`recoverAccount` write `deletedAt`/`scheduledForDeletion`, which the user model lacks (recovery can never work); order line totals aren't floored while the cart subtotal is; `issueCredit` has no validator (negative credit); validators: `objectId` never required (`cart/add`, `favorites`, `address/:id`, `order/attempt` accept a missing id), any extra query key (cache-buster) 400s, no validator on `PUT /address/:id`, `order/create-shipment`, `order/return`, `order/cancel`, pincode not 6 digits, email not lower-cased; add-ons grouped endpoint doesn't filter soft-deleted add-ons; seed loads 14 inactive product sets the API never serves; delete the dead `book.model.js`. Found in step 2: add-on `update` (ReferenceError) and `getById` always 500; order analytics (best-selling matches `status` not `orderStatus`, dates compared as strings) always return `[]`; deal `getById` uses author messages and `destroy` doesn't await `save()`; mystery-box `destroy` writes `deactivatedAt` (not in the model); author/collection/bundle/book create and update crash when a list field is missing; `order.controller` defines `retrieve` twice; upload doesn't await `File.create` and returns a storage key, not a URL; renaming a product set regenerates its slug (breaks links); `recoverAccount` reads `scheduledForDeletion` from the JWT so it always answers `ACCOUNT_ALREADY_ACTIVE`; `PUT /addresses/:id` checks existence with an unfiltered `findOne()` and `$set`s every field; `check-pincode` returns the courier's raw record; `orders.create` 500s without `giftOptions`; a return after 7 days answers 200 `ORDER_RETURN_PERIOD_LAPSED`; checkout select misspells `boxed`; cart `add`/`addAddOn` return `true` or the cart; `/cart/empty` clears books only; `addAddOn` has no default quantity; unsubscribing a missing stock alert answers `STOCK_ALERT_EXISTS`; `PUT /auth/me` validates `contactNo` but ignores it; list endpoints without `page` return `page: null`
 - [ ] OpenAPI from zod at `/docs`
 - [ ] Remove `page.controller` / page & banner models (moved to CMS); move sitemap + Google product feed to storefront
-- **Checkpoint:** API runs locally, all routes reachable, typecheck clean
+- **Checkpoint:** API runs locally, all routes reachable, lint and tests clean
 
 ## Phase 5 — Demo mode
 

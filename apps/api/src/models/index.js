@@ -1,3 +1,5 @@
+require('../helpers/mongooseCompat.helper');
+
 require('./addOn.model');
 require('./token.model');
 require('./file.model');

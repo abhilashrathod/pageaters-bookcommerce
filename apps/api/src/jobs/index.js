@@ -63,6 +63,7 @@ module.exports.schedule = async () => {
                 await func(params);
               }
             } catch (e) {
+              // eslint-disable-next-line no-undef -- legacy bug (undefined logError), fixed in the PLAN.md Phase 4 legacy-bugs step
               logError(e);
             }
           } // end of loop over schedule.JOBS_TO_RUN
@@ -83,6 +84,7 @@ module.exports.schedule = async () => {
               await func(params);
             }
           } catch (e) {
+            // eslint-disable-next-line no-undef -- legacy bug (undefined logError), fixed in the PLAN.md Phase 4 legacy-bugs step
             logError(e);
           }
         }

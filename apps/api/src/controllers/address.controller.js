@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { get } = require('lodash');
 const { models } = require('../constants');
 const axios = require('axios');
-const colors = require('colors');
+const { styleText } = require('node:util');
 const Address = mongoose.model(models.ADDRESS);
 
 const { checkServiceabilityInternal } = require('../helpers/order.helper');
@@ -30,7 +30,7 @@ module.exports.create = async (req, res) => {
     const isServiceable = await checkServiceabilityInternal(pinCode);
 
     if (isServiceable) {
-      console.log(colors.green('Serviceable!'));
+      console.log(styleText('green', 'Serviceable!'));
 
       if (isDefault) {
         await Address.updateMany({ isDeleted: false, userId: user.userId }, { $set: { isDefault: false } });

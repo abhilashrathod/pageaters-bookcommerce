@@ -1,5 +1,4 @@
-const randomString = require('random-base64-string');
-const mkdirp = require('mkdirp');
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
@@ -9,7 +8,7 @@ const appConfig = require('./../appConfig');
 module.exports.writeFile = async (folder, fileName, buffer) => {
   return new Promise(async (resolve, reject) => {
     try {
-      await mkdirp(folder, { recursive: true });
+      await fs.promises.mkdir(folder, { recursive: true });
 
       fs.writeFile(path.join(folder, fileName), buffer, async () => {
         return resolve();
@@ -33,7 +32,12 @@ module.exports.checkEnvVariables = async () => {
 };
 
 module.exports.generateRandomString = (length = 12) => {
-  return randomString(length);
+  // Alphanumeric base64 characters (same output as the former random-base64-string package).
+  let string = '';
+  while (string.length < length) {
+    string += crypto.randomBytes(length).toString('base64').replace(/[+/=]/g, '');
+  }
+  return string.slice(0, length);
 };
 
 module.exports.generateRandomNumber = (n) => {
@@ -46,7 +50,7 @@ module.exports.getId = (id) => {
       return id;
     }
   }
-  return mongoose.Types.ObjectId(id);
+  return new mongoose.Types.ObjectId(id);
 };
 
 module.exports.arrayDifference = (a1, a2) => {

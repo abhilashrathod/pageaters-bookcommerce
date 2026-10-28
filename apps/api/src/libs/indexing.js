@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const colors = require('colors');
+const { inspect, styleText } = require('node:util');
 const lunr = require('lunr');
 
 const { models } = require('../constants');
@@ -35,7 +35,7 @@ const indexBooks = (app) => {
 
     app.booksIndex = booksIndex;
     if (ENVIRONMENT !== 'test') {
-      console.log(colors.cyan('- Books indexing complete'));
+      console.log(styleText('cyan', '- Books indexing complete'));
     }
   });
 };
@@ -65,7 +65,7 @@ const indexAuthors = (app) => {
 
     app.authorIndex = authorIndex;
     if (ENVIRONMENT !== 'test') {
-      console.log(colors.cyan('- Authors indexing complete'));
+      console.log(styleText('cyan', '- Authors indexing complete'));
     }
   });
 };
@@ -96,7 +96,7 @@ const indexCollections = (app) => {
 
     app.collectionIndex = collectionIndex;
     if (ENVIRONMENT !== 'test') {
-      console.log(colors.cyan('- Collection indexing complete'));
+      console.log(styleText('cyan', '- Collection indexing complete'));
     }
   });
 };
@@ -125,7 +125,7 @@ const indexCategories = (app) => {
 
     app.categoryIndex = categoryIndex;
     if (ENVIRONMENT !== 'test') {
-      console.log(colors.cyan('- Category indexing complete'));
+      console.log(styleText('cyan', '- Category indexing complete'));
     }
   });
 };
@@ -153,7 +153,7 @@ const indexBundles = (app) => {
 
     app.bundlesIndex = bundlesIndex;
     if (ENVIRONMENT !== 'test') {
-      console.log(colors.cyan('- Bundles indexing complete'));
+      console.log(styleText('cyan', '- Bundles indexing complete'));
     }
   });
 };
@@ -161,7 +161,7 @@ const indexBundles = (app) => {
 // start indexing
 const runIndexing = (app) => {
   if (ENVIRONMENT !== 'test') {
-    console.info(colors.yellow('Setting up indexes..'));
+    console.info(styleText('yellow', 'Setting up indexes..'));
   }
 
   return Promise.all([
@@ -172,7 +172,8 @@ const runIndexing = (app) => {
     indexBundles(app),
   ])
     .catch((err) => {
-      console.info(colors.yellow('Error setting up indexes', err));
+      // colors joined extra arguments with util.inspect; keep printing the error the same way.
+      console.info(styleText('yellow', `Error setting up indexes ${inspect(err)}`));
       process.exit(2);
     });
 };

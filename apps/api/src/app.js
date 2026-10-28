@@ -2,7 +2,6 @@ const express = require('express');
 const compression = require('compression');
 const cors = require('cors');
 const path = require('path');
-const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const i18n = require('i18n');
@@ -31,9 +30,12 @@ this.app.use(helmet());
 // For NGINX
 this.app.set('trust proxy', 1);
 
-// body-parser needed to parse form-data bodies
-this.app.use(bodyParser.json({ limit: '100mb' }));
-this.app.use(bodyParser.urlencoded({ extended: true, limit: '100mb', parameterLimit: 100000 }));
+// Express 5 defaults to the simple query parser; keep qs parsing (nested keys) as in Express 4.
+this.app.set('query parser', 'extended');
+
+// parse JSON and urlencoded bodies
+this.app.use(express.json({ limit: '100mb' }));
+this.app.use(express.urlencoded({ extended: true, limit: '100mb', parameterLimit: 100000 }));
 this.app.use(cookieParser());
 this.app.set('views', path.join(PROJECT_ROOT, 'src', 'views'));
 this.app.set('view engine', 'ejs');
@@ -59,7 +61,7 @@ this.app.disable('x-powered-by');
 this.app.set('env', ENVIRONMENT);
 
 // Handle `OPTIONS` request.
-this.app.all('*', (req, res, next) => {
+this.app.all('/{*splat}', (req, res, next) => {
   const origin = req.headers.origin;
   if (ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -103,7 +105,7 @@ this.app.use(multer().any());
 // rate limiting
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute will have "max" 75 API request
-  max: 150,
+  limit: 150,
   message: 'LIMIT REACHED: Too many requests were created from this IP. Please try again after an hour. Please contact support in such case if you were not responsible',
 });
 
@@ -111,7 +113,7 @@ const apiLimiter = rateLimit({
 const speedLimiter = slowDown({
   windowMs: 60 * 1000, // 1 minute
   delayAfter: 125,
-  delayMs: 500,
+  delayMs: (used, req) => (used - req.slowDown.limit) * 500, // +500 ms per request over delayAfter (v1 behaviour)
 });
 
 // load routes

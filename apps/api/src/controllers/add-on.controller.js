@@ -1,3 +1,4 @@
+/* eslint-disable no-undef, no-dupe-keys -- legacy bugs (update: undefined id/addOnId; getById: undefined bundles; duplicate currentDiscount keys), fixed in the PLAN.md Phase 4 legacy-bugs step */
 const mongoose = require('mongoose');
 const { generateRandomNumber } = require('../helpers/utils.helper');
 const { models } = require('../constants');

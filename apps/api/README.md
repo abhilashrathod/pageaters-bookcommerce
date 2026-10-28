@@ -1,8 +1,8 @@
 # api
 
-Pageaters REST API — Node + Express + MongoDB (Mongoose).
+Pageaters REST API — Node 22 + Express 5 + MongoDB (Mongoose 8).
 
-Legacy JavaScript codebase, to be migrated to TypeScript in PLAN.md Phase 4.
+JavaScript (CommonJS); it stays JavaScript (see `docs/adr/0001-api-stays-javascript.md`).
 
 ## Setup
 
@@ -12,6 +12,8 @@ Configuration comes from environment variables only (see `src/appConfig.js`).
 cp .env.example .env   # then fill in the values
 pnpm dev               # node --watch, loads .env if present
 pnpm start             # same without watch
+pnpm lint              # ESLint (flat config on @pageaters/config/eslint/node)
+pnpm test              # node --test: boot smoke test, no database needed
 ```
 
 `.env.example` documents every variable and marks which are required to boot

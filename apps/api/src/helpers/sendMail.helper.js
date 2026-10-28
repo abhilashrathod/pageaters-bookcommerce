@@ -1,6 +1,6 @@
 const sgMail = require('@sendgrid/mail');
 const mongoose = require('mongoose');
-const colors = require('colors');
+const { styleText } = require('node:util');
 
 const { SENDGRID_API_KEY, NO_REPLY_EMAIL } = require('./../appConfig');
 const { models } = require('./../constants');
@@ -25,7 +25,7 @@ module.exports.sendMail = async ({ to, subject, body, emailModule = '' }) => {
 
       resolve();
     } catch (e) {
-      console.log(colors.red( JSON.stringify(e)));
+      console.log(styleText('red', String(JSON.stringify(e))));
       reject();
     }
   });

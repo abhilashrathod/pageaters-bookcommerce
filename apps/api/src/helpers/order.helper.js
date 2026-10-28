@@ -1,6 +1,6 @@
 const axios = require('axios');
 const Buffer = require('buffer');
-const colors = require('colors');
+const { styleText } = require('node:util');
 const { sumBy, get } = require('lodash');
 const { ENVIRONMENT, DELHIVERY, AWS } = require('../appConfig');
 
@@ -42,7 +42,7 @@ module.exports.calculateTotalWeight = async function(products, bundles, mysteryB
 
       resolve(totalWeight);
     } catch (e) {
-      console.log(colors.red('ERROR'), JSON.stringify(e));
+      console.log(styleText('red', 'ERROR'), JSON.stringify(e));
       resolve(0);
     }
   });
@@ -74,7 +74,7 @@ module.exports.calculateShipping = async function(isFree, hasMysteryBox) {
         totalDeliveryCharges: 50,
       });
     } catch (e) {
-      console.log(colors.red('ERROR'), JSON.stringify(e));
+      console.log(styleText('red', 'ERROR'), JSON.stringify(e));
       resolve(0);
     }
   });

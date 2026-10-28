@@ -1253,7 +1253,9 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
       url: `${DELHIVERY.BASE_URL}/api/cmu/create.json`,
       data: `format=json&data=${JSON.stringify(payload)}`,
       headers: {
-        "Authorization": `Token ${DELHIVERY.API_TOKEN}`
+        "Authorization": `Token ${DELHIVERY.API_TOKEN}`,
+        // axios 0.x sent this by default for string bodies; axios 1 does not.
+        "Content-Type": 'application/x-www-form-urlencoded'
       }
     };
 
