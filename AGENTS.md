@@ -58,14 +58,14 @@ pageaters/
 - Node **22 LTS** (`.nvmrc`), **pnpm** (version pinned via `packageManager`). Never use npm or yarn; never commit another lockfile.
 - All tasks run through Turbo from the repo root:
 
-| Command                                      | Purpose                                               |
-| -------------------------------------------- | ----------------------------------------------------- |
-| `pnpm install`                               | Install all workspaces                                |
-| `pnpm dev`                                   | Run all apps (or `pnpm dev --filter=storefront`)      |
-| `pnpm build`                                 | Build everything (cached)                             |
-| `pnpm lint` / `pnpm typecheck` / `pnpm test` | Quality gates — all must pass before a commit         |
-| `pnpm test:e2e`                              | Playwright end-to-end suite                           |
-| `pnpm seed`                                  | Load `seed/` into the configured MongoDB (idempotent) |
+| Command                                      | Purpose                                            |
+| -------------------------------------------- | -------------------------------------------------- |
+| `pnpm install`                               | Install all workspaces                             |
+| `pnpm dev`                                   | Run all apps (or `pnpm dev --filter=storefront`)   |
+| `pnpm build`                                 | Build everything (cached)                          |
+| `pnpm lint` / `pnpm typecheck` / `pnpm test` | Quality gates — all must pass before a commit      |
+| `pnpm test:e2e`                              | Playwright end-to-end suite                        |
+| `pnpm seed`                                  | Load `seed/data` into the API MongoDB (idempotent) |
 
 Add new scripts to the relevant `package.json` and register them in `turbo.json`; don't run ad-hoc tooling that others can't reproduce.
 

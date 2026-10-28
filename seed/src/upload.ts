@@ -57,7 +57,7 @@ export function blobPathname(file: string, hash: string): string {
 }
 
 // Seed field holding each document's ID and image URL.
-const FIELDS = {
+export const IMAGE_FIELDS = {
   'store-books': { id: 'bookId', image: 'poster' },
   authors: { id: 'authorId', image: 'avatar' },
   bundles: { id: 'bundleId', image: 'poster' },
@@ -71,7 +71,10 @@ const FIELDS = {
 export function applyImages(data: Dump, entries: readonly ManifestEntry[]): Dump {
   const out: Dump = {};
   const missing: string[] = [];
-  for (const [seedName, field] of Object.entries(FIELDS) as [keyof typeof FIELDS, (typeof FIELDS)[keyof typeof FIELDS]][]) {
+  for (const [seedName, field] of Object.entries(IMAGE_FIELDS) as [
+    keyof typeof IMAGE_FIELDS,
+    (typeof IMAGE_FIELDS)[keyof typeof IMAGE_FIELDS],
+  ][]) {
     const urls = new Map(entries.filter((e) => e.seedName === seedName).map((e) => [e.id, e.url]));
     out[seedName] = (data[seedName] ?? []).map((doc: Doc) => {
       const url = urls.get(String(doc[field.id]));

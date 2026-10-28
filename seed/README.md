@@ -10,6 +10,7 @@ pnpm --filter @pageaters/seed authors               # after sanitise; needs netw
 pnpm --filter @pageaters/seed artwork               # after covers; offline, seconds
 pnpm --filter @pageaters/seed upload                # last; needs BLOB_READ_WRITE_TOKEN in apps/api/.env (~7 min first time)
 pnpm --filter @pageaters/seed accounts              # checks SUPER_ADMIN_* in apps/api/.env
+pnpm seed                                           # from the repo root: load into the API database
 ```
 
 Writes `data/{authors,bundles,categories,collections,product-sets,store-books}.json` in MongoDB Extended JSON.
@@ -89,3 +90,14 @@ demo shopper (`USER`, with one saved address), demo admin and super-admin (both 
 demo roles). The super-admin comes from `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` in `apps/api/.env`; only a
 salted hash is stored, the same way the API hashes passwords. `pnpm --filter @pageaters/seed accounts` checks those
 settings without printing them.
+
+## Loading into MongoDB
+
+`pnpm seed` (from the repo root; `--dry-run` previews) loads `data/` and the demo accounts into the API database
+from `MONGODB_URI` in `apps/api/.env`. It refuses unless that database is `pageaters_api` and every image field is a
+Vercel Blob URL. It is safe to rerun: by default it only inserts what is missing, so edits made since (for example
+by the super-admin) are kept and nothing is deleted. `--sync` makes the catalog match the seed exactly, replacing
+documents and removing extras. Account credentials always follow `.env`; the demo shopper's address, cart and
+favourites are only created when missing.
+
+Full run order: `sanitise` → `covers` → `authors` → `artwork` → `upload` → `pnpm seed`.

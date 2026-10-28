@@ -10,6 +10,7 @@
     "artwork": "node src/artwork-cli.ts",
     "upload": "node --env-file-if-exists=../apps/api/.env src/upload-cli.ts",
     "accounts": "node --env-file-if-exists=../apps/api/.env src/accounts-cli.ts",
+    "load": "node --env-file-if-exists=../apps/api/.env src/load-cli.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --test 'src/**/*.test.ts'"
@@ -21,6 +22,7 @@
     "@types/node": "22.20.5",
     "@vercel/blob": "2.8.2",
     "eslint": "9.39.5",
+    "mongodb": "6.21.0",
     "typescript": "6.0.3"
   },
   "license": "UNLICENSED"
