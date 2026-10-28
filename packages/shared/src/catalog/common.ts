@@ -29,3 +29,10 @@ export const countSchema = z.number().int().nonnegative();
 
 // `currentDiscount`: a percentage off the list price.
 export const discountSchema = z.number().min(0).max(100);
+
+// A link the storefront renders (`href`): a site-relative path, or an absolute https URL. Protocol-relative
+// (`//host`, `/\host`) and other schemes (`javascript:`, `data:`, `http:`) are rejected.
+export const linkSchema = z.union([
+  z.string().regex(/^\/(?![/\\])[^\s\\]*$/, 'INVALID_LINK'),
+  z.url({ protocol: /^https$/, hostname: z.regexes.domain }),
+]);

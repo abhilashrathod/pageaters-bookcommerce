@@ -2,15 +2,16 @@ import { z } from 'zod';
 
 import { apiResponse, imageUrlSchema, isoDateSchema, objectIdSchema, paginated } from '../primitives.ts';
 import { categoryRefSchema } from './category.ts';
+import { linkSchema } from './common.ts';
 import { productSetRefSchema } from './product-set.ts';
 
 // One product set inside a deal, with its position. Mongoose gives each entry its own `_id`.
 export const dealProductSetSchema = z.object({
   _id: objectIdSchema,
   priority: z.number(),
-  // No model default, so optional by the contract's rule.
+  // No model default, so optional by the contract's rule. Populated, it is null if the set was hard-deleted.
   get set() {
-    return productSetRefSchema.optional();
+    return productSetRefSchema.nullish();
   },
 });
 export type DealProductSet = z.infer<typeof dealProductSetSchema>;
@@ -22,9 +23,10 @@ export const dealSchema = z.object({
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
   dealId: z.string(),
-  poster: imageUrlSchema,
-  // A storefront path or URL; free text in the model.
-  ctaLink: z.string(),
+  // '' is the model default and deals are not seeded, so a deal saved without an image sends ''.
+  poster: imageUrlSchema.or(z.literal('')),
+  // Rendered as an href: a site path or an https URL ('' is the model default).
+  ctaLink: linkSchema.or(z.literal('')),
   ctaText: z.string(),
   title: z.string(),
   description: z.string(),

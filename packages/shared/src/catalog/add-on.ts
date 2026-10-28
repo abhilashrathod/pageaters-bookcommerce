@@ -12,7 +12,8 @@ export const addOnSchema = z.object({
   addOnId: z.string(),
   name: z.string(),
   description: z.string(),
-  poster: imageUrlSchema,
+  // '' is the model default and add-ons are not seeded, so one saved without an image sends ''.
+  poster: imageUrlSchema.or(z.literal('')),
   // Free-text grouping key; the storefront lists add-ons grouped by it.
   category: z.string(),
   priority: z.number(),

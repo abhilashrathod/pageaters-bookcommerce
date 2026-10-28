@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 
 import { addOnGroupsResponseSchema, addOnSchema } from './add-on.ts';
 import { authorListResponseSchema, authorSchema } from './author.ts';
-import { bookDetailResponseSchema, bookListResponseSchema, bookSchema } from './book.ts';
+import { bookDetailResponseSchema, bookListResponseSchema, bookSchema, categoryProductsResponseSchema } from './book.ts';
 import type { Book } from './book.ts';
 import { bundleSchema } from './bundle.ts';
 import { categorySchema } from './category.ts';
@@ -11,7 +11,7 @@ import { collectionListResponseSchema, collectionSchema } from './collection.ts'
 import { dealListResponseSchema, dealSchema } from './deal.ts';
 import { metaSchema } from './meta.ts';
 import { mysteryBoxSchema } from './mystery-box.ts';
-import { productSetSchema } from './product-set.ts';
+import { productSetDetailResponseSchema, productSetSchema } from './product-set.ts';
 
 // Compile-time only: supplier prices and soft-delete internals are not part of the contract.
 type HasKey<T, K extends PropertyKey> = K extends keyof T ? true : false;
@@ -218,7 +218,7 @@ void describe('bookSchema', () => {
     const result = bookDetailResponseSchema.safeParse(ok(populated, 'BOOK_LIST_SUCCESS'));
     assert.ok(result.success, JSON.stringify(result.error?.issues));
     const related = result.data.data.relatedBooks[0];
-    assert.ok(typeof related === 'object' && typeof related.author === 'object');
+    assert.ok(typeof related === 'object' && typeof related.author === 'object' && related.author !== null);
     assert.equal(related.author.name, 'An Author');
   });
 
@@ -302,6 +302,15 @@ void describe('categorySchema and metaSchema', () => {
     assert.equal(categorySchema.safeParse({ ...category, meta: undefined }).success, false);
   });
 
+  void it('accepts an empty, site-relative or https canonical url and rejects unsafe ones', () => {
+    for (const url of ['', '/categories/fantasy', 'https://demo.pageaters.com/categories/fantasy']) {
+      assert.ok(metaSchema.safeParse({ ...meta, url }).success, url);
+    }
+    for (const url of ['javascript:alert(1)', 'http://example.com', '//evil.example', 'categories/fantasy']) {
+      assert.equal(metaSchema.safeParse({ ...meta, url }).success, false, url);
+    }
+  });
+
   void it('rejects a fractional book count', () => {
     assert.equal(categorySchema.safeParse({ ...category, numberOfBooks: 1.5 }).success, false);
   });
@@ -362,6 +371,60 @@ void describe('productSetSchema', () => {
   void it('rejects an entry without its _id', () => {
     assert.equal(productSetSchema.safeParse({ ...productSet, products: [{ product: id(1), priority: 1 }] }).success, false);
   });
+
+  void it('accepts a null product left by a hard delete', () => {
+    assert.ok(productSetSchema.safeParse({ ...productSet, products: [{ _id: id(7), priority: 1, product: null }] }).success);
+  });
+
+  void it('does not take a flattened book for an entry', () => {
+    const book = { _id: id(1), title: 'A Book', priority: 0, author: { _id: id(2), name: 'An Author' } };
+    assert.equal(productSetSchema.safeParse({ ...productSet, products: [book] }).success, false);
+  });
+});
+
+void describe('productSetDetailResponseSchema', () => {
+  const flattened = {
+    ...productSet,
+    products: [{ _id: id(1), title: 'A Book', bookId: 'BK-1', price: 499, author: { _id: id(2), name: 'An Author' } }, null],
+    categories: [{ _id: id(3), categoryId: 'CA-1', title: 'Fantasy', numberOfBooks: 1 }],
+  };
+
+  void it('accepts the slug/unique response: products flattened to their books', () => {
+    const result = productSetDetailResponseSchema.safeParse(ok(flattened, 'PRODUCT_SET_LIST_SUCCESS'));
+    assert.ok(result.success, JSON.stringify(result.error?.issues));
+    const author = result.data.data.products[0]?.author;
+    assert.ok(typeof author === 'object' && author !== null);
+    assert.equal(author.name, 'An Author');
+  });
+
+  void it('rejects the stored entry shape and bare ids', () => {
+    assert.equal(productSetDetailResponseSchema.safeParse(ok(productSet)).success, false);
+    assert.equal(productSetDetailResponseSchema.safeParse(ok({ ...flattened, products: [id(1)] })).success, false);
+  });
+});
+
+void describe('categoryProductsResponseSchema', () => {
+  void it('accepts the category listing projection', () => {
+    const item = {
+      _id: id(1),
+      title: 'A Book',
+      bookId: 'BK-1',
+      ISBN: '9780000000001',
+      author: { _id: id(2), name: 'An Author', avatar: blob('authors/an-author') },
+      poster: blob('covers/a-book'),
+      price: 499,
+      popularity: 7,
+      availability: 'available',
+      editorsPick: false,
+      inventory: 3,
+      currentDiscount: 0,
+      newRelease: false,
+      bestSeller: false,
+      categories: [{ _id: id(3), categoryId: 'CA-1', title: 'Fantasy' }],
+    };
+    assert.ok(categoryProductsResponseSchema.safeParse(ok(page([item]))).success);
+    assert.equal(categoryProductsResponseSchema.safeParse(ok(page([{ ...item, availability: 'gone' }]))).success, false);
+  });
 });
 
 void describe('dealSchema', () => {
@@ -389,6 +452,28 @@ void describe('dealSchema', () => {
     assert.ok(dealListResponseSchema.safeParse(ok(page([item]))).success);
     assert.equal(dealListResponseSchema.safeParse(ok(page([{ ...item, poster: '/sale.png' }]))).success, false);
   });
+
+  void it('accepts the model defaults and a null set left by a hard delete', () => {
+    const defaults = { ...deal, poster: '', ctaLink: '', productSets: [{ _id: id(9), priority: 1, set: null }] };
+    assert.ok(dealSchema.safeParse(defaults).success);
+  });
+
+  void it('accepts only site paths and https URLs as ctaLink', () => {
+    for (const ctaLink of ['/sets/new-releases', '/', 'https://demo.pageaters.com/sale']) {
+      assert.ok(dealSchema.safeParse({ ...deal, ctaLink }).success, ctaLink);
+    }
+    const unsafe = [
+      'javascript:alert(1)',
+      'JavaScript:alert(1)',
+      'data:text/html,hi',
+      'http://example.com',
+      '//evil.example',
+      '/\\evil.example',
+      'sale',
+      '/a b',
+    ];
+    for (const ctaLink of unsafe) assert.equal(dealSchema.safeParse({ ...deal, ctaLink }).success, false, ctaLink);
+  });
 });
 
 void describe('addOnSchema', () => {
@@ -397,14 +482,20 @@ void describe('addOnSchema', () => {
     assert.ok(addOnGroupsResponseSchema.safeParse(ok([{ _id: 'bookmarks', addOns: [addOn] }])).success);
   });
 
+  void it("accepts the model's empty poster but not a file name", () => {
+    assert.ok(addOnSchema.safeParse({ ...addOn, poster: '' }).success);
+    assert.equal(addOnSchema.safeParse({ ...addOn, poster: 'bookmark.jpg' }).success, false);
+  });
+
   void it('rejects fractional stock', () => {
     assert.equal(addOnSchema.safeParse({ ...addOn, inventory: 0.5 }).success, false);
   });
 });
 
 void describe('mysteryBoxSchema', () => {
-  void it('accepts a mystery box', () => {
+  void it('accepts a mystery box, including empty image entries (the model default)', () => {
     assert.ok(mysteryBoxSchema.safeParse(mysteryBox).success);
+    assert.ok(mysteryBoxSchema.safeParse({ ...mysteryBox, images: [''] }).success);
   });
 
   void it('rejects a negative book count and non-URL images', () => {

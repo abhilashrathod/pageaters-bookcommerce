@@ -12,6 +12,7 @@ export const authorFieldsSchema = z.object({
   authorId: z.string(),
   name: z.string(),
   intro: z.string(),
+  // https required: the seed guarantees every document has its image, and super-admin uploads must too (Phase 8).
   avatar: imageUrlSchema,
   priority: z.number(),
   popularity: z.number(),

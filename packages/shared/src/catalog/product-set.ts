@@ -5,13 +5,15 @@ import { bookRefSchema } from './book.ts';
 import { categoryRefSchema } from './category.ts';
 import { ref } from './common.ts';
 
-// One entry of a product set: a store book and its position. Mongoose gives each entry its own `_id`.
-export const productSetItemSchema = z.object({
+// One entry of a product set: a store book and its position. Mongoose gives each entry its own `_id`. Strict, so
+// a bare book projection (the flattened detail shape below) can never pass for an entry.
+export const productSetItemSchema = z.strictObject({
   _id: objectIdSchema,
   priority: z.number(),
-  // No model default, so optional by the contract's rule, though every seeded entry has one.
+  // No model default, so optional by the contract's rule, though every seeded entry has one. Populated, it is
+  // null if the book was hard-deleted (books are soft-deleted today).
   get product() {
-    return bookRefSchema.optional();
+    return bookRefSchema.nullish();
   },
 });
 export type ProductSetItem = z.infer<typeof productSetItemSchema>;
@@ -37,7 +39,19 @@ export type ProductSet = z.infer<typeof productSetSchema>;
 export const productSetRefSchema = ref(productSetSchema);
 export type ProductSetRef = z.infer<typeof productSetRefSchema>;
 
+// A set as GET /product-sets/slug/:slug and /product-sets/unique/:setId send it: the entries are sorted by
+// priority and flattened to their populated books (`products: map(sortBy(products, 'priority'), 'product')`),
+// each a projection with its author; null where a book was hard-deleted. Categories are populated. The book
+// projection is strict (the controllers' `select` lists only book fields), so a stored `{ _id, priority,
+// product }` entry can't pass for a book.
+// (The admin's GET /product-sets/:id keeps the entries, sorted: that is `productSetSchema`.)
+export const productSetDetailSchema = productSetSchema.extend({
+  get products() {
+    return z.array(bookRefSchema.options[1].strict().nullable());
+  },
+});
+export type ProductSetDetail = z.infer<typeof productSetDetailSchema>;
+
 // GET /product-sets (admin only): whole documents, nothing populated.
 export const productSetListResponseSchema = apiResponse(paginated(productSetSchema));
-// GET /product-sets/slug/:slug and /product-sets/unique/:setId — products (with author) and categories populated.
-export const productSetDetailResponseSchema = apiResponse(productSetSchema);
+export const productSetDetailResponseSchema = apiResponse(productSetDetailSchema);

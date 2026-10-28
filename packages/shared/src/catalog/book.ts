@@ -55,6 +55,7 @@ export const bookFieldsSchema = z.object({
   bookOfTheMonth: z.boolean(),
   availability: bookAvailabilitySchema,
 
+  // https required: the seed guarantees every document has its image, and super-admin uploads must too (Phase 8).
   poster: imageUrlSchema,
   images: z.array(imageUrlSchema),
 
@@ -77,8 +78,9 @@ export const bookRefSchema = z.union([
   objectIdSchema,
   bookFieldsSchema.partial().extend({
     _id: objectIdSchema,
+    // null when populated after a hard delete, as on the book itself.
     get author() {
-      return ref(authorFieldsSchema).optional();
+      return ref(authorFieldsSchema).nullish();
     },
     get bundledBooks() {
       return z.array(ref(bookFieldsSchema)).optional();
@@ -101,8 +103,9 @@ export type BookRef = z.infer<typeof bookRefSchema>;
 
 export const bookSchema = bookFieldsSchema.extend({
   // No model default, so optional by the contract's rule, though the seed guarantees every book has one.
+  // Populated, it is null if the author was hard-deleted (authors are soft-deleted today).
   get author() {
-    return authorRefSchema.optional();
+    return authorRefSchema.nullish();
   },
   bundledBooks: z.array(bookRefSchema),
   get categories() {
@@ -147,3 +150,30 @@ export type BookListItem = z.infer<typeof bookListItemSchema>;
 export const bookListResponseSchema = apiResponse(paginated(bookListItemSchema));
 // GET /store-books/unique/:bookId — the whole document; author, categories and related* populated.
 export const bookDetailResponseSchema = apiResponse(bookSchema);
+
+// GET /categories/:id/products — the storefront's category listing: plain books (`type: 'book'`) in the category,
+// as its `select` projection with `author` populated (and `categories`, kept optional as in the book list).
+// Defined here rather than in `category.ts` so the category module never needs the book schema at load time.
+export const categoryProductSchema = bookSchema
+  .pick({
+    _id: true,
+    title: true,
+    bookId: true,
+    ISBN: true,
+    author: true,
+    poster: true,
+    price: true,
+    popularity: true,
+    availability: true,
+    editorsPick: true,
+    inventory: true,
+    currentDiscount: true,
+    newRelease: true,
+    preOrder: true,
+    bestSeller: true,
+    categories: true,
+  })
+  .partial({ categories: true });
+export type CategoryProduct = z.infer<typeof categoryProductSchema>;
+
+export const categoryProductsResponseSchema = apiResponse(paginated(categoryProductSchema));

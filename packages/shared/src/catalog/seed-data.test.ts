@@ -36,10 +36,12 @@ const COLLECTIONS: [file: string, schema: z.ZodType][] = [
   ['product-sets', productSetSchema],
 ];
 
-void describe('seed data', () => {
+// Only a missing directory skips: once the seed exists, a missing collection file fails the test.
+void describe('seed data', { skip: !existsSync(SEED_DIR) && 'seed/data is absent' }, () => {
   for (const [file, schema] of COLLECTIONS) {
     const path = new URL(`${file}.json`, SEED_DIR);
-    void it(`every ${file} document parses`, { skip: !existsSync(path) && 'seed/data is absent' }, () => {
+    void it(`every ${file} document parses`, () => {
+      assert.ok(existsSync(path), `seed/data/${file}.json is missing`);
       const docs = toApiJson(JSON.parse(readFileSync(path, 'utf8'))) as unknown[];
       assert.ok(docs.length > 0, `${file} is empty`);
       const failures = docs.flatMap((doc, index) => {

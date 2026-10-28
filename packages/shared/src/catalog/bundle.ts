@@ -16,6 +16,7 @@ export const bundleFieldsSchema = z.object({
   title: z.string(),
   description: z.string(),
   tags: z.array(z.string()),
+  // https required: the seed guarantees every document has its image, and super-admin uploads must too (Phase 8).
   poster: imageUrlSchema,
   currentDiscount: discountSchema,
   // Grams.

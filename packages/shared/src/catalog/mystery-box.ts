@@ -12,7 +12,8 @@ export const mysteryBoxSchema = z.object({
   title: z.string(),
   description: z.string(),
   tags: z.array(z.string()),
-  images: z.array(imageUrlSchema),
+  // Entries default to '' in the model and boxes are not seeded.
+  images: z.array(imageUrlSchema.or(z.literal(''))),
   currentDiscount: discountSchema,
   // Grams.
   weight: z.number().nonnegative(),

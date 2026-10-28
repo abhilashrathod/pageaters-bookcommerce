@@ -14,6 +14,7 @@ export const categoryFieldsSchema = z.object({
   categoryId: z.string(),
   title: z.string(),
   description: z.string(),
+  // https required: the seed guarantees every document has its image, and super-admin uploads must too (Phase 8).
   thumbnail: imageUrlSchema,
   priority: z.number(),
   popularity: z.number(),
