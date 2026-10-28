@@ -6,19 +6,23 @@ JavaScript (CommonJS); it stays JavaScript (see `docs/adr/0001-api-stays-javascr
 
 ## Setup
 
-Configuration comes from environment variables only (see `src/appConfig.js`).
+Configuration comes from environment variables only, validated with zod at boot in `src/env.js`
+(`src/appConfig.js` maps the result to the shape the app imports). Invalid or missing config stops the server
+with one message naming each bad variable and the rule it breaks, never its value.
 
 ```sh
 cp .env.example .env   # then fill in the values
 pnpm dev               # node --watch, loads .env if present
 pnpm start             # same without watch
 pnpm lint              # ESLint (flat config on @pageaters/config/eslint/node)
-pnpm test              # node --test: boot smoke test, no database needed
+pnpm test              # node --test: env validation and boot smoke tests, no database needed
 ```
 
-`.env.example` documents every variable and marks which are required to boot
-(`MONGODB_URI`, `RAZORPAY_KEY_ID`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`).
-Use Razorpay test-mode keys only (`rzp_test_…`). Requires Node 22.9+ for `--env-file-if-exists`.
+`.env.example` documents every variable with its default and rule, and marks which are required to boot
+(`MONGODB_URI`, `ENCRYPTION_KEY`, `RAZORPAY_KEY_ID`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`).
+`ENCRYPTION_KEY` must be exactly 32 bytes; use 32 ASCII characters.
+Razorpay test-mode keys only: `RAZORPAY_KEY_ID` must start with `rzp_test_`, and the API refuses to boot with a
+live key (`rzp_live_…`). Requires Node 22.9+ for `--env-file-if-exists`.
 Never set `APP_ENV=production` for a deployed demo: it sends real SMS and order emails to visitor-typed
 numbers/addresses (AGENTS.md §6). Valid values: `development` | `staging` | `production` | `test`.
 

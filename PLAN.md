@@ -170,7 +170,18 @@ This file is temporary: when every phase is done, archive the decision log into 
     unit tests). Regression check: ~40 read-only GETs against the Atlas demo data, incl. `sortOrder` -1/1/desc, give
     the same statuses, counts and ids before and after. Found: `generateRandomNumber` (`Math.random`) makes the 6-digit
     verification code and order/credit ids — use `crypto.randomInt` for any code that survives Phase 5
-- [ ] `env.js` with zod; replace `config/*.js`; `.env.example`
+- [x] `env.js` with zod; replace `config/*.js`; `.env.example`
+  - Done 2026-10-28 (api-engineer, reviewed + audited): `src/env.js` is the only reader of `process.env` — pure
+    `parseEnv(source)` + a validated, frozen `env`; blank values count as unset. Required: `MONGODB_URI`,
+    `ENCRYPTION_KEY` (exactly 32 utf8 bytes), `RAZORPAY_KEY_ID` (must start `rzp_test_`, so `rzp_live_` is refused in
+    every environment, not only demo), `TWILIO_ACCOUNT_SID` (`AC…`), `TWILIO_AUTH_TOKEN` (the vendor keys stay required
+    until the adapters step). Defaults unchanged. `ALLOWED_ORIGINS` items must be exact http(s) origins (no path,
+    trailing slash or `*`). Failure: `index.js` prints one message naming each bad variable and why — never a value —
+    and exits 1. `appConfig.js` maps `env` to its old shape, so its 16 importers are unchanged; the old
+    missing-config check is gone. `.env.example` matches the schema exactly, seed-only variables in their own section.
+    33 API tests. Notes: `MAIL_FROM` must be a bare address (no `Name <…>` form); `STOREFRONT_URL` with a trailing
+    slash makes `…//auth/reset` links (as before) — tidy in the legacy-bugs step; one key still signs JWTs and
+    encrypts — consider separate keys in the security step
 - [ ] Split `app.js` (app setup) from server start; remove seed-on-boot and in-process cron
 - [ ] Layering: routes → controllers → services → models. Split `order.controller` (1,609 lines), `auth` (738), `cart` (570), `storeBook` (411) into services
 - [ ] Replace Joi with shared zod schemas + `validate()` middleware

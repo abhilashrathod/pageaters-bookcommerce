@@ -3,8 +3,6 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 
-const appConfig = require('./../appConfig');
-
 module.exports.writeFile = async (folder, fileName, buffer) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -17,18 +15,6 @@ module.exports.writeFile = async (folder, fileName, buffer) => {
       return reject(e);
     }
   });
-};
-
-module.exports.checkEnvVariables = async () => {
-  try {
-    for (const variable of Object.keys(appConfig)) {
-      if (appConfig[variable] === undefined || appConfig[variable] === null || appConfig[variable] === '') {
-        console.log(`Missing Config variable: ${variable}`);
-      }
-    }
-  } catch (e) {
-    console.log(e);
-  }
 };
 
 module.exports.generateRandomString = (length = 12) => {

@@ -12,9 +12,6 @@ const slowDown = require('express-slow-down');
 
 const { PORT, PROJECT_ROOT, DEFAULT_LANGUAGE, AVAILABLE_LOCALES, PROJECT_NAME, ALLOWED_ORIGINS, ENVIRONMENT } = require('./appConfig');
 const connectToDb = require('./helpers/connectToDb.helper');
-const { checkEnvVariables } = require('./helpers/utils.helper');
-
-checkEnvVariables();
 
 module.exports.app = express();
 

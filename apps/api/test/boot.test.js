@@ -1,6 +1,6 @@
 const { after, before, test } = require('node:test');
 const assert = require('node:assert/strict');
-const { spawn } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 const path = require('node:path');
 
 // Boot smoke test: load the whole Express app (every route, model and SDK client) in a child process with
@@ -15,7 +15,9 @@ const STUB_ENV = {
   PATH: process.env.PATH,
   APP_ENV: 'test',
   ENABLE_CRON: 'false',
-  ENCRYPTION_KEY: 'test-only-key',
+  ENCRYPTION_KEY: 'test-only-key-'.padEnd(32, '0'),
+  // Never connected to: the app is loaded without startServer().
+  MONGODB_URI: 'mongodb://127.0.0.1:1/pageaters_test',
   // Placeholders in the shape the SDKs check when they are constructed at import time.
   TWILIO_ACCOUNT_SID: `AC${'0'.repeat(32)}`,
   TWILIO_AUTH_TOKEN: 'test',
@@ -96,4 +98,22 @@ test('OPTIONS preflight is answered by the catch-all route', async () => {
 test('unknown routes answer 404', async () => {
   const res = await fetch(`${BASE}/api/v1/does-not-exist`);
   assert.equal(res.status, 404);
+});
+
+test('index.js exits non-zero with a clear message on invalid env, without echoing values', () => {
+  const fakeLiveKey = 'rzp_live_BOOTFAKEzz9';
+  const result = spawnSync(process.execPath, ['index.js'], {
+    cwd: API_ROOT,
+    env: { ...STUB_ENV, RAZORPAY_KEY_ID: fakeLiveKey, ENCRYPTION_KEY: 'BOOTSHORTzz9', MONGODB_URI: '' },
+    encoding: 'utf8',
+    timeout: 20_000,
+  });
+  const output = result.stdout + result.stderr;
+  assert.equal(result.status, 1);
+  assert.match(output, /Invalid API environment/);
+  assert.match(output, /RAZORPAY_KEY_ID: is a live key/);
+  assert.match(output, /ENCRYPTION_KEY: must be exactly 32 bytes/);
+  assert.match(output, /MONGODB_URI: is required/);
+  assert.doesNotMatch(output, /zz9|BOOT/);
+  assert.doesNotMatch(output, /starting app|\n\s+at /);
 });
