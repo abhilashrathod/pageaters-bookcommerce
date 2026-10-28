@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { Category, CategoryListItem, Paginated } from '@pageaters/shared';
 
 import { bindEndpoints, ClientErrorCode, createApiClient, createRequester, defineEndpoint, isApiError } from './index.ts';
-import type { CallOptions, EndpointCall, QueryValue } from './index.ts';
+import type { CallOptions, EndpointCall } from './index.ts';
 import { mockFetch, ok } from './testing/mock-fetch.ts';
 
 const BASE = 'https://api.example.test/api/v1/';
@@ -29,11 +29,24 @@ type Client = ReturnType<typeof createApiClient>;
 const _detailReturns: Same<Awaited<ReturnType<Client['categories']['detail']>>, Category> = true;
 const _listReturns: Same<Awaited<ReturnType<Client['categories']['list']>>, Paginated<CategoryListItem>> = true;
 const _detailInput: Same<Parameters<Client['categories']['detail']>, [input: { id: string | number }, options?: CallOptions]> = true;
-// Preprocessed shared query fields (input type `unknown`) are narrowed to query-string values.
+// Preprocessed shared query fields (input type `unknown`) take their output type; defaulted ones stay optional.
 const _listInput: Same<
   Parameters<Client['categories']['list']>[0],
-  { page?: QueryValue; limit?: QueryValue; sortBy?: QueryValue; sortOrder?: QueryValue } | undefined
+  { page?: number; limit?: number; sortBy?: string; sortOrder?: 1 | -1 } | undefined
 > = true;
+
+// A cart-like body: `quantity` is `z.preprocess`ed (input `unknown`), so it falls back to `number`.
+const _cartAdd = defineEndpoint({
+  method: 'POST',
+  path: '/cart/add',
+  body: z.strictObject({
+    product: z.string().optional(),
+    quantity: z.preprocess((value) => (typeof value === 'string' ? Number(value) : value), z.number().int().min(1)).default(1),
+  }),
+  response: z.object({}),
+});
+const _cartInput: Same<Parameters<EndpointCall<typeof _cartAdd>>[0], { product?: string | undefined; quantity?: number } | undefined> =
+  true;
 
 // A body endpoint takes path params and body fields in one object; a typed query keeps its own field types.
 const _bodyEndpoint = defineEndpoint({
@@ -60,7 +73,14 @@ function typeErrors(client: Client) {
   void client.categories.list({ page: { nested: 1 } });
   // @ts-expect-error an endpoint takes a query or a body, not both
   defineEndpoint({ method: 'GET', path: '/x', query: z.object({}), body: z.object({}), response: z.null() });
+  // @ts-expect-error a preprocessed body field is typed by its output, not `unknown`
+  void cartAdd({ quantity: { x: 1 } });
+  // @ts-expect-error … so a string is rejected too
+  void cartAdd({ quantity: 'lots' });
+  // @ts-expect-error a query field must be a query-string value
+  defineEndpoint({ method: 'GET', path: '/x', query: z.object({ filter: z.object({ a: z.string() }) }), response: z.null() });
 }
+declare const cartAdd: EndpointCall<typeof _cartAdd>;
 void typeErrors;
 
 void describe('createApiClient', () => {
@@ -79,8 +99,8 @@ void describe('createApiClient', () => {
     };
     const { fetch, calls } = mockFetch(() => ok(page, 'CATEGORY_LIST_SUCCESS'));
     const client = createApiClient({ baseUrl: BASE, fetch });
-    assert.deepEqual(await client.categories.list({ page: 2, limit: 5, sortOrder: 'asc', sortBy: undefined }), page);
-    assert.equal(calls[0]?.url, 'https://api.example.test/api/v1/categories?page=2&limit=5&sortOrder=asc');
+    assert.deepEqual(await client.categories.list({ page: 2, limit: 5, sortOrder: -1, sortBy: undefined }), page);
+    assert.equal(calls[0]?.url, 'https://api.example.test/api/v1/categories?page=2&limit=5&sortOrder=-1');
     assert.equal(calls[0]?.init.method, 'GET');
 
     await client.categories.list();

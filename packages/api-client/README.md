@@ -33,28 +33,35 @@ import { cookies } from 'next/headers';
 const api = createApiClient({
   baseUrl: process.env.API_URL,
   headers: async () => ({ cookie: (await cookies()).toString() }),
+  timeoutMs: 0,
 });
 
 await api.categories.detail({ id }, { next: { tags: [`category:${id}`], revalidate: 3600 } });
 ```
+
+Use `timeoutMs: 0` for the Next server client (or wrap calls in React's `cache()`). Next.js de-duplicates identical
+`fetch` calls within a render, but not one that carries an `AbortSignal`; the client only passes a signal when a
+timeout or a caller `signal` needs one, so with no timeout two blocks asking for the same category share one request.
+Vercel's function timeout bounds a hung call instead.
 
 Angular wraps calls in `from(api.categories.list(query))`; pass an `AbortSignal` if the call should cancel on
 unsubscribe.
 
 ### Options
 
-| Client option    | Default        | Meaning                                                                                   |
-| ---------------- | -------------- | ----------------------------------------------------------------------------------------- |
-| `baseUrl`        | —              | API root including `/api/v1`. May be relative (`/api/v1`) behind a same-origin proxy      |
-| `fetch`          | global `fetch` | Custom implementation (tests, instrumentation)                                            |
-| `credentials`    | `'include'`    | The API authenticates with httpOnly cookies on its own domain                             |
-| `headers`        | —              | Object, `Headers`, entries, or a (async) function run per call                            |
-| `validate`       | `false`        | Parse each response's `data` with the endpoint's schema                                   |
-| `timeoutMs`      | `15000`        | Aborts a call whose body hasn't arrived in time; `0` disables                             |
-| `onUnauthorized` | —              | Awaited before a 401 is thrown (clear state, route to login). The API has no refresh flow |
+| Client option    | Default        | Meaning                                                                                                                                                                   |
+| ---------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `baseUrl`        | —              | API root including `/api/v1`. May be relative (`/api/v1`) behind a same-origin proxy                                                                                      |
+| `fetch`          | global `fetch` | Custom implementation (tests, instrumentation); must honour `init.signal` for timeouts                                                                                    |
+| `credentials`    | `'include'`    | The API authenticates with httpOnly cookies on its own domain                                                                                                             |
+| `headers`        | —              | Object, `Headers`, entries, or a (async) function run per call                                                                                                            |
+| `validate`       | `false`        | Parse each response's `data` with the endpoint's schema                                                                                                                   |
+| `timeoutMs`      | `15000`        | Aborts a call whose body hasn't arrived in time; `0` disables                                                                                                             |
+| `onUnauthorized` | —              | Awaited before a 401 is thrown (clear state, route to login). The API has no refresh flow. If it throws, the call still rejects with the 401, the hook's error as `cause` |
 
 Per call: `signal`, `validate`, `timeoutMs`, `headers` (merged over the client's), and Next's `cache` and
-`next: { tags, revalidate }`, passed to `fetch` untouched (left out when unset).
+`next: { tags, revalidate }`, passed to `fetch` untouched (left out when unset). Every fetch uses
+`redirect: 'error'`: the API never redirects, and following one could carry forwarded cookies elsewhere.
 
 ### Errors
 
@@ -73,6 +80,14 @@ rather than `instanceof`: it works across duplicated bundles.
 
 The client's codes are exported as `ClientErrorCode`.
 
+- Request validation failures (the legacy Joi validators) are 400s whose `code` is the Joi message, e.g.
+  `REQUIRED_QUANTITY` or `INVALID_ID`.
+- A 401's `code` is always `UNAUTHORIZED`; the reason (`INVALID_TOKEN`…) only appears translated in `message`.
+- Log `code`, `statusCode` and `issues`, never `data`: it holds the response or the raw body, which may carry
+  personal data.
+- A path that would leave the base URL (not starting with a single `/`, or resolving above the base path) throws a
+  `TypeError` before any request, as does a missing or invalid path param.
+
 ### Validation
 
 Off by default: `data` is cast to the endpoint's `z.output` type with no parsing at all, because the legacy API
@@ -80,10 +95,17 @@ breaks some target contracts until Phase 4. Turn it on per client or per call (`
 the shared schema; the parsed value is returned (unknown keys stripped). Response schemas therefore must not use
 transforms or defaults, or the unvalidated cast would lie about the shape.
 
+### Bundle size
+
+Endpoint objects reference the shared zod schemas (for validation and types), so a bundle that imports the client
+includes zod and those schemas even with validation off. Tree-shaking can't drop them while the endpoint registry is
+reachable.
+
 ### Requests
 
-- Path params: `:name` segments, required by the types and URI-encoded. `''` is rejected at runtime (it would hit
-  another route).
+- Path params: whole-segment `:name` params, `name` matching `[A-Za-z0-9_]+` (checked by `defineEndpoint`),
+  required by the types and URI-encoded. `''`, `.`, `..`, `NaN` and `Infinity` are rejected at runtime (they would
+  reach another route).
 - Query: `undefined`/`null` are skipped, numbers and booleans stringified, arrays sent as repeated keys
   (`categories=a&categories=b`), which Express parses into an array.
 - Body: JSON. `FormData` is passed through untouched (fetch sets the multipart boundary).
@@ -116,8 +138,10 @@ export const categories = {
 ```
 
 `response` is the schema of the envelope's `data`; shared's `fooResponseSchema.shape.data` reuses its definition.
-Request schemas give types only: the API validates. Query fields whose shared input type is `unknown` (the
-`z.preprocess` coercions) are narrowed to `QueryValue`.
+Request schemas give types only: the API validates. A field whose shared input type is `unknown` (the
+`z.preprocess` coercions, e.g. `page`, a cart `quantity`) is typed by its output instead (`number`), in queries and
+bodies alike; defaulted fields stay optional. Every query field must be a `QueryValue` (string, number, boolean,
+or an array of those): a query schema with an object field fails to compile at `defineEndpoint`.
 
 ## Layout
 
@@ -132,16 +156,16 @@ Request schemas give types only: the API validates. Query fields whose shared in
 One file per resource (`categories.ts`, `cart.ts`…) exporting a plain object of endpoints; each folder's `index.ts`
 collects them. Shopper resources sit at the top level (`client.cart.add()`); admin ones under `client.admin`
 (`client.admin.categories.create()`), so a public and an admin resource can share a name and the two folders never
-edit the same file. The registry in `src/index.ts`:
+edit the same file. The registry in `src/index.ts` belongs to the orchestrator, which mounts each folder at merge:
 
 ```ts
 export const endpoints = {
   ...shopperEndpoints,
-  admin: adminEndpoints, // 2c adds this line and its import
+  admin: adminEndpoints, // added by the orchestrator when 2c merges, with its import
 };
 ```
 
-`request` is reserved at the top level (the escape hatch).
+`request` is reserved at the top level (the escape hatch); a resource with that name fails to compile.
 
 ## Conventions
 

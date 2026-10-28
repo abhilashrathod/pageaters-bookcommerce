@@ -25,10 +25,15 @@ export interface FetchInit {
   headers: Headers;
   body?: string | FormData;
   credentials: Credentials;
-  signal: AbortSignal;
+  // The API never redirects; following one could carry the forwarded cookies elsewhere.
+  redirect: 'error';
+  // Only set when the call can be aborted (a caller signal or a timeout). Next.js skips request de-duplication
+  // for a fetch with a signal, so a server client with `timeoutMs: 0` and no signal keeps it.
+  signal?: AbortSignal;
   cache?: CacheMode;
   next?: NextFetchOptions;
 }
+// A custom implementation must honour `init.signal`, or timeouts and aborts can't stop it.
 export type FetchLike = (url: string, init: FetchInit) => Promise<Response>;
 
 // Something that can check the envelope's `data`: any zod schema fits.
@@ -54,6 +59,7 @@ export interface ApiClientOptions {
   timeoutMs?: number;
   // Called (and awaited) before a 401 `ApiError` is thrown, e.g. to clear client state and route to login. The
   // API has no refresh flow: a 401 means the session is gone (no cookie, invalid/expired token, inactive user).
+  // If the hook throws, the 401 is still what the call rejects with, the hook's error attached as `cause`.
   onUnauthorized?: (error: ApiError) => void | Promise<void>;
 }
 
@@ -125,6 +131,8 @@ function errorFromBody(status: number, body: unknown, text: string, statusText: 
 export function createRequester(options: ApiClientOptions): Requester {
   return async function request<Output>(spec: RequestSpec<Output>, call: CallOptions = {}): Promise<Output> {
     const fetchImpl: FetchLike = options.fetch ?? globalThis.fetch;
+    // Built first: an invalid path is a programming error (TypeError), not a network failure.
+    const url = buildUrl(options.baseUrl, spec.path, spec.query);
     const headers = new Headers({ accept: 'application/json' });
     const resolved = typeof options.headers === 'function' ? await options.headers() : options.headers;
     mergeHeaders(headers, resolved);
@@ -138,21 +146,22 @@ export function createRequester(options: ApiClientOptions): Requester {
       headers.set('content-type', 'application/json');
     }
 
-    // One controller for the call: the caller's signal and the timeout both abort it, and `reason` records which.
-    const controller = new AbortController();
+    // One controller for the call, created only when something can abort it: the caller's signal and the timeout
+    // both abort it, and `reason` records which.
+    const timeoutMs = call.timeoutMs ?? options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    const controller = call.signal || timeoutMs > 0 ? new AbortController() : undefined;
     let reason: 'aborted' | 'timeout' | undefined;
     const onCallerAbort = () => {
       reason ??= 'aborted';
-      controller.abort(call.signal?.reason);
+      controller?.abort(call.signal?.reason);
     };
     if (call.signal?.aborted) onCallerAbort();
     else call.signal?.addEventListener('abort', onCallerAbort, { once: true });
-    const timeoutMs = call.timeoutMs ?? options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const timer =
       timeoutMs > 0
         ? setTimeout(() => {
             reason ??= 'timeout';
-            controller.abort();
+            controller?.abort();
           }, timeoutMs)
         : undefined;
 
@@ -160,8 +169,9 @@ export function createRequester(options: ApiClientOptions): Requester {
       method: spec.method,
       headers,
       credentials: options.credentials ?? 'include',
-      signal: controller.signal,
+      redirect: 'error',
     };
+    if (controller) init.signal = controller.signal;
     if (body !== undefined) init.body = body;
     if (call.cache !== undefined) init.cache = call.cache;
     if (call.next !== undefined) init.next = call.next;
@@ -169,8 +179,8 @@ export function createRequester(options: ApiClientOptions): Requester {
     let response: Response;
     let text: string;
     try {
-      if (controller.signal.aborted) throw controller.signal.reason;
-      response = await fetchImpl(buildUrl(options.baseUrl, spec.path, spec.query), init);
+      if (controller?.signal.aborted) throw controller.signal.reason;
+      response = await fetchImpl(url, init);
       text = await response.text();
     } catch (cause) {
       if (reason === 'timeout') {
@@ -189,7 +199,14 @@ export function createRequester(options: ApiClientOptions): Requester {
     // The API mirrors the HTTP status in the body's `statusCode`; either one at 400+ is an error.
     if (!response.ok || (isEnvelope(parsed) && parsed.statusCode >= 400)) {
       const error = errorFromBody(response.ok ? (parsed as Envelope).statusCode : response.status, parsed, text, response.statusText);
-      if (error.statusCode === 401 && options.onUnauthorized) await options.onUnauthorized(error);
+      if (error.statusCode === 401 && options.onUnauthorized) {
+        try {
+          await options.onUnauthorized(error);
+        } catch (hookError) {
+          const { statusCode, code, message, data } = error;
+          throw new ApiError({ statusCode, code, message, data, cause: hookError });
+        }
+      }
       throw error;
     }
     if (!isEnvelope(parsed)) {

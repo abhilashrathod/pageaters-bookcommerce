@@ -35,6 +35,30 @@ void describe('request', () => {
     assert.deepEqual(await request({ method: 'POST', path: '/categories', body: {} }), { _id: 'x' });
   });
 
+  void it('refuses redirects, which the API never sends', async () => {
+    const { request, calls } = setup();
+    await request({ method: 'GET', path: '/' });
+    assert.equal(calls[0]?.init.redirect, 'error');
+  });
+
+  void it('passes a signal only when the call can be aborted (Next.js skips de-duplication with one)', async () => {
+    const noTimeout = setup(undefined, { timeoutMs: 0 });
+    await noTimeout.request({ method: 'GET', path: '/' });
+    assert.equal('signal' in (noTimeout.calls[0]?.init ?? {}), false);
+    await noTimeout.request({ method: 'GET', path: '/' }, { signal: new AbortController().signal });
+    assert.ok(noTimeout.calls[1]?.init.signal);
+
+    const withTimeout = setup();
+    await withTimeout.request({ method: 'GET', path: '/' });
+    assert.ok(withTimeout.calls[0]?.init.signal);
+  });
+
+  void it('throws a TypeError for a path outside the base, before calling fetch', async () => {
+    const { request, calls } = setup();
+    await assert.rejects(request({ method: 'GET', path: '@evil.test/x' }), TypeError);
+    assert.equal(calls.length, 0);
+  });
+
   void it('sends cookies by default and honours another credentials mode', async () => {
     const byDefault = setup();
     await byDefault.request({ method: 'GET', path: '/' });
@@ -115,7 +139,7 @@ void describe('errors', () => {
     assert.deepEqual(error.data, {});
   });
 
-  void it('treats an error status in a 200 body as an error', async () => {
+  void it('defensively treats an error status in a 200 body as an error (the API always sets the HTTP status)', async () => {
     const { request } = setup(() => json({ statusCode: 403, status: 'FORBIDDEN', message: 'Forbidden', data: {} }, 200));
     const error = await rejection(request({ method: 'GET', path: '/' }));
     assert.equal(error.statusCode, 403);
@@ -133,6 +157,20 @@ void describe('errors', () => {
     const error = await rejection(request({ method: 'GET', path: '/auth/me' }));
     assert.equal(error.code, 'UNAUTHORIZED');
     assert.deepEqual(seen, ['UNAUTHORIZED']);
+  });
+
+  void it('still throws the 401 when onUnauthorized fails, with the hook error as its cause', async () => {
+    const hookError = new Error('router not ready');
+    const { request } = setup(() => json({ statusCode: 401, status: 'UNAUTHORIZED', message: 'Invalid token', data: {} }, 401), {
+      onUnauthorized: () => {
+        throw hookError;
+      },
+    });
+    const error = await rejection(request({ method: 'GET', path: '/auth/me' }));
+    assert.equal(error.statusCode, 401);
+    assert.equal(error.code, 'UNAUTHORIZED');
+    assert.equal(error.message, 'Invalid token');
+    assert.equal(error.cause, hookError);
   });
 
   void it('does not call onUnauthorized for other errors', async () => {

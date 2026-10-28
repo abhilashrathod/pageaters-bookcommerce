@@ -28,5 +28,6 @@ export function ok(data: unknown, status = 'SUCCESS'): Response {
 // Never answers until the call's signal aborts, then rejects the way fetch does.
 export const hangUntilAborted: Handler = (_url, init) =>
   new Promise((_resolve, reject) => {
+    if (!init.signal) throw new Error('hangUntilAborted needs a call that can be aborted');
     init.signal.addEventListener('abort', () => reject(new DOMException('The operation was aborted.', 'AbortError')), { once: true });
   });

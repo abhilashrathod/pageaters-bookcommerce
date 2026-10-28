@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 
 import type { CallOptions, HttpMethod, Requester, ResponseSchema } from './http.ts';
-import { fillPath, pathParamNames } from './url.ts';
+import { assertPathTemplate, fillPath, pathParamNames } from './url.ts';
 import type { PathParams, QueryParams, QueryValue } from './url.ts';
 
 // Declarative endpoints. An endpoint is data (method, path template, schemas); `bindEndpoints` turns a tree of
@@ -27,9 +27,20 @@ export interface Endpoint<Method extends HttpMethod, Path extends string, Input,
 // Any endpoint, whatever its types.
 export type AnyEndpoint = Endpoint<HttpMethod, string, unknown, unknown>;
 
-// Preprocessed fields in the shared query schemas (`z.preprocess`) have an `unknown` input type; narrow those
-// to what a query string can carry so callers still get checked.
-export type QueryInput<Shape> = { [Key in keyof Shape]: unknown extends Shape[Key] ? QueryValue : Shape[Key] };
+// A schema's call input. Shared schemas coerce some fields with `z.preprocess`, whose input type is `unknown`; such a
+// field takes its output type instead (`page: number`, a cart `quantity: number`), so callers stay checked. Other
+// fields keep their input type, so defaulted fields stay optional.
+export type SchemaInput<Schema extends z.ZodType> = FieldInput<z.input<Schema>, z.output<Schema>>;
+type FieldInput<In, Out> = {
+  [Key in keyof In]: unknown extends In[Key] ? (Key extends keyof Out ? Out[Key] : never) : In[Key];
+};
+
+// A query schema whose fields can't all go in a query string (an object, a Date…) fails to compile at
+// `defineEndpoint`, naming the offending keys.
+type NonQueryKeys<Input> = { [Key in keyof Input]-?: Input[Key] extends QueryValue ? never : Key }[keyof Input];
+type QueryCheck<Query extends z.ZodType> = [NonQueryKeys<SchemaInput<Query>>] extends [never]
+  ? unknown
+  : { 'query fields must be query-string values': NonQueryKeys<SchemaInput<Query>> };
 
 // Intersections flattened, so editors and the emitted declarations show one object type.
 type Simplify<T> = { [Key in keyof T]: T[Key] } & {};
@@ -53,8 +64,8 @@ export function defineEndpoint<
   Response extends z.ZodType,
   Query extends QuerySchema,
 >(
-  config: BaseConfig<Method, Path, Response> & { query: Query; body?: undefined },
-): Endpoint<Method, Path, Simplify<PathParams<Path> & QueryInput<z.input<Query>>>, z.output<Response>>;
+  config: BaseConfig<Method, Path, Response> & { query: Query & QueryCheck<Query>; body?: undefined },
+): Endpoint<Method, Path, Simplify<PathParams<Path> & SchemaInput<Query>>, z.output<Response>>;
 export function defineEndpoint<
   const Method extends HttpMethod,
   const Path extends string,
@@ -62,10 +73,11 @@ export function defineEndpoint<
   Body extends BodySchema,
 >(
   config: BaseConfig<Method, Path, Response> & { body: Body; query?: undefined },
-): Endpoint<Method, Path, Simplify<PathParams<Path> & z.input<Body>>, z.output<Response>>;
+): Endpoint<Method, Path, Simplify<PathParams<Path> & SchemaInput<Body>>, z.output<Response>>;
 export function defineEndpoint(
   config: BaseConfig<HttpMethod, string, z.ZodType> & { query?: QuerySchema; body?: BodySchema },
 ): Endpoint<HttpMethod, string, unknown, unknown> {
+  assertPathTemplate(config.path);
   return {
     [ENDPOINT]: true,
     method: config.method,

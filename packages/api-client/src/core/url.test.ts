@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { buildUrl, fillPath, pathParamNames, serialiseQuery } from './url.ts';
+import { assertPathTemplate, buildUrl, fillPath, pathParamNames, serialiseQuery } from './url.ts';
 import type { PathParamNames } from './url.ts';
 
 type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
@@ -20,6 +20,21 @@ void describe('buildUrl', () => {
   void it('keeps a relative base for same-origin proxies', () => {
     assert.equal(buildUrl('/api/v1', '/categories', { page: 2 }), '/api/v1/categories?page=2');
   });
+
+  void it('rejects a path that does not start with a single slash, so it cannot change the host', () => {
+    for (const path of ['.evil.test/x', '@evil.test/x', 'categories', '//evil.test/x', '/\\evil.test/x', '']) {
+      assert.throws(() => buildUrl('https://api.demo.example.test', path), TypeError, path);
+      assert.throws(() => buildUrl('https://api.example.test/api/v1', path), TypeError, path);
+    }
+  });
+
+  void it('rejects a path that resolves outside the base path', () => {
+    for (const path of ['/../x', '/%2e%2e/x', '/./../../x']) {
+      assert.throws(() => buildUrl('https://api.example.test/api/v1', path), TypeError, path);
+      assert.throws(() => buildUrl('/api/v1', path), TypeError, path);
+    }
+    assert.equal(buildUrl('https://api.example.test', '/x'), 'https://api.example.test/x');
+  });
 });
 
 void describe('fillPath', () => {
@@ -34,9 +49,24 @@ void describe('fillPath', () => {
     assert.throws(() => fillPath('/categories/unique/:id', { id: null }), TypeError);
   });
 
+  void it('rejects dot segments and non-finite numbers, which would reach another route', () => {
+    for (const id of ['.', '..', Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+      assert.throws(() => fillPath('/categories/unique/:id', { id }), TypeError, String(id));
+    }
+    assert.equal(fillPath('/categories/unique/:id', { id: '...' }), '/categories/unique/...');
+    assert.equal(fillPath('/categories/unique/:id', { id: 0 }), '/categories/unique/0');
+  });
+
   void it('lists the template params', () => {
     assert.deepEqual(pathParamNames('/cart/:cartId/item/:itemId'), ['cartId', 'itemId']);
     assert.deepEqual(pathParamNames('/categories'), []);
+  });
+
+  void it('accepts only whole-segment `:name` params in templates', () => {
+    assertPathTemplate('/cart/:cartId/item/:item_id2');
+    for (const path of ['/a/:id.json', '/a/:id?', '/a/x:id', '/a/:', '/a/:id-x', 'a/:id', '//a']) {
+      assert.throws(() => assertPathTemplate(path), TypeError, path);
+    }
   });
 });
 
