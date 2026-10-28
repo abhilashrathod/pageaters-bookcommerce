@@ -99,8 +99,11 @@ export const orderCustomerRequestSchema = z.object({
 });
 export type OrderCustomerRequest = z.infer<typeof orderCustomerRequestSchema>;
 
-// What the API tells the order's owner about the payment (`orderPaymentInfo` in helpers/order.helper.js): a summary
-// per method, never the raw Razorpay payment entity (which carries the payer's email, phone and card/bank details).
+// The payment as any client may see it: the per-method summary built by `orderPaymentInfo` (helpers/order.helper.js).
+// This is the contract for every order response, owner and admin alike. Today the API stores the raw Razorpay
+// `payment.entity` on the order (order.controller.js:299, :1184), and the admin GET /orders/getById/:id returns it
+// raw (payer email, phone, card/bank/VPA details). This schema intentionally rejects that shape; Phase 4 fixes the
+// API to map through `orderPaymentInfo` and store only the summary.
 const emiDetail = z.union([z.string(), z.number()]);
 export const orderPaymentSchema = z.discriminatedUnion('method', [
   z.object({ method: z.literal(PaymentMethod.CARD), name: z.string(), last4: z.string(), network: z.string() }),
@@ -153,8 +156,9 @@ export const orderSchema = z.object({
   // Razorpay identifiers ('' for cash on delivery). Not secrets; no signature or key is stored on the order.
   razorOrderId: z.string(),
   razorPaymentId: z.string(),
-  // null until checkout (cash on delivery) or payment capture (online).
-  payment: orderPaymentSchema.nullable(),
+  // null until checkout (cash on delivery) or payment capture (online); absent when `orderPaymentInfo` meets a method
+  // outside the six it handles (it returns undefined).
+  payment: orderPaymentSchema.nullish(),
 
   // Not implemented in the API: always null.
   giftCard: objectIdSchema.nullable(),
@@ -175,7 +179,7 @@ export const orderSchema = z.object({
 export type Order = z.infer<typeof orderSchema>;
 
 // GET /orders/:uniqueId — the owner's order page. The API selects these fields only: no Razorpay IDs, no
-// requests, and `payment` reduced to the summary above.
+// requests, and `payment` as the summary above (the same contract as orderSchema).
 export const customerOrderSchema = orderSchema.pick({
   _id: true,
   orderId: true,
@@ -196,3 +200,19 @@ export const customerOrderSchema = orderSchema.pick({
   total: true,
 });
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
+
+// GET /orders/list — the owner's order history (order.controller.js `getAllByUser` select).
+// The admin list (`getAll`) and the attempted-order `retrieve` picks are added at merge.
+export const customerOrderListItemSchema = orderSchema.pick({
+  _id: true,
+  orderId: true,
+  orderDate: true,
+  deliveryAddress: true,
+  orderStatus: true,
+  shipmentTrackingId: true,
+  products: true,
+  boxes: true,
+  bundles: true,
+  total: true,
+});
+export type CustomerOrderListItem = z.infer<typeof customerOrderListItemSchema>;

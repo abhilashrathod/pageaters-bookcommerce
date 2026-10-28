@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 
 import { addressSchema } from './address.ts';
 import { cartSchema } from './cart.ts';
-import { favoritesSchema } from './favorites.ts';
+import { favoritesResponseSchema, favoritesSchema } from './favorites.ts';
 import { giftCardSchema } from './gift-card.ts';
 import { stockAlertSchema, stockAlertSummarySchema } from './stock-alert.ts';
 import { StoreCreditAction, storeCreditSchema } from './store-credit.ts';
@@ -101,6 +101,11 @@ void describe('favoritesSchema', () => {
 
   void it('rejects non-ID wishlist entries', () => {
     assert.equal(favoritesSchema.safeParse({ ...favorites, wishlist: ['the-hobbit'] }).success, false);
+  });
+
+  void it('GET /favorites response keeps only _id and wishlist', () => {
+    assert.deepEqual(favoritesResponseSchema.parse(favorites), { _id: favorites._id, wishlist: [book] });
+    assert.equal(favoritesResponseSchema.safeParse({ _id: favorites._id }).success, false);
   });
 });
 

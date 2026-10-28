@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { OrderRequestStatus, OrderRequestType, OrderStatus } from '../enums.ts';
-import { customerOrderSchema, orderPaymentSchema, orderSchema } from './order.ts';
+import { customerOrderListItemSchema, customerOrderSchema, orderPaymentSchema, orderSchema } from './order.ts';
 
 const id = (n: number) => `64d0000000000000000${String(n).padStart(5, '0')}`;
 const now = '2026-10-28T10:00:00.000Z';
@@ -116,5 +116,39 @@ void describe('customerOrderSchema', () => {
   void it('drops the Razorpay IDs and requests from the owner view', () => {
     const parsed = customerOrderSchema.parse(order);
     for (const key of ['razorOrderId', 'razorPaymentId', 'requests', 'userId']) assert.equal(key in parsed, false, key);
+  });
+
+  void it('accepts a missing payment and rejects a raw Razorpay entity, as orderSchema does', () => {
+    const { payment: _payment, ...withoutPayment } = order;
+    assert.ok(customerOrderSchema.safeParse(withoutPayment).success);
+    assert.ok(orderSchema.safeParse(withoutPayment).success);
+    const raw = { ...order, payment: { id: 'pay_placeholder', method: 'card', card: { last4: '1111' } } };
+    assert.equal(customerOrderSchema.safeParse(raw).success, false);
+    assert.equal(orderSchema.safeParse(raw).success, false);
+  });
+});
+
+void describe('customerOrderListItemSchema', () => {
+  const listItem = {
+    _id: order._id,
+    orderId: order.orderId,
+    orderDate: order.orderDate,
+    deliveryAddress: order.deliveryAddress,
+    orderStatus: order.orderStatus,
+    shipmentTrackingId: order.shipmentTrackingId,
+    products: order.products,
+    boxes: order.boxes,
+    bundles: order.bundles,
+    total: order.total,
+  };
+
+  void it('accepts exactly the fields GET /orders/list selects', () => {
+    assert.deepEqual(customerOrderListItemSchema.parse(order), listItem);
+  });
+
+  void it('rejects a list item without its total or with a negative one', () => {
+    const { total: _total, ...withoutTotal } = listItem;
+    assert.equal(customerOrderListItemSchema.safeParse(withoutTotal).success, false);
+    assert.equal(customerOrderListItemSchema.safeParse({ ...listItem, total: -1 }).success, false);
   });
 });

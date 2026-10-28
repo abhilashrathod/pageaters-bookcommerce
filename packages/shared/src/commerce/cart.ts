@@ -9,8 +9,9 @@ import { isoDateSchema, moneySchema, objectIdSchema } from '../primitives.ts';
 //   addOns[].addOn        → add-on (name poster currentDiscount price)
 //   mysteryBoxes[].box    → mystery box (boxId title images currentDiscount price)
 //   user                  → user (fullName email), admin cart list only
-// GET /cart also adds computed line prices (`price`, `productTotal` / `total`, whole rupees after discount); they are
-// not stored, hence optional.
+// GET /cart also adds computed line prices; they are not stored, hence optional. `price` is the catalog's
+// undiscounted unit price (e.g. `book.product.price`); only `productTotal` / `total` are discounted (quantity × unit
+// price after discount, floored to whole rupees).
 
 const quantity = z.number().int().positive();
 // Legacy: the controllers pass `new Date()` into a String field, so Mongoose stores Date#toString(), not ISO.

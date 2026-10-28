@@ -18,3 +18,7 @@ export const favoritesSchema = z.object({
   updatedAt: isoDateSchema,
 });
 export type Favorites = z.infer<typeof favoritesSchema>;
+
+// GET /favorites: the document selected down to `_id wishlist`.
+export const favoritesResponseSchema = favoritesSchema.pick({ _id: true, wishlist: true });
+export type FavoritesResponse = z.infer<typeof favoritesResponseSchema>;
