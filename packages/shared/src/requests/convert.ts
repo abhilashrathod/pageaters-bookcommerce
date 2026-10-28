@@ -4,19 +4,53 @@
 
 const NUMERIC_STRING = /^\s*[+-]?\d+(?:\.\d+)?(?:e([+-]?\d+))?\s*$/i;
 
-const normalizeExponent = (text: string) =>
-  text
-    .replace(/\.?0+e/, 'e')
-    .replace(/e\+/, 'e')
-    .replace(/^\+/, '')
-    .replace(/^(-?)0+([1-9])/, '$1$2');
+// Joi 14's normalisers used regexes such as /\.?0+e/ and /0+$/, which backtrack quadratically on long runs of
+// zeros (a 100k-character quantity took seconds). These loops give the same results in linear time; each names
+// the Joi regex it replaces.
+
+// /^\+/ → ''
+const dropLeadingPlus = (text: string) => (text.startsWith('+') ? text.slice(1) : text);
+
+// /^(-?)0+([1-9])/ → '$1$2': drop leading zeros before a non-zero digit.
+const dropLeadingZeros = (text: string) => {
+  const start = text.startsWith('-') ? 1 : 0;
+  let end = start;
+  while (text[end] === '0') end += 1;
+  const next = text[end];
+  const nonZeroDigitNext = next !== undefined && next >= '1' && next <= '9';
+  return end > start && nonZeroDigitNext ? text.slice(0, start) + text.slice(end) : text;
+};
+
+// /0+$/ → ''
+const dropTrailingZeros = (text: string) => {
+  let end = text.length;
+  while (end > 0 && text[end - 1] === '0') end -= 1;
+  return text.slice(0, end);
+};
+
+// /\.?0+e/ → 'e' (first match): the zeros, and a dot just before them, in front of the first 'e' preceded by a zero.
+const dropZerosBeforeExponent = (text: string) => {
+  for (let e = text.indexOf('e'); e !== -1; e = text.indexOf('e', e + 1)) {
+    let start = e;
+    while (start > 0 && text[start - 1] === '0') start -= 1;
+    if (start === e) continue;
+    if (start > 0 && text[start - 1] === '.') start -= 1;
+    return text.slice(0, start) + text.slice(e);
+  }
+  return text;
+};
+
+const normalizeExponent = (text: string) => dropLeadingZeros(dropLeadingPlus(dropZerosBeforeExponent(text).replace('e+', 'e')));
 
 const normalizeDecimal = (text: string) => {
-  const normalized = text
-    .replace(/^\+/, '')
-    .replace(/\.0+$/, '')
-    .replace(/^(-?)0+([1-9])/, '$1$2');
-  return normalized.includes('.') && normalized.endsWith('0') ? normalized.replace(/0+$/, '') : normalized;
+  let normalized = dropLeadingPlus(text);
+  // /\.0+$/ → '': a fraction made only of zeros.
+  const dot = normalized.indexOf('.');
+  if (dot !== -1 && dot < normalized.length - 1 && dropTrailingZeros(normalized).length === dot + 1) {
+    normalized = normalized.slice(0, dot);
+  }
+  normalized = dropLeadingZeros(normalized);
+  return normalized.includes('.') && normalized.endsWith('0') ? dropTrailingZeros(normalized) : normalized;
 };
 
 // Joi 14 `number()`: a decimal string ('2', ' 3 ', '+2', '1.0', '1e1') becomes a number, unless parsing would

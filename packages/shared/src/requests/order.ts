@@ -10,7 +10,7 @@ export const CheckoutMethod = {
   COD: 'cod',
   ONLINE: 'online',
 } as const;
-export const checkoutMethodSchema = z.enum(CheckoutMethod);
+export const checkoutMethodSchema = z.enum(CheckoutMethod, { error: 'INVALID_PAYMENT_METHOD' });
 export type CheckoutMethod = z.infer<typeof checkoutMethodSchema>;
 
 // POST /order/attempt. `address` is optional because the Joi `objectId` was; kept for parity, to be tightened in
@@ -25,10 +25,8 @@ const optionalTrimmed = z.string().trim().optional();
 
 // POST /order/create.
 export const orderCreatePayloadSchema = z.strictObject({
-  method: z
-    .string({ error: 'INVALID_PAYMENT_METHOD' })
-    .trim()
-    .pipe(z.enum(CheckoutMethod, { error: 'INVALID_PAYMENT_METHOD' })),
+  // Trimmed first, as Joi did (' cod ' passes).
+  method: z.string({ error: 'INVALID_PAYMENT_METHOD' }).trim().pipe(checkoutMethodSchema),
   instructions: z.string({ error: 'INVALID_INSTRUCTIONS' }).trim().max(100).optional(),
   giftOptions: z
     .strictObject({

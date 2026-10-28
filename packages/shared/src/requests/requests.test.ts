@@ -433,16 +433,24 @@ type Joi = { validate: (value: unknown, schema: unknown) => JoiResult };
 
 const validatorsDir = fileURLToPath(new URL('../../../../apps/api/src/validators/', import.meta.url));
 const hasValidators = existsSync(`${validatorsDir}cart.validator.js`);
+// Resolve Joi from apps/api, where it is installed (this package doesn't depend on it).
+const requireFromApi = createRequire(`${validatorsDir}cart.validator.js`);
+const loadJoi = (): Joi | undefined => {
+  if (!hasValidators) return undefined;
+  try {
+    return requireFromApi('joi') as Joi;
+  } catch {
+    return undefined;
+  }
+};
+const joi = loadJoi();
 
-void describe('parity with the API Joi validators', { skip: !hasValidators && 'apps/api validators are gone' }, () => {
-  // Resolve Joi from apps/api, where it is installed (this package doesn't depend on it).
-  const requireFromApi = createRequire(`${validatorsDir}cart.validator.js`);
-  const loadJoi = () => requireFromApi('joi') as Joi;
+void describe('parity with the API Joi validators', { skip: !joi && 'apps/api validators or joi are gone' }, () => {
   const loadValidator = (file: string) => requireFromApi(`./${file}.validator.js`) as Record<string, unknown>;
 
   for (const table of tables) {
     void it(`${table.file}.${table.joiExport}`, () => {
-      const joi = loadJoi();
+      if (!joi) return;
       const joiSchema = loadValidator(table.file)[table.joiExport];
       assert.ok(joiSchema, `${table.file}.validator.js exports ${table.joiExport}`);
       for (const testCase of table.cases) {
