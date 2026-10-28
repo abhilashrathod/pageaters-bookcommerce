@@ -1,6 +1,6 @@
 ---
 name: api-engineer
-description: Implements PLAN.md work inside apps/api (Node + Express + Mongoose API). Use for any change scoped to the API — installing and running it, TypeScript migration, layering, adapters, security fixes, demo-mode guards. Not for other apps or root config.
+description: Implements PLAN.md work inside apps/api (Node + Express + Mongoose API, JavaScript/CommonJS). Use for any change scoped to the API — installing and running it, dependency upgrades, layering, adapters, security fixes, demo-mode guards. Not for other apps or root config.
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 
@@ -21,6 +21,8 @@ sub-task of one).
 
 - Architecture and API conventions: AGENTS.md §4 and §5 (`apps/api`). Serverless-safe: no in-process cron,
   queues or local disk writes in new code.
+- The API is JavaScript (CommonJS) by decision (`docs/adr/0001-api-stays-javascript.md`): write new code in
+  JavaScript, never convert files to TypeScript; load `@pageaters/shared` with `require()`.
 - Demo mode (§6): guards are server-side. Never weaken the `rzp_live_` boot guard.
 - Sensitive data (§7): if you meet a credential, personal data, real address/phone or business-sensitive value,
   stop, do not print it, and report file path + kind of data.

@@ -33,7 +33,7 @@ pageaters/
 │  ├─ storefront/   Next.js (App Router) + React, Tailwind CSS, shadcn/ui
 │  ├─ admin/        Angular (latest stable), standalone components, signals
 │  ├─ cms/          Payload CMS 3 (Next.js-native), MongoDB adapter, Vercel Blob storage
-│  └─ api/          Node + Express, TypeScript, Mongoose — deployed to Vercel Functions
+│  └─ api/          Node + Express, JavaScript (CommonJS), Mongoose — deployed to Vercel Functions
 ├─ packages/
 │  ├─ shared/       Domain types, enums, zod schemas — the single source of truth for contracts
 │  ├─ api-client/   Typed API client used by storefront and admin
@@ -206,8 +206,10 @@ Rules:
 
 ## 8. Quality bar
 
-- TypeScript `strict` everywhere. No `any` without a justifying comment; no `@ts-ignore` (use `@ts-expect-error`
-  with a reason, sparingly).
+- TypeScript `strict` everywhere except `apps/api`, which stays JavaScript (CommonJS; see
+  `docs/adr/0001-api-stays-javascript.md`): new API code is JavaScript too, its contracts come from the zod schemas
+  in `packages/shared` at runtime, and its gates are lint and tests. No `any` without a justifying comment; no
+  `@ts-ignore` (use `@ts-expect-error` with a reason, sparingly).
 - Tests are required for money logic and state transitions: cart totals, discounts, order pricing, order
   status lifecycle, auth, demo-mode guards. Prefer meaningful tests over coverage percentage.
 - A change is done only when `pnpm lint && pnpm typecheck && pnpm test && pnpm build` pass.
@@ -216,7 +218,12 @@ Rules:
 
 ### Commits
 
-- Conventional Commits (`feat(storefront): …`, `fix(api): …`, `chore(repo): …`), enforced by commitlint.
+- **The owner commits to `main`, never an agent.** Finished work is left uncommitted (staged) on `main` so the owner
+  can read what was done and how before committing it. Agents never commit to `main`, never push, and never amend or
+  reset the owner's commits. Subagents' commits on their own worktree branches are scratch work that never reaches
+  `main` (see §10).
+- Conventional Commits (`feat(storefront): …`, `fix(api): …`, `chore(repo): …`), enforced by commitlint. When handing
+  work over, the orchestrator suggests a commit split and messages; the owner decides.
 - Small, focused commits. One logical change per commit; at least one commit per PLAN.md step.
 - Never force-push `main`.
 
@@ -225,7 +232,7 @@ Rules:
 ## 9. Documentation
 
 - **`docs/*.md`** — explanations of features, the site and the architecture. Keep them current: if a change alters
-  behaviour described in a doc, update the doc in the same commit. Expected docs include
+  behaviour described in a doc, update the doc in the same change. Expected docs include
   `architecture.md`, `demo-mode.md`, `cms.md`, `blocks.md`, `checkout-flow.md`, `order-lifecycle.md`,
   `deployment.md`, `local-development.md`, `seed-data.md`.
 - **`docs/adr/NNNN-title.md`** — one ADR per significant decision (context, decision, consequences). Never edit an
@@ -249,11 +256,13 @@ and ask for exactly that — never invent credentials or create accounts. Secret
 
 - **Execute one checkbox at a time — never a whole phase in one go.** Phases are large; a checkbox is the unit of work.
   For each checkbox: do only that step → run the relevant gates (lint, typecheck, test, build for affected
-  workspaces) → commit → tick the box → report what changed → **stop and wait** for the go-ahead before the next one.
+  workspaces) → secret scan of the uncommitted changes → tick the box → report what changed and how, with suggested
+  commit messages → **stop and wait**. The owner reviews (`git diff --staged`), commits and pushes; the next step
+  starts only after the go-ahead.
 - If a checkbox is itself too big to finish and verify in one focused session, first split it into sub-checkboxes
   in PLAN.md, get them approved, then execute them one at a time the same way.
 - Work phases in order; don't start a phase until the previous one's checkpoint passes.
-- Tick checkboxes in PLAN.md as steps complete, in the same commit as the work.
+- Tick checkboxes in PLAN.md as steps complete, in the same uncommitted change set as the work.
 - At each **Checkpoint**, stop and report to the user before continuing.
 - If a step turns out wrong or impossible, say so and propose a change to PLAN.md — don't silently deviate.
 
@@ -271,12 +280,17 @@ above still applies — subagents split a checkbox, they don't widen it.
 | `deploy-engineer`                                       | Whole repo    | CI, Vercel and build config       |
 | `code-reviewer`, `security-auditor`                     | Whole repo    | Nothing (read-only)               |
 
-- **Orchestrator owns** `PLAN.md`, `AGENTS.md`, root files, `pnpm-lock.yaml`, merging into `main` and pushing. It
-  briefs each subagent with one checkbox (or sub-task), its allowed files and the gates to run.
+- **Orchestrator owns** `PLAN.md`, `AGENTS.md`, root files, `pnpm-lock.yaml` and bringing finished work into `main`
+  (uncommitted). It briefs each subagent with one checkbox (or sub-task), its allowed files and the gates to run.
+  The owner commits and pushes.
 - **Parallel work** runs in separate git worktrees, one branch per subagent (`<agent>/<short-task>`), so agents never
-  share a working tree. Agents commit on their branch with hooks enforced and never push or rewrite history.
+  share a working tree. Agents commit on their branch with hooks enforced (that is how work leaves a worktree) and
+  never push or rewrite history. Worktrees branch from the pushed `main`, so a step that builds on earlier work starts
+  only after the owner has committed and pushed that work.
 - **Before merge**, every branch passes `code-reviewer` (verdict merge) and `security-auditor` (verdict clear).
-  The orchestrator then merges, runs the root gates, regenerates the lockfile if needed, ticks PLAN.md and pushes.
+  The orchestrator then brings each branch into `main` with `git merge --squash` (staged, not committed), makes any
+  integration fixes, runs the root gates and a secret scan, regenerates the lockfile if needed, ticks PLAN.md,
+  removes the worktree and branch, and stops for the owner's review.
 - Changes a subagent needs outside its scope go in its report; the orchestrator makes them or briefs the owner agent.
 - Deployments to production, domain changes and anything needing an account or secret still stop for the owner.
 
