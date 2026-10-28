@@ -105,3 +105,13 @@ export const adminBestSellingResponseSchema = apiResponse(z.array(adminBestSelli
 export const adminRevenueSchema = z.object({ totalRevenue: z.number().nonnegative() });
 export type AdminRevenue = z.infer<typeof adminRevenueSchema>;
 export const adminRevenueResponseSchema = apiResponse(z.array(adminRevenueSchema).max(1));
+
+// POST /orders/create-shipment/:orderId: the carrier's booking result. The legacy API forwards Delhivery's whole
+// create.json response; the contract keeps only the outcome and the waybill (the order's tracking URL is built from
+// it), so vendor fields never reach a client. Phase 4 answers through the shipping adapter.
+export const adminShipmentCreateResultSchema = z.object({
+  success: z.literal(true),
+  packages: z.array(z.object({ waybill: z.string().min(1) })).min(1),
+});
+export type AdminShipmentCreateResult = z.infer<typeof adminShipmentCreateResultSchema>;
+export const adminShipmentCreateResponseSchema = apiResponse(adminShipmentCreateResultSchema);

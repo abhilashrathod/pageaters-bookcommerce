@@ -33,5 +33,5 @@ export type AdminProductSetCreatePayload = z.infer<typeof adminProductSetCreateP
 
 // PUT /product-sets/:id: every field (`$set` writes an omitted one as null). A new title regenerates the slug, which
 // breaks links that used the old one.
-export const adminProductSetUpdatePayloadSchema = productSetPayloadFields;
+export const adminProductSetUpdatePayloadSchema = productSetPayloadFields.required();
 export type AdminProductSetUpdatePayload = z.infer<typeof adminProductSetUpdatePayloadSchema>;

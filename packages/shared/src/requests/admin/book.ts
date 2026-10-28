@@ -11,6 +11,9 @@ import { adminIdListSchema } from './common.ts';
 // body and store it; these schemas leave it out and, since they strip unknown keys, drop it when a form value is
 // parsed. Fields the controllers don't read are left out too: `bookId` (generated), `blindTitle`, `books` (box size),
 // `priority`, `totalReviews`, `averageReviews`, timestamps and soft-delete flags.
+//
+// Deliberate: the update leaves `wholeSalePriceHistory` out although the legacy controller `$set`s it, so an update
+// through this contract writes it as null. That is intended (the seed never loads supplier prices); do not add it.
 
 const bookPayloadFields = bookFieldsSchema.pick({
   type: true,
@@ -53,9 +56,12 @@ const bookRelations = {
   relatedCollections: adminIdListSchema,
 };
 
-// Create: model defaults fill whatever is left out, except the lists the controller walks.
+// Create: model defaults fill whatever is left out, except the lists the controller walks and the poster.
+// The image is required on create, as every catalog document has one (https, `imageUrlSchema`). Until Phase 4/5
+// the legacy upload answers with a stored key, not a URL, so a form fed by it fails this check.
 export const adminBookCreatePayloadSchema = bookPayloadFields.partial().extend({
   title: bookFieldsSchema.shape.title,
+  poster: bookFieldsSchema.shape.poster,
   author: objectIdSchema.nullish(),
   categories: bookRelations.categories,
   relatedBooks: bookRelations.relatedBooks,
@@ -66,5 +72,5 @@ export type AdminBookCreatePayload = z.infer<typeof adminBookCreatePayloadSchema
 
 // Update: the controller `$set`s every field it reads, so an omitted one is written as null (Mongoose 5 sends
 // `undefined` through): every field is required. `author` is not read on update (Phase 4).
-export const adminBookUpdatePayloadSchema = bookPayloadFields.extend(bookRelations);
+export const adminBookUpdatePayloadSchema = bookPayloadFields.extend(bookRelations).required();
 export type AdminBookUpdatePayload = z.infer<typeof adminBookUpdatePayloadSchema>;

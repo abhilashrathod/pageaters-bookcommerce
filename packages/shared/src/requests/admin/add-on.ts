@@ -31,5 +31,5 @@ export type AdminAddOnCreatePayload = z.infer<typeof adminAddOnCreatePayloadSche
 
 // PUT /add-ons/:id — the target contract: every field, as the other updates `$set` them. The legacy route always
 // answers 500 (the controller reads an undefined `id`), see Phase 4.
-export const adminAddOnUpdatePayloadSchema = addOnPayloadFields;
+export const adminAddOnUpdatePayloadSchema = addOnPayloadFields.required();
 export type AdminAddOnUpdatePayload = z.infer<typeof adminAddOnUpdatePayloadSchema>;

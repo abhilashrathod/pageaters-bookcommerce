@@ -24,5 +24,5 @@ export const adminDealCreatePayloadSchema = dealPayloadFields.partial().extend({
 export type AdminDealCreatePayload = z.infer<typeof adminDealCreatePayloadSchema>;
 
 // The update `$set`s every field it reads; an omitted one is written as null, so all are required.
-export const adminDealUpdatePayloadSchema = dealPayloadFields;
+export const adminDealUpdatePayloadSchema = dealPayloadFields.required();
 export type AdminDealUpdatePayload = z.infer<typeof adminDealUpdatePayloadSchema>;

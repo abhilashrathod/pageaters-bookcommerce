@@ -21,5 +21,5 @@ export const adminMysteryBoxCreatePayloadSchema = mysteryBoxPayloadFields.partia
 export type AdminMysteryBoxCreatePayload = z.infer<typeof adminMysteryBoxCreatePayloadSchema>;
 
 // The update `$set`s every field it reads; an omitted one is written as null, so all are required.
-export const adminMysteryBoxUpdatePayloadSchema = mysteryBoxPayloadFields;
+export const adminMysteryBoxUpdatePayloadSchema = mysteryBoxPayloadFields.required();
 export type AdminMysteryBoxUpdatePayload = z.infer<typeof adminMysteryBoxUpdatePayloadSchema>;

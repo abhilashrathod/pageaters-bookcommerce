@@ -29,6 +29,17 @@ export const adminReturnShipmentPayloadSchema = z.object({
 });
 export type AdminReturnShipmentPayload = z.infer<typeof adminReturnShipmentPayloadSchema>;
 
+// POST /orders/create-shipment/:orderId: books the parcel with the carrier (Delhivery today, the mock shipping
+// adapter from Phase 4) for a paid or confirmed order, which becomes shipped. Centimetres and grams.
+export const adminShipmentCreatePayloadSchema = z.object({
+  dimensions: z.object({
+    width: z.number().positive(),
+    height: z.number().positive(),
+    weight: z.number().positive(),
+  }),
+});
+export type AdminShipmentCreatePayload = z.infer<typeof adminShipmentCreatePayloadSchema>;
+
 // POST /orders/admin-cancel/:id. The legacy controller ignores the path and finds the order by `uniqueId` (its
 // `OD-…` id) and `userId` from the body, so the admin sends the `OD-…` id in both (Phase 4: read it from the path).
 // `reason` becomes the timeline entry and the email text; `notify` emails the customer (production only).

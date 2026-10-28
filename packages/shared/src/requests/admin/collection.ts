@@ -21,8 +21,11 @@ const collectionRelations = {
   featuredAuthors: adminIdListSchema,
 };
 
+// The image is required on create, as every catalog document has one (https, `imageUrlSchema`). Until Phase 4/5
+// the legacy upload answers with a stored key, not a URL, so a form fed by it fails this check.
 export const adminCollectionCreatePayloadSchema = collectionPayloadFields.partial().extend({
   title: collectionFieldsSchema.shape.title,
+  poster: collectionFieldsSchema.shape.poster,
   books: collectionRelations.books,
   relatedCollections: collectionRelations.relatedCollections,
   relatedCategories: collectionRelations.relatedCategories.optional(),
@@ -31,5 +34,5 @@ export const adminCollectionCreatePayloadSchema = collectionPayloadFields.partia
 export type AdminCollectionCreatePayload = z.infer<typeof adminCollectionCreatePayloadSchema>;
 
 // The update `$set`s every field it reads; an omitted one is written as null, so all are required.
-export const adminCollectionUpdatePayloadSchema = collectionPayloadFields.extend(collectionRelations);
+export const adminCollectionUpdatePayloadSchema = collectionPayloadFields.extend(collectionRelations).required();
 export type AdminCollectionUpdatePayload = z.infer<typeof adminCollectionUpdatePayloadSchema>;

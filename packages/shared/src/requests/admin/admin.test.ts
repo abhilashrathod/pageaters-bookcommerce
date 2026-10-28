@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { z } from 'zod';
 
+import * as admin from './index.ts';
 import {
   adminAddOnListQuerySchema,
   adminAuthorUpdatePayloadSchema,
@@ -104,9 +105,28 @@ void describe('admin book payloads', () => {
   });
 });
 
+void describe('admin update payloads', () => {
+  // The legacy updates `$set` every field they read, so an omitted one would be written as null.
+  const updates = Object.entries(admin).filter(([name]) => name.endsWith('UpdatePayloadSchema'));
+
+  void it('are all found', () => {
+    assert.equal(updates.length, 9);
+  });
+
+  for (const [name, schema] of updates) {
+    void it(`${name} has no optional key`, () => {
+      const { shape } = schema as { shape: Record<string, z.ZodType> };
+      for (const [key, field] of Object.entries(shape)) assert.equal(field.safeParse(undefined).success, false, key);
+    });
+  }
+});
+
 void describe('other admin payloads', () => {
   void it('type the catalog writes from the field schemas', () => {
-    assert.ok(adminCategoryCreatePayloadSchema.safeParse({ title: 'Poetry' }).success);
+    assert.ok(adminCategoryCreatePayloadSchema.safeParse({ title: 'Poetry', thumbnail: 'https://images.example.test/p.jpg' }).success);
+    // Creates need their image (an https URL; the legacy upload's bare key fails).
+    assert.equal(adminCategoryCreatePayloadSchema.safeParse({ title: 'Poetry' }).success, false);
+    assert.equal(adminCategoryCreatePayloadSchema.safeParse({ title: 'Poetry', thumbnail: 'poetry-abc-1.jpg' }).success, false);
     assert.ok(
       adminAuthorUpdatePayloadSchema.safeParse({ name: 'A. Writer', intro: '', avatar: 'https://images.example.test/a.jpg', books: [] })
         .success,

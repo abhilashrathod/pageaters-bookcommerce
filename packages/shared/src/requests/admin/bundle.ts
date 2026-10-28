@@ -25,8 +25,11 @@ const bundleRelations = {
   relatedCollections: adminIdListSchema,
 };
 
+// The image is required on create, as every catalog document has one (https, `imageUrlSchema`). Until Phase 4/5
+// the legacy upload answers with a stored key, not a URL, so a form fed by it fails this check.
 export const adminBundleCreatePayloadSchema = bundlePayloadFields.partial().extend({
   title: bundleFieldsSchema.shape.title,
+  poster: bundleFieldsSchema.shape.poster,
   bundledBooks: bundleRelations.bundledBooks,
   categories: bundleRelations.categories.optional(),
   relatedBundles: bundleRelations.relatedBundles.optional(),
@@ -36,5 +39,5 @@ export type AdminBundleCreatePayload = z.infer<typeof adminBundleCreatePayloadSc
 
 // The update `$set`s every field it reads; an omitted one is written as null, so all are required. It does not read
 // `weight` (legacy: a bundle's weight can't be changed after creation, Phase 4).
-export const adminBundleUpdatePayloadSchema = bundlePayloadFields.omit({ weight: true }).extend(bundleRelations);
+export const adminBundleUpdatePayloadSchema = bundlePayloadFields.omit({ weight: true }).extend(bundleRelations).required();
 export type AdminBundleUpdatePayload = z.infer<typeof adminBundleUpdatePayloadSchema>;
