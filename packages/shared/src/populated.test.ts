@@ -4,6 +4,8 @@ import { describe, it } from 'node:test';
 import { BookAvailability, OrderStatus } from './enums.ts';
 import {
   cartResponseSchema,
+  customerOrderListResponseSchema,
+  customerOrderResponseSchema,
   favoritesListResponseSchema,
   populatedCartSchema,
   populatedCustomerOrderListItemSchema,
@@ -131,6 +133,12 @@ void describe('populated customer orders', () => {
     assert.equal(parsed.products[0]?.product.author?.name, 'An Author');
   });
 
+  void it('wraps the order in the API response and accepts a book whose author is gone', () => {
+    const orphan = { ...order, products: [{ ...order.products[0], product: { ...book, author: null } }] };
+    const body = { statusCode: 200, status: 'ORDER_SUCCESS', message: 'Order fetched', data: orphan };
+    assert.equal(customerOrderResponseSchema.parse(body).data.products[0]?.product.author, null);
+  });
+
   void it('rejects an unpopulated delivery address', () => {
     assert.equal(populatedCustomerOrderSchema.safeParse({ ...order, deliveryAddress: id(6) }).success, false);
   });
@@ -139,6 +147,8 @@ void describe('populated customer orders', () => {
     const listItem = populatedCustomerOrderListItemSchema.parse(order);
     assert.equal('addOns' in listItem, false);
     assert.equal(listItem.boxes[0]?.box.boxId, 'MB-0001');
+    const body = { statusCode: 200, status: 'ORDER_LIST_SUCCESS', message: 'Orders fetched', data: [order] };
+    assert.equal(customerOrderListResponseSchema.parse(body).data.length, 1);
   });
 });
 
@@ -163,6 +173,10 @@ void describe('populatedFavoritesSchema', () => {
   void it('parses GET /favorites with the wishlist populated', () => {
     const body = { statusCode: 200, message: 'OK', data: { _id: id(30), wishlist: [wished] } };
     assert.deepEqual(favoritesListResponseSchema.parse(body), body);
+  });
+
+  void it('accepts null data for a shopper without a favourites document', () => {
+    assert.ok(favoritesListResponseSchema.safeParse({ statusCode: 200, message: 'OK', data: null }).success);
   });
 
   void it('rejects a wishlist of bare ids', () => {

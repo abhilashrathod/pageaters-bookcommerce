@@ -83,6 +83,8 @@ export const populatedCustomerOrderListItemSchema = customerOrderListItemSchema.
   boxes: populatedOrderLines.boxes,
 });
 export type PopulatedCustomerOrderListItem = z.infer<typeof populatedCustomerOrderListItemSchema>;
+// Not paginated: every order of the shopper, newest first.
+export const customerOrderListResponseSchema = apiResponse(z.array(populatedCustomerOrderListItemSchema));
 
 // GET /favorites: `wishlist` populated with the controller's select; the book's author stays an id.
 export const populatedFavoritesSchema = favoritesResponseSchema.extend({
@@ -107,4 +109,5 @@ export const populatedFavoritesSchema = favoritesResponseSchema.extend({
   ),
 });
 export type PopulatedFavorites = z.infer<typeof populatedFavoritesSchema>;
-export const favoritesListResponseSchema = apiResponse(populatedFavoritesSchema);
+// `data` is null if the shopper has no favourites document (one is created at signup, so only for legacy users).
+export const favoritesListResponseSchema = apiResponse(populatedFavoritesSchema.nullable());
