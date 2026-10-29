@@ -1,140 +1,71 @@
-const mongoose = require('mongoose');
-const { generateRandomNumber } = require('../helpers/utils.helper');
+const { handleControllerError } = require('../helpers/appError.helper');
+const mysteryBoxService = require('../services/mystery-box.service');
 
-const { models } = require('../constants');
+// Thin controller: read the request, call one service, answer with the res.* helpers (src/services/README.md).
 
-const MysteryBox = mongoose.model(models.MYSTERY_BOX);
+const boxFields = (params) => {
+  const { title, description, tags, images, books, currentDiscount, weight, price } = params;
+  return { title, description, tags, images, books, currentDiscount, weight, price };
+};
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit } = req.allParams();
-
-    const query = { isDeleted: false };
-
-    const options = {
-      page,
-      limit,
-      sort: {
-        books: 'asc',
-      },
-    };
-
-    const mysteryBoxRes = await MysteryBox.paginate(query, options);
-
-    return res.ok({ message: 'MYSTERY_BOX_LIST_SUCCESS', data: mysteryBoxRes });
+    const { page, limit } = req.allParams();
+    const data = await mysteryBoxService.listBoxes({ page, limit });
+    return res.ok({ message: 'MYSTERY_BOX_LIST_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.create = async (req, res) => {
   try {
-    let { title, description, tags, images, books, currentDiscount, weight, price } = req.allParams();
-
-    let boxId = `SET-${generateRandomNumber(10)}`;
-
-    const payload = {
-      boxId,
-      title,
-      description,
-      tags,
-      images,
-      books,
-      currentDiscount,
-      weight,
-      price
-    };
-
-    const mysteryBoxRes = await MysteryBox.create(payload);
-
-    return res.ok({ message: 'MYSTERY_BOX_CREATE_SUCCESS', data: mysteryBoxRes });
+    const data = await mysteryBoxService.createBox(boxFields(req.allParams()));
+    return res.ok({ message: 'MYSTERY_BOX_CREATE_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.update = async (req, res) => {
   try {
-    let { id, title, description, tags, books, images, currentDiscount, weight, price } = req.allParams();
-
-    let mysteryBoxRes = await MysteryBox.findOne({ _id: id, isDeleted: false });
-
-    if (!mysteryBoxRes) {
-      return res.error('MYSTERY_BOX_NOT_EXIST');
-    }
-
-    const payload = {
-      title,
-      description,
-      tags,
-      images,
-      books,
-      currentDiscount,
-      weight,
-      price
-    };
-
-    mysteryBoxRes = await MysteryBox.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
-
-    return res.ok({ message: 'MYSTERY_BOX_UPDATE_SUCCESS', data: mysteryBoxRes });
+    const params = req.allParams();
+    const data = await mysteryBoxService.updateBox(params.id, boxFields(params));
+    return res.ok({ message: 'MYSTERY_BOX_UPDATE_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.getById = async (req, res) => {
   try {
-    let { id } = req.allParams();
-
+    const { id } = req.allParams();
     if (!id) return res.ok();
-
-    let mysteryBoxRes = await MysteryBox.findOne({ _id: id, isDeleted: false });
-
-    if (mysteryBoxRes) {
-      return res.ok({ message: 'MYSTERY_BOX_LIST_SUCCESS', data: mysteryBoxRes });
-    } else {
-      return res.error('MYSTERY_BOX_NOT_EXIST');
-    }
+    const data = await mysteryBoxService.getBoxById(id);
+    return res.ok({ message: 'MYSTERY_BOX_LIST_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.getByUniqueId = async (req, res) => {
   try {
-    let { id } = req.allParams();
-
+    const { id } = req.allParams();
     if (!id) return res.ok();
-
-    let mysteryBoxRes = await MysteryBox.findOne({ boxId: id, isDeleted: false });
-
-    if (mysteryBoxRes) {
-      return res.ok({ message: 'MYSTERY_BOX_LIST_SUCCESS', data: mysteryBoxRes });
-    } else {
-      return res.error('MYSTERY_BOX_NOT_EXIST');
-    }
+    const data = await mysteryBoxService.getBoxByBoxId(id);
+    return res.ok({ message: 'MYSTERY_BOX_LIST_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.destroy = async (req, res) => {
   try {
-    let { id } = req.allParams();
-
+    const { id } = req.allParams();
     if (!id) return res.ok();
-
-    const mysteryBoxRes = await MysteryBox.findOne({ _id: id, isDeleted: false });
-
-    if (mysteryBoxRes) {
-      mysteryBoxRes.isDeleted = true;
-      mysteryBoxRes.deactivatedAt = new Date();
-      await mysteryBoxRes.save();
-      return res.ok('MYSTERY_BOX_DELETE_SUCCESS');
-    } else {
-      return res.error('MYSTERY_BOX_NOT_EXIST');
-    }
+    await mysteryBoxService.deleteBox(id);
+    return res.ok('MYSTERY_BOX_DELETE_SUCCESS');
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };

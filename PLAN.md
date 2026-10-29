@@ -214,24 +214,96 @@ This file is temporary: when every phase is done, archive the decision log into 
       downloaded once over verified TLS to `~/.cache/mongodb-binaries`; CI must cache it), fake fixtures with
       per-branch id ranges, `createUser`, `mockVendorCall` for canned vendor answers, every vendor SDK stubbed and
       every non-local connection blocked. i18n `updateFiles: false`, so the API never writes `en.json`. 88 API tests
-  - [ ] 4b. Orders: `order.controller` (1,607 lines, 23 handlers) → thin controller + services split by
+  - [x] 4b. Orders: `order.controller` (1,607 lines, 23 handlers) → thin controller + services split by
         responsibility: pricing, checkout and payment (Razorpay), order lifecycle (status transitions), shipping
         (Delhivery), returns/cancellations/refunds, admin queries and analytics. `order.helper.js` stays a shared helper. Tests for
         order pricing and every status transition
-  - [ ] 4c. Cart and auth: `cart.controller` (570) → cart pricing + cart mutation services; `auth.controller` (535) →
+  - [x] 4c. Cart and auth: `cart.controller` (570) → cart pricing + cart mutation services; `auth.controller` (535) →
         session/token, password, verification (email/SMS) services. `cart.helper.js` stays a shared helper. Tests for cart totals
         and auth (register, login, token revoke, password reset)
-  - [ ] 4d. Catalog and the rest: store books, authors, bundles, collections, categories, deals, add-ons, mystery
+  - [x] 4d. Catalog and the rest: store books, authors, bundles, collections, categories, deals, add-ons, mystery
         boxes, product sets, addresses, favourites (done in 4a), stock alerts, store credit, users, files → services.
         Tests for store credit and stock alerts
+    - 4b–4d done 2026-10-29 in parallel worktrees (api-engineer ×3, each reviewed + audited; tests written and
+      committed against the legacy controllers first, then the refactor with the tests unchanged). 4b: `order.controller`
+      1,607 → 258 lines over ten `order-*` services, 213 tests (checkout pricing, Razorpay payloads and webhook HMAC,
+      every one of the 12 stages against every transition, authz). 4c: cart 570 → 177 and auth 535 → 229 lines over
+      seven `cart-*`/`auth-*` services, 124 tests (cart totals, cookies, register/login/revoke, password, email and
+      SMS verification). 4d: 16 controllers over 18 services, 168 tests. API: 593 tests, ~21 s (one in-memory MongoDB
+      per test file); lint warnings 43 → 24. Legacy bugs and leaks are pinned in tests and JSDoc, not fixed; the audits'
+      new findings are in the security step above. Not covered: production-only notification paths (adapters step).
+      Declared changes: stock saves now awaited; two hanging error paths now 500; debug logs of the SMS text and the
+      contact payload removed. Follow-up for the test-writer: move the shared test utilities duplicated in
+      `fixtures/orders.js` and `fixtures/store.js` into `test/helpers/`
   - [ ] 4e. After 4b–4d merge: fold the shared `helpers/*.helper.js` (`order`, `cart`, mail) into the services that
         own them; no behaviour change
 - [ ] Replace Joi with shared zod schemas + `validate()` middleware
+  - Tighten the request contracts while replacing Joi (deferred until now because they break Joi parity): max lengths
+    on tokens, address and gift fields; pin code `^\d{6}$`; a raw password length cap; store-credit `amount` ≥ 0
+    (`PATCH /orders/credit`, admin `issueCredit`); the `_CID` cart cookie must be a 24-hex id (`cartValidator`;
+    blocks the cookie operator injection in 7c); upload `fileModule` must be a known module, checked before the S3
+    upload (400) — today an unknown one answers 200, then the unawaited `File.create` rejects and the unhandled
+    rejection exits the process, leaving an orphaned S3 object
 - [ ] Adapters: payments (Razorpay + mock), sms, email, shipping (Delhivery + mock), storage (Vercel Blob)
-- [ ] Security fixes: single CORS allowlist (remove reflect-any-origin), mount rate limiters, per-route body limits (drop global 100 MB + `multer().any()`), protect `/re-index`, auth audit on every route; ~~remove `POST /admin/banavo` (`adminRegister`), which created an `ADMIN` account with no authentication~~ (removed early on 2026-10-28 at the owner's request; admins come from the seed); move password hashing from a single HMAC-SHA512 to scrypt/argon2 (rehash on next login). Data exposure found in Phase 3: admin `user.controller` `getAll`/`getAllDetails`/`search` return full user documents (hash, salt, OTP, tokens, `razorPayCustId`) — respond through `userSchema`; `search` puts raw `q` into `$regex` (ReDoS/regex injection) — escape it; `update` runs `findOneAndUpdate({})`; admin `order.getById` returns the raw Razorpay payment entity (payer contact, card/bank/VPA) — map through `orderPaymentInfo` and store only the summary; `recoverAccount` returns a session token in the body; `permissionVerification` `req.user` select leaks `contactOtp` and rate-limit stamps. Request contracts to tighten once the API uses them (breaks Joi parity, so deferred): max lengths on tokens, address and gift fields, pin code `^\d{6}$`, raw password length cap (bcrypt-style 72-byte limit). Found in step 2: `POST /orders/create-shipment/:orderId` is guarded only as USER with no owner filter (any shopper can ship any paid order — guard as ADMIN); `POST /public/contactUs` is an unauthenticated mail trigger (remove or guard); `GET /store-books/bulk/export` is unauthenticated and writes to local disk (remove); public `GET /store-books/unique/:id` and admin `/store-books/get/:id` send the whole document incl. `wholeSalePriceHistory`, and create/update accept and store it (project it out, `select: false`, stop reading it); admin `users.search` and `orders.search` put raw `q` into `$regex`; logging found in 4a: `logRequest` (`extendReq.middleware.js`) `console.log`s full request headers (the `_PID` session cookie), `req.user` and `req.allParams()` (plaintext passwords on failed login, password change/reset) and upserts headers + params into `log_api` — remove `logRequest` and the `log_api` model (or keep method, URL, status, request ID only) and give pino `redact` rules for cookies, `authorization`, `set-cookie`, password/OTP/token fields; i18n runs with `updateFiles` defaulting to true, so an unknown message key (e.g. Joi's `"<key>" is not allowed` for a request-chosen key) is written into `src/locales/en.json` at runtime — set `updateFiles: false` (done early in 4a if it lands there); links to the reserved root domain in `stockAlert.controller.js` (`https://pageaters.com/book/…`), `libs/sitemap.js`, `libs/googledata.js` and the email templates → demo domain from config
+  - Shipping adapter: send the Delhivery token as an `Authorization` header (today it travels in the
+    `check-pincode` query string), `encodeURIComponent` the pincode, and never log the raw axios error — the
+    order-shipment and `check-pincode` error paths print the token and the buyer's address and phone
+  - Storage adapter: await the `File` record write after the upload
+  - Cover the production-only notification paths left untested in 4b (order confirmation e-mail with CDN image
+    rewrite, gift and store-credit lines; Twilio order SMS; CANCEL_ORDER and CLOSE_ORDER e-mails): the tests can't set
+    `APP_ENV=production`, so make the environment injectable or test through the mock adapters
+- [ ] Security fixes, by area (each found while reading the legacy code or by the step audits; 4b–4d pin them in tests,
+      so a fix flips the pinned test). `POST /admin/banavo` was removed early on 2026-10-28 (admins come from the seed)
+  - [ ] 7a. Perimeter: single CORS allowlist (remove reflect-any-origin); mount the rate limiters on every public route,
+        naming login, OTP/verification sends and the public `GET /addresses/check-pincode/:pincode` (anyone can spend
+        the Delhivery quota); per-route body limits (drop the global 100 MB and `multer().any()`); protect `/re-index`;
+        `mongoose.set('sanitizeFilter', true)`; auth audit on every route, incl. `POST /orders/create-shipment/:orderId`
+        (guarded only as USER with no owner filter — any shopper can ship any paid order; guard as ADMIN); remove
+        `POST /public/contactUs` (unauthenticated mail trigger) and `GET /store-books/bulk/export` (unauthenticated,
+        writes to local disk, and two simultaneous exports share one file path, so the second `unlinkSync` throws
+        outside any `try` and crashes the process)
+  - [ ] 7b. Sessions and passwords: HIGH — a revoked token still opens a session (`permissionVerification` never checks
+        `access_tokens.revoked`; logout, password change and reset end no sessions) — require an unrevoked token and
+        revoke all of a user's tokens on password change/reset; move password hashing from HMAC-SHA512 to scrypt/argon2
+        (rehash on next login) and compare with `crypto.timingSafeEqual` (`isPasswordValid` uses `===`);
+        password-reset and verify-email tokens never expire and use AES-CBC without a MAC — expire them (~1 h reset,
+        ~24 h verify) and use a random token stored as a hash; split the JWT signing key from the encryption key;
+        contact OTP has no expiry, no attempt cap and no limit on the first send (SMS pumping) — ~10 min expiry,
+        ~5 attempts, per-user/IP send limit, constant-time compare, `crypto.randomInt` instead of `Math.random`; the
+        verify-email resend limit reads the misspelt `lastverifyEmailSentOn`, so it never applies;
+        `permissionVerification`'s `req.user` select leaks `contactOtp` and rate-limit stamps. Phase 5 replaces signup
+        and OTP with the one-click demo login, so fix only what survives it (sessions, passwords, admin login)
+  - [ ] 7c. Order money and cart integrity: HIGH — a shopper can pay less: apply store credit, `POST /orders/create`
+        (online; the Razorpay order is made for the reduced total), then `PATCH /orders/credit` to 0 (allowed in any
+        stage), pay the reduced amount, and the webhook debits 0 credit; the balance is checked only when credit is
+        applied, so one balance can go to several pending orders and go negative — allow credit only on `attempted`
+        orders, check the captured amount equals `total × 100` in the payment webhook, debit with a guarded `$gte`
+        update; the payment webhook accepts any correctly signed event (check the event type and
+        `payment.entity.status === 'captured'`); gift-wrap cost comes from the request (use a server price list);
+        `attemptOrder` finds the cart by id only (add the owner); HIGH — NoSQL operator injection through the `_CID`
+        cart cookie (cookie-parser decodes `j:{"$in":[own, victim]}`; ownership is checked by `findUserCart`, but the
+        writes filter on `{_id}` only) lets a shopper write to other users' carts — write with the found cart's `_id` +
+        `user` (the cookie format check is in the zod step)
+  - [ ] 7d. Data exposure: admin users `getAll`/`getAllDetails`/`search` return full user documents (hash, salt, OTP,
+        tokens, `razorPayCustId`) — respond through `userSchema`; admin `users.search` and `orders.search` put raw `q`
+        into `$regex` (ReDoS/regex injection: `.*` matches everyone, `(` → 500) — escape it; admin users `update` runs
+        `findOneAndUpdate({})`; admin `order.getById` returns the raw Razorpay payment entity (payer contact,
+        card/bank/VPA) — map through `orderPaymentInfo` and store only the summary; public `GET /store-books/unique/:id`
+        and admin `/store-books/get/:id` send `wholeSalePriceHistory`, and create/update accept and store it (project
+        it out, `select: false`, stop reading it); links to the reserved root domain in `stockAlert.controller.js`
+        (`https://pageaters.com/book/…`), `libs/sitemap.js`, `libs/googledata.js` and the email templates → the demo
+        domain from config
 - [ ] Replace lunr in-memory index with MongoDB text index / Atlas Search; replace sqlite mail queue with direct sends via adapter
 - [ ] Central error handler, pino logging, request IDs, `/health`
-- [ ] Fix legacy bugs found in Phase 1 cleanup: `add-on.controller` `update` (undefined `id`/`addOnId`) and `getById` (returns undefined `bundles`), `getByProductId` ignores `productId`; `jobs/index.js` undefined `logError`; `STOCK_ALERT` email has only `en.html` but renderer loads `en.ejs`; `auth.controller` `updatePassword` saves the old `password` instead of `newPassword`; list endpoints (e.g. `GET /categories`) return no documents without `page`/`limit` and sort on `undefined` without `sortBy` — add defaults; `category.controller` sorts on `Number('asc')` (NaN); `storeDeal.contoller` passes `offset: parseInt(undefined)` so the deals list returns `page`/`offset`/`pagingCounter` as null; `order.getByUniqueId` calls `orderPaymentInfo(null)` (500) for an order without payment; `deleteAccount`/`recoverAccount` write `deletedAt`/`scheduledForDeletion`, which the user model lacks (recovery can never work) — remove both endpoints instead of fixing them (owner decision 2026-10-29: no real users, no account deletion); order line totals aren't floored while the cart subtotal is; `issueCredit` has no validator (negative credit); validators: `objectId` never required (`cart/add`, `favorites`, `address/:id`, `order/attempt` accept a missing id), any extra query key (cache-buster) 400s, no validator on `PUT /address/:id`, `order/create-shipment`, `order/return`, `order/cancel`, pincode not 6 digits, email not lower-cased; add-ons grouped endpoint doesn't filter soft-deleted add-ons; seed loads 14 inactive product sets the API never serves; delete the dead `book.model.js`. Found in step 2: add-on `update` (ReferenceError) and `getById` always 500; order analytics (best-selling matches `status` not `orderStatus`, dates compared as strings) always return `[]`; deal `getById` uses author messages and `destroy` doesn't await `save()`; mystery-box `destroy` writes `deactivatedAt` (not in the model); author/collection/bundle/book create and update crash when a list field is missing; `order.controller` defines `retrieve` twice; upload doesn't await `File.create` and returns a storage key, not a URL; renaming a product set regenerates its slug (breaks links); `recoverAccount` reads `scheduledForDeletion` from the JWT so it always answers `ACCOUNT_ALREADY_ACTIVE`; `PUT /addresses/:id` checks existence with an unfiltered `findOne()` and `$set`s every field; `check-pincode` returns the courier's raw record; `orders.create` 500s without `giftOptions`; a return after 7 days answers 200 `ORDER_RETURN_PERIOD_LAPSED`; checkout select misspells `boxed`; cart `add`/`addAddOn` return `true` or the cart; `/cart/empty` clears books only; `addAddOn` has no default quantity; unsubscribing a missing stock alert answers `STOCK_ALERT_EXISTS`; `PUT /auth/me` validates `contactNo` but ignores it; list endpoints without `page` return `page: null`
+  - Remove `logRequest` (`extendReq.middleware.js`): it `console.log`s full request headers (the `_PID` session
+    cookie), `req.user` and `req.allParams()` (plaintext passwords on failed login, password change and reset) and
+    upserts headers + params into `log_api` — drop the `log_api` model (or keep method, URL, status, request ID only);
+    pino `redact` rules for cookies, `authorization`, `set-cookie` and password/OTP/token fields
+  - Process-level `unhandledRejection`/`uncaughtException` logging: several legacy writes aren't awaited and any of
+    them can take the process down
+  - The central handler must recognise the cart's `ProductMismatchError` (4c) and keep its legacy body
+- [ ] Fix legacy bugs (await `user.save()` in register, login and contact OTP send/resend — a failed save is an
+      unhandled rejection and the resend limit can fail open) found in Phase 1 cleanup: `add-on.controller` `update` (undefined `id`/`addOnId`) and `getById` (returns undefined `bundles`), `getByProductId` ignores `productId`; `jobs/index.js` undefined `logError`; `STOCK_ALERT` email has only `en.html` but renderer loads `en.ejs`; `auth.controller` `updatePassword` saves the old `password` instead of `newPassword`; list endpoints (e.g. `GET /categories`) return no documents without `page`/`limit` and sort on `undefined` without `sortBy` — add defaults; `category.controller` sorts on `Number('asc')` (NaN); `storeDeal.contoller` passes `offset: parseInt(undefined)` so the deals list returns `page`/`offset`/`pagingCounter` as null; `order.getByUniqueId` calls `orderPaymentInfo(null)` (500) for an order without payment; `deleteAccount`/`recoverAccount` write `deletedAt`/`scheduledForDeletion`, which the user model lacks (recovery can never work) — remove both endpoints instead of fixing them (owner decision 2026-10-29: no real users, no account deletion); order line totals aren't floored while the cart subtotal is; `issueCredit` has no validator (negative credit); validators: `objectId` never required (`cart/add`, `favorites`, `address/:id`, `order/attempt` accept a missing id), any extra query key (cache-buster) 400s, no validator on `PUT /address/:id`, `order/create-shipment`, `order/return`, `order/cancel`, pincode not 6 digits, email not lower-cased; add-ons grouped endpoint doesn't filter soft-deleted add-ons; seed loads 14 inactive product sets the API never serves; delete the dead `book.model.js`. Found in step 2: add-on `update` (ReferenceError) and `getById` always 500; order analytics (best-selling matches `status` not `orderStatus`, dates compared as strings) always return `[]`; deal `getById` uses author messages and `destroy` doesn't await `save()`; mystery-box `destroy` writes `deactivatedAt` (not in the model); author/collection/bundle/book create and update crash when a list field is missing; `order.controller` defines `retrieve` twice; upload doesn't await `File.create` and returns a storage key, not a URL; renaming a product set regenerates its slug (breaks links); `recoverAccount` reads `scheduledForDeletion` from the JWT so it always answers `ACCOUNT_ALREADY_ACTIVE`; `PUT /addresses/:id` checks existence with an unfiltered `findOne()` and `$set`s every field; `check-pincode` returns the courier's raw record; `orders.create` 500s without `giftOptions`; a return after 7 days answers 200 `ORDER_RETURN_PERIOD_LAPSED`; checkout select misspells `boxed`; cart `add`/`addAddOn` return `true` or the cart; `/cart/empty` clears books only; `addAddOn` has no default quantity; unsubscribing a missing stock alert answers `STOCK_ALERT_EXISTS`; `PUT /auth/me` validates `contactNo` but ignores it; list endpoints without `page` return `page: null`
 - [ ] OpenAPI from zod at `/docs`
 - [ ] Remove `page.controller` / page & banner models (moved to CMS); move sitemap + Google product feed to storefront
 - **Checkpoint:** API runs locally, all routes reachable, lint and tests clean

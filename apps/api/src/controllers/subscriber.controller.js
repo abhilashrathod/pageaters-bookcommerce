@@ -1,43 +1,24 @@
-const mongoose = require('mongoose');
+const { handleControllerError } = require('../helpers/appError.helper');
+const subscriberService = require('../services/subscriber.service');
 
-const { models } = require('../constants');
-
-const Subscriber = mongoose.model(models.SUBSCRIBER);
-
+// Thin controller: read the request, call one service, answer with the res.* helpers (src/services/README.md).
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit } = req.allParams();
-
-    const query = {};
-
-    const options = {
-      page,
-      limit
-    };
-
-    const author = await Subscriber.paginate(query, options);
-
-    return res.ok({ message: 'SUBSCRIBER_LIST_SUCCESS', data: author });
+    const { page, limit } = req.allParams();
+    const data = await subscriberService.listSubscribers({ page, limit });
+    return res.ok({ message: 'SUBSCRIBER_LIST_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.create = async (req, res) => {
   try {
-    let { email } = req.allParams();
-
-    const isFound = await Subscriber.findOne({email});
-
-    if (isFound) {
-      return res.ok({ message: 'SUBSCRIBER_EXIST', data: {} });
-    }
-
-    await Subscriber.create({ email });
-
-    return res.ok({ message: 'SUBSCRIBER_CREATE_SUCCESS', data: {} });
+    const { email } = req.allParams();
+    const added = await subscriberService.addSubscriber(email);
+    return res.ok({ message: added ? 'SUBSCRIBER_CREATE_SUCCESS' : 'SUBSCRIBER_EXIST', data: {} });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };

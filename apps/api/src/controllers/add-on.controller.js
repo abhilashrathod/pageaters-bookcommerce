@@ -1,157 +1,64 @@
-/* eslint-disable no-undef, no-dupe-keys -- legacy bugs (update: undefined id/addOnId; getById: undefined bundles; duplicate currentDiscount keys), fixed in the PLAN.md Phase 4 legacy-bugs step */
-const mongoose = require('mongoose');
-const { generateRandomNumber } = require('../helpers/utils.helper');
-const { models } = require('../constants');
+const { handleControllerError } = require('../helpers/appError.helper');
+const addOnService = require('../services/add-on.service');
 
-const Addon = mongoose.model(models.ADD_ON);
-
+// Thin controller: read the request, call one service, answer with the res.* helpers (src/services/README.md).
 
 module.exports.getAll = async (req, res) => {
   try {
-    let { page, limit, sortBy, sortOrder } = req.allParams();
-
-    const query = { isDeleted: false };
-
-    const allowedSortingFields = ['name'];
-
-    if (sortBy && !allowedSortingFields.includes(sortBy)) {
-      return res.error('SORTING_NOT_ALLOWED');
-    }
-
-    const options = {
-      page,
-      limit,
-      sort: {
-        [sortBy]: sortOrder,
-      },
-    };
-
-    const addOnsRes = await Addon.paginate(query, options);
-
-    return res.ok({ message: 'ADD_ON_LIST_SUCCESS', data: addOnsRes });
+    const { page, limit, sortBy, sortOrder } = req.allParams();
+    const data = await addOnService.listAddOns({ page, limit, sortBy, sortOrder });
+    return res.ok({ message: 'ADD_ON_LIST_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.create = async (req, res) => {
   try {
-    let { name, description, poster, category, priority, price, currentDiscount, inventory, productPrefrerence, products } = req.allParams();
-
-    let addOnId = `AO-${generateRandomNumber(10)}`;
-
-    const payload = {
-      addOnId,
-      name,
-      description,
-      poster,
-      category,
-      currentDiscount,
-      inventory,
-      priority,
-      price,
-      currentDiscount,
-      productPrefrerence, 
-      products
-    };
-
-    const addOnRes = await Addon.create(payload);
-
-    return res.ok({ message: 'ADD_ON_CREATE_SUCCESS', data: addOnRes });
+    const { name, description, poster, category, priority, price, currentDiscount, inventory, productPrefrerence, products } = req.allParams();
+    const data = await addOnService.createAddOn({ name, description, poster, category, priority, price, currentDiscount, inventory, productPrefrerence, products });
+    return res.ok({ message: 'ADD_ON_CREATE_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
+// Legacy: always 500 (see addOnService.updateAddOn).
 module.exports.update = async (req, res) => {
   try {
-    let { name, description, poster, category, priority, price, currentDiscount, inventory, productPrefrerence, products } = req.allParams();
-
-    const addOn = await Addon.findOne({ _id: id, isDeleted: false });
-
-    if (!addOn) {
-      return res.error('ADD_ON_NOT_EXIST');
-    }
-
-    const payload = {
-      addOnId,
-      name,
-      description,
-      poster,
-      category,
-      currentDiscount,
-      inventory,
-      priority,
-      price,
-      currentDiscount,
-      productPrefrerence, 
-      products
-    };
-
-    const addOnRes = await Addon.findOneAndUpdate({ _id: id }, { $set: { ...payload } }, { new: true });
-
-    return res.ok({ message: 'ADD_ON_UPDATE_SUCCESS', data: addOnRes });
+    const data = await addOnService.updateAddOn();
+    return res.ok({ message: 'ADD_ON_UPDATE_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
+// Legacy: 500 for a live add-on (see addOnService.getAddOnById).
 module.exports.getById = async (req, res) => {
   try {
-    let { id } = req.allParams();
-
-    const populateOptions = [{
-      path: 'products',
-      select: `title bookId ISBN author poster price popularity editorsPick inventory newRelease currentDiscount preOrder bestSeller`,
-    }];
-
-    const addOnRes = await Addon.findOne({ _id: id, isDeleted: false }).populate(populateOptions);
-
-    if (addOnRes) {
-      return res.ok({ message: 'ADD_ON_LIST_SUCCESS', data: bundles });
-    } else {
-      return res.error('ADD_ON_NOT_EXIST');
-    }
+    const { id } = req.allParams();
+    const data = await addOnService.getAddOnById(id);
+    return res.ok({ message: 'ADD_ON_LIST_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.getByProductId = async (req, res) => {
   try {
-    const pipeline = [
-      {
-        $group: {
-          _id: '$category', // Group by the 'type' field
-          addOns: { $push: '$$ROOT' } // Create an array of add-ons in each group
-        }
-      }
-    ];
-
-    // Aggregate the data using the defined pipeline
-    const groupedAddOns = await Addon.aggregate(pipeline);
-
-    return res.ok({ message: 'ADD_ON_LIST_SUCCESS', data: groupedAddOns });
+    const data = await addOnService.groupAddOnsByCategory();
+    return res.ok({ message: 'ADD_ON_LIST_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.destroy = async (req, res) => {
   try {
-    let { id } = req.allParams();
-
-    const addOnRes = await Addon.findOne({ _id: id, isDeleted: false });
-
-    if (addOnRes) {
-      addOnRes.isDeleted = true;
-      addOnRes.deletedAt = new Date();
-      await addOnRes.save();
-      return res.ok('ADD_ON_DELETE_SUCCESS');
-    } else {
-      return res.error('ADD_ON_NOT_EXIST');
-    }
+    const { id } = req.allParams();
+    await addOnService.deleteAddOn(id);
+    return res.ok('ADD_ON_DELETE_SUCCESS');
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };

@@ -1,79 +1,35 @@
-const mongoose = require('mongoose');
 const { get } = require('lodash');
 
-const { models, enums } = require('../constants');
+const { handleControllerError } = require('../helpers/appError.helper');
+const storeCreditService = require('../services/store-credit.service');
 
-const { generateRandomNumber } = require('./../helpers/utils.helper');
-const sendMailQueue = require('./../helpers/sendMailQueue.helper');
-
-const User = mongoose.model(models.USER);
-const CreditTransactions = mongoose.model(models.STORE_CREDIT_TRANSACTIONS);
+// Thin controller: read the request, call one service, answer with the res.* helpers (src/services/README.md).
 
 module.exports.issueCredit = async (req, res) => {
   try {
     const { userId, credit, orderId } = req.allParams();
-
-    const userRes = await User.findOne({ _id: userId, status: enums.USER_STATUS.ACTIVE }).select('email fullName');
-
-    if (!userRes) {
-      return res.error('USER_NOT_FOUND');
-    }
-
-    const record = {
-      creditId: `CR-${generateRandomNumber(10)}`,
-      orderId,
-      userId,
-      amount: credit,
-      action: 'CREDIT',
-      expired: false,
-    };
-
-    await CreditTransactions.create(record);
-    await User.findOneAndUpdate({ _id: userId }, { $inc: { storeCredit: credit } }, { new: true });
-
-    const emailBody = {
-      emailModule: 'STORE_CREDIT_REWARD',
-      to: userRes.email,
-      subject: `Your Store Credit is Here! - Pageaters`,
-      data: {
-        CUSTOMER_NAME: userRes.fullName ? userRes.fullName : 'Reader',
-        AMOUNT: credit,
-      },
-    };
-    sendMailQueue.add(emailBody);
-
+    await storeCreditService.issueCredit({ userId, credit, orderId });
     return res.created({ message: 'STORE_CREDIT_SUCCESS', data: {} });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.getStoreCredit = async (req, res) => {
   try {
-    const userId = get(req, 'user.userId', '');
-
-    const userRes = await User.findOne({ _id: userId }).select(`storeCredit`);
-
-    return res.ok({ message: 'STORE_CREDIT_LIST_SUCCESS', data: userRes });
-
+    const data = await storeCreditService.getBalance(get(req, 'user.userId', ''));
+    return res.ok({ message: 'STORE_CREDIT_LIST_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.getCreditHistory = async (req, res) => {
   try {
-    const userId = get(req, 'user.userId', '');
-    let { page, limit } = req.allParams();
-
-    const creditRes = await CreditTransactions.paginate({userId}, { page, limit, sort: { createdAt: -1 } });
-
-    if (creditRes) {
-      return res.ok({ message: 'STORE_CREDIT_LIST_SUCCESS', data: creditRes });
-    }
-
-    return res.error('STORE_CREDIT_NOT_EXIST');
+    const { page, limit } = req.allParams();
+    const data = await storeCreditService.getHistory(get(req, 'user.userId', ''), { page, limit });
+    return res.ok({ message: 'STORE_CREDIT_LIST_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
