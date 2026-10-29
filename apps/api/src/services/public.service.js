@@ -1,5 +1,5 @@
 const sendMailQueue = require('../helpers/sendMailQueue.helper');
-const { returnProductImage, returnBundleImage } = require('../helpers/order.helper');
+const { returnProductImage, returnBundleImage } = require('../helpers/image-url.helper');
 
 // Unauthenticated public endpoints (POST /public/contactUs).
 

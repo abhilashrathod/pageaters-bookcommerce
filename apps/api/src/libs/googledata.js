@@ -5,7 +5,7 @@ const { models } = require('../constants');
 
 const router = express.Router();
 
-const { returnProductImage } = require('../helpers/order.helper');
+const { returnProductImage } = require('../helpers/image-url.helper');
 
 const Book = mongoose.model(models.STORE_BOOK);
 

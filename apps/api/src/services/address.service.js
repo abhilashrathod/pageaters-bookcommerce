@@ -5,11 +5,34 @@ const { get } = require('lodash');
 const { models } = require('../constants');
 const { DELHIVERY } = require('../appConfig');
 const { AppError } = require('../helpers/appError.helper');
-const { checkServiceabilityInternal } = require('../helpers/order.helper');
 
 // A shopper's delivery addresses (soft-deleted, at most one default) and the Delhivery pincode check.
 
 const Address = mongoose.model(models.ADDRESS);
+
+/**
+ * Whether Delhivery delivers to a pincode (a non-empty `delivery_codes` answer).
+ * Legacy: any courier or network error counts as unserviceable (false); the token travels in the query string.
+ * The shipping adapter step moves this call behind the shipping adapter.
+ * @param {string} pincode
+ * @returns {Promise<boolean>}
+ */
+const checkServiceabilityInternal = async (pincode) => {
+  try {
+    const config = {
+      method: 'get',
+      url: `${DELHIVERY.BASE_URL}/c/api/pin-codes/json?filter_codes=${pincode}&token=${DELHIVERY.API_TOKEN}`,
+      headers: {},
+    };
+
+    const apiRes = await axios(config);
+    const pincodeRes = await apiRes.data.delivery_codes[0];
+
+    return Boolean(pincodeRes);
+  } catch {
+    return false;
+  }
+};
 
 const clearDefault = (userId) => Address.updateMany({ isDeleted: false, userId }, { $set: { isDefault: false } });
 

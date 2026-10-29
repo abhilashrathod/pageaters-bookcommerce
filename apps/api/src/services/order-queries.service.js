@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
+const { get } = require('lodash');
 
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
-const { orderPaymentInfo } = require('../helpers/order.helper');
 
 // Order reads: the shopper's own orders, and the admin list, lookup and search. Orders still in checkout
 // (`attempted`, `created`) are hidden from the lists.
@@ -10,6 +10,67 @@ const { orderPaymentInfo } = require('../helpers/order.helper');
 const Order = mongoose.model(models.ORDER);
 
 const NOT_PLACED = [enums.ORDER_STAGES.ATTEMPTED, enums.ORDER_STAGES.CREATED];
+
+/**
+ * The buyer-facing summary of a stored Razorpay payment: card name/last4/network, bank, UPI id, wallet, EMI
+ * (legacy: issuer/rate/duration under the card field names) or just the method for COD.
+ * Legacy: an unknown method gives `undefined`; a `null` payment throws a TypeError (→ 500 in `getUserOrder`).
+ * @param {object} payment The order's `payment` (Razorpay payment entity).
+ * @returns {object|undefined}
+ */
+const orderPaymentInfo = (payment) => {
+  let payload;
+
+  switch (payment.method) {
+    case enums.PAYMENT_METHODS.CARD:
+      payload = {
+        method: enums.PAYMENT_METHODS.CARD,
+        name: get(payment, 'card.name', ''),
+        last4: get(payment, 'card.last4', ''),
+        network: get(payment, 'card.network', ''),
+      };
+      return payload;
+
+    case enums.PAYMENT_METHODS.NET_BAKING:
+      payload = {
+        method: enums.PAYMENT_METHODS.NET_BAKING,
+        bank: get(payment, 'bank', ''),
+      };
+      return payload;
+
+
+    case enums.PAYMENT_METHODS.UPI:
+      payload = {
+        method: enums.PAYMENT_METHODS.UPI,
+        upi_id: get(payment, 'vpa', ''),
+      };
+      return payload;
+
+    case enums.PAYMENT_METHODS.WALLET:
+      payload = {
+        method: enums.PAYMENT_METHODS.WALLET,
+        wallet: get(payment, 'wallet', ''),
+      };
+      return payload;
+
+    case enums.PAYMENT_METHODS.EMI:
+      payload = {
+        method: enums.PAYMENT_METHODS.EMI,
+        name: get(payment, 'emi.issuer', ''),
+        last4: get(payment, 'emi.rate', ''),
+        network: get(payment, 'emi.duration', ''),
+      };
+      return payload;
+
+    case enums.PAYMENT_METHODS.COD:
+      payload = {
+        method: enums.PAYMENT_METHODS.COD
+      };
+      return payload;
+    default:
+      return payload;
+  }
+};
 
 /** Populate options for an order shown to its buyer (address and items with display fields). */
 const ORDER_POPULATE = [

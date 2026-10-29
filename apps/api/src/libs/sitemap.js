@@ -11,7 +11,7 @@ const Bundle = mongoose.model(models.BUNDLE);
 const Collection = mongoose.model(models.COLLECTION);
 const Category = mongoose.model(models.CATEGORY);
 
-const { returnProductImage, returnCollectionImage, returnCategoryImage, returnBundleImage } = require('../helpers/order.helper');
+const { returnProductImage, returnCollectionImage, returnCategoryImage, returnBundleImage } = require('../helpers/image-url.helper');
 
 const URLS = {
   COLLECTION: 'https://pageaters.com/collections',

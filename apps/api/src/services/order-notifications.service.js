@@ -1,7 +1,7 @@
 const moment = require('moment');
 
 const { ENVIRONMENT, TWILIO } = require('../appConfig');
-const { returnAssetImage, returnBundleImage, returnProductImage, textMessage } = require('../helpers/order.helper');
+const { returnAssetImage, returnBundleImage, returnProductImage } = require('../helpers/image-url.helper');
 const sendMailQueue = require('../helpers/sendMailQueue.helper');
 
 // The shopper's order e-mails and the confirmation SMS. E-mails go through the in-process mail queue
@@ -14,6 +14,16 @@ const isProduction = () => ENVIRONMENT === 'production';
 const formatDate = (date) => moment(date).format('DD MMM YYYY');
 const readerName = (user) => (user.fullName ? user.fullName : 'Reader');
 const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + string.slice(1);
+
+/**
+ * The order confirmation SMS text, addressed to the buyer's name or, without one, the local part of their e-mail.
+ * @param {string} [name]
+ * @param {string} email
+ * @param {string} orderId Public order id (`OD-…`).
+ * @returns {string}
+ */
+const textMessage = (name, email, orderId) =>
+  `Hi ${name ? name : email.split('@')[0]}, Your order#${orderId} has been confirmed! Track your order progress in Account > Orders section. Happy Reading! -- Team Pageaters.`;
 
 // The order summary most templates share. `order.userId` is the populated buyer.
 const orderSummary = (order) => ({

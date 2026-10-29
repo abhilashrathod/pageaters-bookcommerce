@@ -1,14 +1,14 @@
+const { styleText } = require('node:util');
 const mongoose = require('mongoose');
-const { get } = require('lodash');
+const { get, sumBy } = require('lodash');
 
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
-const { calculateTotal } = require('../helpers/cart.helper');
-const { calculateShipping, calculateTotalWeight } = require('../helpers/order.helper');
+const { calculateTotal } = require('./cart-pricing.service');
 
 // Order money: the cart subtotal, shipping, gift charges, store credit and the priced order lines.
 //
-// Two roundings meet here (legacy, kept): the subtotal adds cart lines floored per unit (cart.helper calculateTotal),
+// Two roundings meet here (legacy, kept): the subtotal adds cart lines floored per unit (cart-pricing calculateTotal),
 // while the order lines store unfloored totals — 2 × (499 − 10%) is 898 in the subtotal but 898.2 on the line.
 
 const Order = mongoose.model(models.ORDER);
@@ -40,8 +40,40 @@ const CART_POPULATE = [
 const discounted = (price, discount) => price - (discount * price) / 100;
 
 /**
+ * Total weight of cart lines: Σ catalog weight × quantity over books, bundles and boxes (add-ons weigh nothing).
+ * Legacy: any error (a line whose product is null, a missing argument) is logged and the weight is 0.
+ * @param {object[]} products Lines `{ product, quantity }` with a populated `product.weight`.
+ * @param {object[]} bundles Lines `{ bundle, quantity }`.
+ * @param {object[]} mysteryBoxes Lines `{ box, quantity }`.
+ * @returns {Promise<number>}
+ */
+const calculateTotalWeight = async (products, bundles, mysteryBoxes) => {
+  try {
+    const finalProductsWeight = sumBy(products, (obj) => obj.product.weight * obj.quantity);
+    const finalBundleWeight = sumBy(bundles, (obj) => obj.bundle.weight * obj.quantity);
+    const finalBoxWeight = sumBy(mysteryBoxes, (obj) => obj.box.weight * obj.quantity);
+    return Number(finalProductsWeight) + Number(finalBundleWeight) + Number(finalBoxWeight);
+  } catch (e) {
+    console.log(styleText('red', 'ERROR'), JSON.stringify(e));
+    return 0;
+  }
+};
+
+/**
+ * Delivery charges: free when `isFree`, else 125 with a mystery box, else 50. Taxes are always 0.
+ * @param {boolean} isFree
+ * @param {boolean} hasMysteryBox
+ * @returns {Promise<{ taxes: number, deliveryAmount: number, totalDeliveryCharges: number }>}
+ */
+const calculateShipping = async (isFree, hasMysteryBox) => {
+  if (isFree) return { taxes: 0, deliveryAmount: 0, totalDeliveryCharges: 0 };
+  if (hasMysteryBox) return { taxes: 0, deliveryAmount: 125, totalDeliveryCharges: 125 };
+  return { taxes: 0, deliveryAmount: 50, totalDeliveryCharges: 50 };
+};
+
+/**
  * Subtotal of a populated cart: each line is quantity × floor(discounted unit price). Writes the line totals onto the
- * cart's items in memory (cart.helper behaviour).
+ * cart's items in memory (cart-pricing calculateTotal).
  * @param {object} cart Cart populated with CART_POPULATE.
  * @returns {Promise<number>}
  */

@@ -197,7 +197,7 @@ This file is temporary: when every phase is done, archive the decision log into 
     seed-on-boot (`scripts/seedData.js`), `src/jobs/` (`logTime` always blocked; `clearResources` cleaned a folder
     nothing writes; `deleteAccount` never worked), `cron`, `ENABLE_CRON`, `DELETE_ACCOUNT_DATA_AFTER`. No
     account-deletion purge, now or later (owner decision 2026-10-28: the demo has no real users). 47 API tests (boot test runs in-process)
-- [ ] Layering: routes → controllers → services → models. Split `order.controller` (1,609 lines), `auth` (738), `cart` (570), `storeBook` (411) into services
+- [x] Layering: routes → controllers → services → models. Split `order.controller` (1,609 lines), `auth` (738), `cart` (570), `storeBook` (411) into services
   - Split (proposed 2026-10-29): 4a first, then 4b, 4c and 4d in parallel worktrees. Behaviour-preserving: same
     routes, status codes, message keys and response shapes; legacy bugs and security fixes stay for their own steps.
     Services use the Mongoose models directly (no extra repository layer) and own every vendor call, so the adapters
@@ -235,8 +235,16 @@ This file is temporary: when every phase is done, archive the decision log into 
       Declared changes: stock saves now awaited; two hanging error paths now 500; debug logs of the SMS text and the
       contact payload removed. Follow-up for the test-writer: move the shared test utilities duplicated in
       `fixtures/orders.js` and `fixtures/store.js` into `test/helpers/`
-  - [ ] 4e. After 4b–4d merge: fold the shared `helpers/*.helper.js` (`order`, `cart`, mail) into the services that
+  - [x] 4e. After 4b–4d merge: fold the shared `helpers/*.helper.js` (`order`, `cart`, mail) into the services that
         own them; no behaviour change
+    - Done 2026-10-29 (api-engineer, reviewed + audited): `cart.helper.js` and `order.helper.js` deleted — each
+      function now lives in the service that owns it (`calculateTotal` in `cart-pricing`, shipping and weight in
+      `order-pricing`, pickup address in `order-shipping`, payment info in `order-queries`, the SMS text in
+      `order-notifications`, the Delhivery pincode check in `address.service` until the shipping adapter); the CDN
+      image-URL builders moved to `helpers/image-url.helper.js` (the sitemap and Google feed use them; `libs/` never
+      imports services). The mail-queue helpers stay until the mail step. Generic test utilities shared in
+      `test/helpers/` (`assert.js`, `mail.js`, `settle.js`); `api.stop()` waits for in-flight database writes instead
+      of fixed delays. 593 tests, lint warnings 24 → 16
 - [ ] Replace Joi with shared zod schemas + `validate()` middleware
   - Tighten the request contracts while replacing Joi (deferred until now because they break Joi parity): max lengths
     on tokens, address and gift fields; pin code `^\d{6}$`; a raw password length cap; store-credit `amount` ≥ 0

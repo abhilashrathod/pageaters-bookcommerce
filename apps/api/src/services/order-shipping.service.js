@@ -3,9 +3,8 @@ const axios = require('axios');
 const { map } = require('lodash');
 
 const { models, enums } = require('../constants');
-const { DELHIVERY } = require('../appConfig');
+const { DELHIVERY, ENVIRONMENT } = require('../appConfig');
 const { AppError } = require('../helpers/appError.helper');
-const { returnPickupAddress } = require('../helpers/order.helper');
 const { getId } = require('../helpers/utils.helper');
 const { sendReturnShipmentEmail, sendShippedEmail } = require('./order-notifications.service');
 
@@ -13,6 +12,37 @@ const { sendReturnShipmentEmail, sendShippedEmail } = require('./order-notificat
 // or replacement request. The adapters step moves the Delhivery call behind the shipping adapter.
 
 const Order = mongoose.model(models.ORDER);
+
+/**
+ * The warehouse Delhivery picks shipments up from: the demo office in development and staging, the demo warehouse
+ * elsewhere (both fake demo addresses).
+ * @returns {{ name: string, add: string, city: string, pin_code: string, country: string, phone: string }}
+ */
+const returnPickupAddress = () => {
+  const demoAddress = {
+    name: 'Pageaters Main Office',
+    add: 'Unit 1, Demo Logistics Park, Sector 1',
+    city: 'Gandhinagar',
+    pin_code: '382016',
+    country: 'India',
+    phone: '9000000000',
+  };
+
+  const mainAddress = {
+    name: 'PAGEATERS DEMO WAREHOUSE',
+    add: 'Unit 1, Demo Logistics Park, Sector 1',
+    city: 'Gandhinagar',
+    pin_code: '382016',
+    country: 'India',
+    phone: '9000000000',
+  };
+
+  if (ENVIRONMENT === 'development' || ENVIRONMENT === 'staging') {
+    return demoAddress;
+  }
+
+  return mainAddress;
+};
 
 const { PAID, CONFIRMED, SHIPPED, RETURNED, REPLACEMENT, RETURNED_IN_PROGRESS, REPLACEMENT_IN_PROGRESS } = enums.ORDER_STAGES;
 
