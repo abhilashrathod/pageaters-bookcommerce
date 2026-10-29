@@ -1,485 +1,187 @@
 const mongoose = require('mongoose');
-const moment = require('moment');
 const { get } = require('lodash');
 
-const { HOST, TWILIO } = require('./../appConfig');
 const { models, enums } = require('../constants');
+const { handleControllerError } = require('../helpers/appError.helper');
+const { encrypt } = require('../helpers/encryption.helper');
+const authAccount = require('../services/auth-account.service');
+const authSession = require('../services/auth-session.service');
+const authVerification = require('../services/auth-verification.service');
 
-const { encrypt, decrypt, generateJwtToken } = require('../helpers/encryption.helper');
-const { generateRandomNumber } = require('./../helpers/utils.helper');
-const sendMailQueue = require('./../helpers/sendMailQueue.helper');
+// Thin controller: read the request, call one service, answer with the res.* helpers (src/services/README.md).
+// Services return tokens and ids; this controller owns the session and cart cookies.
+//
+// deleteAccount and recoverAccount are left here as they were (they still use the user model directly): both are
+// removed in a later step (owner decision 2026-10-29).
 
 const User = mongoose.model(models.USER);
-const AccessTokens = mongoose.model(models.ACCESS_TOKEN);
-const Cart = mongoose.model(models.CART);
-const Favorites = mongoose.model(models.FAVORITES);
 
-const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
-
+// Legacy: `expires` is computed once, when this module loads, so every session cookie a process sets expires
+// 30 days after the process started (the JWT itself lasts 7 days, 30 for admins).
 const ACCESS_TOKEN_OPTIONS = {
   httpOnly: true,
-  expires: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)),
+  expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 };
 
 const CART_COOKIE_OPTIONS = {
   httpOnly: true,
 };
 
+const REVOKED_COOKIE_OPTIONS = {
+  httpOnly: true,
+  expires: 0,
+};
+
+const userIdOf = (req) => get(req, 'user.userId', '');
+
+// Sets the session and cart cookies. The cart id is an ObjectId, so Express writes it as JSON (`j:"<id>"`, legacy).
+const setSessionCookies = (res, { token, cartId }) => {
+  res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
+  res.cookie(enums.TOKEN_ID.CART_COOKIE, cartId, CART_COOKIE_OPTIONS);
+};
+
 module.exports.register = async (req, res) => {
   try {
-    let { email, password } = req.allParams();
-    const ipAddress = req.ip;
-
-    const isEmailAvailable = await User.isEmailAvailable(email);
-
-    if (!isEmailAvailable) {
-      return res.error('USER_ALREADY_REGISTERED');
-    }
-
-    const user = await User.create({ email, role: enums.USER_ROLES.USER });
-
-    await user.setPassword(password);
-    const verifyToken = await user.generateVerifyEmailToken();
-
-    user.verifyEmailToken = verifyToken;
-    user.lastVerifyEmailSentOn = new Date().toISOString();
-
-    user.save();
-
-    const newUserCart = await Cart.create({ user: user._id });
-    await Favorites.create({ userId: user._id });
-
-    const { payload, token } = generateJwtToken(user, ipAddress);
-
-    await AccessTokens.create({ ...payload, token });
-    // const profile = await User.getProfile(user._id); // TODO: Improvement could be made
-
-    // create an access token cookie that will also expires in 7 days
-    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
-
-    // Attach cart cookie for shopping cart
-    res.cookie(enums.TOKEN_ID.CART_COOKIE, newUserCart._id, CART_COOKIE_OPTIONS);
-
+    const { email, password } = req.allParams();
+    const session = await authSession.register({ email, password, ipAddress: req.ip });
+    setSessionCookies(res, session);
     return res.ok({ message: 'REGISTRATION_SUCCESS', data: {} });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.login = async (req, res) => {
   try {
     const { email, password } = req.allParams();
-    const ipAddress = req.ip;
-
-    let user = await User.findOne({ email, status: enums.USER_STATUS.ACTIVE });
-
-    if (!user) {
-      return res.error('INVALID_LOGIN_ATTEMPT', 'INVALID_USER');
-    }
-
-    if (!user.isPasswordValid(password)) {
-      return res.error('INVALID_LOGIN_ATTEMPT', 'INVALID_PASSWORD');
-    }
-
-    // update last login to latest
-    user.lastLoginAt = new Date().toISOString();
-    user.save();
-
-    // generate necessary token
-    const { token, payload } = generateJwtToken(user, ipAddress);
-    await AccessTokens.create({ ...payload, token });
-
-    // get user profile
-    user = await User.getProfile(user._id);
-    const cartRes = await Cart.findOne({ user: user._id });
-
-    // create an access token cookie that will also expires in 7 days
-    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, token, ACCESS_TOKEN_OPTIONS);
-
-    // Attach cart cookie for shopping cart
-    res.cookie(enums.TOKEN_ID.CART_COOKIE, cartRes ? cartRes._id : '', CART_COOKIE_OPTIONS);
-
-    if (!user.emailVerified) {
-      return res.ok({ message: 'EMAIL_VERIFICATION_PENDING', data: user });
-    }
-
-    return res.ok({ message: 'LOGIN_SUCCESS', data: user });
+    const { profile, ...session } = await authSession.login({ email, password, ipAddress: req.ip });
+    setSessionCookies(res, session);
+    return res.ok({ message: profile.emailVerified ? 'LOGIN_SUCCESS' : 'EMAIL_VERIFICATION_PENDING', data: profile });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.revokeToken = async (req, res) => {
   try {
     const token = req.cookies[enums.TOKEN_ID.ACCESS_TOKEN_COOKIE];
-    const ipAddress = req.ip;
-    const userId = get(req, 'user.userId', '');
-
-    if (!token) {
-      return res.unauthorized('INVALID_TOKEN');
-    }
-
-    // users can revoke their own tokens and admins can revoke any tokens
-    const accessToken = await AccessTokens.findOne({ token, userId });
-    if (!accessToken) {
-      return res.unauthorized('TOKEN_UNMATCHED');
-    }
-
-    // revoke token and save
-    accessToken.revoked = Date.now();
-    accessToken.revokedByIp = ipAddress;
-    await accessToken.save();
-
-    // revoke refresh token & cart cookie
-    const cookieOptions = {
-      httpOnly: true,
-      expires: 0,
-    };
-
-    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, '', cookieOptions);
-    res.cookie(enums.TOKEN_ID.CART_COOKIE, '', cookieOptions);
-
+    await authSession.revokeToken({ token, userId: userIdOf(req), ipAddress: req.ip });
+    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, '', REVOKED_COOKIE_OPTIONS);
+    res.cookie(enums.TOKEN_ID.CART_COOKIE, '', REVOKED_COOKIE_OPTIONS);
     return res.ok({ message: 'TOKEN_REVOKED', data: {} });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.me = async (req, res) => {
   try {
-    let { user } = req;
-
-    user = await User.getProfile(user.userId);
-
-    return res.ok({ message: 'ME_SUCCESS', data: user });
+    const data = await authSession.getProfile(req.user.userId);
+    return res.ok({ message: 'ME_SUCCESS', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
-module.exports.logout = async (req, res) => {
-  try {
-    return res.ok('LOGOUT_SUCCESS');
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
+// Not routed (POST /auth/logout revokes the token); kept as it was.
+module.exports.logout = async (req, res) => res.ok('LOGOUT_SUCCESS');
 
 module.exports.updateProfile = async (req, res) => {
   try {
     const { fullName } = req.allParams();
-    let { user } = req;
-
-    const fieldsToUpdate = {};
-
-    if (fullName) {
-      fieldsToUpdate.fullName = fullName;
-    }
-
-    await User.findOneAndUpdate({ _id: user.userId }, { $set: { ...fieldsToUpdate } });
-
-    user = await User.getProfile(user.userId);
-
-    return res.ok({ message: 'PROFILE_UPDATED', data: user });
+    const data = await authAccount.updateProfile({ userId: req.user.userId, fullName });
+    return res.ok({ message: 'PROFILE_UPDATED', data });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.updatePassword = async (req, res) => {
   try {
-    let { password, newPassword, confirmPassword } = req.allParams();
-    const userId = get(req, 'user.userId', '');
-
-    const user = await User.findById(userId);
-
-    if (!user.isPasswordValid(password)) {
-      return res.error('INVALID_PASSWORD');
-    }
-
-    if (newPassword !== confirmPassword) {
-      return res.error('PASSWORDS_DO_NOT_MATCH');
-    }
-
-    await user.setPassword(password);
-
+    const { password, newPassword, confirmPassword } = req.allParams();
+    await authAccount.updatePassword({ userId: userIdOf(req), password, newPassword, confirmPassword });
     return res.ok('PASSWORD_UPDATED');
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.allParams();
-
-    const user = await User.findOne({ email, isDeleted: false });
-
-    if (!user) {
-      return res.error('NO_USER_FOUND_FOR_THIS_EMAIL');
-    }
-
-    const limitExceeded =
-      user.lastForgotPasswordSentOn &&
-      user.lastForgotPasswordSentOn >=
-      moment()
-        .subtract(3, 'm')
-        .toDate()
-        .toISOString();
-
-    if (limitExceeded) {
-      return res.error('FORGOT_PASSWORD_LIMIT_EXCEEDED');
-    }
-
-    const token = await user.generateForgotPasswordToken(user);
-
-    sendMailQueue.add({
-      emailModule: 'FORGOT_PASSWORD',
-      to: user.email,
-      subject: 'Pageaters Account - Reset Password Requested',
-      data: {
-        FULL_NAME: returnAddressName(user.fullName, user.email),
-        LINK: `${HOST}/auth/reset?token=${token}&email=${encodeURIComponent(user.email)}`,
-      },
-    });
-
+    await authAccount.forgotPassword({ email });
     return res.ok('FORGOT_PASSWORD_MAIL_SENT');
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.resendForgetPasswordEmail = async (req, res) => {
   try {
     const { email } = req.allParams();
-
-    const user = await User.findOne({ email, isDeleted: false });
-
-    if (!user) {
-      return res.error('NO_USER_FOUND_FOR_THIS_EMAIL');
-    }
-
-    const currentTime = moment().subtract(1, 'm').toDate().toISOString();
-
-    const limitExceeded = user.lastForgotPasswordSentOn && user.lastForgotPasswordSentOn >= currentTime;
-
-    if (limitExceeded) {
-      return res.error('FORGOT_PASSWORD_LIMIT_EXCEEDED');
-    }
-
-    user.lastForgotPasswordSentOn = new Date().toISOString();
-    await user.save();
-
-    sendMailQueue.add({
-      emailModule: 'FORGOT_PASSWORD',
-      to: user.email,
-      subject: 'Pageaters Account - Reset Password Requested',
-      data: {
-        FULL_NAME: returnAddressName(user.fullName, user.email),
-        LINK: `${HOST}/auth/reset?token=${user.forgotPasswordToken}&email=${encodeURIComponent(user.email)}`,
-      },
-    });
-
+    await authAccount.resendForgotPasswordEmail({ email });
     return res.ok('FORGOT_PASSWORD_MAIL_SENT');
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
+  }
+};
+
+module.exports.resetPassword = async (req, res) => {
+  try {
+    const { email, token, newPassword, confirmPassword } = req.allParams();
+    await authAccount.resetPassword({ email, token, newPassword, confirmPassword });
+    return res.ok('PASSWORD_UPDATED');
+  } catch (e) {
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.verifyEmail = async (req, res) => {
   try {
-    let { email, token } = req.allParams();
-
-    const result = await User.verifyEmail(email, token);
-
-    if (!result.success) {
-      return res.error(result.message, result.success);
-    }
-
+    const { email, token } = req.allParams();
+    await authVerification.verifyEmail({ email, token });
     return res.ok('EMAIL_VERIFIED');
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.resendVerificationEmail = async (req, res) => {
   try {
     const { email } = req.allParams();
-
-    const user = await User.findOne({ email, isDeleted: false });
-
-    if (!user) {
-      return res.error('NO_USER_FOUND_FOR_THIS_EMAIL');
-    }
-
-    const limitExceeded =
-      user.lastverifyEmailSentOn &&
-      user.lastverifyEmailSentOn >=
-      moment()
-        .subtract(1, 'm')
-        .toDate()
-        .toISOString();
-
-    if (limitExceeded) {
-      return res.error('VERIFY_EMAIL_LIMIT_EXCEEDED');
-    }
-
-    const token = await user.generateVerifyEmailToken();
-
-    sendMailQueue.add({
-      emailModule: 'REGISTRATION',
-      to: user.email,
-      subject: 'Pageaters Account - Greetings from Pageaters!',
-      data: {
-        FULL_NAME: returnAddressName('', user.email),
-        LINK: `${HOST}/auth/verify?token=${token}&email=${encodeURIComponent(user.email)}`,
-      },
-    });
-
+    await authVerification.resendVerificationEmail({ email });
     return res.ok();
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.sendContactVerification = async (req, res) => {
   try {
-    let { contactNo } = req.allParams();
-    const verificationCode = generateRandomNumber(6);
-
-    const userId = get(req, 'user.userId', '');
-
-    const loggedInUser = await User.findOne({ _id: userId });
-
-    loggedInUser.lastMessageSentOn = new Date().toISOString();
-    loggedInUser.contactOtp = verificationCode;
-    loggedInUser.contactNo = contactNo;
-    loggedInUser.contactVerified = false;
-    loggedInUser.save();
-
-    let message = {
-      body: textMessage(loggedInUser.fullName, loggedInUser.email, verificationCode),
-      from: TWILIO.PHONE,
-      to: `+91${contactNo}`,
-    };
-
-    await twilioClient.messages.create(message);
-
+    const { contactNo } = req.allParams();
+    await authVerification.sendContactVerification({ userId: userIdOf(req), contactNo });
     return res.ok({ message: 'CONTACT_VERIFICATION_INITIATED', data: {} });
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.resendContactVerification = async (req, res) => {
   try {
-    const userId = get(req, 'user.userId', '');
-
-    const user = await User.findOne({ _id: userId });
-
-    if (!user.contactOtp) {
-      return res.error('CONTACT_VERIFICATION_NOT_EXIST');
-    }
-
-    const limitExceeded =
-      user.lastMessageSentOn &&
-      user.lastMessageSentOn >=
-      moment()
-        .subtract(1, 'm')
-        .toDate()
-        .toISOString();
-
-    if (limitExceeded) {
-      return res.error('RESEND_OTP_LIMIT_EXCEEDED');
-    }
-
-    user.lastMessageSentOn = new Date().toISOString();
-    user.save();
-
-    let message = {
-      body: textMessage(user.fullName, user.email, user.contactOtp),
-      from: TWILIO.PHONE,
-      to: `+91${user.contactNo}`,
-    };
-
-    await twilioClient.messages.create(message);
-
+    await authVerification.resendContactVerification({ userId: userIdOf(req) });
     return res.ok('CONTACT_VERIFICATION_INITIATED');
-
   } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
 module.exports.verifyContact = async (req, res) => {
   try {
     const { otp } = req.allParams();
-
-    const userId = get(req, 'user.userId', '');
-
-    const user = await User.findOne({ _id: userId });
-
-    if (!user.contactOtp) {
-      return res.error('CONTACT_VERIFICATION_NOT_EXIST');
-    }
-
-    if (user.contactOtp !== otp) {
-      return res.error('OTP_VERIFICATION_FAILED');
-    }
-
-    if (user.contactOtp === otp) {
-      user.contactVerified = true;
-      user.lastMessageSentOn = '';
-      user.contactOtp = '';
-      await user.save();
-      return res.ok('OTP_VERIFICATION_SUCCESS');
-    }
-
-    return res.error('OTP_VERIFICATION_FAILED');
+    await authVerification.verifyContact({ userId: userIdOf(req), otp });
+    return res.ok('OTP_VERIFICATION_SUCCESS');
   } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-module.exports.resetPassword = async (req, res) => {
-  try {
-    let { email, token, newPassword, confirmPassword } = req.allParams();
-    let tokenData;
-
-    try {
-      tokenData = decrypt(token);
-      tokenData = JSON.parse(tokenData);
-    } catch (e) {
-      return res.error('INVALID_RESET_PASSWORD_TOKEN', 'CANNOT_DECRYPT_TOKEN');
-    }
-
-    const user = await User.findOne({ email: tokenData.email, forgotPasswordToken: { $ne: '' }, isDeleted: false });
-
-    if (!user) {
-      return res.error('INVALID_RESET_PASSWORD_TOKEN', 'USER_NOT_FOUND');
-    }
-
-    if (user._id.toString() !== tokenData.userId) {
-      return res.error('INVALID_RESET_PASSWORD_TOKEN', 'USER_ID_NOT_VALID');
-    }
-
-    if (user.email !== email) {
-      return res.error('INVALID_RESET_PASSWORD_TOKEN', 'EMAIL_NOT_VALID');
-    }
-
-    if (tokenData.motive !== 'FORGOT_PASSWORD') {
-      return res.error('INVALID_RESET_PASSWORD_TOKEN', 'INCORRECT_MOTIVE');
-    }
-
-    if (newPassword !== confirmPassword) {
-      return res.error('PASSWORDS_DO_NOT_MATCH');
-    }
-
-    await user.setPassword(newPassword);
-
-    return res.ok('PASSWORD_UPDATED');
-  } catch (e) {
-    return res.internalServerError(e);
+    return handleControllerError(res, e);
   }
 };
 
@@ -525,11 +227,3 @@ module.exports.recoverAccount = async (req, res) => {
     return res.internalServerError(e);
   }
 };
-
-function textMessage(name, email, code) {
-  return `Hi ${name ? name : email.split('@')[0]}, Pageaters verification code: ${code}`;
-}
-
-function returnAddressName(name, email) {
-  return `${name ? name : email.split('@')[0]}`;
-}
