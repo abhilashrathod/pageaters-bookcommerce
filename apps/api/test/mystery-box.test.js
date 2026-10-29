@@ -2,8 +2,8 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, loadCatalog, startTestApp } = require('./helpers');
-const { asCreated, asJson, assertBody, assertGuarded, envelopes, loadStore, paged, stopApp, storeIds } = require('./helpers/fixtures/store');
+const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, loadCatalog, paged, startTestApp } = require('./helpers');
+const { loadStore, storeIds } = require('./helpers/fixtures/store');
 
 // /api/v1/mystery-boxes over HTTP, written against the legacy controller before the service refactor.
 
@@ -20,7 +20,7 @@ before(async () => {
 });
 
 after(async () => {
-  await stopApp(api);
+  await api.stop();
 });
 
 beforeEach(async () => {

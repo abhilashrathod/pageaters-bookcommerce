@@ -4,8 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const mongoose = require('mongoose');
 
-const { createUser, ids, loadCatalog, startTestApp } = require('./helpers');
-const { asCreated, asJson, assertBody, assertGuarded, envelopes, eventually, loadStore, paged, stopApp, storeIds } = require('./helpers/fixtures/store');
+const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, eventually, ids, loadCatalog, paged, startTestApp } = require('./helpers');
+const { loadStore, storeIds } = require('./helpers/fixtures/store');
 
 // /api/v1/store-books over HTTP: public list, detail and search, the unauthenticated CSV export, and admin CRUD
 // with its side effects on categories, authors, bundles and collections. Written against the legacy controller
@@ -53,7 +53,7 @@ before(async () => {
 });
 
 after(async () => {
-  await stopApp(api);
+  await api.stop();
 });
 
 beforeEach(async () => {

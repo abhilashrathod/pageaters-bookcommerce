@@ -2,40 +2,17 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, ids, loadCatalog, mockVendorCall, startTestApp } = require('./helpers');
-const {
-  createAddress,
-  createOrder,
-  eventually,
-  fillCart,
-  loadOrderCatalog,
-  orderIds,
-  razorpaySignature,
-} = require('./helpers/fixtures/orders');
-const t = require('../src/locales/en.json');
+const { assertBody, createUser, envelopes, eventually, ids, loadCatalog, mockVendorCall, startTestApp } = require('./helpers');
+const { createAddress, createOrder, fillCart, loadOrderCatalog, orderIds, razorpaySignature } = require('./helpers/fixtures/orders');
 
 // Checkout over HTTP: POST /orders/attempt, POST /orders/create (pricing, COD and online), PATCH /orders/credit,
 // GET /orders/retrieve and the Razorpay payment webhook POST /orders/confirm. Written against the legacy controller
 // first; envelopes are pinned as raw JSON (key order included).
 
-const ok = (status, data) => ({ statusCode: 200, status, message: t[status], data });
-const badRequest = (status) => ({ statusCode: 400, status, error: t[status], message: t[status], data: {} });
-const joiError = (status) => ({ statusCode: 400, status, message: t[status], error: t[status], data: {} });
-const serverError = {
-  statusCode: 500,
-  status: 'SOME_ERROR_OCCURRED',
-  message: t.SOME_ERROR_OCCURRED,
-  error: t.SOME_ERROR_OCCURRED,
-  data: {},
-};
-const forbidden = { statusCode: 403, status: 'FORBIDDEN', message: t.FORBIDDEN, data: {}, error: t.FORBIDDEN };
-const unauthorized = { statusCode: 401, status: 'UNAUTHORIZED', message: t.NO_AUTH_HEADER, data: {}, error: t.NO_AUTH_HEADER };
+const { badRequest, forbidden, ok, serverError } = envelopes;
+const joiError = envelopes.badRequestObject;
+const unauthorized = envelopes.unauthorized('NO_AUTH_HEADER');
 const WEBHOOK_OK = { status: 'ok' };
-
-const assertBody = (res, status, body) => {
-  assert.equal(res.status, status);
-  assert.equal(JSON.stringify(res.body), JSON.stringify(body));
-};
 
 const Order = () => mongoose.model('order');
 const Book = () => mongoose.model('storeBook');

@@ -2,29 +2,16 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, ids, loadCatalog, startTestApp } = require('./helpers');
+const { assertBody, createUser, envelopes, ids, loadCatalog, startTestApp } = require('./helpers');
 const { createAddress, createOrder, loadOrderCatalog, orderIds } = require('./helpers/fixtures/orders');
 const t = require('../src/locales/en.json');
 
 // Order reads over HTTP: the shopper's order and order list, the admin list, lookup and search, and the analytics
 // endpoints. Written against the legacy controller first; projections are pinned by their key lists.
 
-const badRequest = (status) => ({ statusCode: 400, status, error: t[status], message: t[status], data: {} });
-const serverError = {
-  statusCode: 500,
-  status: 'SOME_ERROR_OCCURRED',
-  message: t.SOME_ERROR_OCCURRED,
-  error: t.SOME_ERROR_OCCURRED,
-  data: {},
-};
-const forbidden = { statusCode: 403, status: 'FORBIDDEN', message: t.FORBIDDEN, data: {}, error: t.FORBIDDEN };
-const unauthorized = { statusCode: 401, status: 'UNAUTHORIZED', message: t.NO_AUTH_HEADER, data: {}, error: t.NO_AUTH_HEADER };
-const ok = (status, data) => ({ statusCode: 200, status, message: t[status], data });
+const { badRequest, forbidden, ok, serverError } = envelopes;
+const unauthorized = envelopes.unauthorized('NO_AUTH_HEADER');
 
-const assertBody = (res, status, body) => {
-  assert.equal(res.status, status);
-  assert.equal(JSON.stringify(res.body), JSON.stringify(body));
-};
 const assertEnvelope = (res, status) => {
   assert.equal(res.status, 200);
   assert.equal(JSON.stringify(Object.keys(res.body)), JSON.stringify(['statusCode', 'status', 'message', 'data']));

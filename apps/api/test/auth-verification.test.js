@@ -2,27 +2,19 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, mockVendorCall, startTestApp } = require('./helpers');
-const t = require('../src/locales/en.json');
+const { assertBody, captureMails, createUser, envelopes, mockVendorCall, startTestApp } = require('./helpers');
 
 // Verification over HTTP: email verification (verify + resend, mailed through SendGrid) and contact-number OTPs
 // (send / resend / verify, texted through Twilio). Both vendors are mocked to capture what would be sent.
 
-const ok = (status, data) => ({ statusCode: 200, status, message: t[status], data });
-const okString = (status) => ({ statusCode: 200, status, data: {}, message: t[status] });
-const badRequest = (status) => ({ statusCode: 400, status, error: t[status], message: t[status], data: {} });
-const joiError = (status) => ({ statusCode: 400, status, message: t[status], error: t[status], data: {} });
-const unauthorized = (key) => ({ statusCode: 401, status: 'UNAUTHORIZED', message: t[key], data: {}, error: t[key] });
-
-const assertBody = (res, status, body) => {
-  assert.equal(res.status, status);
-  assert.equal(JSON.stringify(res.body), JSON.stringify(body));
-};
+const { badRequest, ok, okString, unauthorized } = envelopes;
+const joiError = envelopes.badRequestObject;
 
 const User = () => mongoose.model('user');
 const MINUTE = 60 * 1000;
 
 let api;
+let mailbox;
 let mails;
 let texts;
 
@@ -31,18 +23,14 @@ before(async () => {
 });
 
 after(async () => {
-  // res.error() writes its request log (log_api) without awaiting it; let the last one land before the client closes.
-  await new Promise((resolve) => setTimeout(resolve, 100));
   await api.stop();
 });
 
 beforeEach(async () => {
   await api.reset();
-  mails = [];
+  mailbox = captureMails();
+  mails = mailbox.sent;
   texts = [];
-  mockVendorCall('sendgrid.send', (mail) => {
-    mails.push(mail);
-  });
   mockVendorCall('twilio.messages.create', (message) => {
     texts.push(message);
     return { sid: 'SM-test' };
@@ -50,13 +38,7 @@ beforeEach(async () => {
 });
 
 // Waits until the queue has sent and logged `count` mails, so no queue work runs into the next test.
-const waitForMails = async (count) => {
-  const logged = () => mongoose.model('log_email').countDocuments();
-  for (let i = 0; i < 100 && (mails.length < count || (await logged()) < count); i += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 20));
-  }
-  assert.equal(mails.length, count);
-};
+const waitForMails = async (count) => assert.equal((await mailbox.wait(count)).length, count);
 
 // The user model's own unawaited saves (send/resend OTP) land shortly after the response.
 const userWhen = async (id, check) => {

@@ -3,21 +3,13 @@ const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 
-const { createUser, PASSWORD, startTestApp } = require('./helpers');
-const t = require('../src/locales/en.json');
+const { assertBody, createUser, envelopes, PASSWORD, startTestApp } = require('./helpers');
 
 // Sessions over HTTP: register, login, logout (token revoke), GET and PUT /auth/me. Envelopes and cookies (names,
 // values, flags, expiry) are pinned exactly, so the controller → service refactor can't change them.
 
-const ok = (status, data) => ({ statusCode: 200, status, message: t[status], data });
-const badRequest = (status) => ({ statusCode: 400, status, error: t[status], message: t[status], data: {} });
-const joiError = (status) => ({ statusCode: 400, status, message: t[status], error: t[status], data: {} });
-const unauthorized = (key) => ({ statusCode: 401, status: 'UNAUTHORIZED', message: t[key], data: {}, error: t[key] });
-
-const assertBody = (res, status, body) => {
-  assert.equal(res.status, status);
-  assert.equal(JSON.stringify(res.body), JSON.stringify(body));
-};
+const { badRequest, ok, unauthorized } = envelopes;
+const joiError = envelopes.badRequestObject;
 
 const DAY = 24 * 60 * 60 * 1000;
 const User = () => mongoose.model('user');
@@ -37,8 +29,6 @@ before(async () => {
 });
 
 after(async () => {
-  // res.error() writes its request log (log_api) without awaiting it; let the last one land before the client closes.
-  await new Promise((resolve) => setTimeout(resolve, 100));
   await api.stop();
 });
 

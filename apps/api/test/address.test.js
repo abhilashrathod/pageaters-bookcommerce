@@ -2,8 +2,8 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, mockVendorCall, startTestApp } = require('./helpers');
-const { addressFields, asCreated, asJson, assertBody, assertGuarded, envelopes, stopApp } = require('./helpers/fixtures/store');
+const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, mockVendorCall, startTestApp } = require('./helpers');
+const { addressFields } = require('./helpers/fixtures/store');
 const t = require('../src/locales/en.json');
 
 // /api/v1/addresses over HTTP: a shopper's delivery addresses and the pincode serviceability check (Delhivery,
@@ -34,7 +34,7 @@ before(async () => {
 });
 
 after(async () => {
-  await stopApp(api);
+  await api.stop();
 });
 
 beforeEach(async () => {

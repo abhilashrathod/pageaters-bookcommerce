@@ -2,8 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, mockVendorCall, startTestApp } = require('./helpers');
-const { assertBody, assertGuarded, envelopes, eventually, stopApp } = require('./helpers/fixtures/store');
+const { assertBody, assertGuarded, createUser, envelopes, eventually, mockVendorCall, startTestApp } = require('./helpers');
 
 // POST /api/v1/file/upload (admin image upload to S3, mocked) over HTTP, written against the legacy controller
 // before the service refactor.
@@ -21,7 +20,7 @@ before(async () => {
 });
 
 after(async () => {
-  await stopApp(api);
+  await api.stop();
 });
 
 beforeEach(async () => {

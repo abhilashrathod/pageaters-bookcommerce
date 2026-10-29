@@ -2,41 +2,17 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, ids, loadCatalog, mockVendorCall, startTestApp } = require('./helpers');
-const {
-  captureMails,
-  createAddress,
-  createOrder,
-  eventually,
-  loadOrderCatalog,
-  orderIds,
-  razorpaySignature,
-} = require('./helpers/fixtures/orders');
-const t = require('../src/locales/en.json');
+const { assertBody, captureMails, createUser, envelopes, eventually, ids, loadCatalog, mockVendorCall, startTestApp } = require('./helpers');
+const { createAddress, createOrder, loadOrderCatalog, orderIds, razorpaySignature } = require('./helpers/fixtures/orders');
 const { ORDER_STAGES } = require('../src/constants/enums');
 
 // Order status transitions over HTTP: admin ship / deliver / cancel, shopper cancel / return / replace, return and
 // replacement shipments, the Razorpay refund webhook and the Delhivery shipment. Each transition is tried from every
 // stage, so the allowed and refused source stages are pinned. Written against the legacy controller first.
 
-const ok = (status, data) => ({ statusCode: 200, status, message: t[status], data });
-const okString = (status) => ({ statusCode: 200, status, data: {}, message: t[status] });
-const badRequest = (status) => ({ statusCode: 400, status, error: t[status], message: t[status], data: {} });
-const serverError = {
-  statusCode: 500,
-  status: 'SOME_ERROR_OCCURRED',
-  message: t.SOME_ERROR_OCCURRED,
-  error: t.SOME_ERROR_OCCURRED,
-  data: {},
-};
-const forbidden = { statusCode: 403, status: 'FORBIDDEN', message: t.FORBIDDEN, data: {}, error: t.FORBIDDEN };
+const { badRequest, forbidden, ok, okString, serverError } = envelopes;
 const WEBHOOK_OK = { status: 'ok' };
 const STAGES = Object.values(ORDER_STAGES);
-
-const assertBody = (res, status, body) => {
-  assert.equal(res.status, status);
-  assert.equal(JSON.stringify(res.body), JSON.stringify(body));
-};
 
 const Order = () => mongoose.model('order');
 const Book = () => mongoose.model('storeBook');

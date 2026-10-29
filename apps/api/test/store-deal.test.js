@@ -2,8 +2,8 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, ids, loadCatalog, startTestApp } = require('./helpers');
-const { asCreated, asJson, assertBody, assertGuarded, envelopes, eventually, loadStore, stopApp, storeIds } = require('./helpers/fixtures/store');
+const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, eventually, ids, loadCatalog, startTestApp } = require('./helpers');
+const { loadStore, storeIds } = require('./helpers/fixtures/store');
 
 // /api/v1/deals over HTTP: public list and detail (product sets with their books' prices and discounts); admin
 // CRUD. Written against the legacy controller (storeDeal.contoller.js) before the service refactor.
@@ -23,7 +23,7 @@ before(async () => {
 });
 
 after(async () => {
-  await stopApp(api);
+  await api.stop();
 });
 
 beforeEach(async () => {

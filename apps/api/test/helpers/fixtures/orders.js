@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const { fixtureId } = require('./ids');
 const { ids } = require('./catalog');
 const { TEST_ENV } = require('../env');
-const { mockVendorCall } = require('../stubs');
 
 // Order fixtures (4b): the bundle, mystery box and add-on the order tests sell next to the shared catalog's books,
 // fake delivery addresses, carts and orders in any lifecycle stage. Fake data only (AGENTS.md §7): "Test" names,
@@ -130,41 +129,4 @@ const createOrder = (user, overrides = {}) => {
 const razorpaySignature = (rawBody, secret = TEST_ENV.RAZORPAY_WEBHOOK_SECRET) =>
   crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
 
-/**
- * Captures the e-mails the app hands to SendGrid (the in-process mail queue renders and sends them after the
- * response). Call in each test before the request; `await mails.wait(n)` before the test ends, or the queued send
- * outlives api.reset() and fails on the cleared mock.
- * @returns {{ sent: object[], wait: (count: number) => Promise<object[]> }}
- */
-const captureMails = () => {
-  const sent = [];
-  mockVendorCall('sendgrid.send', (mail) => {
-    sent.push(mail);
-    return [{ statusCode: 202 }];
-  });
-  const wait = async (count) => {
-    const deadline = Date.now() + 5000;
-    while (sent.length < count && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 10));
-    // Let the queue write its log_email row before the next reset.
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    return sent;
-  };
-  return { sent, wait };
-};
-
-/**
- * Polls until `check()` returns a truthy value (fire-and-forget writes in the legacy code finish after the response).
- * @template T
- * @param {() => Promise<T>} check
- * @returns {Promise<T>}
- */
-const eventually = async (check, timeout = 2000) => {
-  const deadline = Date.now() + timeout;
-  for (;;) {
-    const value = await check();
-    if (value || Date.now() > deadline) return value;
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  }
-};
-
-module.exports = { captureMails, createAddress, createOrder, eventually, fillCart, loadOrderCatalog, orderIds, razorpaySignature };
+module.exports = { createAddress, createOrder, fillCart, loadOrderCatalog, orderIds, razorpaySignature };

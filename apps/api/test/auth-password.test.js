@@ -2,26 +2,20 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, mockVendorCall, PASSWORD, startTestApp } = require('./helpers');
-const t = require('../src/locales/en.json');
+const { assertBody, captureMails, createUser, envelopes, PASSWORD, startTestApp } = require('./helpers');
 
 // Passwords over HTTP: change (PUT /auth/password), forgot / resend / reset. Reset mails go out through the mail
 // queue to SendGrid, which is mocked here to capture them. Envelopes are pinned byte for byte.
 
+const { badRequest, okString } = envelopes;
+const joiError = envelopes.badRequestObject;
 // res.ok('KEY') (string form): `data` before `message`.
-const okString = (status) => ({ statusCode: 200, status, data: {}, message: t[status] });
-const badRequest = (status) => ({ statusCode: 400, status, error: t[status], message: t[status], data: {} });
-const joiError = (status) => ({ statusCode: 400, status, message: t[status], error: t[status], data: {} });
-
-const assertBody = (res, status, body) => {
-  assert.equal(res.status, status);
-  assert.equal(JSON.stringify(res.body), JSON.stringify(body));
-};
 
 const User = () => mongoose.model('user');
 const MINUTE = 60 * 1000;
 
 let api;
+let mailbox;
 let mails;
 
 before(async () => {
@@ -29,28 +23,18 @@ before(async () => {
 });
 
 after(async () => {
-  // res.error() writes its request log (log_api) without awaiting it; let the last one land before the client closes.
-  await new Promise((resolve) => setTimeout(resolve, 100));
   await api.stop();
 });
 
 beforeEach(async () => {
   await api.reset();
-  mails = [];
-  mockVendorCall('sendgrid.send', (mail) => {
-    mails.push(mail);
-  });
+  mailbox = captureMails();
+  mails = mailbox.sent;
 });
 
 // Waits until the queue has sent `count` mails and logged them (the log write comes after the send), so no queue work
 // is left running into the next test.
-const waitForMails = async (count) => {
-  const logged = () => mongoose.model('log_email').countDocuments();
-  for (let i = 0; i < 100 && (mails.length < count || (await logged()) < count); i += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 20));
-  }
-  assert.equal(mails.length, count);
-};
+const waitForMails = async (count) => assert.equal((await mailbox.wait(count)).length, count);
 
 const login = (email, password) => api.request('/auth/login', { method: 'POST', body: { email, password } });
 

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const { DB_NAME, DB_PORT } = require('./setup');
 const { clearDb, startMemoryDb, stopMemoryDb } = require('./db');
+const { settleDbOperations, trackDbOperations } = require('./settle');
 const { clearVendorMocks } = require('./stubs');
 
 // Runs the real Express app over HTTP against an in-memory MongoDB, with vendor SDKs stubbed and the network
@@ -12,7 +13,7 @@ const { clearVendorMocks } = require('./stubs');
 //   await loadCatalog(); await api.reindex();   // fixtures, then the lunr search indexes if the test searches
 //   const res = await api.request('/favorites', { cookie });
 //   await api.reset();                     // in beforeEach(): empty collections, clear vendor mocks
-//   await api.stop();                      // in after()
+//   await api.stop();                      // in after(): waits for unawaited writes, then closes
 //
 // Paths are relative to /api/v1. Console output from the legacy code (morgan is off under APP_ENV=test, but
 // res.error logs every request it rejects) is muted; set TEST_LOGS=1 to see it.
@@ -37,6 +38,7 @@ const startTestApp = async () => {
     console.info = () => {};
   }
 
+  trackDbOperations();
   const app = require('../../src/app');
   await require('../../src/helpers/connectToDb.helper')();
 
@@ -76,7 +78,10 @@ const startTestApp = async () => {
       clearVendorMocks();
       await clearDb(mongoose.connection);
     },
+    // Waits for the writes the legacy code doesn't await (the request log of res.error and friends, unawaited
+    // saves) so none of them runs into a closed connection, then stops the server and the database.
     stop: async () => {
+      await settleDbOperations();
       await new Promise((resolve) => server.close(resolve));
       await mongoose.disconnect();
       await stopMemoryDb();

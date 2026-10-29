@@ -2,8 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, ids, loadCatalog, startTestApp } = require('./helpers');
-const { asCreated, asJson, assertBody, assertGuarded, envelopes, paged, stopApp } = require('./helpers/fixtures/store');
+const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, ids, loadCatalog, paged, startTestApp } = require('./helpers');
 
 // /api/v1/authors over HTTP: public list, detail and search; admin CRUD. Written against the legacy controller
 // before the service refactor.
@@ -24,7 +23,7 @@ before(async () => {
 });
 
 after(async () => {
-  await stopApp(api);
+  await api.stop();
 });
 
 beforeEach(async () => {

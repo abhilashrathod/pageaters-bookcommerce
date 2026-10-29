@@ -2,8 +2,8 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, mockVendorCall, startTestApp } = require('./helpers');
-const { addressFields, asJson, assertBody, assertGuarded, envelopes, eventually, paged, stopApp } = require('./helpers/fixtures/store');
+const { asJson, assertBody, assertGuarded, createUser, envelopes, eventually, mockVendorCall, paged, startTestApp } = require('./helpers');
+const { addressFields } = require('./helpers/fixtures/store');
 const t = require('../src/locales/en.json');
 
 // /api/v1/subscribers (newsletter sign-up) and /api/v1/public/contactUs over HTTP, written against the legacy
@@ -20,7 +20,7 @@ before(async () => {
 });
 
 after(async () => {
-  await stopApp(api);
+  await api.stop();
 });
 
 beforeEach(async () => {

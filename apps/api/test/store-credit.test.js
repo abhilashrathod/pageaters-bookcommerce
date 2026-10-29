@@ -2,8 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, mockVendorCall, startTestApp } = require('./helpers');
-const { asJson, assertBody, assertGuarded, envelopes, eventually, paged, stopApp } = require('./helpers/fixtures/store');
+const { asJson, assertBody, assertGuarded, createUser, envelopes, eventually, mockVendorCall, paged, startTestApp } = require('./helpers');
 
 // /api/v1/store-credit over HTTP: issue credit (admin), balance and history (shopper). Pins the legacy envelopes
 // byte for byte, written against the legacy controller before the service refactor.
@@ -20,7 +19,7 @@ before(async () => {
 });
 
 after(async () => {
-  await stopApp(api);
+  await api.stop();
 });
 
 beforeEach(async () => {

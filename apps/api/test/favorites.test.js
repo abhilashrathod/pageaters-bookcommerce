@@ -2,24 +2,14 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, ids, loadCatalog, startTestApp } = require('./helpers');
-const t = require('../src/locales/en.json');
+const { assertBody, createUser, envelopes, ids, loadCatalog, startTestApp } = require('./helpers');
 
 // Integration tests for /api/v1/favorites over HTTP against an in-memory MongoDB. They pin the legacy envelopes
 // byte for byte (key order included, via the raw JSON), so the controller → service refactor can't change them.
 
-const ok = (status, data) => ({ statusCode: 200, status, message: t[status], data });
-// res.error('KEY') envelope: `error` before `message`.
-const badRequest = (status) => ({ statusCode: 400, status, error: t[status], message: t[status], data: {} });
+const { badRequest, ok, unauthorized } = envelopes;
 // Joi failures go through res.error(errorObject): `message` before `error`.
-const invalidId = { statusCode: 400, status: 'INVALID_ID', message: t.INVALID_ID, error: t.INVALID_ID, data: {} };
-const unauthorized = (key) => ({ statusCode: 401, status: 'UNAUTHORIZED', message: t[key], data: {}, error: t[key] });
-
-// deepEqual ignores key order; comparing JSON text doesn't.
-const assertBody = (res, status, body) => {
-  assert.equal(res.status, status);
-  assert.equal(JSON.stringify(res.body), JSON.stringify(body));
-};
+const invalidId = envelopes.badRequestObject('INVALID_ID');
 
 const BOOK_ONE_LISTED = {
   _id: String(ids.bookOne),

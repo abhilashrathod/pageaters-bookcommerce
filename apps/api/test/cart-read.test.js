@@ -2,22 +2,13 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, fixtureId, ids, loadCatalog, startTestApp } = require('./helpers');
+const { assertBody, createUser, envelopes, fixtureId, ids, loadCatalog, startTestApp } = require('./helpers');
 const { cartIds, cartSession, loadCartFixtures } = require('./helpers/fixtures/cart');
-const t = require('../src/locales/en.json');
 
 // Cart reads and totals over HTTP: GET /cart/retrieve (shopper), GET /cart and GET /cart/:id (admin). Envelopes are
 // pinned byte for byte (raw JSON, key order included), so the controller → service refactor can't change them.
 
-const ok = (status, data) => ({ statusCode: 200, status, message: t[status], data });
-const badRequest = (status) => ({ statusCode: 400, status, error: t[status], message: t[status], data: {} });
-const unauthorized = (key) => ({ statusCode: 401, status: 'UNAUTHORIZED', message: t[key], data: {}, error: t[key] });
-const forbidden = { statusCode: 403, status: 'FORBIDDEN', message: t.FORBIDDEN, data: {}, error: t.FORBIDDEN };
-
-const assertBody = (res, status, body) => {
-  assert.equal(res.status, status);
-  assert.equal(JSON.stringify(res.body), JSON.stringify(body));
-};
+const { badRequest, forbidden, ok, unauthorized } = envelopes;
 
 const line = fixtureId('cart');
 const ADDED = '2026-01-01T00:00:00.000Z';
@@ -142,8 +133,6 @@ before(async () => {
 });
 
 after(async () => {
-  // res.error() writes its request log (log_api) without awaiting it; let the last one land before the client closes.
-  await new Promise((resolve) => setTimeout(resolve, 100));
   await api.stop();
 });
 

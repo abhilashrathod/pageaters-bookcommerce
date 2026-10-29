@@ -2,7 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, fixtureId, ids, loadCatalog, startTestApp } = require('./helpers');
+const { assertBody, createUser, envelopes, fixtureId, ids, loadCatalog, startTestApp } = require('./helpers');
 const { cartIds, cartSession, loadCartFixtures } = require('./helpers/fixtures/cart');
 const t = require('../src/locales/en.json');
 
@@ -10,16 +10,9 @@ const t = require('../src/locales/en.json');
 // (raw JSON, key order included), so the controller → service refactor can't change them. Legacy bugs are pinned
 // too: they are fixed in their own PLAN.md step, not here.
 
-const ok = (status, data) => ({ statusCode: 200, status, message: t[status], data });
-const badRequest = (status) => ({ statusCode: 400, status, error: t[status], message: t[status], data: {} });
-const joiError = (status) => ({ statusCode: 400, status, message: t[status], error: t[status], data: {} });
-const unauthorized = (key) => ({ statusCode: 401, status: 'UNAUTHORIZED', message: t[key], data: {}, error: t[key] });
+const { badRequest, ok, unauthorized } = envelopes;
+const joiError = envelopes.badRequestObject;
 const mismatch = (message) => ({ statusCode: 400, status: 'PRODUCT_ITEM_MISMATCH', error: message, message, data: {} });
-
-const assertBody = (res, status, body) => {
-  assert.equal(res.status, status);
-  assert.equal(JSON.stringify(res.body), JSON.stringify(body));
-};
 
 const line = fixtureId('cart');
 
@@ -32,8 +25,6 @@ before(async () => {
 });
 
 after(async () => {
-  // res.error() writes its request log (log_api) without awaiting it; let the last one land before the client closes.
-  await new Promise((resolve) => setTimeout(resolve, 100));
   await api.stop();
 });
 

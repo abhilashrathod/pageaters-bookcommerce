@@ -2,8 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, ids, loadCatalog, mockVendorCall, startTestApp } = require('./helpers');
-const { asJson, assertBody, assertGuarded, envelopes, stopApp } = require('./helpers/fixtures/store');
+const { asJson, assertBody, assertGuarded, createUser, envelopes, ids, loadCatalog, mockVendorCall, startTestApp } = require('./helpers');
 
 // /api/v1/stock-alerts over HTTP: shoppers subscribe/unsubscribe to back-in-stock alerts, admins list them and
 // send the alerts. Written against the legacy controller before the service refactor.
@@ -22,7 +21,7 @@ before(async () => {
 });
 
 after(async () => {
-  await stopApp(api);
+  await api.stop();
 });
 
 beforeEach(async () => {
