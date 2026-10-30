@@ -4,7 +4,7 @@ import { categoryProductSchema } from '../../catalog/book.ts';
 import { categorySchema } from '../../catalog/category.ts';
 import { apiResponse } from '../../primitives.ts';
 
-// GET /categories/search/:q — lunr search, at most 10, not paginated: its `select` projection.
+// GET /categories/search/:q — word-prefix search, at most 10 (most books first), not paginated: its `select` projection.
 export const shopperCategorySearchResultSchema = categorySchema.pick({
   _id: true,
   categoryId: true,

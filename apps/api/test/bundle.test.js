@@ -98,8 +98,7 @@ describe('detail and search', () => {
     assertBody(await api.request(`/bundles/${storeIds.bundleDeleted}`, { cookie: admin.cookie }), 400, badRequest('BUNDLE_NOT_EXIST'));
   });
 
-  test('GET /bundles/search/:q finds live bundles by tag through the lunr index', async () => {
-    await api.reindex();
+  test('GET /bundles/search/:q finds live bundles by title or tag prefix', async () => {
     assertBody(await api.request('/bundles/search/pair'), 200, ok('BUNDLE_SEARCH_SUCCESS', asJson(await Bundle().find({ _id: storeIds.bundleOne }))));
     assertBody(await api.request('/bundles/search/solo'), 200, ok('BUNDLE_SEARCH_SUCCESS', asJson(await Bundle().find({ _id: storeIds.bundleTwo }))));
     assertBody(await api.request('/bundles/search/deleted'), 200, ok('BUNDLE_SEARCH_SUCCESS', []));

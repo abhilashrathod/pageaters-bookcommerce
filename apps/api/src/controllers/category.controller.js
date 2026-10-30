@@ -36,7 +36,7 @@ module.exports.update = async (req, res) => {
 module.exports.search = async (req, res) => {
   try {
     const { q } = req.allParams();
-    const data = await categoryService.searchCategories(req.app.categoryIndex, q);
+    const data = await categoryService.searchCategories(q);
     return res.ok({ message: 'CATEGORY_SEARCH_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);

@@ -128,7 +128,6 @@ describe('detail', () => {
 
 describe('GET /store-books/search', () => {
   test('finds live books by title prefix, with the author name', async () => {
-    await api.reindex();
     const expected = asJson(
       await Book()
         .find({ _id: ids.bookTwo })
@@ -142,7 +141,6 @@ describe('GET /store-books/search', () => {
   });
 
   test('an empty query answers no results', async () => {
-    await api.reindex();
     assertBody(await api.request('/store-books/search'), 200, ok('BOOK_SEARCH_SUCCESS', []));
   });
 });

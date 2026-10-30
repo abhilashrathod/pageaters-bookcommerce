@@ -11,7 +11,7 @@ const { clearVendorMocks } = require('./stubs');
 // (node --test gives each file its own process):
 //
 //   const api = await startTestApp();      // in before()
-//   await loadCatalog(); await api.reindex();   // fixtures, then the lunr search indexes if the test searches
+//   await loadCatalog();                   // shared fixtures (test/helpers/fixtures/catalog.js)
 //   const res = await api.request('/favorites', { cookie });
 //   await api.reset();                     // in beforeEach(): empty collections, clear vendor mocks and the outbox
 //   await api.stop();                      // in after(): waits for unawaited writes, then closes
@@ -25,7 +25,6 @@ const { clearVendorMocks } = require('./stubs');
  *   baseUrl: string,
  *   request: (path: string, options?: { method?: string, body?: unknown, cookie?: string }) =>
  *     Promise<{ status: number, body: any, headers: Headers }>,
- *   reindex: () => Promise<void>,
  *   reset: () => Promise<void>,
  *   stop: () => Promise<void>,
  * }>}
@@ -75,9 +74,6 @@ const startTestApp = async () => {
     app,
     baseUrl,
     request,
-    // Rebuilds the lunr search indexes from what is in the database now (they build once on connect, when the
-    // database is still empty). Await it after loading fixtures in tests that hit a search endpoint.
-    reindex: () => require('../../src/libs/indexing').runIndexing(app),
     reset: async () => {
       clearVendorMocks();
       clearOutbox();

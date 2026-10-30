@@ -78,7 +78,7 @@ central error handler (Phase 4 step 9) replaces it.
   `appError`, `encryption`, `utils`, `image-url` (public image URLs, also used by `libs/`), the Mongo connection and
   compat helpers. `environment` exposes the legacy production-only gate (`isProduction()`, read per call so
   tests can switch it).
-- **`libs/` (sitemap, Google feed, search index) must not import services**; code they share with services goes in a
+- **`libs/` (sitemap, Google feed) must not import services**; code they share with services goes in a
   helper.
 - **Dependency direction:** order → cart → catalog / notifications. No back edges and no lazy-`require` workarounds
   for cycles; move the shared code down a layer instead.
@@ -129,8 +129,8 @@ Integration tests run the real app over HTTP on an in-memory MongoDB with fake f
   Sign a payment webhook with `razorpaySignature(rawBody)` (`fixtures/orders.js`). Domain fixtures stay in
   `test/helpers/fixtures/<domain>.js`.
 - Accounts: `createUser({ role })` returns `{ user, cookie }`, made with the app's own hashing and token code.
-- Search: the lunr indexes build when the app connects (empty database); `await api.reindex()` after loading
-  fixtures in tests that search.
+- Search: the catalogue search queries MongoDB on each request (no index to rebuild), so fixtures and admin writes
+  are found at once.
 - A vendor SDK call that still happens fails (rejects with `VendorCallError`) unless mocked for that exact call with
   `mockVendorCall('blob.put', fn)` (cleared by `api.reset()`); the app itself never reaches one under the mocks.
 - Fixtures: shared catalog in `test/helpers/fixtures/catalog.js` (`loadCatalog()`, `ids`). Each domain adds its own

@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
-const { generateRandomNumber, getId } = require('../helpers/utils.helper');
+const { generateRandomNumber } = require('../helpers/utils.helper');
+const { SEARCH_MAX_TIME_MS, SEARCH_RESULT_LIMIT, wordPrefixFilter } = require('../helpers/search-pattern.helper');
 
 // Categories: public list, detail, search and the category's books; admin create/update/delete.
 
@@ -64,16 +65,20 @@ const updateCategory = async (id, { title, description, thumbnail, meta, popular
 };
 
 /**
- * Searches live categories by title and description (lunr prefix search on `q`), at most 10.
- * @param {object | undefined} categoryIndex The lunr index (`app.categoryIndex`).
- * @param {string} q
- * @returns {Promise<object[]>} [] before the index exists.
+ * Searches live categories by title and description (word-prefix search on `q`, helpers/search-pattern.helper.js):
+ * the first 10, most books first (then oldest first).
+ * @param {unknown} q
+ * @returns {Promise<object[]>} [] without `q`.
  */
-const searchCategories = async (categoryIndex, q) => {
-  if (!categoryIndex) return [];
+const searchCategories = async (q) => {
+  const filter = wordPrefixFilter(q, ['title', 'description']);
+  if (!filter) return [];
 
-  const lunrIdArray = categoryIndex.search(`${q}*`).map(({ ref }) => getId(ref));
-  return Category.find({ _id: mongoose.trusted({ $in: lunrIdArray }), isDeleted: false }).select('categoryId title numberOfBooks _id').limit(10);
+  return Category.find({ ...filter, isDeleted: false })
+    .select('categoryId title numberOfBooks _id')
+    .sort({ numberOfBooks: -1, _id: 1 })
+    .limit(SEARCH_RESULT_LIMIT)
+    .maxTimeMS(SEARCH_MAX_TIME_MS);
 };
 
 /**

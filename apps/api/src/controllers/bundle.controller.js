@@ -69,7 +69,7 @@ module.exports.update = async (req, res) => {
 module.exports.search = async (req, res) => {
   try {
     const { q } = req.allParams();
-    const data = await bundleService.searchBundles(req.app.bundlesIndex, q);
+    const data = await bundleService.searchBundles(q);
     return res.ok({ message: 'BUNDLE_SEARCH_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);

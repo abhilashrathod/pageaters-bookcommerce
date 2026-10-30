@@ -36,7 +36,7 @@ module.exports.update = async (req, res) => {
 module.exports.search = async (req, res) => {
   try {
     const { q } = req.allParams();
-    const data = await authorService.searchAuthors(req.app.authorIndex, q);
+    const data = await authorService.searchAuthors(q);
     return res.ok({ message: 'AUTHOR_SEARCH_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);

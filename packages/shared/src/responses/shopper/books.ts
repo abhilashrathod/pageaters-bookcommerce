@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { bookSchema } from '../../catalog/book.ts';
 import { apiResponse } from '../../primitives.ts';
 
-// GET /store-books/search?q= — lunr search, at most 10 books, not paginated: its `select` projection with
+// GET /store-books/search?q= — word-prefix search, at most 10 books (most popular first), not paginated: its `select` projection with
 // `author` populated (`name` only). An empty `q` answers [].
 export const shopperBookSearchResultSchema = bookSchema.pick({
   _id: true,

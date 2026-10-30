@@ -86,8 +86,7 @@ describe('detail and search', () => {
     assertBody(await api.request(`/categories/${new mongoose.Types.ObjectId()}`, { cookie: admin.cookie }), 400, badRequest('CATEGORY_NOT_EXIST'));
   });
 
-  test('GET /categories/search/:q finds live categories through the lunr index', async () => {
-    await api.reindex();
+  test('GET /categories/search/:q finds live categories by title or description prefix', async () => {
     const expected = asJson(await Category().find({ _id: ids.categoryFiction }).select('categoryId title numberOfBooks _id'));
     assertBody(await api.request('/categories/search/fict'), 200, ok('CATEGORY_SEARCH_SUCCESS', expected));
     assertBody(await api.request('/categories/search/gone'), 200, ok('CATEGORY_SEARCH_SUCCESS', []));

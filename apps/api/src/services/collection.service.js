@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
-const { generateRandomNumber, getId } = require('../helpers/utils.helper');
+const { generateRandomNumber } = require('../helpers/utils.helper');
+const { SEARCH_MAX_TIME_MS, SEARCH_RESULT_LIMIT, wordPrefixFilter } = require('../helpers/search-pattern.helper');
 const { addBackLinks } = require('./catalog-links.service');
 
 // Collections (curated lists of store books): public list, detail and search; admin create/update/delete. A
@@ -112,16 +113,16 @@ const updateCollection = async (id, fields) => {
 };
 
 /**
- * Searches live collections by title, tags and description (lunr prefix search on `q`).
- * @param {object | undefined} collectionIndex The lunr index (`app.collectionIndex`).
- * @param {string} q
- * @returns {Promise<object[]>} Full collection documents; [] before the index exists.
+ * Searches live collections by title, tags and description (word-prefix search on `q`,
+ * helpers/search-pattern.helper.js): the first 10, most popular first (then oldest first).
+ * @param {unknown} q
+ * @returns {Promise<object[]>} Full collection documents; [] without `q`.
  */
-const searchCollections = async (collectionIndex, q) => {
-  if (!collectionIndex) return [];
+const searchCollections = async (q) => {
+  const filter = wordPrefixFilter(q, ['title', 'tags', 'description']);
+  if (!filter) return [];
 
-  const lunrIdArray = collectionIndex.search(`${q}*`).map(({ ref }) => getId(ref));
-  return Collection.find({ _id: mongoose.trusted({ $in: lunrIdArray }), isDeleted: false });
+  return Collection.find({ ...filter, isDeleted: false }).sort({ popularity: -1, _id: 1 }).limit(SEARCH_RESULT_LIMIT).maxTimeMS(SEARCH_MAX_TIME_MS);
 };
 
 /**

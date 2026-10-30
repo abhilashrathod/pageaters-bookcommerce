@@ -12,7 +12,7 @@ const { TEST_ENV } = require('./helpers/env');
 const messages = require('../src/locales/en.json');
 
 // PLAN.md Phase 4 step 7a (perimeter): the CORS allowlist, rate limits, body limits and the upload parser, the
-// re-index guard, query-filter sanitising, the removed endpoints and the webhook's raw-body signature check.
+// query-filter sanitising, the removed endpoints and the webhook's raw-body signature check.
 
 const { badRequest, forbidden } = envelopes;
 
@@ -220,26 +220,15 @@ describe('POST /file/upload (single file, size limit, content check)', () => {
   });
 });
 
-// Was: public, and every call rebuilt every search index.
-describe('GET /re-index', () => {
-  test('needs an ADMIN session', async () => {
-    const shopper = await createUser();
-    const admin = await createUser({ role: 'ADMIN' });
-    assert.equal((await send(`${root}/re-index`)).status, 401);
-    assertBody(await send(`${root}/re-index`, { headers: { cookie: shopper.cookie } }), 403, forbidden);
-    const res = await send(`${root}/re-index`, { headers: { cookie: admin.cookie } });
-    assert.equal(res.status, 200);
-    assert.equal(res.body.status, 'REINDEX_COMPLETED');
-  });
-});
-
 describe('removed endpoints', () => {
   // POST /public/contactUs mailed request-chosen template data to the shop, unauthenticated. GET
-  // /store-books/bulk/export was unauthenticated, wrote to local disk and could crash the process.
-  test('POST /public/contactUs and GET /store-books/bulk/export answer 404', async () => {
+  // /store-books/bulk/export was unauthenticated, wrote to local disk and could crash the process. GET /re-index rebuilt
+  // the in-process search indexes; search now queries the database.
+  test('POST /public/contactUs, GET /store-books/bulk/export and GET /re-index answer 404', async () => {
     const admin = await createUser({ role: 'ADMIN' });
     assert.equal((await api.request('/public/contactUs', { method: 'POST', body: { PRODUCTS: [], BUNDLES: [] } })).status, 404);
     assert.equal((await api.request('/store-books/bulk/export', { cookie: admin.cookie })).status, 404);
+    assert.equal((await send(`${root}/re-index`, { headers: { cookie: admin.cookie } })).status, 404);
   });
 
   // PUT /users/:id let an admin rewrite another account; no client called it (the api-client never exposed it).

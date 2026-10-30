@@ -4,7 +4,8 @@ const { toArray } = require('lodash');
 const { models } = require('../constants');
 const enums = require('../constants/enums');
 const { AppError } = require('../helpers/appError.helper');
-const { generateRandomNumber, getId, arrayDifference } = require('../helpers/utils.helper');
+const { generateRandomNumber, arrayDifference } = require('../helpers/utils.helper');
+const { SEARCH_MAX_TIME_MS, SEARCH_RESULT_LIMIT, wordPrefixFilter } = require('../helpers/search-pattern.helper');
 const { addBackLinks } = require('./catalog-links.service');
 
 // Store books (the products): public list, detail and search; admin create/update/delete with their side effects
@@ -153,18 +154,20 @@ const updateBook = async (id, fields) => {
 };
 
 /**
- * Searches live store books by title (lunr prefix search on `q`), at most 10, with the author's name.
- * @param {object | undefined} booksIndex The lunr index (`app.booksIndex`).
- * @param {string | undefined} q
- * @returns {Promise<object[]>} [] before the index exists or without `q`.
+ * Searches live store books by title (word-prefix search on `q`, helpers/search-pattern.helper.js): the first 10,
+ * most popular first (then oldest first), with the author's name.
+ * @param {unknown} q
+ * @returns {Promise<object[]>} [] without `q`.
  */
-const searchBooks = async (booksIndex, q) => {
-  if (!booksIndex || !q) return [];
+const searchBooks = async (q) => {
+  const filter = wordPrefixFilter(q, ['title']);
+  if (!filter) return [];
 
-  const lunrIdArray = booksIndex.search(`${q}*`).map(({ ref }) => getId(ref));
-  return Book.find({ _id: mongoose.trusted({ $in: lunrIdArray }), isDeleted: false })
+  return Book.find({ ...filter, isDeleted: false })
     .select('title ISBN bookId author poster weight price popularity inventory editorsPick newRelease preOrder currentDiscount bestSeller')
-    .limit(10)
+    .sort({ popularity: -1, _id: 1 })
+    .limit(SEARCH_RESULT_LIMIT)
+    .maxTimeMS(SEARCH_MAX_TIME_MS)
     .populate({ path: 'author', select: 'name' });
 };
 

@@ -40,7 +40,7 @@ module.exports.update = async (req, res) => {
 module.exports.search = async (req, res) => {
   try {
     const { q } = req.allParams();
-    const data = await collectionService.searchCollections(req.app.collectionIndex, q);
+    const data = await collectionService.searchCollections(q);
     return res.ok({ message: 'COLLECTION_SEARCH_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);

@@ -8,8 +8,8 @@ const { TEST_ENV } = require('./helpers/env');
 
 // Boot smoke tests: load the whole Express app (every route, model and SDK client) in this process with placeholder
 // config and an unreachable database, then hit it over HTTP. No real database and no network: port 1 on 127.0.0.1
-// refuses at once. Loading the app queues no queries (search indexing waits for a connection), so nothing is left
-// pending when the tests end.
+// refuses at once. Loading the app queues no queries, so nothing is left pending when the
+// tests end.
 
 const API_ROOT = path.join(__dirname, '..');
 const DB_HOST = '127.0.0.1:1';

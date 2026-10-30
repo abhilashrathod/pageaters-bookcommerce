@@ -96,15 +96,13 @@ describe('GET /authors/unique/:authorId and /authors/:id', () => {
 });
 
 describe('GET /authors/search', () => {
-  test('finds live authors by name prefix through the lunr index', async () => {
-    await api.reindex();
+  test('finds live authors by name prefix', async () => {
     const res = await api.request('/authors/search?q=author');
     assertBody(res, 200, ok('AUTHOR_SEARCH_SUCCESS', asJson(await Author().find({}))));
     assertBody(await api.request('/authors/search?q=nobody'), 200, ok('AUTHOR_SEARCH_SUCCESS', []));
   });
 
-  test('legacy: an author deleted after indexing is filtered out by the query', async () => {
-    await api.reindex();
+  test('a soft-deleted author is left out at once', async () => {
     await Author().updateOne({ _id: ids.authorB }, { isDeleted: true });
     const res = await api.request('/authors/search?q=author');
     assert.deepEqual(res.body.data.map((a) => a._id), [String(ids.authorA)]);

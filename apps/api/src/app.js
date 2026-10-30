@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const compression = require('compression');
 const cors = require('cors');
 const path = require('path');
@@ -9,7 +8,6 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 
 const { PROJECT_ROOT, DEFAULT_LANGUAGE, AVAILABLE_LOCALES, PROJECT_NAME, ALLOWED_ORIGINS, ENVIRONMENT, ON_VERCEL } = require('./appConfig');
-const { USER_ROLES } = require('./constants/enums');
 const requireDb = require('./middlewares/requireDb.middleware');
 const { limiters } = require('./middlewares/rateLimit.middleware');
 
@@ -19,9 +17,6 @@ const { limiters } = require('./middlewares/rateLimit.middleware');
 const app = express();
 
 require('./models');
-
-// Needs the models registered.
-const permissionValidator = require('./middlewares/permissionVerification.middleware');
 
 if (ENVIRONMENT !== 'test') {
   app.use(morgan(':method :url :status - :response-time ms'));
@@ -79,13 +74,6 @@ const keepRawBody = (req, res, buffer) => {
 app.use(express.json({ limit: '100kb', verify: keepRawBody }));
 app.use(cookieParser());
 
-// Search indexes (lunr): built once per process when the first MongoDB connection opens, never at import, so
-// loading the app queues no queries. src/server.js connects at boot; a serverless instance connects on its first
-// database-backed request. GET /re-index rebuilds them.
-const { runIndexing } = require('./libs/indexing');
-if (mongoose.connection.readyState === 1) runIndexing(app);
-else mongoose.connection.once('connected', () => runIndexing(app));
-
 // Disable x-powered-by header
 app.disable('x-powered-by');
 app.set('env', ENVIRONMENT);
@@ -119,17 +107,6 @@ app.use('/sitemap.xml', requireDb, siteMap);
 // google products
 const writeGoogleData = require('./libs/googledata');
 app.use('/googleproducts.xml', requireDb, writeGoogleData);
-
-// Rebuilds the search indexes: ADMIN only (it was public, and every call rebuilds every index).
-app.get('/re-index', requireDb, permissionValidator(USER_ROLES.ADMIN), (req, res) => {
-  runIndexing(app);
-
-  return res.send({
-    name: PROJECT_NAME,
-    status: 'REINDEX_COMPLETED',
-    message: 'successs',
-  });
-});
 
 // It works route
 app.get('/', (req, res) => {

@@ -184,7 +184,7 @@ const getOrderById = async (id) => {
  * Admin: orders in any stage whose public id contains `q` as literal text (helpers/search-pattern.helper.js:
  * escaped, at most 100 characters), case-insensitively, each with `payment` as the summary.
  * @param {unknown} q
- * @returns {Promise<object[]>} [] for an empty `q`.
+ * @returns {Promise<object[]>} [] for an empty or non-string `q`.
  */
 const searchOrders = async (q) => {
   const pattern = literalPattern(q);

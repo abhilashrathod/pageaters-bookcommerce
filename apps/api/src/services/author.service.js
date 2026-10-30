@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
-const { generateRandomNumber, getId } = require('../helpers/utils.helper');
+const { generateRandomNumber } = require('../helpers/utils.helper');
+const { SEARCH_MAX_TIME_MS, SEARCH_RESULT_LIMIT, wordPrefixFilter } = require('../helpers/search-pattern.helper');
 
 // Authors: public list, detail and search; admin create/update/delete. An author's `books` list and each book's
 // `author` field are kept in step by create, update and delete.
@@ -66,16 +67,16 @@ const updateAuthor = async (id, { name, intro, avatar, books }) => {
 };
 
 /**
- * Searches live authors by name and intro (lunr prefix search on `q`).
- * @param {object | undefined} authorIndex The lunr index (`app.authorIndex`); undefined until the first connection.
- * @param {string} q
- * @returns {Promise<object[]>} Full author documents; [] before the index exists.
+ * Searches live authors by name and intro (word-prefix search on `q`, helpers/search-pattern.helper.js): the first
+ * 10, most popular first (then oldest first).
+ * @param {unknown} q
+ * @returns {Promise<object[]>} Full author documents; [] without `q`.
  */
-const searchAuthors = async (authorIndex, q) => {
-  if (!authorIndex) return [];
+const searchAuthors = async (q) => {
+  const filter = wordPrefixFilter(q, ['name', 'intro']);
+  if (!filter) return [];
 
-  const lunrIdArray = authorIndex.search(`${q}*`).map(({ ref }) => getId(ref));
-  return Author.find({ _id: mongoose.trusted({ $in: lunrIdArray }), isDeleted: false });
+  return Author.find({ ...filter, isDeleted: false }).sort({ popularity: -1, _id: 1 }).limit(SEARCH_RESULT_LIMIT).maxTimeMS(SEARCH_MAX_TIME_MS);
 };
 
 /**

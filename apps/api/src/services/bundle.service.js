@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
-const { generateRandomNumber, getId } = require('../helpers/utils.helper');
+const { generateRandomNumber } = require('../helpers/utils.helper');
+const { SEARCH_MAX_TIME_MS, SEARCH_RESULT_LIMIT, wordPrefixFilter } = require('../helpers/search-pattern.helper');
 const { addBackLinks } = require('./catalog-links.service');
 
 // Bundles (several store books sold together): public list, detail and search; admin create/update/delete. A
@@ -108,16 +109,16 @@ const updateBundle = async (id, fields) => {
 };
 
 /**
- * Searches live bundles by title and tags (lunr prefix search on `q`).
- * @param {object | undefined} bundlesIndex The lunr index (`app.bundlesIndex`).
- * @param {string} q
- * @returns {Promise<object[]>} Full bundle documents; [] before the index exists.
+ * Searches live bundles by title and tags (word-prefix search on `q`, helpers/search-pattern.helper.js): the first
+ * 10, most popular first (then oldest first).
+ * @param {unknown} q
+ * @returns {Promise<object[]>} Full bundle documents; [] without `q`.
  */
-const searchBundles = async (bundlesIndex, q) => {
-  if (!bundlesIndex) return [];
+const searchBundles = async (q) => {
+  const filter = wordPrefixFilter(q, ['title', 'tags']);
+  if (!filter) return [];
 
-  const lunrIdArray = bundlesIndex.search(`${q}*`).map(({ ref }) => getId(ref));
-  return Bundles.find({ _id: mongoose.trusted({ $in: lunrIdArray }), isDeleted: false });
+  return Bundles.find({ ...filter, isDeleted: false }).sort({ popularity: -1, _id: 1 }).limit(SEARCH_RESULT_LIMIT).maxTimeMS(SEARCH_MAX_TIME_MS);
 };
 
 /**

@@ -132,7 +132,8 @@ describe('admin search takes q as literal text', () => {
     assertBody(res, 200, ok('USER_LIST_SUCCESS', []));
     const { literalPattern } = require('../src/helpers/search-pattern.helper');
     assert.equal(literalPattern('x'.repeat(500)).length, 100);
-    assert.equal(literalPattern({ $ne: '' }), '\\[object Object\\]');
+    assert.equal(literalPattern({ $ne: '' }), '');
+    assert.equal(literalPattern(['a', 'b']), '');
   });
 
   test('orders: regex syntax matches nothing; the literal id fragment still matches', async () => {

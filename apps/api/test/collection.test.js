@@ -91,7 +91,6 @@ describe('detail and search', () => {
   });
 
   test('GET /collections/search/:q finds live collections by title, tag or description', async () => {
-    await api.reindex();
     assertBody(await api.request('/collections/search/shelf'), 200, ok('COLLECTION_SEARCH_SUCCESS', asJson(await Collection().find({ _id: storeIds.collectionOne }))));
     const res = await api.request('/collections/search/coll');
     assert.deepEqual(res.body.data.map((c) => c._id).sort(), [String(storeIds.collectionOne), String(storeIds.collectionTwo)]);

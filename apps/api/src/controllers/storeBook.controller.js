@@ -79,7 +79,7 @@ module.exports.update = async (req, res) => {
 module.exports.search = async (req, res) => {
   try {
     const { q } = req.allParams();
-    const data = await storeBookService.searchBooks(req.app.booksIndex, q);
+    const data = await storeBookService.searchBooks(q);
     return res.ok({ message: 'BOOK_SEARCH_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);
