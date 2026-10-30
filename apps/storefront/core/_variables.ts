@@ -15,16 +15,6 @@ export const SECONDARY_COLOR = '#FFFFFF';
 
 export const LIGHT_COLOR = '#868686';
 
-
-
-/**
- *
- * SEO
- * ***********/
-
-export const HORIZONTAL_LOGO = `https://res.cloudinary.com/pageaters/image/upload/v1650978952/horizontal-logo_i7ding.png`;
-export const ICON_LOGO = `https://res.cloudinary.com/pageaters/image/upload/v1624876170/design-4_qps5su.png`;
-
 /**
  *
  * SEO

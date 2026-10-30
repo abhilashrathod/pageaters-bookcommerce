@@ -72,11 +72,6 @@ function MyApp({Component, pageProps}: AppProps) {
           <base href="/"/>
           <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
-          <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/pageaters/image/upload/v1651043823/Favicons/favicon_cccii1.ico"/>
-          <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/pageaters/image/upload/v1651043822/Favicons/apple-touch-icon_hsgmcm.png"/>
-          <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/pageaters/image/upload/v1651043822/Favicons/favicon-32x32_qaib2d.png"/>
-          <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/pageaters/image/upload/v1651043822/Favicons/favicon-16x16_gdsvtl.png"/>
-
           <meta name="og:type" content="website"/>
           <meta name="og:site_name" content="pageaters.com"/>
 

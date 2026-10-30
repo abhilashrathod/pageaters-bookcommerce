@@ -38,8 +38,7 @@ const FeaturedCategorySection = styled.section`
 const META = {
   title: 'Pageaters: An Online Bookstore | Eat New Story Everyday',
   description: 'Pageaters: Online Bookstore. Our original book collection contains only the highest quality books, allowing you to have an exceptional reading experience.',
-  image: 'https://res.cloudinary.com/pageaters/image/upload/v1673173795/web-banner_ogzs01.png',
-  url: 'https://pageaters.com/',
+  url: `${process.env.NEXT_PUBLIC_SITE_URL}/`,
 };
 
 const Home: NextPage = (props: any) => {
@@ -94,12 +93,10 @@ const Home: NextPage = (props: any) => {
           <meta name="description" content={META.description}/>
           <meta property="og:title" content={META.title}/>
           <meta property="og:description" content={META.description}/>
-          <meta property="og:image" content={META.image}/>
           <meta property="og:url" content={META.url}/>
           <meta property="twitter:url" content={META.url}/>
           <meta property="twitter:title" content={META.title}/>
           <meta property="twitter:description" content={META.description}/>
-          <meta property="twitter:image" content={META.image}/>
         </Head>
         <PageWrapper>
           <section className={'mb-25'}>

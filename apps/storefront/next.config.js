@@ -5,7 +5,7 @@ const nextConfig = {
     styledComponents: true
   },
   images: {
-    domains: ['storebooks.s3.ap-south-1.amazonaws.com', 'd2jesamohckae0.cloudfront.net', 'via.placeholder.com'],
+    domains: ['storebooks.s3.ap-south-1.amazonaws.com', 'd2jesamohckae0.cloudfront.net'],
   },
 };
 

@@ -118,8 +118,7 @@ const About: NextPage = () => {
                     __html: JSON.stringify({
                       "@context": "https://schema.org",
                       "@type": "Organization",
-                      url: process.env.NEXT_PUBLIC_SITE_URL,
-                      logo: "https://res.cloudinary.com/pageaters/image/upload/v1624876170/design-4_qps5su.png"
+                      url: process.env.NEXT_PUBLIC_SITE_URL
                     }),
                   }}
           />

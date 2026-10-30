@@ -11,8 +11,7 @@ import {Icon} from '@iconify/react';
 import {get} from 'lodash';
 
 import {getProductImage} from "../../core/_imageRendererHelper";
-// import logo from '../../public/images/brand-logo.svg';
-import {AUTH_COOKIE, HORIZONTAL_LOGO, MD, SECONDARY_COLOR, SM} from "../../core/_variables";
+import {AUTH_COOKIE, MD, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 
 import {IBook} from "../../schemas/book";
 import {searchStore} from "../../core/_analytics";
@@ -49,9 +48,14 @@ const LogoSpace = styled.div`
   }
 `;
 
-const MainHeaderLogo = styled.img`
-  width: 150px;
-  height: auto;
+const MainHeaderLogo = styled.span`
+  display: inline-block;
+  color: ${PRIMARY_COLOR};
+  text-transform: none;
+  white-space: nowrap;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
 `;
 
 const Nav = styled.nav`
@@ -234,7 +238,7 @@ const AppHeader: React.FC<Props> = () => {
             <HeaderContainer>
               <LogoSpace>
                 <Link href={'/'}>
-                  <a><MainHeaderLogo src={HORIZONTAL_LOGO} alt="pageaters-logo" width={150}/></a>
+                  <a><MainHeaderLogo>Pageaters</MainHeaderLogo></a>
                 </Link>
               </LogoSpace>
               <Nav>
@@ -251,7 +255,7 @@ const AppHeader: React.FC<Props> = () => {
                         opened={showSearch}
                         position="top"
                         padding={'sm'}
-                        title={<MainHeaderLogo src={HORIZONTAL_LOGO} alt="pageaters-logo" width={150}/>}
+                        title={<MainHeaderLogo>Pageaters</MainHeaderLogo>}
                         size={'full'}
                         transition="slide-down"
                         transitionDuration={250}

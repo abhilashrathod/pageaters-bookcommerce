@@ -6,9 +6,7 @@ import {useRouter} from "next/router";
 
 import AppButton, {ButtonSizes, ButtonVariants} from "../form-controls/Button";
 
-import logo from '../../public/images/horizontal-logo.png';
-
-import {FOOTER_NAVIGATION, HORIZONTAL_LOGO, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
+import {FOOTER_NAVIGATION, PRIMARY_COLOR, SECONDARY_COLOR, SM} from "../../core/_variables";
 
 
 interface Props {
@@ -34,9 +32,12 @@ const MainFooterAddress = styled.div`
 `;
 const MainFooterLogoSpace = styled.div``;
 
-const MainFooterLogo = styled.img`
-  width: 200px;
-  height: auto;
+const MainFooterLogo = styled.span`
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1;
 `;
 
 const ContactTitle = styled.h6`
@@ -114,7 +115,7 @@ const AppFooter: React.FC<Props> = () => {
               <MainFooter>
                 <MainFooterAddress>
                   <MainFooterLogoSpace>
-                    <MainFooterLogo src={HORIZONTAL_LOGO} alt={'pageaters-main-logo'} width={200} />
+                    <MainFooterLogo>Pageaters</MainFooterLogo>
                   </MainFooterLogoSpace>
                 </MainFooterAddress>
                 <MainFooterAddress>
