@@ -1,5 +1,4 @@
 import {
-  deleteAccountPayloadSchema,
   forgotPasswordPayloadSchema,
   loginPayloadSchema,
   registerPayloadSchema,
@@ -60,12 +59,6 @@ export const auth = {
   me: defineEndpoint({ method: 'GET', path: '/auth/me', response: profile }),
   // PUT /auth/me — the legacy API only saves `fullName` (a sent `contactNo` is validated, then ignored).
   updateProfile: defineEndpoint({ method: 'PUT', path: '/auth/me', body: updateProfilePayloadSchema, response: profile }),
-  // DELETE /auth/me — the password goes in the JSON body, never the URL.
-  deleteAccount: defineEndpoint({ method: 'DELETE', path: '/auth/me', body: deleteAccountPayloadSchema, response: empty }),
   // PUT /auth/password
   updatePassword: defineEndpoint({ method: 'PUT', path: '/auth/password', body: updatePasswordPayloadSchema, response: empty }),
-  // GET /auth/recoverAccount — always fails in the legacy API (`ACCOUNT_ALREADY_ACTIVE`: it reads the flag from the
-  // JWT payload, not the user). Its success body would carry a session token, so the type is deliberately empty
-  // until Phase 4 fixes the endpoint.
-  recoverAccount: defineEndpoint({ method: 'GET', path: '/auth/recoverAccount', response: empty }),
 };

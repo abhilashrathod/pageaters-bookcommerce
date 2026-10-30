@@ -100,12 +100,11 @@ void describe('shopper endpoints: responses', () => {
     assert.deepEqual(profile, { ...f.user, role: 'USER' });
   });
 
-  void it('drops the courier raw record and the recovery token', async () => {
+  void it('drops the courier raw record', async () => {
     assert.deepEqual(
       await validatingClient({ ...pincode(), raw: { postal_code: {} } }).addresses.checkPincode({ pincode: '560001' }),
       pincode(),
     );
-    assert.deepEqual(await validatingClient({ user: {}, token: 'session' }).auth.recoverAccount(), {});
   });
 
   void it('rejects the raw Razorpay entity on an order', async () => {

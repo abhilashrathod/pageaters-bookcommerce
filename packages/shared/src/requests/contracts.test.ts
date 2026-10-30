@@ -7,7 +7,6 @@ import {
   addressCreatePayloadSchema,
   addressPincodePayloadSchema,
   addressUpdatePayloadSchema,
-  deleteAccountPayloadSchema,
   loginPayloadSchema,
   orderCancelPayloadSchema,
   orderCreatePayloadSchema,
@@ -56,8 +55,6 @@ void describe('Phase 4 request contracts', () => {
     const padded = `${' '.repeat(127)}x`;
     assert.equal((accepts(loginPayloadSchema, { email: EMAIL, password: padded }) as { password: string }).password, padded);
     rejects(loginPayloadSchema, { email: EMAIL, password: `${' '.repeat(128)}x` }, 'INVALID_PASSWORD');
-    rejects(deleteAccountPayloadSchema, { password: 'p'.repeat(129) }, 'INVALID_PASSWORD');
-    accepts(deleteAccountPayloadSchema, { password: 'p'.repeat(128) });
   });
 
   void it('caps tokens at 1024 characters', () => {

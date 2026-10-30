@@ -25,8 +25,6 @@ function typeErrors(client: ApiClient) {
   void client.cart.add({ product: id(3), quantity: 'lots' });
   // @ts-expect-error the product is required to add to the cart
   void client.cart.add({ quantity: 1 });
-  // @ts-expect-error deleting the account needs the password
-  void client.auth.deleteAccount({});
   // @ts-expect-error the search term is a path param
   void client.categories.search({});
   // @ts-expect-error a return request is 'return' or 'replace', never 'cancel'
@@ -157,7 +155,6 @@ const rows: Row[] = [
   ['auth.logout', (c) => c.auth.logout(), 'POST', '/auth/logout', {}],
   ['auth.me', (c) => c.auth.me(), 'GET', '/auth/me'],
   ['auth.updateProfile', (c) => c.auth.updateProfile({ fullName: 'Demo Reader' }), 'PUT', '/auth/me', { fullName: 'Demo Reader' }],
-  ['auth.deleteAccount', (c) => c.auth.deleteAccount({ password: 'secret-1' }), 'DELETE', '/auth/me', { password: 'secret-1' }],
   [
     'auth.updatePassword',
     (c) => c.auth.updatePassword({ password: 'secret-1', newPassword: 'secret-2', confirmPassword: 'secret-2' }),
@@ -165,7 +162,6 @@ const rows: Row[] = [
     '/auth/password',
     { password: 'secret-1', newPassword: 'secret-2', confirmPassword: 'secret-2' },
   ],
-  ['auth.recoverAccount', (c) => c.auth.recoverAccount(), 'GET', '/auth/recoverAccount'],
 
   ['cart.detail', (c) => c.cart.detail(), 'GET', '/cart/retrieve'],
   ['cart.add', (c) => c.cart.add({ product: book, quantity: 2 }), 'POST', '/cart/add', { product: book, quantity: 2 }],

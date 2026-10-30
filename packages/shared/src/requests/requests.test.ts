@@ -7,7 +7,6 @@ import {
   addressPincodePayloadSchema,
   cartItemAddPayloadSchema,
   checkoutMethodSchema,
-  deleteAccountPayloadSchema,
   favoritesRequestPayloadSchema,
   forgotPasswordPayloadSchema,
   loginPayloadSchema,
@@ -275,17 +274,6 @@ const tables: Table[] = [
       { input: { token: ' ' }, output: { token: ' ' } },
       { input: { token: null }, rejects: true },
       { input: { token: 1 }, rejects: true },
-    ],
-  },
-  {
-    file: 'auth',
-    joiExport: 'deleteAccount',
-    schema: deleteAccountPayloadSchema,
-    cases: [
-      { input: { password: 'secret' }, output: { password: 'secret' } },
-      { input: { password: '   ' }, output: { password: '   ' } },
-      { input: {}, code: 'INVALID_PASSWORD' },
-      { input: { password: '' }, code: 'INVALID_PASSWORD' },
     ],
   },
   {

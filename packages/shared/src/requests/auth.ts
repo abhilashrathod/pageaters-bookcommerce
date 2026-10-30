@@ -3,7 +3,6 @@ import {
   emailFieldSchema,
   fullNameFieldSchema,
   otpFieldSchema,
-  PASSWORD_RAW_MAX,
   passwordFieldSchema,
   phoneFieldSchema,
   TOKEN_MAX,
@@ -86,9 +85,3 @@ export const revokeValidationPayloadSchema = z.strictObject({
   token: z.preprocess((value) => (value === '' ? undefined : value), z.string({ error: 'INVALID_TOKEN' }).max(TOKEN_MAX).optional()),
 });
 export type RevokeValidationPayload = z.infer<typeof revokeValidationPayloadSchema>;
-
-// Account deletion: required, not trimmed, so '   ' passes (as in Joi); capped like every password.
-export const deleteAccountPayloadSchema = z.strictObject({
-  password: z.string({ error: 'INVALID_PASSWORD' }).min(1).max(PASSWORD_RAW_MAX),
-});
-export type DeleteAccountPayload = z.infer<typeof deleteAccountPayloadSchema>;
