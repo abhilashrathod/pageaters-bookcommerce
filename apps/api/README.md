@@ -23,12 +23,26 @@ The API `require()`s the built `@pageaters/shared` (its `dist/`). From the repo 
 `pnpm dev` directly, build it once with `pnpm --filter @pageaters/shared build` (again after changing it).
 
 `.env.example` documents every variable with its default and rule, and marks which are required to boot
-(`MONGODB_URI`, `ENCRYPTION_KEY`, `RAZORPAY_KEY_ID`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`).
+(`MONGODB_URI`, `ENCRYPTION_KEY`, `RAZORPAY_KEY_ID`).
 `ENCRYPTION_KEY` must be exactly 32 bytes; use 32 ASCII characters.
 Razorpay test-mode keys only: `RAZORPAY_KEY_ID` must start with `rzp_test_`, and the API refuses to boot with a
 live key (`rzp_live_…`). Requires Node 22.9+ for `--env-file-if-exists`.
-Never set `APP_ENV=production` for a deployed demo: it sends real SMS and order emails to visitor-typed
-numbers/addresses (AGENTS.md §6). Valid values: `development` | `staging` | `production` | `test`.
+Valid `APP_ENV` values: `development` | `staging` | `production` | `test`; `production` turns on the legacy
+production-only order SMS and e-mails.
+
+### Adapters (e-mail, SMS)
+
+Third-party services sit behind adapters in `src/adapters/` (see its README). Each has a real and a `mock`
+implementation, chosen per adapter; **`mock` is the default**, and keeps messages in memory without sending them.
+
+| Variable        | Values                       | Keys required only with the real adapter                 |
+| --------------- | ---------------------------- | -------------------------------------------------------- |
+| `EMAIL_ADAPTER` | `mock` (default), `sendgrid` | `SENDGRID_API_KEY`, `MAIL_FROM`                          |
+| `SMS_ADAPTER`   | `mock` (default), `twilio`   | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE` |
+
+Never select a real e-mail or SMS adapter for the deployed demo: it would message the addresses and numbers
+visitors type (AGENTS.md §6). E-mails are rendered from `src/templates/email/` by `src/services/mail.service.js`
+and sent before the request answers (no in-process queue).
 
 ## Structure
 
@@ -39,7 +53,9 @@ src/routes/       route definitions
 src/controllers/  request handlers
 src/models/       Mongoose models
 src/middlewares/  auth, validation, response helpers
-src/helpers/      shared logic (orders, mail, encryption)
+src/adapters/     third-party services behind real + mock implementations (email, sms)
+src/services/     business logic (src/services/README.md)
+src/helpers/      pure cross-cutting utilities (errors, encryption, image URLs)
 src/libs/         search index, sitemap, Google product feed
 src/templates/    email templates (EJS)
 src/notes/        domain notes on orders, payments and refunds

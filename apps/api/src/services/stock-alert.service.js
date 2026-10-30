@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
-const sendMailQueue = require('../helpers/sendMailQueue.helper');
+const { sendTemplateMail } = require('./mail.service');
 
 // Back-in-stock alerts: a shopper subscribes to a store book; an admin sends the alerts, which closes them.
 // Alerts are soft-deleted (`isDeleted`), never removed.
@@ -38,19 +38,20 @@ const listProductsWithAlerts = ({ page, limit }) => {
 const listSubscribers = (product) => StockAlert.find({ isDeleted: false, product }).populate(SUBSCRIBER_POPULATE);
 
 /**
- * Queues a STOCK_ALERT email for every open alert on a product and closes them all.
- * Legacy: the STOCK_ALERT template ships only `en.html` while the mail queue renders `en.ejs`, so no email is ever
+ * Sends a STOCK_ALERT email for every open alert on a product, closing each alert right after its send attempt
+ * (sent or failed, as before), one at a time. If the request dies part-way (a vendor timeout, the function's time
+ * limit), the alerts already handled stay closed, so a retry mails only the rest.
+ * Legacy: the STOCK_ALERT template ships only `en.html` while mail.service renders `en.ejs`, so no email is ever
  * sent; the email links point at the reserved root domain (fixed in the security step).
  * @param {string} product Store book id.
  * @returns {Promise<number>} How many alerts were closed.
  */
 const sendAlerts = async (product) => {
-  const query = { isDeleted: false, product };
-  const subscribersRes = await StockAlert.find(query).populate(SUBSCRIBER_POPULATE);
+  const subscribersRes = await StockAlert.find({ isDeleted: false, product }).populate(SUBSCRIBER_POPULATE);
 
   for (const alert of subscribersRes) {
     const sub = alert.toObject();
-    sendMailQueue.add({
+    await sendTemplateMail({
       emailModule: 'STOCK_ALERT',
       to: sub.user.email,
       data: {
@@ -61,9 +62,8 @@ const sendAlerts = async (product) => {
         PRICE: sub.product.price,
       },
     });
+    await StockAlert.updateOne({ _id: alert._id }, { $set: { isDeleted: true, deletedAt: new Date() } });
   }
-
-  await StockAlert.updateMany(query, { $set: { isDeleted: true, deletedAt: new Date() } }, { new: true });
 
   return subscribersRes.length;
 };

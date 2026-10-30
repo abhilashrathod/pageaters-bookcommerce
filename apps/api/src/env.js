@@ -48,8 +48,14 @@ const schema = z.object({
     )
     .default(DEFAULT_ALLOWED_ORIGINS),
 
-  // Required: the database, auth, and the Razorpay and Twilio SDK clients, which are constructed when their modules
-  // load and throw without credentials. The Phase 4 adapters (real + mock) will make the vendor keys optional.
+  // Adapters (AGENTS.md §4.4): `mock` unless a real one is chosen explicitly, so nothing is ever sent to an address or
+  // number a visitor typed by default (§6). A real adapter's keys are required only when it is selected
+  // (ADAPTER_KEYS below).
+  EMAIL_ADAPTER: z.enum(['sendgrid', 'mock'], { error: 'must be one of sendgrid, mock' }).default('mock'),
+  SMS_ADAPTER: z.enum(['twilio', 'mock'], { error: 'must be one of twilio, mock' }).default('mock'),
+
+  // Required: the database, auth, and the Razorpay SDK client, which is constructed when its module loads and
+  // throws without credentials (until the payments adapter).
   // A raw `@` in the password makes the driver read part of the password as a host name (and log it), so the
   // credentials may hold only the one `@` that ends them.
   MONGODB_URI: required(
@@ -72,14 +78,15 @@ const schema = z.object({
       .refine((value) => !value.startsWith('rzp_live_'), 'is a live key (rzp_live_…); only test-mode keys are allowed')
       .refine((value) => value.startsWith('rzp_live_') || value.startsWith('rzp_test_'), 'must start with rzp_test_'),
   ),
-  TWILIO_ACCOUNT_SID: required(z.string().startsWith('AC', 'must start with AC')),
-  TWILIO_AUTH_TOKEN: required(z.string()),
 
-  // Optional: only the feature that uses the variable fails without it.
+  // Optional: only the feature that uses the variable fails without it. The vendor keys of an adapter become
+  // required when that adapter is selected.
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
   DELHIVERY_BASE_URL: httpUrl('must be an http(s) URL').default('https://staging-express.delhivery.com'),
   DELHIVERY_API_TOKEN: z.string().optional(),
+  TWILIO_ACCOUNT_SID: z.string().startsWith('AC', 'must start with AC').optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_PHONE: z
     .string()
     .regex(/^\+[1-9]\d{1,14}$/, 'must be an E.164 phone number (+ and country code, digits only)')
@@ -93,6 +100,26 @@ const schema = z.object({
 });
 
 const VARIABLES = Object.keys(schema.shape);
+
+// The variables each real adapter needs, keyed by its selector. MAIL_FROM has a default for the mock, but a real
+// send must name its own (verified) sender.
+const ADAPTER_KEYS = {
+  EMAIL_ADAPTER: { sendgrid: ['SENDGRID_API_KEY', 'MAIL_FROM'] },
+  SMS_ADAPTER: { twilio: ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_PHONE'] },
+};
+
+// `<KEY>: is required when <SELECTOR>=<adapter>` for each key the selected real adapters miss. Reads the raw input:
+// the selector values are fixed names (an invalid one is reported by the schema), so the message never echoes input.
+const missingAdapterKeys = (input) => {
+  const problems = [];
+  for (const [selector, adapters] of Object.entries(ADAPTER_KEYS)) {
+    const keys = Object.hasOwn(adapters, input[selector] ?? '') ? adapters[input[selector]] : [];
+    for (const name of keys) {
+      if (input[name] === undefined) problems.push({ name, reason: `is required when ${selector}=${input[selector]}` });
+    }
+  }
+  return problems;
+};
 
 class EnvError extends Error {
   constructor(problems) {
@@ -121,17 +148,18 @@ const parseEnv = (source) => {
   }
 
   const result = schema.safeParse(input, { error: safeError });
-  if (!result.success) {
-    const problems = [];
-    for (const issue of result.error.issues) {
-      const name = String(issue.path[0]);
-      if (problems.some((problem) => problem.name === name)) continue;
-      const value = input[name];
-      const echoes = typeof value === 'string' && value.length > 0 && issue.message.includes(value);
-      problems.push({ name, reason: echoes ? 'is invalid' : issue.message });
-    }
-    throw new EnvError(problems);
+  const problems = [];
+  for (const issue of result.success ? [] : result.error.issues) {
+    const name = String(issue.path[0]);
+    if (problems.some((problem) => problem.name === name)) continue;
+    const value = input[name];
+    const echoes = typeof value === 'string' && value.length > 0 && issue.message.includes(value);
+    problems.push({ name, reason: echoes ? 'is invalid' : issue.message });
   }
+  for (const problem of missingAdapterKeys(input)) {
+    if (!problems.some(({ name }) => name === problem.name)) problems.push(problem);
+  }
+  if (problems.length > 0) throw new EnvError(problems);
 
   const env = result.data;
   Object.freeze(env.ALLOWED_ORIGINS);

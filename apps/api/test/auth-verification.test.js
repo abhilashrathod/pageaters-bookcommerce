@@ -2,10 +2,11 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { assertBody, captureMails, createUser, envelopes, mockVendorCall, startTestApp } = require('./helpers');
+const { assertBody, createUser, envelopes, sentEmails, sentTexts, startTestApp } = require('./helpers');
+const sms = require('../src/adapters/sms');
 
 // Verification over HTTP: email verification (verify + resend, mailed through SendGrid) and contact-number OTPs
-// (send / resend / verify, texted through Twilio). Both vendors are mocked to capture what would be sent.
+// (send / resend / verify, texted to +91<number>). The mock e-mail and SMS adapters record what would be sent.
 
 const { badRequest, ok, okString, unauthorized } = envelopes;
 const joiError = envelopes.badRequestObject;
@@ -14,9 +15,6 @@ const User = () => mongoose.model('user');
 const MINUTE = 60 * 1000;
 
 let api;
-let mailbox;
-let mails;
-let texts;
 
 before(async () => {
   api = await startTestApp();
@@ -28,17 +26,10 @@ after(async () => {
 
 beforeEach(async () => {
   await api.reset();
-  mailbox = captureMails();
-  mails = mailbox.sent;
-  texts = [];
-  mockVendorCall('twilio.messages.create', (message) => {
-    texts.push(message);
-    return { sid: 'SM-test' };
-  });
 });
 
-// Waits until the queue has sent and logged `count` mails, so no queue work runs into the next test.
-const waitForMails = async (count) => assert.equal((await mailbox.wait(count)).length, count);
+// Sends are awaited before the response, so the mails are recorded by the time it arrives.
+const expectMails = (count) => assert.equal(sentEmails().length, count);
 
 // The user model's own unawaited saves (send/resend OTP) land shortly after the response.
 const userWhen = async (id, check) => {
@@ -93,8 +84,8 @@ describe('POST /auth/verify-email/resend', () => {
     assertBody(res, 200, ok('SUCCESS', {}));
     const fresh = await User().findById(user._id);
     assert.ok(fresh.verifyEmailToken);
-    await waitForMails(1);
-    const [mail] = mails;
+    expectMails(1);
+    const [mail] = sentEmails();
     assert.deepEqual(
       { from: mail.from, to: mail.to, subject: mail.subject },
       { from: 'no-reply@demo.pageaters.com', to: user.email, subject: 'Pageaters Account - Greetings from Pageaters!' },
@@ -109,9 +100,9 @@ describe('POST /auth/verify-email/resend', () => {
     const { user } = await createUser();
     const resend = () => api.request('/auth/verify-email/resend', { method: 'POST', body: { email: user.email } });
     assert.equal((await resend()).status, 200);
-    await waitForMails(1);
+    expectMails(1);
     assert.equal((await resend()).status, 200);
-    await waitForMails(2);
+    expectMails(2);
   });
 
   test('an unknown email answers NO_USER_FOUND_FOR_THIS_EMAIL', async () => {
@@ -135,20 +126,20 @@ describe('POST /auth/contact/send', () => {
     assert.match(fresh.contactOtp, /^[1-9]\d{5}$/);
     assert.deepEqual([fresh.contactNo, fresh.contactVerified], ['9000000042', false]);
     assert.ok(Date.now() - Date.parse(fresh.lastMessageSentOn) < MINUTE);
-    assert.deepEqual(texts, [{ body: `Hi ${user.fullName}, Pageaters verification code: ${fresh.contactOtp}`, from: undefined, to: '+919000000042' }]);
+    assert.deepEqual(sentTexts(), [{ body: `Hi ${user.fullName}, Pageaters verification code: ${fresh.contactOtp}`, to: '+919000000042' }]);
   });
 
   test('a user without a name is greeted by the email local part', async () => {
     const { user, cookie } = await createUser();
     await User().updateOne({ _id: user._id }, { fullName: '' });
     await api.request('/auth/contact/send', { method: 'POST', body: { contactNo: '9000000042' }, cookie });
-    assert.match(texts[0].body, new RegExp(`^Hi ${user.email.split('@')[0]}, Pageaters verification code: \\d{6}$`));
+    assert.match(sentTexts()[0].body, new RegExp(`^Hi ${user.email.split('@')[0]}, Pageaters verification code: \\d{6}$`));
   });
 
-  test('a failed text answers 500 but the OTP is already stored', async () => {
+  test('a failed text answers 500 but the OTP is already stored', async (t) => {
     const { user, cookie } = await createUser();
-    mockVendorCall('twilio.messages.create', () => {
-      throw new Error('Twilio down');
+    t.mock.method(sms, 'send', async () => {
+      throw new Error('SMS down');
     });
     const res = await api.request('/auth/contact/send', { method: 'POST', body: { contactNo: '9000000042' }, cookie });
     assert.equal(res.status, 500);
@@ -168,7 +159,7 @@ describe('POST /auth/contact/resend', () => {
     await User().updateOne({ _id: user._id }, { contactOtp: '123456', contactNo: '9000000043', lastMessageSentOn: stamp });
 
     assertBody(await api.request('/auth/contact/resend', { method: 'POST', cookie }), 200, okString('CONTACT_VERIFICATION_INITIATED'));
-    assert.deepEqual(texts, [{ body: `Hi ${user.fullName}, Pageaters verification code: 123456`, from: undefined, to: '+919000000043' }]);
+    assert.deepEqual(sentTexts(), [{ body: `Hi ${user.fullName}, Pageaters verification code: 123456`, to: '+919000000043' }]);
     await userWhen(user._id, (u) => u.lastMessageSentOn > stamp);
   });
 
@@ -177,7 +168,7 @@ describe('POST /auth/contact/resend', () => {
     assertBody(await api.request('/auth/contact/resend', { method: 'POST', cookie }), 400, badRequest('CONTACT_VERIFICATION_NOT_EXIST'));
     await User().updateOne({ _id: user._id }, { contactOtp: '123456', lastMessageSentOn: new Date().toISOString() });
     assertBody(await api.request('/auth/contact/resend', { method: 'POST', cookie }), 400, badRequest('RESEND_OTP_LIMIT_EXCEEDED'));
-    assert.deepEqual(texts, []);
+    assert.deepEqual(sentTexts(), []);
   });
 });
 

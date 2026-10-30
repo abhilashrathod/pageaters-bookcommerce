@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { DB_NAME, DB_PORT } = require('./setup');
 const { clearDb, startMemoryDb, stopMemoryDb } = require('./db');
 const { settleDbOperations, trackDbOperations } = require('./settle');
+const { clearOutbox } = require('./outbox');
 const { clearVendorMocks } = require('./stubs');
 
 // Runs the real Express app over HTTP against an in-memory MongoDB, with vendor SDKs stubbed and the network
@@ -12,7 +13,7 @@ const { clearVendorMocks } = require('./stubs');
 //   const api = await startTestApp();      // in before()
 //   await loadCatalog(); await api.reindex();   // fixtures, then the lunr search indexes if the test searches
 //   const res = await api.request('/favorites', { cookie });
-//   await api.reset();                     // in beforeEach(): empty collections, clear vendor mocks
+//   await api.reset();                     // in beforeEach(): empty collections, clear vendor mocks and the outbox
 //   await api.stop();                      // in after(): waits for unawaited writes, then closes
 //
 // Paths are relative to /api/v1. Console output from the legacy code (morgan is off under APP_ENV=test, but
@@ -76,6 +77,7 @@ const startTestApp = async () => {
     reindex: () => require('../../src/libs/indexing').runIndexing(app),
     reset: async () => {
       clearVendorMocks();
+      clearOutbox();
       await clearDb(mongoose.connection);
     },
     // Waits for the writes the legacy code doesn't await (the request log of res.error and friends, unawaited

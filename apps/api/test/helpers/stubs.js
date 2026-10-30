@@ -77,7 +77,7 @@ const stubFactory = (name, statics = {}) =>
 const STUBS = {
   razorpay: (real) => stubFactory('razorpay', { validateWebhookSignature: real.validateWebhookSignature }),
   twilio: () => stubFactory('twilio'),
-  '@sendgrid/mail': () => stubClient('sendgrid', ['setApiKey']),
+  '@sendgrid/mail': () => stubClient('sendgrid', ['setApiKey', 'setTimeout']),
   axios: () => stubClient('axios'),
   'aws-sdk/clients/s3': () => stubFactory('S3'),
 };

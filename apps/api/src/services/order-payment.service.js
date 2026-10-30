@@ -66,7 +66,7 @@ const confirmPayment = async ({ rawBody, signature, payload }) => {
   }
 
   await sendConfirmationSms(user, order.orderId);
-  sendConfirmationEmail(user, order);
+  await sendConfirmationEmail(user, order);
 };
 
 /**

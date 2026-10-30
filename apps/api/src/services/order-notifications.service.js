@@ -1,16 +1,13 @@
 const moment = require('moment');
 
-const { ENVIRONMENT, TWILIO } = require('../appConfig');
+const sms = require('../adapters/sms');
+const environment = require('../helpers/environment.helper');
 const { returnAssetImage, returnBundleImage, returnProductImage } = require('../helpers/image-url.helper');
-const sendMailQueue = require('../helpers/sendMailQueue.helper');
+const { sendTemplateMail } = require('./mail.service');
 
-// The shopper's order e-mails and the confirmation SMS. E-mails go through the in-process mail queue
-// (helpers/sendMailQueue.helper.js), which renders src/templates/email/<module> and sends after the response.
-// The adapters step replaces Twilio and the queue; until then this is the only place orders reach them.
-
-const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
-
-const isProduction = () => ENVIRONMENT === 'production';
+// The shopper's order e-mails and the confirmation SMS. E-mails are rendered and sent through mail.service.js (the
+// email adapter), texts through the SMS adapter; both are awaited and never fail the order. The legacy
+// production-only gates read `environment.isProduction()` at send time.
 const formatDate = (date) => moment(date).format('DD MMM YYYY');
 const readerName = (user) => (user.fullName ? user.fullName : 'Reader');
 const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + string.slice(1);
@@ -55,37 +52,33 @@ const withCdnBoxImages = (boxes) => {
 
 /**
  * Texts the order confirmation to the buyer's number, in production only and only when the account has one.
- * Never fails: a Twilio error is swallowed (legacy). Outside production nothing is sent (the legacy code logged the
+ * Never fails: an SMS adapter error is swallowed (legacy). Outside production nothing is sent (the legacy code logged the
  * text, which holds the buyer's name or e-mail; that log line is dropped).
  * @param {{ fullName?: string, email: string, contactNo?: string }} user
  * @param {string} orderId Public order id (`OD-…`).
  * @returns {Promise<void>}
  */
 const sendConfirmationSms = async (user, orderId) => {
-  if (!isProduction()) return;
+  if (!environment.isProduction()) return;
   try {
     if (!user.contactNo) return;
-    await twilioClient.messages.create({
-      body: textMessage(user.fullName, user.email, orderId),
-      from: TWILIO.PHONE,
-      to: `+91${user.contactNo}`,
-    });
+    await sms.send({ to: `+91${user.contactNo}`, body: textMessage(user.fullName, user.email, orderId) });
   } catch {
     // legacy: a failed SMS never fails the order
   }
 };
 
 /**
- * Queues the order confirmation e-mail, in production only. Rewrites the populated product, bundle and box images
+ * Sends the order confirmation e-mail, in production only. Rewrites the populated product, bundle and box images
  * to CDN URLs on the order in place (legacy). Never fails.
  * @param {{ fullName?: string, email: string }} user
  * @param {object} order Order with populated items and delivery address.
- * @returns {void}
+ * @returns {Promise<void>}
  */
-const sendConfirmationEmail = (user, order) => {
-  if (!isProduction()) return;
+const sendConfirmationEmail = async (user, order) => {
+  if (!environment.isProduction()) return;
   try {
-    sendMailQueue.add({
+    await sendTemplateMail({
       emailModule: 'ORDER_CONFIRMATION',
       to: user.email,
       subject: `Order Confirmation #${order.orderId} - Pageaters`,
@@ -105,72 +98,76 @@ const sendConfirmationEmail = (user, order) => {
       },
     });
   } catch {
-    // legacy: a failed confirmation e-mail never fails the order
+    // legacy: a failed confirmation e-mail never fails the order (building the data can throw on a malformed order)
   }
 };
 
 /**
- * Queues the "order shipped" e-mail (every environment).
+ * Sends the "order shipped" e-mail (every environment).
  * @param {object} order Order with populated `userId` and `deliveryAddress`.
- * @returns {void}
+ * @returns {Promise<void>} A failed send is logged by mail.service, never thrown; only building the data can throw.
  */
-const sendShippedEmail = (order) =>
-  sendMailQueue.add({
+const sendShippedEmail = async (order) => {
+  await sendTemplateMail({
     emailModule: 'ORDER_SHIPPED',
     to: order.userId.email,
     subject: `Order #${order.orderId} is Shipped - Pageaters`,
     data: orderSummary(order),
   });
+};
 
 /**
- * Queues the "order delivered" e-mail (every environment).
+ * Sends the "order delivered" e-mail (every environment).
  * @param {object} order Order with populated `userId` and `deliveryAddress`.
- * @returns {void}
+ * @returns {Promise<void>} A failed send is logged by mail.service, never thrown; only building the data can throw.
  */
-const sendDeliveredEmail = (order) =>
-  sendMailQueue.add({
+const sendDeliveredEmail = async (order) => {
+  await sendTemplateMail({
     emailModule: 'ORDER_DELIVERED',
     to: order.userId.email,
     subject: `Your Order #${order.orderId} Is Delivered! - Pageaters`,
     data: orderSummary(order),
   });
+};
 
 /**
- * Queues the "return/replace request raised" e-mail (every environment).
+ * Sends the "return/replace request raised" e-mail (every environment).
  * @param {object} order Order with populated `userId` and `deliveryAddress`.
  * @param {string} type Request type as sent by the shopper. Legacy: a missing type throws a TypeError (→ 500).
- * @returns {void}
+ * @returns {Promise<void>} A failed send is logged by mail.service, never thrown; only building the data can throw.
  */
-const sendRequestEmail = (order, type) =>
-  sendMailQueue.add({
+const sendRequestEmail = async (order, type) => {
+  await sendTemplateMail({
     emailModule: 'ORDER_REQUESTS',
     to: order.userId.email,
     subject: `${capitalizeFirstLetter(type)} Request is Raised for Order #${order.orderId} - Pageaters`,
     data: requestSummary(order, type),
   });
+};
 
 /**
- * Queues the "return/replacement shipment aligned" e-mail (every environment).
+ * Sends the "return/replacement shipment aligned" e-mail (every environment).
  * @param {object} order Order with populated `userId` and `deliveryAddress`.
  * @param {'return' | 'replacement'} type
- * @returns {void}
+ * @returns {Promise<void>} A failed send is logged by mail.service, never thrown; only building the data can throw.
  */
-const sendReturnShipmentEmail = (order, type) =>
-  sendMailQueue.add({
+const sendReturnShipmentEmail = async (order, type) => {
+  await sendTemplateMail({
     emailModule: 'ORDER_RETURN_SHIPMENT',
     to: order.userId.email,
     subject: `${capitalizeFirstLetter(type)} is Aligned for Order #${order.orderId} - Pageaters`,
     data: requestSummary(order, type),
   });
+};
 
 /**
- * Queues the shopper-cancellation e-mail, in production only.
+ * Sends the shopper-cancellation e-mail, in production only.
  * @param {object} order Order with populated `userId`.
- * @returns {void}
+ * @returns {Promise<void>} A failed send is logged by mail.service, never thrown.
  */
-const sendCancelEmail = (order) => {
-  if (!isProduction()) return;
-  sendMailQueue.add({
+const sendCancelEmail = async (order) => {
+  if (!environment.isProduction()) return;
+  await sendTemplateMail({
     emailModule: 'CANCEL_ORDER',
     to: order.userId.email,
     subject: `Order ${order.orderId} Cancellation Confirmation  - Pageaters`,
@@ -179,15 +176,15 @@ const sendCancelEmail = (order) => {
 };
 
 /**
- * Queues the admin-cancellation e-mail, in production only and only when `notify` is truthy.
+ * Sends the admin-cancellation e-mail, in production only and only when `notify` is truthy.
  * @param {object} order Order with populated `userId`.
  * @param {string} reason
  * @param {unknown} notify
- * @returns {void}
+ * @returns {Promise<void>} A failed send is logged by mail.service, never thrown.
  */
-const sendAdminCancelEmail = (order, reason, notify) => {
-  if (!isProduction() || !notify) return;
-  sendMailQueue.add({
+const sendAdminCancelEmail = async (order, reason, notify) => {
+  if (!environment.isProduction() || !notify) return;
+  await sendTemplateMail({
     emailModule: 'CLOSE_ORDER',
     to: order.userId.email,
     subject: `Order ${order.orderId} Cancellation Confirmation  - Pageaters`,

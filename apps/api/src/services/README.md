@@ -14,8 +14,11 @@ Business logic of the API. Layers: `routes → controllers → services → mode
   `new AppError('ORDER_NOT_FOUND', { status: 404, data })`. `code` is a message key that exists in
   `src/locales/en.json`. Unexpected errors just propagate (they become a 500).
 - **Models directly**, via `mongoose.model(models.X)`. No repository layer.
-- **Vendor calls only in services** (Razorpay, Twilio, SendGrid, Delhivery, S3), so the adapters step swaps each
-  SDK in one place.
+- **Vendor calls only through adapters** (`src/adapters/`, see its README) for e-mail and SMS; the remaining SDK
+  calls (Razorpay, Delhivery, S3) live only in services until their adapters (step 6b). E-mail goes through
+  `mail.service.js` (`sendTemplateMail`), which renders the template, awaits the send and never throws. Always
+  render ejs with an explicit options object (without one, ejs reads compile options from the data), and pass only
+  the template's own keys when data comes from a request.
 - **JSDoc on every exported function**: what it does, params, return, and which `AppError` codes it throws.
 - Services may call other services; never a controller.
 - Keep legacy behaviour (status, message key, shape) when moving code; note known legacy bugs in the JSDoc
@@ -72,8 +75,8 @@ central error handler (Phase 4 step 9) replaces it.
   Delhivery pincode check lives in `address.service.js`.
 - **`helpers/` holds only pure, cross-cutting utilities** with no domain rules and no database or vendor calls:
   `appError`, `encryption`, `utils`, `image-url` (CDN image URLs, also used by `libs/`), the Mongo connection and
-  compat helpers. The mail queue helpers (`sendMail`, `sendMailQueue`) stay until the adapters step replaces them
-  with direct sends through the email adapter.
+  compat helpers. `environment` exposes the legacy production-only gate (`isProduction()`, read per call so
+  tests can switch it).
 - **`libs/` (sitemap, Google feed, search index) must not import services**; code they share with services goes in a
   helper.
 - **Dependency direction:** order → cart → catalog / notifications. No back edges and no lazy-`require` workarounds
@@ -108,15 +111,18 @@ steps, except the frozen list, which applies only while parallel branches are op
 Integration tests run the real app over HTTP on an in-memory MongoDB with fake fixtures and every vendor SDK stubbed
 (`test/helpers/`). Write them against the legacy controller first, see them pass, then refactor and keep them green.
 
-- **Require `./helpers` before anything in `src/`.** Its first require applies the test env, stubs Razorpay, Twilio,
-  SendGrid, axios (Delhivery) and S3, and blocks every non-local connection.
+- **Require `./helpers` before anything in `src/`.** Its first require applies the test env (mock e-mail and SMS
+  adapters), stubs the Razorpay, Twilio, SendGrid, axios (Delhivery) and S3 SDKs, and blocks every non-local
+  connection.
 - One `startTestApp()` per file (`before`), `api.reset()` in `beforeEach` (empties collections, clears vendor
-  mocks), `api.stop()` in `after` (it first waits for in-flight database writes the legacy code doesn't await, such
+  mocks and the outbox), `api.stop()` in `after` (it first waits for in-flight database writes the legacy code doesn't await, such
   as res.error's request log, so no fixed delay is needed). `api.request(path, { method, body, cookie })` calls
   `/api/v1/<path>`.
-- Generic assertions come from `./helpers` (`test/helpers/assert.js`, `mail.js`): `envelopes` (legacy `res.*` bodies
+- Generic assertions come from `./helpers` (`test/helpers/assert.js`, `outbox.js`): `envelopes` (legacy `res.*` bodies
   key by key), `assertBody` (JSON-text compare), `assertGuarded`, `paged`, `asJson`/`asCreated`, `eventually`, and
-  `captureMails()` (SendGrid capture; `await mails.wait(n)` before the test ends). Domain fixtures stay in
+  `sentEmails()` / `sentTexts()` (what the mock adapters were given; sends are awaited, so they are complete when the
+  response arrives). Switch the production-only notifications on for one test with
+  `t.mock.method(environment, 'isProduction', () => true)` and make an adapter fail with `t.mock.method(sms, 'send', …)`. Domain fixtures stay in
   `test/helpers/fixtures/<domain>.js`.
 - Accounts: `createUser({ role })` returns `{ user, cookie }`, made with the app's own hashing and token code.
 - Search: the lunr indexes build when the app connects (empty database); `await api.reindex()` after loading

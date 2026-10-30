@@ -126,7 +126,7 @@ const createDelhiveryShipment = async (orderId, dimensions) => {
   });
   await order.save();
 
-  sendShippedEmail(order);
+  await sendShippedEmail(order);
   return response;
 };
 
@@ -171,7 +171,7 @@ const alignReturnShipment = async (id, requestId, shipment) => {
     { new: true },
   );
 
-  sendReturnShipmentEmail(order, isReturn ? 'return' : 'replacement');
+  await sendReturnShipmentEmail(order, isReturn ? 'return' : 'replacement');
 };
 
 module.exports = { alignReturnShipment, createDelhiveryShipment };

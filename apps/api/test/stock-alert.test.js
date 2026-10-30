@@ -2,7 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { asJson, assertBody, assertGuarded, createUser, envelopes, ids, loadCatalog, mockVendorCall, startTestApp } = require('./helpers');
+const { asJson, assertBody, assertGuarded, createUser, envelopes, ids, loadCatalog, sentEmails, startTestApp } = require('./helpers');
 
 // /api/v1/stock-alerts over HTTP: shoppers subscribe/unsubscribe to back-in-stock alerts, admins list them and
 // send the alerts. Written against the legacy controller before the service refactor.
@@ -14,7 +14,6 @@ const StockAlert = () => mongoose.model('stock_alert');
 let api;
 let admin;
 let shopper;
-let mails;
 
 before(async () => {
   api = await startTestApp();
@@ -29,10 +28,6 @@ beforeEach(async () => {
   await loadCatalog();
   admin = await createUser({ role: 'ADMIN' });
   shopper = await createUser();
-  mails = [];
-  mockVendorCall('sendgrid.send', (mail) => {
-    mails.push(mail);
-  });
 });
 
 const subscribe = (product, cookie = shopper.cookie) => api.request('/stock-alerts', { method: 'POST', body: { product: String(product) }, cookie });
@@ -138,7 +133,8 @@ describe('admin', () => {
     assert.equal(asJson(alert).user.email, shopper.user.email);
   });
 
-  test('POST /stock-alerts/:product/users closes the alerts; legacy: the STOCK_ALERT email never renders', async () => {
+  test('POST /stock-alerts/:product/users closes the alerts; legacy: the STOCK_ALERT email never renders', async (t) => {
+    const errors = t.mock.method(console, 'error', () => {});
     const other = await createUser();
     await subscribe(ids.bookOne);
     await subscribe(ids.bookOne, other.cookie);
@@ -152,8 +148,36 @@ describe('admin', () => {
     assert.equal(await StockAlert().countDocuments({ product: ids.bookOne, isDeleted: false }), 0);
     assert.equal(await StockAlert().countDocuments({ product: ids.bookTwo, isDeleted: false }), 1);
 
-    // The template ships only en.html; the mail queue renders en.ejs, so nothing is sent.
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    assert.deepEqual(mails, []);
+    // The template ships only en.html; mail.service renders en.ejs, so nothing is sent. Each failure is logged by
+    // template name, never with the recipient.
+    assert.deepEqual(sentEmails(), []);
+    const logged = errors.mock.calls.map((call) => call.arguments.join(' '));
+    assert.equal(logged.length, 2);
+    for (const line of logged) {
+      assert.match(line, /^Email STOCK_ALERT not sent \(/);
+      assert.doesNotMatch(line, /@/);
+    }
+  });
+
+  test('closes each alert right after its send, so a failure part-way leaves the handled ones closed', async (t) => {
+    t.mock.method(console, 'error', () => {});
+    const other = await createUser();
+    await subscribe(ids.bookOne);
+    await subscribe(ids.bookOne, other.cookie);
+    const Model = StockAlert();
+    const updateOne = Model.updateOne.bind(Model);
+    let closes = 0;
+    t.mock.method(Model, 'updateOne', (...args) => {
+      closes += 1;
+      if (closes === 2) throw new Error('Test: request died part-way');
+      return updateOne(...args);
+    });
+
+    const res = await api.request(`/stock-alerts/${ids.bookOne}/users`, { method: 'POST', cookie: admin.cookie });
+    assert.equal(res.status, 500);
+    assert.equal(closes, 2);
+    t.mock.restoreAll();
+    assert.equal(await StockAlert().countDocuments({ product: ids.bookOne, isDeleted: true }), 1);
+    assert.equal(await StockAlert().countDocuments({ product: ids.bookOne, isDeleted: false }), 1);
   });
 });

@@ -66,7 +66,7 @@ const requestReturn = async (userId, uniqueId, { type, comments, reason, books, 
   });
   await order.save();
 
-  sendRequestEmail(order, type);
+  await sendRequestEmail(order, type);
   return true;
 };
 
@@ -102,7 +102,7 @@ const cancelByUser = async (userId, uniqueId, { reason, comments }) => {
   });
   await order.save();
 
-  sendCancelEmail(order);
+  await sendCancelEmail(order);
   await restoreInventory(order);
 };
 

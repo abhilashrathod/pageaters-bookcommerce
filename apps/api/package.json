@@ -18,7 +18,6 @@
     "@sendgrid/mail": "8.1.6",
     "aws-sdk": "^2.939.0",
     "axios": "1.21.0",
-    "better-queue": "^3.8.10",
     "compression": "1.8.2",
     "cookie-parser": "1.4.7",
     "cors": "^2.8.5",

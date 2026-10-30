@@ -4,16 +4,16 @@ const { HOST } = require('../appConfig');
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { decrypt } = require('../helpers/encryption.helper');
-const sendMailQueue = require('../helpers/sendMailQueue.helper');
 const { greetingName, sentWithin } = require('./auth-verification.service');
+const { sendTemplateMail } = require('./mail.service');
 
 // The signed-in user's profile and password, and password reset by email (an encrypted token in a link, mailed
-// through the mail queue → SendGrid).
+// through mail.service → the email adapter).
 
 const User = mongoose.model(models.USER);
 
 const mailResetLink = (user, token) =>
-  sendMailQueue.add({
+  sendTemplateMail({
     emailModule: 'FORGOT_PASSWORD',
     to: user.email,
     subject: 'Pageaters Account - Reset Password Requested',
@@ -69,7 +69,7 @@ const forgotPassword = async ({ email }) => {
   if (sentWithin(user.lastForgotPasswordSentOn, 3)) throw new AppError('FORGOT_PASSWORD_LIMIT_EXCEEDED');
 
   const token = await user.generateForgotPasswordToken(user);
-  mailResetLink(user, token);
+  await mailResetLink(user, token);
 };
 
 /**
@@ -88,7 +88,7 @@ const resendForgotPasswordEmail = async ({ email }) => {
   user.lastForgotPasswordSentOn = new Date().toISOString();
   await user.save();
 
-  mailResetLink(user, user.forgotPasswordToken);
+  await mailResetLink(user, user.forgotPasswordToken);
 };
 
 /**

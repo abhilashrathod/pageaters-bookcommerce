@@ -7,9 +7,6 @@ Object.assign(process.env, {
   MONGODB_URI: 'mongodb://127.0.0.1:1/pageaters_test',
   ENCRYPTION_KEY: 'k'.repeat(32),
   RAZORPAY_KEY_ID: 'rzp_test_FAKEKEY123',
-  TWILIO_ACCOUNT_SID: `AC${'0'.repeat(32)}`,
-  TWILIO_AUTH_TOKEN: 'fake-twilio-token',
-  SENDGRID_API_KEY: 'SG.test',
 });
 
 require('../src/models');

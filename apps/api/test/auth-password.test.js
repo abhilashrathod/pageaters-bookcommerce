@@ -2,10 +2,10 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { assertBody, captureMails, createUser, envelopes, PASSWORD, startTestApp } = require('./helpers');
+const { assertBody, createUser, envelopes, PASSWORD, sentEmails, startTestApp } = require('./helpers');
 
-// Passwords over HTTP: change (PUT /auth/password), forgot / resend / reset. Reset mails go out through the mail
-// queue to SendGrid, which is mocked here to capture them. Envelopes are pinned byte for byte.
+// Passwords over HTTP: change (PUT /auth/password), forgot / resend / reset. Reset mails go out through the mock
+// email adapter, which records them (sentEmails). Envelopes are pinned byte for byte.
 
 const { badRequest, okString } = envelopes;
 const joiError = envelopes.badRequestObject;
@@ -15,8 +15,6 @@ const User = () => mongoose.model('user');
 const MINUTE = 60 * 1000;
 
 let api;
-let mailbox;
-let mails;
 
 before(async () => {
   api = await startTestApp();
@@ -28,13 +26,10 @@ after(async () => {
 
 beforeEach(async () => {
   await api.reset();
-  mailbox = captureMails();
-  mails = mailbox.sent;
 });
 
-// Waits until the queue has sent `count` mails and logged them (the log write comes after the send), so no queue work
-// is left running into the next test.
-const waitForMails = async (count) => assert.equal((await mailbox.wait(count)).length, count);
+// Sends are awaited before the response, so the mails are recorded by the time it arrives.
+const expectMails = (count) => assert.equal(sentEmails().length, count);
 
 const login = (email, password) => api.request('/auth/login', { method: 'POST', body: { email, password } });
 
@@ -76,8 +71,8 @@ describe('POST /auth/forgot-password', () => {
     assert.ok(fresh.forgotPasswordToken);
     assert.ok(Date.now() - Date.parse(fresh.lastForgotPasswordSentOn) < MINUTE);
 
-    await waitForMails(1);
-    const [mail] = mails;
+    expectMails(1);
+    const [mail] = sentEmails();
     assert.deepEqual(
       { from: mail.from, to: mail.to, subject: mail.subject },
       { from: 'no-reply@demo.pageaters.com', to: user.email, subject: 'Pageaters Account - Reset Password Requested' },
@@ -93,7 +88,7 @@ describe('POST /auth/forgot-password', () => {
     assertBody(await api.request('/auth/forgot-password', { method: 'POST', body: { email: user.email } }), 400, badRequest('FORGOT_PASSWORD_LIMIT_EXCEEDED'));
     await User().updateOne({ _id: user._id }, { lastForgotPasswordSentOn: new Date(Date.now() - 4 * MINUTE).toISOString() });
     assert.equal((await api.request('/auth/forgot-password', { method: 'POST', body: { email: user.email } })).status, 200);
-    await waitForMails(1);
+    expectMails(1);
   });
 
   test('an unknown email answers NO_USER_FOUND_FOR_THIS_EMAIL', async () => {
@@ -119,8 +114,8 @@ describe('POST /auth/forgot-password/resend', () => {
     const fresh = await User().findById(user._id);
     assert.equal(fresh.forgotPasswordToken, 'stored-token');
     assert.ok(fresh.lastForgotPasswordSentOn > stamp);
-    await waitForMails(1);
-    assert.ok(mails[0].html.includes(`token=stored-token&amp;email=${encodeURIComponent(user.email)}`));
+    expectMails(1);
+    assert.ok(sentEmails()[0].html.includes(`token=stored-token&amp;email=${encodeURIComponent(user.email)}`));
   });
 
   test('within a minute answers FORGOT_PASSWORD_LIMIT_EXCEEDED; an unknown email NO_USER_FOUND_FOR_THIS_EMAIL', async () => {

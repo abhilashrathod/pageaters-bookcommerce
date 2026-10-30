@@ -42,7 +42,7 @@ const shipOrder = async (orderId, shipmentTrackingId) => {
   order.orderHistory.push(historyEntry(SHIPPED, 'Order hand over to shipment company. Your books are on their way'));
   await order.save();
 
-  sendShippedEmail(order);
+  await sendShippedEmail(order);
   return order;
 };
 
@@ -60,7 +60,7 @@ const completeShipment = async (id) => {
   order.orderHistory.push(historyEntry(FULFILLED, 'Shipment delivered. Happy reading!'));
   await order.save();
 
-  sendDeliveredEmail(order);
+  await sendDeliveredEmail(order);
   return order;
 };
 
@@ -84,7 +84,7 @@ const cancelByAdmin = async ({ uniqueId, userId, reason, notify }) => {
   order.orderHistory.push(historyEntry(CANCELLED, reason));
   await order.save();
 
-  sendAdminCancelEmail(order, reason, notify);
+  await sendAdminCancelEmail(order, reason, notify);
   await restoreInventory(order);
 };
 

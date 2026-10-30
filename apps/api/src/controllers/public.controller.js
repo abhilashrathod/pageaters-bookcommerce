@@ -5,7 +5,7 @@ const publicService = require('../services/public.service');
 
 module.exports.contactUs = async (req, res) => {
   try {
-    publicService.sendContactMail(req.allParams());
+    await publicService.sendContactMail(req.allParams());
     return res.ok('MAIL_SENT');
   } catch (e) {
     return handleControllerError(res, e);

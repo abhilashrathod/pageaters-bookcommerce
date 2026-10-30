@@ -78,7 +78,7 @@ const attemptOrder = async (userId, cartId, address) => {
  * - `online`: creates a Razorpay order for the total; the order becomes `created` and nothing else happens until
  *   the payment webhook.
  * - `cod`: the order becomes `confirmed`; then stock is taken, the cart emptied, the SMS sent (production), applied
- *   store credit debited and the confirmation e-mail queued (production).
+ *   store credit debited and the confirmation e-mail sent (production).
  * Total = subtotal + shipping + gift charges − store credit applied to the order.
  * @param {string} userId
  * @param {string | undefined} cartId From the cart cookie; must be the user's cart.
@@ -143,7 +143,7 @@ const placeOrder = async (userId, cartId, { method, instructions, giftOptions })
     order.storeCreditTransaction = await debitStoreCredit(order._id, order.userId, storeCredit);
     await order.save();
   }
-  sendConfirmationEmail(user, order);
+  await sendConfirmationEmail(user, order);
 
   return { total, orderId: order.orderId };
 };

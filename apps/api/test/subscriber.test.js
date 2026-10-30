@@ -2,7 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { asJson, assertBody, assertGuarded, createUser, envelopes, eventually, mockVendorCall, paged, startTestApp } = require('./helpers');
+const { asJson, assertBody, assertGuarded, createUser, envelopes, eventually, paged, sentEmails, startTestApp } = require('./helpers');
 const { addressFields } = require('./helpers/fixtures/store');
 const t = require('../src/locales/en.json');
 
@@ -13,7 +13,6 @@ const { ok, okString, serverError } = envelopes;
 
 let api;
 let admin;
-let mails;
 
 before(async () => {
   api = await startTestApp();
@@ -26,10 +25,6 @@ after(async () => {
 beforeEach(async () => {
   await api.reset();
   admin = await createUser({ role: 'ADMIN' });
-  mails = [];
-  mockVendorCall('sendgrid.send', (mail) => {
-    mails.push(mail);
-  });
 });
 
 const signUp = (email) => api.request('/subscribers', { method: 'POST', body: { email } });
@@ -92,9 +87,9 @@ describe('POST /public/contactUs', () => {
 
   test('legacy: unauthenticated, queues an order-confirmation mail to the shop', async () => {
     assertBody(await api.request('/public/contactUs', { method: 'POST', body: payload }), 200, okString('MAIL_SENT'));
-    // The mail log is written after the send; wait for it so nothing runs after the test.
-    await eventually(() => mongoose.model('log_email').countDocuments());
-    assert.deepEqual(mails.map(({ to, subject }) => ({ to, subject })), [{ to: 'owner@example.com', subject: 'Order Confirmation #TEST-ORDER-1 - Pageaters' }]);
+    // Sent and logged before the response.
+    assert.equal(await mongoose.model('log_email').countDocuments(), 1);
+    assert.deepEqual(sentEmails().map(({ to, subject }) => ({ to, subject })), [{ to: 'owner@example.com', subject: 'Order Confirmation #TEST-ORDER-1 - Pageaters' }]);
   });
 
   test('legacy: answers 500 without PRODUCTS or BUNDLES', async () => {

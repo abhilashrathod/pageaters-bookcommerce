@@ -2,7 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { assertBody, captureMails, createUser, envelopes, eventually, ids, loadCatalog, mockVendorCall, startTestApp } = require('./helpers');
+const { assertBody, createUser, envelopes, eventually, ids, loadCatalog, mockVendorCall, sentEmails, startTestApp } = require('./helpers');
 const { createAddress, createOrder, loadOrderCatalog, orderIds, razorpaySignature } = require('./helpers/fixtures/orders');
 const { ORDER_STAGES } = require('../src/constants/enums');
 
@@ -16,6 +16,13 @@ const STAGES = Object.values(ORDER_STAGES);
 
 const Order = () => mongoose.model('order');
 const Book = () => mongoose.model('storeBook');
+
+// The e-mails the request sent (awaited before the response), checked to be exactly `count`.
+const mailed = (count) => {
+  const mails = sentEmails();
+  assert.equal(mails.length, count);
+  return mails;
+};
 
 const daysAgo = (days) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
@@ -77,7 +84,6 @@ describe('admin-only lifecycle routes refuse a shopper', () => {
 describe('POST /orders/ship', () => {
   test('ships a paid order: tracking id, history, e-mail and the populated order', async () => {
     const order = await orderFor({ orderStatus: 'paid' });
-    const mails = captureMails();
     const res = await call('POST', '/orders/ship', { orderId: String(order._id), shipmentTrackingId: 'TRACK-1' });
     assert.equal(res.status, 200);
     assert.equal(JSON.stringify(Object.keys(res.body)), JSON.stringify(['statusCode', 'status', 'message', 'data']));
@@ -101,7 +107,7 @@ describe('POST /orders/ship', () => {
       ['shipped'],
     );
 
-    const [mail] = await mails.wait(1);
+    const [mail] = mailed(1);
     assert.equal(mail.to, shopper.user.email);
     assert.equal(mail.subject, `Order #${order.orderId} is Shipped - Pageaters`);
     assert.match(mail.html, new RegExp(order.orderId));
@@ -111,11 +117,10 @@ describe('POST /orders/ship', () => {
     const allowed = ['paid', 'confirmed'].includes(stage);
     test(`${allowed ? 'ships' : 'refuses'} an order in stage '${stage}'`, async () => {
       const order = await orderFor({ orderStatus: stage });
-      const mails = captureMails();
       const res = await call('POST', '/orders/ship', { orderId: String(order._id), shipmentTrackingId: 'TRACK-1' });
       if (allowed) {
         assert.equal(res.status, 200);
-        await mails.wait(1);
+        mailed(1);
       } else {
         assertBody(res, 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
       }
@@ -129,7 +134,6 @@ describe('PATCH /orders/ship/:id/complete', () => {
     const allowed = stage === 'shipped';
     test(`${allowed ? 'delivers' : 'refuses'} an order in stage '${stage}'`, async () => {
       const order = await orderFor({ orderStatus: stage });
-      const mails = captureMails();
       const res = await call('PATCH', `/orders/ship/${order._id}/complete`);
       if (allowed) {
         assert.equal(res.status, 200);
@@ -139,7 +143,7 @@ describe('PATCH /orders/ship/:id/complete', () => {
           res.body.data.orderHistory.map((entry) => entry.title),
           ['fulfilled'],
         );
-        const [mail] = await mails.wait(1);
+        const [mail] = mailed(1);
         assert.equal(mail.subject, `Your Order #${order.orderId} Is Delivered! - Pageaters`);
       } else {
         assertBody(res, 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
@@ -264,11 +268,10 @@ describe('POST /orders/return/:uniqueId (return and replace requests)', () => {
         orderStatus: stage,
         orderHistory: [{ title: 'fulfilled', description: 'Delivered', time: daysAgo(1) }],
       });
-      const mails = captureMails();
       const res = await request(order);
       if (allowed) {
         assertBody(res, 200, ok('ORDER_RETURN_SUCCESS', {}));
-        await mails.wait(1);
+        mailed(1);
       } else {
         assertBody(res, 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
       }
@@ -281,7 +284,6 @@ describe('POST /orders/return/:uniqueId (return and replace requests)', () => {
       orderStatus: 'fulfilled',
       orderHistory: [{ title: 'fulfilled', description: 'Delivered', time: daysAgo(6) }],
     });
-    const mails = captureMails();
     await request(order);
     const returned = await Order().findById(order._id);
     assert.deepEqual(
@@ -293,7 +295,7 @@ describe('POST /orders/return/:uniqueId (return and replace requests)', () => {
       [req.type, req.status, req.info.reason, req.info.comments, [...req.books], [...req.bundles]],
       ['return', 'open', 'Damaged', 'Torn cover', [String(ids.bookOne)], []],
     );
-    const [mail] = await mails.wait(1);
+    const [mail] = mailed(1);
     assert.equal(mail.subject, `Return Request is Raised for Order #${order.orderId} - Pageaters`);
   });
 
@@ -302,7 +304,6 @@ describe('POST /orders/return/:uniqueId (return and replace requests)', () => {
       orderStatus: 'fulfilled',
       orderHistory: [{ title: 'fulfilled', description: 'Delivered', time: daysAgo(1) }],
     });
-    const mails = captureMails();
     assertBody(await request(order, 'replace'), 200, ok('ORDER_RETURN_SUCCESS', {}));
     const replaced = await Order().findById(order._id);
     assert.equal(replaced.orderStatus, 'replacement');
@@ -310,7 +311,7 @@ describe('POST /orders/return/:uniqueId (return and replace requests)', () => {
       replaced.orderHistory.map((entry) => entry.title),
       ['fulfilled', 'replacement'],
     );
-    const [mail] = await mails.wait(1);
+    const [mail] = mailed(1);
     assert.equal(mail.subject, `Replace Request is Raised for Order #${order.orderId} - Pageaters`);
   });
 
@@ -367,11 +368,10 @@ describe('return and replacement shipments (admin)', () => {
     const next = { returned: 'return in progress', replacement: 'replacement in progress' }[stage];
     test(`${next ? 'aligns' : 'refuses'} a pickup for an order in stage '${stage}'`, async () => {
       const order = await withRequest(stage, 'return');
-      const mails = captureMails();
       const res = await call('PATCH', `/orders/return/${order._id}/shipment/${order.requests[0]._id}`, { shipment: 'PICKUP-1' });
       if (next) {
         assertBody(res, 200, ok('ORDER_UPDATE_SUCCESS', {}));
-        await mails.wait(1);
+        mailed(1);
       } else {
         assertBody(res, 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
       }
@@ -381,7 +381,6 @@ describe('return and replacement shipments (admin)', () => {
 
   test('aligning a return sets the tracking id on the order and the request, and e-mails the shopper', async () => {
     const order = await withRequest('returned', 'return');
-    const mails = captureMails();
     await call('PATCH', `/orders/return/${order._id}/shipment/${order.requests[0]._id}`, { shipment: 'PICKUP-1' });
     const aligned = await Order().findById(order._id);
     assert.equal(aligned.shipmentTrackingId, 'PICKUP-1');
@@ -390,28 +389,26 @@ describe('return and replacement shipments (admin)', () => {
       aligned.orderHistory.map((entry) => entry.title),
       ['return in progress'],
     );
-    const [mail] = await mails.wait(1);
+    const [mail] = mailed(1);
     assert.equal(mail.subject, `Return is Aligned for Order #${order.orderId} - Pageaters`);
   });
 
   test('aligning a replacement e-mails "Replacement is Aligned"', async () => {
     const order = await withRequest('replacement', 'replace');
-    const mails = captureMails();
     await call('PATCH', `/orders/return/${order._id}/shipment/${order.requests[0]._id}`, { shipment: 'PICKUP-2' });
-    const [mail] = await mails.wait(1);
+    const [mail] = mailed(1);
     assert.equal(mail.subject, `Replacement is Aligned for Order #${order.orderId} - Pageaters`);
   });
 
   test('legacy: an unknown request id answers 200 and changes nothing (but still e-mails)', async () => {
     const order = await withRequest('returned', 'return');
-    const mails = captureMails();
     assertBody(
       await call('PATCH', `/orders/return/${order._id}/shipment/${new mongoose.Types.ObjectId()}`, { shipment: 'X' }),
       200,
       ok('ORDER_UPDATE_SUCCESS', {}),
     );
     assert.equal((await Order().findById(order._id)).orderStatus, 'returned');
-    await mails.wait(1);
+    mailed(1);
   });
 
   for (const stage of STAGES) {
@@ -529,7 +526,6 @@ describe('POST /orders/create-shipment/:orderId (Delhivery)', () => {
       addOns: [{ quantity: 1, addOn: orderIds.addOnOne }],
     });
     mockDelhivery();
-    const mails = captureMails();
     const res = await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS });
     assertBody(res, 200, ok('SHIPMENT_CREATE_SUCCESS', { success: true, packages: [{ waybill: 'WB-TEST-1' }] }));
 
@@ -585,18 +581,17 @@ describe('POST /orders/create-shipment/:orderId (Delhivery)', () => {
       shipped.orderHistory.map((entry) => entry.title),
       ['shipped'],
     );
-    const [mail] = await mails.wait(1);
+    const [mail] = mailed(1);
     assert.equal(mail.subject, `Order #${order.orderId} is Shipped - Pageaters`);
   });
 
   test('a COD (confirmed) order ships as COD for the order total', async () => {
     const order = await orderFor({ orderStatus: 'confirmed' });
     mockDelhivery();
-    const mails = captureMails();
     await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS });
     const [shipment] = JSON.parse(calls[0].data.slice('format=json&data='.length)).shipments;
     assert.deepEqual([shipment.payment_mode, shipment.cod_amount], ['COD', 499]);
-    await mails.wait(1);
+    mailed(1);
   });
 
   for (const stage of STAGES) {
@@ -604,11 +599,10 @@ describe('POST /orders/create-shipment/:orderId (Delhivery)', () => {
     test(`${allowed ? 'ships' : 'refuses'} an order in stage '${stage}'`, async () => {
       const order = await orderFor({ orderStatus: stage });
       mockDelhivery();
-      const mails = captureMails();
       const res = await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS });
       if (allowed) {
         assert.equal(res.status, 200);
-        await mails.wait(1);
+        mailed(1);
       } else {
         assertBody(res, 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
         assert.equal(calls.length, 0);
@@ -664,10 +658,9 @@ describe('POST /orders/create-shipment/:orderId (Delhivery)', () => {
     const other = await createUser();
     const order = await orderFor({ orderStatus: 'paid' });
     mockDelhivery();
-    const mails = captureMails();
     const res = await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS }, other.cookie);
     assert.equal(res.status, 200);
     assert.equal((await Order().findById(order._id)).orderStatus, 'shipped');
-    await mails.wait(1);
+    mailed(1);
   });
 });

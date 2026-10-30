@@ -9,8 +9,6 @@ Object.assign(process.env, {
   MONGODB_URI: URI,
   ENCRYPTION_KEY: 'k'.repeat(32),
   RAZORPAY_KEY_ID: 'rzp_test_FAKEKEY123',
-  TWILIO_ACCOUNT_SID: `AC${'0'.repeat(32)}`,
-  TWILIO_AUTH_TOKEN: 'fake-twilio-token',
 });
 
 const HELPER = '../src/helpers/connectToDb.helper';

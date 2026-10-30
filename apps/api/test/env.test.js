@@ -8,8 +8,15 @@ const MINIMAL = Object.freeze({
   MONGODB_URI: 'mongodb://127.0.0.1:27017/pageaters_test',
   ENCRYPTION_KEY: 'k'.repeat(32),
   RAZORPAY_KEY_ID: 'rzp_test_FAKEKEY123',
+});
+
+// What the real adapters need, with fake values.
+const SENDGRID = Object.freeze({ EMAIL_ADAPTER: 'sendgrid', SENDGRID_API_KEY: 'SG.fake-key', MAIL_FROM: 'sender@example.com' });
+const TWILIO = Object.freeze({
+  SMS_ADAPTER: 'twilio',
   TWILIO_ACCOUNT_SID: `AC${'0'.repeat(32)}`,
   TWILIO_AUTH_TOKEN: 'fake-twilio-token',
+  TWILIO_PHONE: '+15005550006',
 });
 
 const failure = (source) => {
@@ -32,6 +39,8 @@ describe('parseEnv', () => {
     assert.equal(env.DELHIVERY_BASE_URL, 'https://staging-express.delhivery.com');
     assert.equal(env.MAIL_FROM, 'no-reply@demo.pageaters.com');
     assert.equal(env.RAZORPAY_KEY_SECRET, undefined);
+    assert.equal(env.EMAIL_ADAPTER, 'mock');
+    assert.equal(env.SMS_ADAPTER, 'mock');
     assert.ok(Object.isFrozen(env));
     assert.ok(Object.isFrozen(env.ALLOWED_ORIGINS));
   });
@@ -151,6 +160,8 @@ describe('parseEnv', () => {
       TWILIO_AUTH_TOKEN: 'SECRETTOKENqq7',
       PORT: 'SECRETPORTqq7',
       APP_ENV: 'SECRETENVqq7',
+      EMAIL_ADAPTER: 'SECRETEMAILADAPTERqq7',
+      SMS_ADAPTER: 'SECRETSMSADAPTERqq7',
       ALLOWED_ORIGINS: 'https://SECRETORIGINqq7.example/path',
       MAIL_FROM: 'SECRETMAILqq7',
       TWILIO_PHONE: 'SECRETPHONEqq7',
@@ -160,5 +171,73 @@ describe('parseEnv', () => {
     assert.doesNotMatch(error.message, /SECRET|qq7/);
     // TWILIO_AUTH_TOKEN is valid here (any non-empty string), so it is the only variable not reported.
     assert.equal(error.variables.length, Object.keys(bad).length - 1);
+  });
+});
+
+describe('parseEnv adapters', () => {
+  test('defaults both adapters to mock and needs no vendor key for them', () => {
+    const env = parseEnv({ ...MINIMAL, EMAIL_ADAPTER: ' ', SMS_ADAPTER: '' });
+    assert.equal(env.EMAIL_ADAPTER, 'mock');
+    assert.equal(env.SMS_ADAPTER, 'mock');
+    assert.equal(env.SENDGRID_API_KEY, undefined);
+    assert.equal(env.TWILIO_ACCOUNT_SID, undefined);
+  });
+
+  test('accepts the mock explicitly, with or without vendor keys set', () => {
+    const env = parseEnv({ ...MINIMAL, ...SENDGRID, ...TWILIO, EMAIL_ADAPTER: 'mock', SMS_ADAPTER: 'mock' });
+    assert.equal(env.EMAIL_ADAPTER, 'mock');
+    assert.equal(env.SMS_ADAPTER, 'mock');
+  });
+
+  test('selects a real adapter when its keys are all set', () => {
+    const env = parseEnv({ ...MINIMAL, ...SENDGRID, ...TWILIO });
+    assert.equal(env.EMAIL_ADAPTER, 'sendgrid');
+    assert.equal(env.SMS_ADAPTER, 'twilio');
+    assert.equal(env.MAIL_FROM, 'sender@example.com');
+  });
+
+  test('requires the SendGrid key and sender only when EMAIL_ADAPTER=sendgrid', () => {
+    const error = failure({ ...MINIMAL, EMAIL_ADAPTER: 'sendgrid' });
+    assert.match(error.message, /SENDGRID_API_KEY: is required when EMAIL_ADAPTER=sendgrid/);
+    // MAIL_FROM has a default for the mock; a real send must name its sender.
+    assert.match(error.message, /MAIL_FROM: is required when EMAIL_ADAPTER=sendgrid/);
+    assert.deepEqual([...error.variables].sort(), ['MAIL_FROM', 'SENDGRID_API_KEY']);
+  });
+
+  test('requires the Twilio keys only when SMS_ADAPTER=twilio, naming each missing one', () => {
+    const error = failure({ ...MINIMAL, SMS_ADAPTER: 'twilio', TWILIO_AUTH_TOKEN: 'fake-twilio-token' });
+    assert.deepEqual([...error.variables].sort(), ['TWILIO_ACCOUNT_SID', 'TWILIO_PHONE']);
+    assert.match(error.message, /TWILIO_ACCOUNT_SID: is required when SMS_ADAPTER=twilio/);
+    assert.match(error.message, /TWILIO_PHONE: is required when SMS_ADAPTER=twilio/);
+  });
+
+  test('still validates a vendor key that is set for the selected adapter', () => {
+    const error = failure({ ...MINIMAL, ...TWILIO, TWILIO_ACCOUNT_SID: 'XXsecretqq7' });
+    assert.deepEqual(error.variables, ['TWILIO_ACCOUNT_SID']);
+    assert.match(error.message, /TWILIO_ACCOUNT_SID: must start with AC/);
+    assert.doesNotMatch(error.message, /qq7/);
+  });
+
+  test('reports adapter keys together with other problems', () => {
+    const error = failure({ ENCRYPTION_KEY: 'k'.repeat(32), RAZORPAY_KEY_ID: 'rzp_test_FAKEKEY123', EMAIL_ADAPTER: 'sendgrid' });
+    assert.deepEqual([...error.variables].sort(), ['MAIL_FROM', 'MONGODB_URI', 'SENDGRID_API_KEY']);
+  });
+
+  test('refuses an unknown adapter name without echoing it and without asking for vendor keys', () => {
+    for (const [name, value] of [
+      ['EMAIL_ADAPTER', 'smtpqq7'],
+      ['SMS_ADAPTER', 'constructor'],
+    ]) {
+      const error = failure({ ...MINIMAL, [name]: value });
+      assert.deepEqual(error.variables, [name]);
+      assert.match(error.message, new RegExp(`${name}: must be one of`));
+      assert.equal(error.message.includes(value), false);
+    }
+  });
+
+  test('never echoes a vendor key value', () => {
+    const error = failure({ ...MINIMAL, EMAIL_ADAPTER: 'sendgrid', SENDGRID_API_KEY: 'SG.SECRETqq7', SMS_ADAPTER: 'twilio', TWILIO_AUTH_TOKEN: 'SECRETTOKENqq7' });
+    assert.deepEqual([...error.variables].sort(), ['MAIL_FROM', 'TWILIO_ACCOUNT_SID', 'TWILIO_PHONE']);
+    assert.doesNotMatch(error.message, /SECRET|qq7/);
   });
 });

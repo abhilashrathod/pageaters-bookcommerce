@@ -2,7 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { asJson, assertBody, assertGuarded, createUser, envelopes, eventually, mockVendorCall, paged, startTestApp } = require('./helpers');
+const { asJson, assertBody, assertGuarded, createUser, envelopes, paged, sentEmails, startTestApp } = require('./helpers');
 
 // /api/v1/store-credit over HTTP: issue credit (admin), balance and history (shopper). Pins the legacy envelopes
 // byte for byte, written against the legacy controller before the service refactor.
@@ -12,7 +12,6 @@ const { ok, created, badRequest, badRequestObject } = envelopes;
 let api;
 let admin;
 let shopper;
-let mails;
 
 before(async () => {
   api = await startTestApp();
@@ -26,10 +25,6 @@ beforeEach(async () => {
   await api.reset();
   admin = await createUser({ role: 'ADMIN' });
   shopper = await createUser();
-  mails = [];
-  mockVendorCall('sendgrid.send', (mail) => {
-    mails.push(mail);
-  });
 });
 
 const issue = (body, cookie = admin.cookie) => api.request('/store-credit', { method: 'POST', body, cookie });
@@ -65,7 +60,8 @@ describe('POST /store-credit (issue)', () => {
     );
     assert.match(records[0].creditId, /^CR-\d{10}$/);
 
-    await eventually(() => mails.length === 2);
+    const mails = sentEmails();
+    assert.equal(mails.length, 2);
     assert.deepEqual(mails.map(({ to, subject }) => ({ to, subject })), [
       { to: shopper.user.email, subject: 'Your Store Credit is Here! - Pageaters' },
       { to: shopper.user.email, subject: 'Your Store Credit is Here! - Pageaters' },

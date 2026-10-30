@@ -1,18 +1,17 @@
 const mongoose = require('mongoose');
 const moment = require('moment');
 
-const { HOST, TWILIO } = require('../appConfig');
+const { HOST } = require('../appConfig');
 const { models } = require('../constants');
+const sms = require('../adapters/sms');
 const { AppError } = require('../helpers/appError.helper');
-const sendMailQueue = require('../helpers/sendMailQueue.helper');
 const { generateRandomNumber } = require('../helpers/utils.helper');
+const { sendTemplateMail } = require('./mail.service');
 
-// Verification: the email address (a link with an encrypted token, mailed through the mail queue → SendGrid) and the
-// contact number (a 6-digit OTP texted through Twilio to +91<number>). Twilio is called only here.
+// Verification: the email address (a link with an encrypted token, mailed through mail.service → the email adapter)
+// and the contact number (a 6-digit OTP texted through the SMS adapter to +91<number>).
 
 const User = mongoose.model(models.USER);
-
-const twilioClient = require('twilio')(TWILIO.ACCOUNT_SID, TWILIO.AUTH_TOKEN);
 
 /**
  * How mails and texts address the user: the full name, else the local part of the email.
@@ -62,7 +61,7 @@ const resendVerificationEmail = async ({ email }) => {
 
   const token = await user.generateVerifyEmailToken();
 
-  sendMailQueue.add({
+  await sendTemplateMail({
     emailModule: 'REGISTRATION',
     to: user.email,
     subject: 'Pageaters Account - Greetings from Pageaters!',
@@ -78,7 +77,7 @@ const resendVerificationEmail = async ({ email }) => {
  * saved without awaiting (legacy), so a failed text still leaves the OTP stored.
  * @param {{ userId: string, contactNo: string }} input
  * @returns {Promise<void>}
- * @throws Twilio's error when the text fails (→ 500).
+ * @throws the SMS adapter's error when the text fails (→ 500).
  */
 const sendContactVerification = async ({ userId, contactNo }) => {
   const verificationCode = generateRandomNumber(6);
@@ -91,11 +90,7 @@ const sendContactVerification = async ({ userId, contactNo }) => {
   user.contactVerified = false;
   user.save();
 
-  await twilioClient.messages.create({
-    body: otpText(user.fullName, user.email, verificationCode),
-    from: TWILIO.PHONE,
-    to: `+91${contactNo}`,
-  });
+  await sms.send({ to: `+91${contactNo}`, body: otpText(user.fullName, user.email, verificationCode) });
 };
 
 /**
@@ -113,11 +108,7 @@ const resendContactVerification = async ({ userId }) => {
   user.lastMessageSentOn = new Date().toISOString();
   user.save();
 
-  await twilioClient.messages.create({
-    body: otpText(user.fullName, user.email, user.contactOtp),
-    from: TWILIO.PHONE,
-    to: `+91${user.contactNo}`,
-  });
+  await sms.send({ to: `+91${user.contactNo}`, body: otpText(user.fullName, user.email, user.contactOtp) });
 };
 
 /**

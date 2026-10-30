@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { generateRandomNumber } = require('../helpers/utils.helper');
-const sendMailQueue = require('../helpers/sendMailQueue.helper');
+const { sendTemplateMail } = require('./mail.service');
 
 // Store credit: a shopper's balance (`user.storeCredit`) and its transaction log. Spending credit at checkout is
 // part of the order services.
@@ -12,7 +12,7 @@ const User = mongoose.model(models.USER);
 const CreditTransactions = mongoose.model(models.STORE_CREDIT_TRANSACTIONS);
 
 /**
- * Issues store credit to an active user: records a CREDIT transaction, adds `credit` to the balance and queues the
+ * Issues store credit to an active user: records a CREDIT transaction, adds `credit` to the balance and sends the
  * STORE_CREDIT_REWARD email.
  * Legacy (no validator, kept until the zod step): `credit` is not checked, so a negative or non-numeric amount is
  * recorded and applied as is; a malformed `userId` fails as a 500.
@@ -35,7 +35,7 @@ const issueCredit = async ({ userId, credit, orderId }) => {
   });
   await User.findOneAndUpdate({ _id: userId }, { $inc: { storeCredit: credit } }, { new: true });
 
-  sendMailQueue.add({
+  await sendTemplateMail({
     emailModule: 'STORE_CREDIT_REWARD',
     to: userRes.email,
     subject: `Your Store Credit is Here! - Pageaters`,
