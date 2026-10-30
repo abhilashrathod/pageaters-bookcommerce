@@ -28,14 +28,6 @@ module.exports = {
     CATEGORY: 'CATEGORY',
     BUNDLE: 'BUNDLE',
   },
-  BUCKETS: {
-    AUTHOR: 'pageaters-authors',
-    COLLECTIONS: 'pageaters-collections',
-    ASSETS: 'pageaters-assets',
-    CATEGORIES: 'pageaters-categories',
-    BUNDLES: 'pageaters-bundles',
-    BOOK: 'storebooks'
-  },
   VALID_FILE_TYPES: {
     JPG: 'jpg',
     PNG: 'png',

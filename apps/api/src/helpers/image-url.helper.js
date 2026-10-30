@@ -1,73 +1,23 @@
-const bufferModule = require('buffer');
-const { AWS } = require('../appConfig');
+// Image URLs for e-mails, the sitemap, the Google Merchant feed and the catalog export. Catalog image fields hold
+// full public URLs: the seed points every one at Vercel Blob (seed/src/upload.ts, checked by its loader) and admin
+// uploads answer the file's public URL (services/file.service.js). The legacy CloudFront image-resizer URLs built
+// from S3 keys are gone with S3. A pure function, shared by services and libs/ (which must not import services).
 
-const { enums } = require('../constants');
-
-// Image-resizer URLs on the CDN: a base64 JSON request (bucket, key, resize) appended to the CloudFront access
-// point. Pure functions shared by services and by libs/ (sitemap, Google Merchant feed), which must not import
-// services.
-
-// Legacy, kept: the fallback calls `.from` on the `buffer` module (not its `Buffer` class), so a key that btoa
-// rejects (characters above U+00FF) throws a TypeError instead of being encoded.
-function universalBtoa(str) {
+/**
+ * The public URL of a stored image: an absolute https URL passes through, normalised by the URL parser (`href`, so
+ * it is well-formed wherever it is embedded); anything else (a legacy storage key, another scheme, empty, missing)
+ * has no public URL and gives '' — an explicit "no image" rather than a broken or unsafe link.
+ * @param {unknown} value An image field (`poster`, `thumbnail`, `avatar`, `images[i]`).
+ * @returns {string}
+ */
+const imageUrl = (value) => {
+  if (typeof value !== 'string') return '';
   try {
-    return btoa(str);
+    const url = new URL(value);
+    return url.protocol === 'https:' ? url.href : '';
   } catch {
-    return bufferModule.from(str).toString('base64');
+    return '';
   }
-}
-
-const imageUrl = (bucket, name, height, width) => {
-  const imageRequest = JSON.stringify({
-    bucket,
-    key: name,
-    edits: {
-      resize: {
-        height,
-        width,
-        fit: 'cover',
-      },
-    },
-  });
-
-  return `${AWS.CLOUDFRONT_ACCESS_POINT}/${universalBtoa(imageRequest)}`;
 };
 
-/**
- * CDN URL of a book image (book bucket), 110×75 by default.
- * @param {string} name Object key (the book's `poster`).
- * @param {number} [height=110]
- * @param {number} [width=75]
- * @returns {string}
- */
-const returnProductImage = (name, height = 110, width = 75) => imageUrl(enums.BUCKETS.BOOK, name, height, width);
-
-/**
- * CDN URL of a bundle image, 75×75.
- * @param {string} name Object key (the bundle's `poster`).
- * @returns {string}
- */
-const returnBundleImage = (name) => imageUrl(enums.BUCKETS.BUNDLES, name, 75, 75);
-
-/**
- * CDN URL of a collection image, 75×75.
- * @param {string} name Object key (the collection's `poster`).
- * @returns {string}
- */
-const returnCollectionImage = (name) => imageUrl(enums.BUCKETS.COLLECTIONS, name, 75, 75);
-
-/**
- * CDN URL of a category image, 75×75.
- * @param {string} name Object key (the category's `thumbnail`).
- * @returns {string}
- */
-const returnCategoryImage = (name) => imageUrl(enums.BUCKETS.CATEGORIES, name, 75, 75);
-
-/**
- * CDN URL of an asset image (assets bucket, e.g. mystery box images), 75×75.
- * @param {string} name Object key.
- * @returns {string}
- */
-const returnAssetImage = (name) => imageUrl(enums.BUCKETS.ASSETS, name, 75, 75);
-
-module.exports = { returnAssetImage, returnBundleImage, returnCategoryImage, returnCollectionImage, returnProductImage };
+module.exports = { imageUrl };

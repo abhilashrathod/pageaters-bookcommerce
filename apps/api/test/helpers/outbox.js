@@ -17,9 +17,15 @@ const sentEmails = () => emailMock.list();
  */
 const sentTexts = () => smsMock.list();
 
+// The other mock adapters record what they were asked to do (payment orders, shipments, uploads); tests read them
+// through the adapter (`require('../src/adapters/payments').list()`, …). Required here only when clearing, so loading
+// the harness doesn't read the environment early.
+const MOCK_ADAPTERS = ['payments', 'shipping', 'storage'];
+
 const clearOutbox = () => {
   emailMock.clear();
   smsMock.clear();
+  for (const kind of MOCK_ADAPTERS) require(`../../src/adapters/${kind}`).clear();
 };
 
 module.exports = { clearOutbox, sentEmails, sentTexts };

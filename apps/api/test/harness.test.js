@@ -15,24 +15,23 @@ const twilio = require('twilio')(`AC${'0'.repeat(32)}`, 'test');
 const Razorpay = require('razorpay');
 const razorpay = new Razorpay({ key_id: 'rzp_test_placeholder', key_secret: 'test' });
 const sgMail = require('@sendgrid/mail');
-const axios = require('axios');
-const S3 = require('aws-sdk/clients/s3');
-const s3 = new S3({ region: 'ap-south-1' });
+const blob = require('@vercel/blob');
 
 test('the test env is applied when ./helpers is required', () => {
   assert.equal(process.env.APP_ENV, 'test');
   assert.match(process.env.MONGODB_URI, /^mongodb:\/\/127\.0\.0\.1:\d+\/pageaters_test$/);
   assert.equal(process.env.RAZORPAY_KEY_ID, 'rzp_test_placeholder');
+  for (const name of ['EMAIL_ADAPTER', 'SMS_ADAPTER', 'PAYMENTS_ADAPTER', 'SHIPPING_ADAPTER', 'STORAGE_ADAPTER']) {
+    assert.equal(process.env[name], 'mock', name);
+  }
 });
 
-test('unmocked async SDK calls reject; S3 calls throw', async () => {
+test('unmocked SDK calls reject', async () => {
   sgMail.setApiKey('SG.test');
   await assert.rejects(twilio.messages.create({ to: '+919000000000' }), isVendorCall('twilio.messages.create'));
   await assert.rejects(razorpay.orders.create({ amount: 100 }), isVendorCall('razorpay.orders.create'));
   await assert.rejects(sgMail.send({ to: 'shopper@example.com' }), isVendorCall('sendgrid.send'));
-  await assert.rejects(axios.get('https://track.example.com'), isVendorCall('axios.get'));
-  await assert.rejects(axios({ url: 'https://track.example.com' }), isVendorCall('axios'));
-  assert.throws(() => s3.upload({}), isVendorCall('S3.upload'));
+  await assert.rejects(blob.put('uploads/test.png', 'x', { access: 'public' }), isVendorCall('blob.put'));
 });
 
 test('mockVendorCall answers one call on clients created before it, until cleared', async () => {
@@ -41,11 +40,11 @@ test('mockVendorCall answers one call on clients created before it, until cleare
     calls.push(payload);
     return { id: 'order_test_1' };
   });
-  mockVendorCall('S3.upload', () => ({ promise: async () => ({ Key: 'test/key.png' }) }));
+  mockVendorCall('blob.put', (pathname) => ({ url: `https://files.example.com/${pathname}` }));
 
   assert.deepEqual(await razorpay.orders.create({ amount: 100 }), { id: 'order_test_1' });
   assert.deepEqual(calls, [{ amount: 100 }]);
-  assert.deepEqual(await s3.upload({}).promise(), { Key: 'test/key.png' });
+  assert.deepEqual(await blob.put('uploads/key.png', 'x'), { url: 'https://files.example.com/uploads/key.png' });
   // Other calls on the same client stay blocked.
   await assert.rejects(razorpay.payments.fetch('pay_test'), isVendorCall('razorpay.payments.fetch'));
 

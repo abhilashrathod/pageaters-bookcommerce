@@ -1,34 +1,24 @@
-const axios = require('axios');
 const mongoose = require('mongoose');
 const { get } = require('lodash');
 
+const shipping = require('../adapters/shipping');
 const { models } = require('../constants');
-const { DELHIVERY } = require('../appConfig');
 const { AppError } = require('../helpers/appError.helper');
 
-// A shopper's delivery addresses (soft-deleted, at most one default) and the Delhivery pincode check.
+// A shopper's delivery addresses (soft-deleted, at most one default) and the pincode check (the shipping adapter:
+// Delhivery or its mock).
 
 const Address = mongoose.model(models.ADDRESS);
 
 /**
- * Whether Delhivery delivers to a pincode (a non-empty `delivery_codes` answer).
- * Legacy: any courier or network error counts as unserviceable (false); the token travels in the query string.
- * The shipping adapter step moves this call behind the shipping adapter.
+ * Whether the courier delivers to a pincode.
+ * Legacy: any courier or network error counts as unserviceable (false); the error is not logged.
  * @param {string} pincode
  * @returns {Promise<boolean>}
  */
 const checkServiceabilityInternal = async (pincode) => {
   try {
-    const config = {
-      method: 'get',
-      url: `${DELHIVERY.BASE_URL}/c/api/pin-codes/json?filter_codes=${pincode}&token=${DELHIVERY.API_TOKEN}`,
-      headers: {},
-    };
-
-    const apiRes = await axios(config);
-    const pincodeRes = await apiRes.data.delivery_codes[0];
-
-    return Boolean(pincodeRes);
+    return Boolean(await shipping.checkPincode(pincode));
   } catch {
     return false;
   }
@@ -57,7 +47,7 @@ const getAddress = async (userId, id) => {
 };
 
 /**
- * Adds an address after checking its pincode with Delhivery; a default address clears the user's other defaults.
+ * Adds an address after checking its pincode with the courier; a default address clears the user's other defaults.
  * Legacy: a courier error counts as unserviceable; `email` falls back to the account email when empty.
  * @param {{ userId: string, email?: string }} user The caller (`req.user`: `userId`, `email`).
  * @param {object} fields fullName, email, contactNo, city, state, pinCode, addressLine1, addressLine2, landmark,
@@ -151,19 +141,14 @@ const deleteAddress = async (userId, id) => {
 };
 
 /**
- * Asks Delhivery whether a pincode is serviceable.
- * Legacy: also answers the courier's raw record (`raw`); a courier error propagates (500).
- * @param {string} pincode
+ * Asks the courier whether a pincode is serviceable.
+ * Legacy: also answers the courier's raw record (`raw`); a courier error propagates (500, the clean adapter error).
+ * @param {string} pincode Validated: 6 digits.
  * @returns {Promise<{ main: object, raw: object }>} `main`: serviceable, isCod, isPrepaid, district, state.
- * @throws {AppError} PINCODE_ERROR (400, object form) when Delhivery has no record for it.
+ * @throws {AppError} PINCODE_ERROR (400, object form) when the courier has no record for it.
  */
 const checkPincode = async (pincode) => {
-  const apiRes = await axios({
-    method: 'get',
-    url: `${DELHIVERY.BASE_URL}/c/api/pin-codes/json?filter_codes=${pincode}&token=${DELHIVERY.API_TOKEN}`,
-    headers: {},
-  });
-  const pincodeRes = apiRes.data.delivery_codes[0];
+  const pincodeRes = await shipping.checkPincode(pincode);
 
   if (!pincodeRes) throw new AppError('PINCODE_ERROR', { data: {} });
 

@@ -5,6 +5,7 @@ const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const { kebabCase } = require('lodash');
 
 const { models } = require('../constants');
+const { imageUrl } = require('../helpers/image-url.helper');
 const { PROJECT_ROOT } = require('../appConfig');
 
 // The catalog CSV export (a product-import template), a development tool.
@@ -61,7 +62,7 @@ const toRow = (item) => ({
   dimensions: item.dimensions,
   weight: item.weight,
   availability: item.availability,
-  productImage: `https://storebooks.s3.ap-south-1.amazonaws.com/${item.poster}`,
+  productImage: imageUrl(item.poster),
 });
 
 /**

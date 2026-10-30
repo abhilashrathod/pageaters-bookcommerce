@@ -115,8 +115,9 @@ module.exports.createShipmentForDelhivery = async (req, res) => {
     const data = await orderShipping.createDelhiveryShipment(orderId, dimensions);
     return res.ok({ message: 'SHIPMENT_CREATE_SUCCESS', data });
   } catch (e) {
-    // Expected refusals answer through AppError; only log an unexpected Delhivery failure.
-    if (!(e instanceof AppError)) console.error('Delhivery shipment failed', e);
+    // Expected refusals answer through AppError; an unexpected failure is logged by message, code and status only
+    // (the shipping adapter's errors carry nothing else: no token, address or phone).
+    if (!(e instanceof AppError)) console.error('Shipment failed:', e?.message, e?.code ?? '', e?.status ?? '');
     return handleControllerError(res, e);
   }
 };

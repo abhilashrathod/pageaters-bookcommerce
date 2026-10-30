@@ -1,38 +1,33 @@
 const mongoose = require('mongoose');
 const { get } = require('lodash');
-const Razorpay = require('razorpay');
 
+const payments = require('../adapters/payments');
 const { models, enums } = require('../constants');
-const { RAZOR_PAY, RAZOR_PAY_WEBHOOKS } = require('../appConfig');
 const { debitStoreCredit, deductInventory, resetCart } = require('./order-fulfilment.service');
 const { sendConfirmationEmail, sendConfirmationSms } = require('./order-notifications.service');
 const { CART_POPULATE } = require('./order-pricing.service');
 const { ORDER_POPULATE } = require('./order-queries.service');
 
-// Razorpay: the payment order created at checkout, and the business side of the two webhooks (payment captured,
-// refund processed). The webhooks always answer `{ status: 'ok' }` — the controller does that — so Razorpay never
-// retries; these functions just do nothing when the signature is missing or wrong or no order matches.
+// Payments (the payments adapter: Razorpay or its mock): the payment order created at checkout, and the business
+// side of the two webhooks (payment captured, refund processed). The webhooks always answer `{ status: 'ok' }` — the
+// controller does that — so Razorpay never retries; these functions just do nothing when the signature is missing
+// or wrong or no order matches.
 
 const Order = mongoose.model(models.ORDER);
 const User = mongoose.model(models.USER);
-
-const razorpay = new Razorpay({ key_id: RAZOR_PAY.USER_ID, key_secret: RAZOR_PAY.PASSWORD });
 
 const PAID_DESCRIPTION =
   'We have received your order. We shall start preparing your shipment. Once shipment is handover to shipment company, you will receive tracking information and estimated delivery date. ';
 const REFUNDED_DESCRIPTION = 'Refund is successfully processed. It will be with you in 5-7 business days. Thank you.';
 
-// Razorpay's own check: HMAC-SHA256 of the raw body with the webhook secret.
-const isSigned = (rawBody, signature, secret) => Boolean(signature) && Razorpay.validateWebhookSignature(rawBody, signature, secret);
-
 /**
- * Creates the Razorpay order a shopper pays at checkout.
+ * Creates the payment order a shopper pays at checkout.
  * @param {string} orderId Public order id (`OD-…`), used for the receipt.
  * @param {number} total Rupees; sent in paise.
- * @returns {Promise<{ id: string }>} Razorpay's order. Rejects when Razorpay fails (→ 500).
+ * @returns {Promise<{ id: string }>} The payment order. Rejects when the adapter fails (the caller answers 500
+ *   and leaves the order `attempted`).
  */
-const createPaymentOrder = (orderId, total) =>
-  razorpay.orders.create({ amount: total * 100, currency: 'INR', receipt: `${orderId}-RCPTID` });
+const createPaymentOrder = (orderId, total) => payments.createOrder({ amount: total * 100, currency: 'INR', receipt: `${orderId}-RCPTID` });
 
 /**
  * Payment-captured webhook: marks the matching `created` order paid, stores the Razorpay payment entity, then takes
@@ -42,7 +37,7 @@ const createPaymentOrder = (orderId, total) =>
  * @returns {Promise<void>}
  */
 const confirmPayment = async ({ rawBody, signature, payload }) => {
-  if (!isSigned(rawBody, signature, RAZOR_PAY_WEBHOOKS.PAYMENT_CAPTURED)) return;
+  if (!payments.verifyWebhookSignature(rawBody, signature)) return;
 
   const order = await Order.findOne({
     orderStatus: enums.ORDER_STAGES.CREATED,
@@ -76,7 +71,7 @@ const confirmPayment = async ({ rawBody, signature, payload }) => {
  * @returns {Promise<void>}
  */
 const recordRefund = async ({ rawBody, signature, payload }) => {
-  if (!isSigned(rawBody, signature, RAZOR_PAY_WEBHOOKS.PAYMENT_REFUND_COMPLETE)) return;
+  if (!payments.verifyWebhookSignature(rawBody, signature)) return;
 
   const order = await Order.findOne({ razorOrderId: get(payload, 'payment.entity.order_id', '') }).populate(CART_POPULATE);
   if (!order) return;

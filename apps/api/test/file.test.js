@@ -1,11 +1,13 @@
 const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 const mongoose = require('mongoose');
 
-const { assertBody, assertGuarded, createUser, envelopes, eventually, mockVendorCall, startTestApp } = require('./helpers');
+const { assertBody, assertGuarded, createUser, envelopes, startTestApp } = require('./helpers');
+const storage = require('../src/adapters/storage');
 
-// POST /api/v1/file/upload (admin image upload to S3, mocked) over HTTP, written against the legacy controller
-// before the service refactor.
+// POST /api/v1/file/upload (admin image upload through the mock storage adapter) over HTTP, written against the
+// legacy controller before the service refactor.
 
 const { ok, badRequest, serverError } = envelopes;
 
@@ -13,7 +15,8 @@ const File = () => mongoose.model('file');
 
 let api;
 let admin;
-let uploads;
+
+const uploads = () => storage.list();
 
 before(async () => {
   api = await startTestApp();
@@ -26,11 +29,6 @@ after(async () => {
 beforeEach(async () => {
   await api.reset();
   admin = await createUser({ role: 'ADMIN' });
-  uploads = [];
-  mockVendorCall('S3.upload', (params) => {
-    uploads.push(params);
-    return { promise: async () => ({ Location: `https://files.example.com/${params.Bucket}/${params.Key}` }) };
-  });
 });
 
 // Multipart upload through the app's multer middleware (api.request only sends JSON).
@@ -50,36 +48,43 @@ describe('POST /file/upload', () => {
     await assertGuarded(api, ['POST', '/file/upload', {}], { admin: true, userCookie: shopper.cookie });
   });
 
-  test('uploads to the bucket of the file module and answers the storage key (legacy: not a URL)', async () => {
+  // 6b: answers the file's public URL (was: the storage key), and the File record is written before the answer
+  // (was: not awaited).
+  test("stores the file under its module's folder and answers its public URL", async () => {
     const res = await upload({ fields: { fileModule: 'AUTHOR', title: 'Test Author Photo' }, file: PNG });
     assert.equal(res.status, 200);
-    const [params] = uploads;
-    assert.equal(params.Bucket, 'pageaters-authors');
-    assert.match(params.Key, /^test-author-photo-[A-Za-z0-9]{10}-\d+\.png$/);
-    assert.equal(Buffer.from(params.Body).toString(), PNG.content);
-    assert.equal(JSON.stringify(res.body), JSON.stringify(ok('FILE_UPLOADED', { fileUrl: params.Key })));
+    const [stored] = uploads();
+    assert.match(stored.pathname, /^uploads\/authors\/test-author-photo-[A-Za-z0-9]{10}-\d+\.png$/);
+    assert.equal(stored.url, `https://storage.mock.invalid/${stored.pathname}`);
+    assert.equal(stored.contentType, 'image/png');
+    assert.equal(stored.sha256, crypto.createHash('sha256').update(PNG.content).digest('hex'));
+    assert.equal(JSON.stringify(res.body), JSON.stringify(ok('FILE_UPLOADED', { fileUrl: stored.url })));
 
-    // Legacy: the File record is created without awaiting it.
-    const record = await eventually(() => File().findOne({ fileName: params.Key }));
+    const fileName = stored.pathname.split('/').pop();
+    const record = await File().findOne({ fileName });
     assert.equal(record.fileModule, 'AUTHOR');
-    assert.equal(record.fileUrl, `https://files.example.com/pageaters-authors/${params.Key}`);
+    assert.equal(record.fileUrl, stored.url);
     assert.equal(record.mimeType, 'image/png');
   });
 
-  test('picks the bucket per module', async () => {
+  test('picks the folder per module, and the content type from the extension', async () => {
     const cases = [
-      ['STORE_BOOK', 'storebooks'],
-      ['COLLECTION', 'pageaters-collections'],
-      ['CATEGORY', 'pageaters-categories'],
-      ['BUNDLE', 'pageaters-bundles'],
-      ['ASSETS', 'pageaters-assets'],
+      ['STORE_BOOK', 'books'],
+      ['COLLECTION', 'collections'],
+      ['CATEGORY', 'categories'],
+      ['BUNDLE', 'bundles'],
+      ['ASSETS', 'assets'],
     ];
-    for (const [fileModule, bucket] of cases) {
-      uploads = [];
+    for (const [fileModule, folder] of cases) {
+      storage.clear();
       await upload({ fields: { fileModule, title: 'x' }, file: PNG });
-      assert.equal(uploads[0].Bucket, bucket, fileModule);
+      assert.match(uploads()[0].pathname, new RegExp(`^uploads/${folder}/x-`), fileModule);
     }
-    await eventually(async () => (await File().countDocuments()) === cases.length);
+    assert.equal(await File().countDocuments(), cases.length);
+
+    storage.clear();
+    await upload({ fields: { fileModule: 'AUTHOR', title: 'x' }, file: { ...PNG, name: 'photo.jpeg', type: 'text/html' } });
+    assert.equal(uploads()[0].contentType, 'image/jpeg', 'never the client-sent type');
   });
 
   // Phase 4: the module is checked before the upload. Was: an unknown, missing or array module went to the book
@@ -90,33 +95,40 @@ describe('POST /file/upload', () => {
     for (const fields of invalid) {
       assertBody(await upload({ fields: { ...fields, title: 'x' }, file: PNG }), 400, badRequest('INVALID_FILE'));
     }
-    assert.deepEqual(uploads, []);
+    assert.deepEqual(uploads(), []);
     assert.equal(await File().countDocuments(), 0);
   });
 
-  test('DEFAULT uploads to the book bucket', async () => {
+  test('DEFAULT uploads to the books folder', async () => {
     assert.equal((await upload({ fields: { fileModule: 'DEFAULT', title: 'x' }, file: PNG })).status, 200);
-    assert.equal(uploads[0].Bucket, 'storebooks');
-    await eventually(async () => (await File().countDocuments()) === 1);
+    assert.match(uploads()[0].pathname, /^uploads\/books\//);
+    assert.equal(await File().countDocuments(), 1);
   });
 
   test('refuses a request without a file, or with an unsupported extension', async () => {
     assertBody(await upload({ fields: { title: 'x' } }), 400, badRequest('NO_FILE_PRESENT'));
     assertBody(await upload({ fields: { title: 'x' }, file: { ...PNG, name: 'cover.gif' } }), 400, badRequest('UNSUPPORTED_FILE_TYPE'));
-    assert.deepEqual(uploads, []);
+    assert.deepEqual(uploads(), []);
   });
 
   test('legacy: a JSON body (no multipart) answers 500', async () => {
     assertBody(await api.request('/file/upload', { method: 'POST', body: { title: 'x' }, cookie: admin.cookie }), 500, serverError);
   });
 
-  test('an S3 failure answers 500 and records nothing', async () => {
-    mockVendorCall('S3.upload', () => ({
-      promise: async () => {
-        throw new Error('S3 down');
-      },
-    }));
+  test('a storage failure answers 500 and records nothing', async (t) => {
+    t.mock.method(storage, 'put', async () => {
+      throw Object.assign(new Error('Storage upload failed'), { status: 503 });
+    });
     assertBody(await upload({ fields: { fileModule: 'AUTHOR', title: 'x' }, file: PNG }), 500, serverError);
     assert.equal(await File().countDocuments(), 0);
+  });
+
+  // 6b: the record write is awaited, so its failure answers 500 (was: an unhandled rejection after a 200).
+  test('a failed record write answers 500', async (t) => {
+    t.mock.method(File(), 'create', async () => {
+      throw new Error('write failed');
+    });
+    assertBody(await upload({ fields: { fileModule: 'AUTHOR', title: 'x' }, file: PNG }), 500, serverError);
+    assert.equal(uploads().length, 1, 'the file itself was stored');
   });
 });

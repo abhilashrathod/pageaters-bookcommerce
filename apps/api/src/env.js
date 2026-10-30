@@ -53,9 +53,11 @@ const schema = z.object({
   // (ADAPTER_KEYS below).
   EMAIL_ADAPTER: z.enum(['sendgrid', 'mock'], { error: 'must be one of sendgrid, mock' }).default('mock'),
   SMS_ADAPTER: z.enum(['twilio', 'mock'], { error: 'must be one of twilio, mock' }).default('mock'),
+  PAYMENTS_ADAPTER: z.enum(['razorpay', 'mock'], { error: 'must be one of razorpay, mock' }).default('mock'),
+  SHIPPING_ADAPTER: z.enum(['delhivery', 'mock'], { error: 'must be one of delhivery, mock' }).default('mock'),
+  STORAGE_ADAPTER: z.enum(['blob', 'mock'], { error: 'must be one of blob, mock' }).default('mock'),
 
-  // Required: the database, auth, and the Razorpay SDK client, which is constructed when its module loads and
-  // throws without credentials (until the payments adapter).
+  // Required: the database and auth.
   // A raw `@` in the password makes the driver read part of the password as a host name (and log it), so the
   // credentials may hold only the one `@` that ends them.
   MONGODB_URI: required(
@@ -71,17 +73,19 @@ const schema = z.object({
   ENCRYPTION_KEY: required(
     z.string().refine((value) => Buffer.byteLength(value, 'utf8') === 32, 'must be exactly 32 bytes (use 32 ASCII characters)'),
   ),
-  // Critical guard (AGENTS.md §6): live Razorpay keys are refused outright; only test-mode keys may be used.
-  RAZORPAY_KEY_ID: required(
-    z
-      .string()
-      .refine((value) => !value.startsWith('rzp_live_'), 'is a live key (rzp_live_…); only test-mode keys are allowed')
-      .refine((value) => value.startsWith('rzp_live_') || value.startsWith('rzp_test_'), 'must start with rzp_test_'),
-  ),
 
   // Optional: only the feature that uses the variable fails without it. The vendor keys of an adapter become
   // required when that adapter is selected.
+  // Critical guard (AGENTS.md §6): whenever a Razorpay key ID is set, whichever payments adapter is selected, a live
+  // key is refused outright; only test-mode keys may be used. Required with PAYMENTS_ADAPTER=razorpay.
+  RAZORPAY_KEY_ID: z
+    .string()
+    .refine((value) => !value.startsWith('rzp_live_'), 'is a live key (rzp_live_…); only test-mode keys are allowed')
+    .refine((value) => value.startsWith('rzp_live_') || value.startsWith('rzp_test_'), 'must start with rzp_test_')
+    .optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
+  // Required in staging and production with either payments adapter (ENVIRONMENT_KEYS): without it no webhook
+  // verifies, and a deployed API must never run that way unnoticed.
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
   DELHIVERY_BASE_URL: httpUrl('must be an http(s) URL').default('https://staging-express.delhivery.com'),
   DELHIVERY_API_TOKEN: z.string().optional(),
@@ -93,10 +97,7 @@ const schema = z.object({
     .optional(),
   SENDGRID_API_KEY: z.string().optional(),
   MAIL_FROM: z.email({ error: 'must be an email address' }).default('no-reply@demo.pageaters.com'),
-  S3_REGION: z.string().optional(),
-  S3_ACCESS_KEY_ID: z.string().optional(),
-  S3_SECRET_ACCESS_KEY: z.string().optional(),
-  IMAGE_CDN_URL: httpUrl('must be an http(s) URL').optional(),
+  BLOB_READ_WRITE_TOKEN: z.string().optional(),
 });
 
 const VARIABLES = Object.keys(schema.shape);
@@ -106,16 +107,27 @@ const VARIABLES = Object.keys(schema.shape);
 const ADAPTER_KEYS = {
   EMAIL_ADAPTER: { sendgrid: ['SENDGRID_API_KEY', 'MAIL_FROM'] },
   SMS_ADAPTER: { twilio: ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_PHONE'] },
+  PAYMENTS_ADAPTER: { razorpay: ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET'] },
+  SHIPPING_ADAPTER: { delhivery: ['DELHIVERY_API_TOKEN'] },
+  STORAGE_ADAPTER: { blob: ['BLOB_READ_WRITE_TOKEN'] },
+};
+
+// Variables required in a deployed environment whichever adapter is selected, keyed by APP_ENV.
+const ENVIRONMENT_KEYS = {
+  staging: ['RAZORPAY_WEBHOOK_SECRET'],
+  production: ['RAZORPAY_WEBHOOK_SECRET'],
 };
 
 // `<KEY>: is required when <SELECTOR>=<adapter>` for each key the selected real adapters miss. Reads the raw input:
 // the selector values are fixed names (an invalid one is reported by the schema), so the message never echoes input.
 const missingAdapterKeys = (input) => {
   const problems = [];
-  for (const [selector, adapters] of Object.entries(ADAPTER_KEYS)) {
+  for (const [selector, adapters] of Object.entries({ ...ADAPTER_KEYS, APP_ENV: ENVIRONMENT_KEYS })) {
     const keys = Object.hasOwn(adapters, input[selector] ?? '') ? adapters[input[selector]] : [];
     for (const name of keys) {
-      if (input[name] === undefined) problems.push({ name, reason: `is required when ${selector}=${input[selector]}` });
+      if (input[name] === undefined && !problems.some((problem) => problem.name === name)) {
+        problems.push({ name, reason: `is required when ${selector}=${input[selector]}` });
+      }
     }
   }
   return problems;

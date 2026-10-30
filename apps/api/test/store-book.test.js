@@ -240,9 +240,10 @@ describe('GET /store-books/bulk/export', () => {
       header,
       'Slug,Title,Body (HTML),Brand,Release Year,Categories,Tags,Inventory,Sell Price,Discount,Weight,dimensions,SKU,MRP,Language,ISBN,Version,Pages,Availability,Poster',
     );
+    // 6b: the poster URL passes through (was: prefixed with the legacy S3 bucket URL).
     assert.deepEqual(rows.sort(), [
-      'test-book-one-a-test,Test Book One (A Test),Line one<br>Line two,Test Press,,Test Fiction,Test Author A,25,449,10,0,,test-book-one,499,English,9990000000001,,200,available,https://storebooks.s3.ap-south-1.amazonaws.com/https://images.example.com/test-cover.png',
-      'test-book-two,Test Book Two ,,,,Test Fiction,Test Author B,25,449,10,0,,test-book-two,499,English,9990000000002,,200,available,https://storebooks.s3.ap-south-1.amazonaws.com/https://images.example.com/test-cover.png',
+      'test-book-one-a-test,Test Book One (A Test),Line one<br>Line two,Test Press,,Test Fiction,Test Author A,25,449,10,0,,test-book-one,499,English,9990000000001,,200,available,https://images.example.com/test-cover.png',
+      'test-book-two,Test Book Two ,,,,Test Fiction,Test Author B,25,449,10,0,,test-book-two,499,English,9990000000002,,200,available,https://images.example.com/test-cover.png',
     ]);
   });
 });

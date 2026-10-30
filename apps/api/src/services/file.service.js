@@ -1,48 +1,46 @@
 const mongoose = require('mongoose');
-const S3 = require('aws-sdk/clients/s3');
 const { kebabCase } = require('lodash');
 
 const { adminFileModuleSchema } = require('@pageaters/shared');
 
-const { AWS } = require('../appConfig');
+const storage = require('../adapters/storage');
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { generateRandomString } = require('../helpers/utils.helper');
 
-// Admin image uploads to S3, one bucket per file module. The adapters step moves this to Vercel Blob behind a
-// storage adapter.
+// Admin image uploads, through the storage adapter (Vercel Blob or its mock), under one folder per file module.
 
 const File = mongoose.model(models.FILE);
 
-const awsStoreBooksInstance = new S3({
-  region: AWS.BUCKET_REGION,
-  accessKeyId: AWS.BUCKET_ACCESS_KEY,
-  secretAccessKey: AWS.BUCKET_SECRET_KEY,
-});
-
-const BUCKETS = {
-  [enums.FILE_MODULES.STORE_BOOK]: enums.BUCKETS.BOOK,
-  [enums.FILE_MODULES.AUTHOR]: enums.BUCKETS.AUTHOR,
-  [enums.FILE_MODULES.COLLECTION]: enums.BUCKETS.COLLECTIONS,
-  [enums.FILE_MODULES.CATEGORY]: enums.BUCKETS.CATEGORIES,
-  [enums.FILE_MODULES.BUNDLE]: enums.BUCKETS.BUNDLES,
-  [enums.FILE_MODULES.ASSETS]: enums.BUCKETS.ASSETS,
+// `uploads/<folder>/…`: the folder names follow the seed's catalog folders (seed/src/upload.ts), but uploads live
+// beside `catalog/`, never in it — the seed reports every blob under `catalog/` it didn't make as unused.
+const UPLOAD_PREFIX = 'uploads';
+const FOLDERS = {
+  [enums.FILE_MODULES.STORE_BOOK]: 'books',
+  [enums.FILE_MODULES.AUTHOR]: 'authors',
+  [enums.FILE_MODULES.COLLECTION]: 'collections',
+  [enums.FILE_MODULES.CATEGORY]: 'categories',
+  [enums.FILE_MODULES.BUNDLE]: 'bundles',
+  [enums.FILE_MODULES.ASSETS]: 'assets',
 };
 
-// DEFAULT (the only known module without a bucket of its own) uses the book bucket.
-const getBucketName = (fileModule) => (Object.hasOwn(BUCKETS, fileModule) ? BUCKETS[fileModule] : enums.BUCKETS.BOOK);
+// DEFAULT (the only known module without a folder of its own) uses the books folder, as it used the book bucket.
+const folderOf = (fileModule) => (Object.hasOwn(FOLDERS, fileModule) ? FOLDERS[fileModule] : FOLDERS[enums.FILE_MODULES.STORE_BOOK]);
+
+// The stored content type follows the checked extension, never the client's multipart header.
+const CONTENT_TYPES = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png' };
 
 /**
- * Uploads an image to the bucket of its file module (DEFAULT uses the book bucket) as
- * `<kebab title>-<random>-<timestamp>.<ext>`, and records it in the `file` collection. The module must be one the
- * File model accepts (`AdminFileModule` in @pageaters/shared), checked before the upload.
- * Legacy (fixed in the adapters step): the record is created without awaiting it, so a failed write is an unhandled
- * rejection after the response; the caller gets the storage key, not a URL.
+ * Stores an image publicly as `uploads/<module folder>/<kebab title>-<random>-<timestamp>.<ext>` (DEFAULT uses the
+ * books folder), then records it in the `file` collection. The module must be one the File model accepts
+ * (`AdminFileModule` in @pageaters/shared), checked before the upload.
  * @param {{ fileModule?: string, title?: string, file?: { originalname: string, buffer: Buffer, mimetype: string } }} input
  *   `file` is the multer file.
- * @returns {Promise<string>} The storage key (file name).
+ * @returns {Promise<string>} The file's public URL.
  * @throws {AppError} NO_FILE_PRESENT (400); UNSUPPORTED_FILE_TYPE (400) unless the extension is jpg, jpeg or png;
- *   INVALID_FILE (400) for a missing or unknown `fileModule` (an array from a repeated field too).
+ *   INVALID_FILE (400) for a missing or unknown `fileModule` (an array from a repeated field too). A storage failure
+ *   rejects with the adapter's clean error (→ 500) and records nothing; a failed record write rejects (→ 500) after
+ *   the file was stored.
  */
 const uploadFile = async ({ fileModule, title, file }) => {
   if (!file) throw new AppError('NO_FILE_PRESENT');
@@ -50,19 +48,19 @@ const uploadFile = async ({ fileModule, title, file }) => {
   const ext = file.originalname.split('.').pop();
   if (!Object.values(enums.VALID_FILE_TYPES).includes(ext)) throw new AppError('UNSUPPORTED_FILE_TYPE');
 
-  // Before the upload: the File model accepts only these modules, so an unknown one would leave an orphaned object.
+  // Before the upload: the File model accepts only these modules, so an unknown one would leave an orphaned file.
   if (!adminFileModuleSchema.safeParse(fileModule).success) throw new AppError('INVALID_FILE');
 
-  const slug = kebabCase(title);
-  const bucketName = getBucketName(fileModule);
+  const fileName = `${kebabCase(title)}-${generateRandomString(10)}-${Date.now()}.${ext}`;
+  const { url } = await storage.put({
+    pathname: `${UPLOAD_PREFIX}/${folderOf(fileModule)}/${fileName}`,
+    body: file.buffer,
+    contentType: CONTENT_TYPES[ext],
+  });
 
-  const fileName = `${slug}-${generateRandomString(10)}-${Date.now()}.${ext}`;
+  await File.create({ fileName, fileModule, fileUrl: url, mimeType: file.mimetype });
 
-  const bucketRes = await awsStoreBooksInstance.upload({ Bucket: bucketName, Body: file.buffer, Key: fileName }).promise();
-
-  void File.create({ fileName, fileModule, fileUrl: bucketRes.Location, mimeType: file.mimetype });
-
-  return fileName;
+  return url;
 };
 
 module.exports = { uploadFile };

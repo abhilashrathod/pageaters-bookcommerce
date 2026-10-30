@@ -2,7 +2,7 @@ const moment = require('moment');
 
 const sms = require('../adapters/sms');
 const environment = require('../helpers/environment.helper');
-const { returnAssetImage, returnBundleImage, returnProductImage } = require('../helpers/image-url.helper');
+const { imageUrl } = require('../helpers/image-url.helper');
 const { sendTemplateMail } = require('./mail.service');
 
 // The shopper's order e-mails and the confirmation SMS. E-mails are rendered and sent through mail.service.js (the
@@ -40,13 +40,13 @@ const requestSummary = (order, type) => ({
   ...orderSummary(order),
 });
 
-// Rewrite populated item images to CDN URLs in place and return the same array (legacy).
-const withCdnImages = (items, path, field, toUrl) => {
-  for (const item of items) item[path][field] = toUrl(item[path][field]);
+// Normalise populated item images to their public URLs in place and return the same array (legacy: in place).
+const withImageUrls = (items, path, field) => {
+  for (const item of items) item[path][field] = imageUrl(item[path][field]);
   return items;
 };
-const withCdnBoxImages = (boxes) => {
-  for (const item of boxes) item.box.images[0] = returnAssetImage(item.box.images[0]);
+const withBoxImageUrls = (boxes) => {
+  for (const item of boxes) item.box.images[0] = imageUrl(item.box.images[0]);
   return boxes;
 };
 
@@ -69,8 +69,8 @@ const sendConfirmationSms = async (user, orderId) => {
 };
 
 /**
- * Sends the order confirmation e-mail, in production only. Rewrites the populated product, bundle and box images
- * to CDN URLs on the order in place (legacy). Never fails.
+ * Sends the order confirmation e-mail, in production only. Normalises the populated product, bundle and box images
+ * to their public URLs on the order in place (legacy: in place). Never fails.
  * @param {{ fullName?: string, email: string }} user
  * @param {object} order Order with populated items and delivery address.
  * @returns {Promise<void>}
@@ -86,9 +86,9 @@ const sendConfirmationEmail = async (user, order) => {
         ORDER_ID: order.orderId,
         ORDER_DATE: formatDate(order.orderDate),
         FULL_NAME: readerName(user),
-        PRODUCTS: withCdnImages(order.products, 'product', 'poster', returnProductImage),
-        BUNDLES: withCdnImages(order.bundles, 'bundle', 'poster', returnBundleImage),
-        BOXES: withCdnBoxImages(order.boxes),
+        PRODUCTS: withImageUrls(order.products, 'product', 'poster'),
+        BUNDLES: withImageUrls(order.bundles, 'bundle', 'poster'),
+        BOXES: withBoxImageUrls(order.boxes),
         SUBTOTAL: order.subTotal,
         SHIPPING: order.shipping,
         STORE_CREDIT: order.storeCredit,

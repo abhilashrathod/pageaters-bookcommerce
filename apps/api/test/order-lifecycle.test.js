@@ -2,8 +2,9 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { assertBody, createUser, envelopes, eventually, ids, loadCatalog, mockVendorCall, sentEmails, startTestApp } = require('./helpers');
+const { assertBody, createUser, envelopes, eventually, ids, loadCatalog, sentEmails, startTestApp } = require('./helpers');
 const { createAddress, createOrder, loadOrderCatalog, orderIds, razorpaySignature } = require('./helpers/fixtures/orders');
+const shipping = require('../src/adapters/shipping');
 const { ORDER_STAGES } = require('../src/constants/enums');
 
 // Order status transitions over HTTP: admin ship / deliver / cancel, shopper cancel / return / replace, return and
@@ -506,18 +507,10 @@ describe('POST /orders/refund/processed (Razorpay refund webhook)', () => {
   });
 });
 
-describe('POST /orders/create-shipment/:orderId (Delhivery)', () => {
+describe('POST /orders/create-shipment/:orderId (mock shipping adapter)', () => {
   const DIMENSIONS = { width: 20, height: 5, weight: 800 };
-  let calls;
-
-  const mockDelhivery = (answer = { success: true, packages: [{ waybill: 'WB-TEST-1' }] }) => {
-    calls = [];
-    mockVendorCall('axios', (config) => {
-      calls.push(config);
-      if (config.url.endsWith('/api/cmu/create.json')) return { data: answer };
-      throw new Error(`unexpected Delhivery call ${config.url}`);
-    });
-  };
+  // What the mock courier was asked to ship (the Delhivery request itself is pinned in adapters-shipping.test.js).
+  const shipments = () => shipping.list().filter((entry) => entry.type === 'shipment');
 
   test('creates a prepaid shipment for a paid order and ships it', async () => {
     const order = await orderFor({
@@ -525,20 +518,12 @@ describe('POST /orders/create-shipment/:orderId (Delhivery)', () => {
       boxes: [{ quantity: 1, box: orderIds.boxOne }],
       addOns: [{ quantity: 1, addOn: orderIds.addOnOne }],
     });
-    mockDelhivery();
     const res = await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS });
-    assertBody(res, 200, ok('SHIPMENT_CREATE_SUCCESS', { success: true, packages: [{ waybill: 'WB-TEST-1' }] }));
+    assert.equal(shipments().length, 1);
+    const [{ shipment: payload, waybill }] = shipments();
+    assert.match(waybill, /^MOCK\d{10}$/);
+    assertBody(res, 200, ok('SHIPMENT_CREATE_SUCCESS', { success: true, packages: [{ waybill }] }));
 
-    assert.equal(calls.length, 1);
-    const [config] = calls;
-    assert.equal(config.method, 'post');
-    assert.equal(config.url, 'https://staging-express.delhivery.com/api/cmu/create.json');
-    assert.equal(
-      JSON.stringify(config.headers),
-      JSON.stringify({ Authorization: 'Token undefined', 'Content-Type': 'application/x-www-form-urlencoded' }),
-    );
-    assert.ok(config.data.startsWith('format=json&data='));
-    const payload = JSON.parse(config.data.slice('format=json&data='.length));
     assert.equal(
       JSON.stringify(payload),
       JSON.stringify({
@@ -576,7 +561,7 @@ describe('POST /orders/create-shipment/:orderId (Delhivery)', () => {
 
     const shipped = await Order().findById(order._id);
     assert.equal(shipped.orderStatus, 'shipped');
-    assert.equal(shipped.shipmentTrackingId, 'https://www.delhivery.com/track/package/WB-TEST-1');
+    assert.equal(shipped.shipmentTrackingId, `https://tracking.shipping.mock.invalid/package/${waybill}`);
     assert.deepEqual(
       shipped.orderHistory.map((entry) => entry.title),
       ['shipped'],
@@ -587,9 +572,8 @@ describe('POST /orders/create-shipment/:orderId (Delhivery)', () => {
 
   test('a COD (confirmed) order ships as COD for the order total', async () => {
     const order = await orderFor({ orderStatus: 'confirmed' });
-    mockDelhivery();
     await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS });
-    const [shipment] = JSON.parse(calls[0].data.slice('format=json&data='.length)).shipments;
+    const [shipment] = shipments()[0].shipment.shipments;
     assert.deepEqual([shipment.payment_mode, shipment.cod_amount], ['COD', 499]);
     mailed(1);
   });
@@ -598,22 +582,21 @@ describe('POST /orders/create-shipment/:orderId (Delhivery)', () => {
     const allowed = ['paid', 'confirmed'].includes(stage);
     test(`${allowed ? 'ships' : 'refuses'} an order in stage '${stage}'`, async () => {
       const order = await orderFor({ orderStatus: stage });
-      mockDelhivery();
       const res = await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS });
       if (allowed) {
         assert.equal(res.status, 200);
         mailed(1);
       } else {
         assertBody(res, 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
-        assert.equal(calls.length, 0);
+        assert.equal(shipments().length, 0);
       }
       assert.equal((await Order().findById(order._id)).orderStatus, allowed ? 'shipped' : stage);
     });
   }
 
-  test('answers SHIPMENT_CREATE_ERROR and keeps the order when Delhivery refuses', async () => {
+  test('answers SHIPMENT_CREATE_ERROR and keeps the order when the courier refuses', async (t) => {
     const order = await orderFor({ orderStatus: 'paid' });
-    mockDelhivery({ success: false, rmk: 'Test refusal' });
+    t.mock.method(shipping, 'createShipment', async () => ({ success: false, rmk: 'Test refusal' }));
     assertBody(
       await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS }),
       400,
@@ -622,42 +605,41 @@ describe('POST /orders/create-shipment/:orderId (Delhivery)', () => {
     assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
   });
 
-  test('answers 500 when Delhivery is unreachable', async () => {
+  test('answers 500 when the courier is unreachable, logging only the clean error', async (t) => {
     const order = await orderFor({ orderStatus: 'paid' });
-    mockVendorCall('axios', () => {
-      throw new Error('Delhivery down');
+    t.mock.method(shipping, 'createShipment', async () => {
+      throw Object.assign(new Error('Shipping request failed'), { code: 'ECONNRESET' });
     });
+    const errors = t.mock.method(console, 'error', () => {});
     assertBody(await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS }), 500, serverError);
     assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
+    assert.ok(errors.mock.calls.some((c) => c.arguments.join(' ') === 'Shipment failed: Shipping request failed ECONNRESET '));
   });
 
   // Phase 4: validated with the shared contract (was: missing dimensions threw a TypeError, 500).
   test('refuses missing or non-positive dimensions before calling Delhivery', async () => {
     const order = await orderFor({ orderStatus: 'paid' });
-    mockDelhivery();
     for (const body of [{}, { dimensions: { ...DIMENSIONS, weight: 0 } }, { dimensions: { ...DIMENSIONS, width: '20' } }]) {
       assertBody(await call('POST', `/orders/create-shipment/${order._id}`, body), 400, badRequestObject('INVALID_REQUEST'));
     }
-    assert.deepEqual(calls, []);
+    assert.deepEqual(shipments(), []);
     assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
   });
 
   // Phase 4: the path id is validated after the merge, so a query or body value can't replace it with an operator.
   test('refuses an orderId operator from the query or body', async () => {
     const order = await orderFor({ orderStatus: 'paid' });
-    mockDelhivery();
     const path = `/orders/create-shipment/${order._id}`;
     assertBody(await call('POST', `${path}?orderId[$ne]=x`, { dimensions: DIMENSIONS }), 400, badRequestObject('INVALID_REQUEST'));
     assertBody(await call('POST', path, { dimensions: DIMENSIONS, orderId: { $ne: 'x' } }), 400, badRequestObject('INVALID_REQUEST'));
     assertBody(await call('POST', path, { dimensions: DIMENSIONS, orderId: 'nope' }), 400, badRequestObject('INVALID_ID'));
-    assert.deepEqual(calls, []);
+    assert.deepEqual(shipments(), []);
     assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
   });
 
   test("legacy (security step): guarded only as USER — a shopper can ship another user's paid order", async () => {
     const other = await createUser();
     const order = await orderFor({ orderStatus: 'paid' });
-    mockDelhivery();
     const res = await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS }, other.cookie);
     assert.equal(res.status, 200);
     assert.equal((await Order().findById(order._id)).orderStatus, 'shipped');

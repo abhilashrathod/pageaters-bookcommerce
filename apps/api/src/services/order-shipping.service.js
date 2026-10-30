@@ -1,15 +1,16 @@
 const mongoose = require('mongoose');
-const axios = require('axios');
 const { map } = require('lodash');
 
+const shipping = require('../adapters/shipping');
 const { models, enums } = require('../constants');
-const { DELHIVERY, ENVIRONMENT } = require('../appConfig');
+const { ENVIRONMENT } = require('../appConfig');
 const { AppError } = require('../helpers/appError.helper');
 const { getId } = require('../helpers/utils.helper');
 const { sendReturnShipmentEmail, sendShippedEmail } = require('./order-notifications.service');
 
-// Shipments: the forward shipment booked with Delhivery, and aligning the pickup/replacement shipment of a return
-// or replacement request. The adapters step moves the Delhivery call behind the shipping adapter.
+// Shipments: the forward shipment booked with the courier (the shipping adapter: Delhivery or its mock), and
+// recording the pickup/replacement shipment of a return or replacement request (an id the admin enters; no courier
+// call).
 
 const Order = mongoose.model(models.ORDER);
 
@@ -64,14 +65,14 @@ const productsDescription = (order) =>
   `${section(order.products, (item) => item.product.title)}${section(order.bundles, (item) => item.bundle.title)}${section(order.boxes, (item) => item.box.title)}${section(order.addOns, (item) => item.addOn.name)}`.trim();
 
 /**
- * Books a Delhivery surface shipment for a paid (prepaid) or confirmed (COD, collecting the total) order, ships the
- * order with the Delhivery tracking URL and e-mails the buyer.
+ * Books a surface shipment with the courier for a paid (prepaid) or confirmed (COD, collecting the total) order,
+ * ships the order with the courier's tracking URL and e-mails the buyer.
  * Legacy (PLAN.md security step): the route is guarded only as USER, with no owner check — any shopper can ship any
- * paid order. Missing `dimensions` throws a TypeError (→ 500); a Delhivery network error rejects (→ 500).
+ * paid order. A courier failure rejects with the adapter's clean error (→ 500; the controller logs only that).
  * @param {string} orderId Order `_id`.
  * @param {{ width: number, height: number, weight: number }} dimensions
- * @returns {Promise<object>} Delhivery's response body.
- * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such paid/confirmed order), SHIPMENT_CREATE_ERROR (Delhivery
+ * @returns {Promise<object>} The courier's answer.
+ * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such paid/confirmed order), SHIPMENT_CREATE_ERROR (the courier
  *   refused; the order is unchanged).
  */
 const createDelhiveryShipment = async (orderId, dimensions) => {
@@ -105,20 +106,11 @@ const createDelhiveryShipment = async (orderId, dimensions) => {
     pickup_location: returnPickupAddress(),
   };
 
-  const { data: response } = await axios({
-    method: 'post',
-    url: `${DELHIVERY.BASE_URL}/api/cmu/create.json`,
-    data: `format=json&data=${JSON.stringify(payload)}`,
-    headers: {
-      Authorization: `Token ${DELHIVERY.API_TOKEN}`,
-      // axios 0.x sent this by default for string bodies; axios 1 does not.
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-  });
+  const response = await shipping.createShipment(payload);
   if (!response.success) throw new AppError('SHIPMENT_CREATE_ERROR');
 
   order.orderStatus = SHIPPED;
-  order.shipmentTrackingId = `https://www.delhivery.com/track/package/${response.packages[0].waybill}`;
+  order.shipmentTrackingId = shipping.trackingUrl(response.packages[0].waybill);
   order.orderHistory.push({
     title: SHIPPED,
     description: 'Order hand over to shipment company. Your books are on their way',

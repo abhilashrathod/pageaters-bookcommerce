@@ -1,4 +1,4 @@
-const { returnProductImage, returnBundleImage } = require('../helpers/image-url.helper');
+const { imageUrl } = require('../helpers/image-url.helper');
 const { sendTemplateMail } = require('./mail.service');
 
 // Unauthenticated public endpoints (POST /public/contactUs).
@@ -21,7 +21,7 @@ const TEMPLATE_KEYS = [
 
 /**
  * Sends an ORDER_CONFIRMATION email to the shop address with the request payload as template data, after
- * rewriting each product and bundle poster to its image-resizer URL (the payload objects are changed in place).
+ * normalising each product and bundle poster to its public image URL (helpers/image-url.helper.js) (the payload objects are changed in place).
  * Only the template's own keys (TEMPLATE_KEYS) are passed on, so request keys such as `settings` never reach the
  * renderer.
  * Legacy: unauthenticated mail trigger with request-chosen template data (removed or guarded in the security
@@ -31,10 +31,10 @@ const TEMPLATE_KEYS = [
  */
 const sendContactMail = async (payload) => {
   for (const productItem of payload.PRODUCTS) {
-    productItem.product.poster = returnProductImage(productItem.product.poster);
+    productItem.product.poster = imageUrl(productItem.product.poster);
   }
   for (const bundleItem of payload.BUNDLES) {
-    bundleItem.bundle.poster = returnBundleImage(bundleItem.bundle.poster);
+    bundleItem.bundle.poster = imageUrl(bundleItem.bundle.poster);
   }
 
   await sendTemplateMail({

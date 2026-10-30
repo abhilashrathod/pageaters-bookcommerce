@@ -1,24 +1,14 @@
 const { describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
-const path = require('node:path');
 
 require('./helpers');
+const { API_ROOT, fakeModule, leakyError } = require('./helpers/fake-module');
 
-// The email and SMS adapters (src/adapters): each real adapter maps the interface onto its vendor SDK and refuses
-// to start without its keys; the mocks record without sending; the selectors load only the chosen implementation.
+// The email and SMS adapters (src/adapters), and the selection of every adapter kind: each real adapter maps the
+// interface onto its vendor SDK and refuses to start without its keys; the mocks record without sending; the
+// selectors load only the chosen implementation. Payments, shipping and storage: adapters-<kind>.test.js.
 // The vendor SDK modules are replaced here by recording fakes (no network: ./helpers also blocks it).
-
-const API_ROOT = path.join(__dirname, '..');
-
-// A vendor error that quotes the recipient, as Twilio's do; adapters must not pass its message or itself on.
-const leakyError = (fields) => Object.assign(new Error("The 'To' number +919000000042 / reader@example.com is not valid"), fields);
-
-// Puts `exports` in the require cache in place of a vendor module, for adapters created after this call.
-const fakeModule = (request, exports) => {
-  const filename = require.resolve(request, { paths: [API_ROOT] });
-  require.cache[filename] = { id: filename, filename, loaded: true, exports };
-};
 
 const fakeSendgrid = () => {
   const calls = { setApiKey: [], setTimeout: [], send: [] };
@@ -211,37 +201,50 @@ describe('adapter selection', () => {
   test('the test env selects the mocks', () => {
     assert.equal(require('../src/adapters/email'), emailMock);
     assert.equal(require('../src/adapters/sms'), smsMock);
+    assert.equal(require('../src/adapters/payments').name, 'mock');
+    assert.equal(require('../src/adapters/shipping'), require('../src/adapters/shipping/mock'));
+    assert.equal(require('../src/adapters/storage'), require('../src/adapters/storage/mock'));
   });
 
+  // Each adapter kind, and the vendor SDK module each real adapter requires.
+  // Delhivery has no SDK (the adapter uses fetch).
+  const KINDS = ['email', 'sms', 'payments', 'shipping', 'storage'];
+  const SDKS = { sendgrid: '@sendgrid/mail', twilio: 'twilio', razorpay: 'razorpay', blob: '@vercel/blob' };
+  const MOCKS = {
+    ...Object.fromEntries(KINDS.map((kind) => [kind, 'mock'])),
+    ...Object.fromEntries(Object.keys(SDKS).map((sdk) => [sdk, false])),
+  };
+
   // A fresh process per environment: src/env.js validates once per process. The child only builds the adapters
-  // (setApiKey and the Twilio client constructor make no network call) and reports which SDK modules it loaded.
+  // (setApiKey and the SDK client constructors make no network call) and reports which SDK modules it loaded.
   const select = (vars) => {
     const script = `
-      const email = require('./src/adapters/email');
-      const sms = require('./src/adapters/sms');
-      const loaded = (request) => Boolean(require.cache[require.resolve(request)]);
-      process.stdout.write(JSON.stringify({ email: email.name, sms: sms.name, sendgrid: loaded('@sendgrid/mail'), twilio: loaded('twilio') }));
+      const kinds = ${JSON.stringify(KINDS)};
+      const sdks = ${JSON.stringify(SDKS)};
+      const names = Object.fromEntries(kinds.map((kind) => [kind, require('./src/adapters/' + kind).name]));
+      const loaded = Object.fromEntries(Object.entries(sdks).map(([sdk, request]) => [sdk, Boolean(require.cache[require.resolve(request)])]));
+      process.stdout.write(JSON.stringify({ ...names, ...loaded }));
     `;
     const env = {
       PATH: process.env.PATH,
       MONGODB_URI: 'mongodb://127.0.0.1:1/unused',
       ENCRYPTION_KEY: 'k'.repeat(32),
-      RAZORPAY_KEY_ID: 'rzp_test_placeholder',
       ...vars,
     };
     return JSON.parse(execFileSync(process.execPath, ['-e', script], { cwd: API_ROOT, env, encoding: 'utf8' }));
   };
 
   test('defaults to the mocks without loading a vendor SDK', () => {
-    assert.deepEqual(select({}), { email: 'mock', sms: 'mock', sendgrid: false, twilio: false });
+    assert.deepEqual(select({}), MOCKS);
+    // A test-mode Razorpay key alone doesn't select Razorpay.
+    assert.deepEqual(select({ RAZORPAY_KEY_ID: 'rzp_test_placeholder' }), MOCKS);
   });
 
   test('loads a real adapter only when it is selected', () => {
     assert.deepEqual(select({ EMAIL_ADAPTER: 'sendgrid', SENDGRID_API_KEY: 'SG.fake', MAIL_FROM: 'sender@example.com' }), {
+      ...MOCKS,
       email: 'sendgrid',
-      sms: 'mock',
       sendgrid: true,
-      twilio: false,
     });
     assert.deepEqual(
       select({
@@ -250,7 +253,18 @@ describe('adapter selection', () => {
         TWILIO_AUTH_TOKEN: 'fake-token',
         TWILIO_PHONE: '+15005550006',
       }),
-      { email: 'mock', sms: 'twilio', sendgrid: false, twilio: true },
+      { ...MOCKS, sms: 'twilio', twilio: true },
     );
+    assert.deepEqual(
+      select({
+        PAYMENTS_ADAPTER: 'razorpay',
+        RAZORPAY_KEY_ID: 'rzp_test_placeholder',
+        RAZORPAY_KEY_SECRET: 'fake-secret',
+        RAZORPAY_WEBHOOK_SECRET: 'fake-webhook-secret',
+      }),
+      { ...MOCKS, payments: 'razorpay', razorpay: true },
+    );
+    assert.deepEqual(select({ SHIPPING_ADAPTER: 'delhivery', DELHIVERY_API_TOKEN: 'fake-token' }), { ...MOCKS, shipping: 'delhivery' });
+    assert.deepEqual(select({ STORAGE_ADAPTER: 'blob', BLOB_READ_WRITE_TOKEN: 'fake-blob-token' }), { ...MOCKS, storage: 'blob', blob: true });
   });
 });

@@ -2,7 +2,8 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { assertBody, createUser, envelopes, mockVendorCall, startTestApp } = require('./helpers');
+const { assertBody, createUser, envelopes, startTestApp } = require('./helpers');
+const shipping = require('../src/adapters/shipping');
 const { addressFields } = require('./helpers/fixtures/store');
 const { createAddress, createOrder } = require('./helpers/fixtures/orders');
 
@@ -19,7 +20,6 @@ const Order = () => mongoose.model('order');
 
 let api;
 let shopper;
-let courierCalls;
 
 before(async () => {
   api = await startTestApp();
@@ -32,11 +32,6 @@ after(async () => {
 beforeEach(async () => {
   await api.reset();
   shopper = await createUser();
-  courierCalls = [];
-  mockVendorCall('axios', (config) => {
-    courierCalls.push(config);
-    return { data: { delivery_codes: [{ postal_code: { pin: 999001, cod: 'Y', pre_paid: 'Y' } }] } };
-  });
 });
 
 const post = (path, body, cookie) => api.request(path, { method: 'POST', body, cookie });
@@ -134,7 +129,7 @@ describe('addresses', () => {
     for (const pincode of ['abc', '99900', '9990011']) {
       assertBody(await api.request(`/addresses/check-pincode/${pincode}`), 400, invalid('INVALID_PINCODE'));
     }
-    assert.deepEqual(courierCalls, []);
+    assert.deepEqual(shipping.list(), []);
   });
 
   test('PUT /addresses/:id is validated (was: no validator), after the session check', async () => {

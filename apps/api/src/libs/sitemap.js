@@ -11,7 +11,7 @@ const Bundle = mongoose.model(models.BUNDLE);
 const Collection = mongoose.model(models.COLLECTION);
 const Category = mongoose.model(models.CATEGORY);
 
-const { returnProductImage, returnCollectionImage, returnCategoryImage, returnBundleImage } = require('../helpers/image-url.helper');
+const { imageUrl } = require('../helpers/image-url.helper');
 
 const URLS = {
   COLLECTION: 'https://pageaters.com/collections',
@@ -101,10 +101,13 @@ router.get('/', async function(req, res, next) {
       const url = {};
       url.loc = records[i].url;
       url.lastmod = records[i].updated_at;
-      url['image:image'] = {
-        'image:loc': records[i].featured_image_url,
-        'image:caption': records[i].title,
-      };
+      // No image entry without a public image URL ('' from imageUrl): an empty image:loc is invalid.
+      if (records[i].featured_image_url) {
+        url['image:image'] = {
+          'image:loc': records[i].featured_image_url,
+          'image:caption': records[i].title,
+        };
+      }
 
       collection.push(url);
     }
@@ -143,7 +146,7 @@ async function getRecordsFromDataSource() {
     records.push({
       url: `${URLS.BOOK}/${book.bookId}`,
       title: `${book.title} ${book.tagline}`,
-      featured_image_url: returnProductImage(book.poster),
+      featured_image_url: imageUrl(book.poster),
       updated_at: `${moment().format('YYYY-MM-DD')}`,
     });
   }
@@ -153,7 +156,7 @@ async function getRecordsFromDataSource() {
     records.push({
       url: `${URLS.BUNDLE}/${bundle.bundleId}`,
       title: bundle.title,
-      featured_image_url: returnBundleImage(bundle.poster),
+      featured_image_url: imageUrl(bundle.poster),
       updated_at: `${moment().format('YYYY-MM-DD')}`,
     });
   }
@@ -163,7 +166,7 @@ async function getRecordsFromDataSource() {
     records.push({
       url: `${URLS.COLLECTION}/${collection.collectionId}`,
       title: collection.title,
-      featured_image_url: returnCollectionImage(collection.poster),
+      featured_image_url: imageUrl(collection.poster),
       updated_at: `${moment().format('YYYY-MM-DD')}`,
     });
   }
@@ -173,7 +176,7 @@ async function getRecordsFromDataSource() {
     records.push({
       url: `${URLS.CATEGORY}/${category.categoryId}`,
       title: category.title,
-      featured_image_url: returnCategoryImage(category.thumbnail),
+      featured_image_url: imageUrl(category.thumbnail),
       updated_at: `${moment().format('YYYY-MM-DD')}`,
     });
   }

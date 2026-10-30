@@ -4,18 +4,13 @@ const mongoose = require('mongoose');
 
 const { createUser, ids, loadCatalog, sentEmails, sentTexts, startTestApp } = require('./helpers');
 
-// A CDN base for the image rewrite (fake host), set before src/env.js first reads the environment.
-const CDN = 'https://cdn.example.com';
-process.env.IMAGE_CDN_URL = CDN;
-
 const { createAddress, createOrder, fillCart, loadOrderCatalog, orderIds, razorpaySignature } = require('./helpers/fixtures/orders');
 const email = require('../src/adapters/email');
 const sms = require('../src/adapters/sms');
 const environment = require('../src/helpers/environment.helper');
-const { returnAssetImage, returnBundleImage, returnProductImage } = require('../src/helpers/image-url.helper');
 
-// The legacy production-only notifications, through the mock adapters: the order confirmation e-mail (CDN image
-// rewrite, gift and store-credit lines) and SMS after COD checkout and after the payment webhook, and the
+// The legacy production-only notifications, through the mock adapters: the order confirmation e-mail (public image
+// URLs, gift and store-credit lines) and SMS after COD checkout and after the payment webhook, and the
 // CANCEL_ORDER / CLOSE_ORDER e-mails. Each test switches the production gate on with
 // t.mock.method(environment, 'isProduction'); outside production nothing is sent.
 
@@ -85,7 +80,7 @@ describe('order confirmation (COD checkout)', () => {
     assert.equal(await EmailLog().countDocuments(), 0);
   });
 
-  test('in production: the confirmation e-mail with CDN images, gift and store-credit lines, logged', async (t) => {
+  test('in production: the confirmation e-mail with image URLs, gift and store-credit lines, logged', async (t) => {
     production(t);
     const order = await checkoutCod({ giftOptions: GIFT, storeCredit: 40 });
 
@@ -96,13 +91,13 @@ describe('order confirmation (COD checkout)', () => {
       { from: mail.from, to: mail.to, subject: mail.subject },
       { from: 'no-reply@demo.pageaters.com', to: shopper.user.email, subject: `Order Confirmation #${order.orderId} - Pageaters` },
     );
-    // Book, bundle and box images rewritten to CDN resizer URLs.
-    assert.ok(mail.html.includes(`src="${returnProductImage(POSTER)}"`), 'book poster on the CDN');
-    // Legacy, pinned: checkout stores bundle lines unpopulated, so the bundle's image is built from a missing poster
-    // and its title is empty (the webhook test below has the populated bundle).
-    assert.ok(mail.html.includes(`src="${returnBundleImage(undefined)}"`), 'bundle line without its poster');
-    assert.ok(mail.html.includes(`src="${returnAssetImage('test-box.png')}"`), 'box image on the CDN');
-    assert.ok(returnProductImage(POSTER).startsWith(`${CDN}/`));
+    // 6b: book, bundle and box images are their stored public URLs, unchanged (was: CDN resizer URLs built from S3
+    // keys).
+    assert.ok(mail.html.includes(`src="${POSTER}"`), 'book poster URL');
+    // Legacy, pinned: checkout stores bundle lines unpopulated, so the bundle has no poster (now an empty src) and
+    // its title is empty (the webhook test below has the populated bundle).
+    assert.ok(mail.html.includes('src=""'), 'bundle line without its poster');
+    assert.ok(mail.html.includes('src="https://images.example.com/test-box.png"'), 'box image URL');
     assert.ok(mail.html.includes('Test Book One') && mail.html.includes('Test Mystery Box'));
     assert.equal(mail.html.includes('Test Bundle One'), false);
     assert.ok(mail.html.includes(shopper.user.fullName));
@@ -219,8 +214,8 @@ describe('order confirmation (payment webhook)', () => {
     const [mail] = sentEmails();
     assert.equal(sentEmails().length, 1);
     assert.equal(mail.subject, `Order Confirmation #${order.orderId} - Pageaters`);
-    assert.ok(mail.html.includes(`src="${returnProductImage(POSTER)}"`));
-    assert.ok(mail.html.includes(`src="${returnBundleImage('test-bundle.png')}"`));
+    assert.ok(mail.html.includes(`src="${POSTER}"`));
+    assert.ok(mail.html.includes('src="https://images.example.com/test-bundle.png"'));
     assert.ok(mail.html.includes('Test Book One') && mail.html.includes('Test Bundle One'));
     assert.match(mail.html, /Gift Charges[\s\S]*>INR 30</);
     assert.match(mail.html, /Store Credit[\s\S]*>INR 20</);

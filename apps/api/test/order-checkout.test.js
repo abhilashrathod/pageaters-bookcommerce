@@ -2,8 +2,9 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { assertBody, createUser, envelopes, eventually, ids, loadCatalog, mockVendorCall, startTestApp } = require('./helpers');
+const { assertBody, createUser, envelopes, eventually, ids, loadCatalog, startTestApp } = require('./helpers');
 const { createAddress, createOrder, fillCart, loadOrderCatalog, orderIds, razorpaySignature } = require('./helpers/fixtures/orders');
+const payments = require('../src/adapters/payments');
 
 // Checkout over HTTP: POST /orders/attempt, POST /orders/create (pricing, COD and online), PATCH /orders/credit,
 // GET /orders/retrieve and the Razorpay payment webhook POST /orders/confirm. Written against the legacy controller
@@ -316,22 +317,24 @@ describe('POST /orders/create — pricing', () => {
   });
 });
 
-describe('POST /orders/create — online payment', () => {
-  test('creates a Razorpay order for the total in paise and waits for payment', async () => {
+describe('POST /orders/create — online payment (mock payments adapter)', () => {
+  test('creates a payment order for the total in paise and waits for payment', async () => {
     const attempted = await attemptWith({ products: [{ product: ids.bookOne, quantity: 1 }] });
-    const calls = [];
-    mockVendorCall('razorpay.orders.create', (payload) => {
-      calls.push(payload);
-      return { id: 'order_test_1' };
-    });
 
     const res = await post('/orders/create', { method: 'online', giftOptions: GIFT });
-    assertBody(res, 200, ok('ORDER_CREATE_SUCCESS', { razorOrderId: 'order_test_1', total: 499, orderId: attempted.orderId }));
-    assert.equal(JSON.stringify(calls), JSON.stringify([{ amount: 49900, currency: 'INR', receipt: `${attempted.orderId}-RCPTID` }]));
+    const created = payments.list();
+    assert.equal(created.length, 1);
+    const [paymentOrder] = created;
+    assert.match(paymentOrder.id, /^order_mock[0-9a-f]{14}$/);
+    assertBody(res, 200, ok('ORDER_CREATE_SUCCESS', { razorOrderId: paymentOrder.id, total: 499, orderId: attempted.orderId }));
+    assert.equal(
+      JSON.stringify({ amount: paymentOrder.amount, currency: paymentOrder.currency, receipt: paymentOrder.receipt }),
+      JSON.stringify({ amount: 49900, currency: 'INR', receipt: `${attempted.orderId}-RCPTID` }),
+    );
 
     const order = await Order().findById(attempted._id);
     assert.equal(order.orderStatus, 'created');
-    assert.equal(order.razorOrderId, 'order_test_1');
+    assert.equal(order.razorOrderId, paymentOrder.id);
     assert.equal(order.payment, null);
     assert.deepEqual(order.orderHistory, []);
     // Nothing is deducted until the payment webhook.
@@ -339,23 +342,40 @@ describe('POST /orders/create — online payment', () => {
     assert.equal((await Cart().findOne({ user: shopper.user._id })).products.length, 1);
   });
 
-  test('a created (unpaid) order can be created again with a new Razorpay order', async () => {
+  test('a created (unpaid) order can be created again with a new payment order', async () => {
     await attemptWith({ products: [{ product: ids.bookOne, quantity: 1 }] });
-    let n = 0;
-    mockVendorCall('razorpay.orders.create', () => ({ id: `order_test_${(n += 1)}` }));
-    await post('/orders/create', { method: 'online', giftOptions: GIFT });
+    const first = await post('/orders/create', { method: 'online', giftOptions: GIFT });
     const res = await post('/orders/create', { method: 'online', giftOptions: GIFT });
-    assert.equal(res.body.data.razorOrderId, 'order_test_2');
+    const [one, two] = payments.list();
+    assert.equal(res.body.data.razorOrderId, two.id);
+    assert.equal(first.body.data.razorOrderId, one.id);
+    assert.notEqual(one.id, two.id);
     assert.equal(await Order().countDocuments({ userId: shopper.user._id }), 1);
   });
 
-  test('answers 500 and leaves the order attempted when Razorpay fails', async () => {
+  test('answers 500 and leaves the order attempted when the payment order fails', async (t) => {
     const attempted = await attemptWith({ products: [{ product: ids.bookOne, quantity: 1 }] });
-    mockVendorCall('razorpay.orders.create', () => {
-      throw new Error('razorpay down');
+    t.mock.method(payments, 'createOrder', async () => {
+      throw Object.assign(new Error('Payment order failed'), { status: 503 });
     });
     assertBody(await post('/orders/create', { method: 'online', giftOptions: GIFT }), 500, serverError);
     assert.equal((await Order().findById(attempted._id)).orderStatus, 'attempted');
+  });
+
+  test('end to end: checkout, then the signed payment webhook marks the order paid', async () => {
+    const attempted = await attemptWith({ products: [{ product: ids.bookOne, quantity: 1 }] });
+    const res = await post('/orders/create', { method: 'online', giftOptions: GIFT });
+    const { razorOrderId } = res.body.data;
+    const event = {
+      event: 'payment.captured',
+      payload: { payment: { entity: { id: 'pay_test_e2e', order_id: razorOrderId, method: 'upi', amount: 49900 } } },
+    };
+    assertBody(await webhook('/orders/confirm', event, true), 200, WEBHOOK_OK);
+
+    const paid = await Order().findById(attempted._id);
+    assert.deepEqual([paid.orderStatus, paid.razorPaymentId], ['paid', 'pay_test_e2e']);
+    assert.equal((await Cart().findOne({ user: shopper.user._id })).products.length, 0);
+    assert.equal(await eventually(async () => ((await Book().findById(ids.bookOne)).inventory === 24 ? 24 : undefined)), 24);
   });
 });
 

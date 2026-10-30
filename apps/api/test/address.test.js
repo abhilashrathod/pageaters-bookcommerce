@@ -2,32 +2,26 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, mockVendorCall, startTestApp } = require('./helpers');
+const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, startTestApp } = require('./helpers');
+const shipping = require('../src/adapters/shipping');
 const { addressFields } = require('./helpers/fixtures/store');
 const t = require('../src/locales/en.json');
 
-// /api/v1/addresses over HTTP: a shopper's delivery addresses and the pincode serviceability check (Delhivery,
-// mocked). Written against the legacy controller before the service refactor.
+// /api/v1/addresses over HTTP: a shopper's delivery addresses and the pincode serviceability check (the mock
+// shipping adapter: every well-formed pincode is serviceable except 999000 and 999999). Written against the legacy
+// controller before the service refactor.
 
 const { ok, okString, badRequest, badRequestObject, serverError } = envelopes;
 
 const Address = () => mongoose.model('address');
 
-const PINCODE_RECORD = { postal_code: { pin: 999001, cod: 'Y', pre_paid: 'Y', district: 'Test District', state_code: 'TS' } };
+// The mock courier's record for a serviceable pincode.
+const PINCODE_RECORD = { postal_code: { pin: 999001, cod: 'Y', pre_paid: 'Y', district: 'Mock District', state_code: 'MK' } };
 
 let api;
 let shopper;
-let courierCalls;
 
-// Delhivery answers every pincode except 999000 as serviceable.
-const mockCourier = () => {
-  courierCalls = [];
-  mockVendorCall('axios', (config) => {
-    courierCalls.push(config);
-    const serviceable = !config.url.includes('filter_codes=999000');
-    return { data: { delivery_codes: serviceable ? [PINCODE_RECORD] : [] } };
-  });
-};
+const courierCalls = () => shipping.list().filter((call) => call.type === 'pincode');
 
 before(async () => {
   api = await startTestApp();
@@ -40,7 +34,6 @@ after(async () => {
 beforeEach(async () => {
   await api.reset();
   shopper = await createUser();
-  mockCourier();
 });
 
 const create = (body, cookie = shopper.cookie) => api.request('/addresses', { method: 'POST', body, cookie });
@@ -75,8 +68,7 @@ describe('POST /addresses', () => {
     const [address] = await Address().find({ userId: shopper.user._id });
     assertBody(res, 200, ok('ADDRESS_CREATE_SUCCESS', asCreated(address)));
     assert.equal(address.isDefault, true);
-    assert.equal(courierCalls.length, 1);
-    assert.match(courierCalls[0].url, /filter_codes=999001/);
+    assert.deepEqual(courierCalls(), [{ type: 'pincode', pincode: '999001' }]);
   });
 
   test('a new default address clears the previous default', async () => {
@@ -99,9 +91,9 @@ describe('POST /addresses', () => {
     assert.equal(await Address().countDocuments(), 0);
   });
 
-  test('legacy: a courier failure counts as unserviceable', async () => {
-    mockVendorCall('axios', () => {
-      throw new Error('courier down');
+  test('legacy: a courier failure counts as unserviceable', async (t) => {
+    t.mock.method(shipping, 'checkPincode', async () => {
+      throw Object.assign(new Error('Shipping request failed'), { status: 503 });
     });
     assertBody(await create(addressFields()), 400, badRequestObject('PINCODE_ERROR'));
   });
@@ -217,7 +209,7 @@ describe('GET /addresses/check-pincode/:pincode', () => {
     assertBody(
       await api.request('/addresses/check-pincode/999001'),
       200,
-      ok('PINCODE_SUCCESS', { main: { serviceable: true, isCod: 'Y', isPrepaid: 'Y', district: 'Test District', state: 'TS' }, raw: PINCODE_RECORD }),
+      ok('PINCODE_SUCCESS', { main: { serviceable: true, isCod: 'Y', isPrepaid: 'Y', district: 'Mock District', state: 'MK' }, raw: PINCODE_RECORD }),
     );
   });
 
@@ -225,9 +217,9 @@ describe('GET /addresses/check-pincode/:pincode', () => {
     assertBody(await api.request('/addresses/check-pincode/999000'), 400, badRequestObject('PINCODE_ERROR'));
   });
 
-  test('a courier failure answers 500', async () => {
-    mockVendorCall('axios', () => {
-      throw new Error('courier down');
+  test('a courier failure answers 500', async (t) => {
+    t.mock.method(shipping, 'checkPincode', async () => {
+      throw Object.assign(new Error('Shipping request failed'), { status: 503 });
     });
     assertBody(await api.request('/addresses/check-pincode/999001'), 500, serverError);
   });

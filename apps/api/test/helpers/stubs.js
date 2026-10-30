@@ -1,10 +1,11 @@
 const net = require('node:net');
 const path = require('node:path');
 
-// Vendor SDK stubs and a network guard for integration tests: no test may reach Razorpay, Twilio, SendGrid,
-// Delhivery (axios) or S3, or any other host. An unmocked vendor call fails with a VendorCallError naming the call
-// (a rejected promise for the SDKs whose methods are async, a throw for S3), so a test that reaches a vendor fails
-// loudly instead of sending a real payment, SMS or email.
+// Vendor SDK stubs and a network guard for integration tests: no test may reach Razorpay, Twilio, SendGrid or
+// Vercel Blob, or any other host (Delhivery, which the shipping adapter calls with fetch, included). The test env
+// selects every mock adapter, so the SDKs are not even loaded; the stubs are a second line. An unmocked vendor call
+// rejects with a VendorCallError naming the call, so a test that reaches a vendor fails loudly instead of sending a
+// real payment, SMS, e-mail or file.
 //
 // The stubs replace the SDK modules in the require cache, so they must be installed before src/ is required
 // (test/helpers/index.js does that when it is first required). Constructing a client, as the controllers do at
@@ -21,16 +22,16 @@ class VendorCallError extends Error {
   }
 }
 
-const VENDORS = ['razorpay', 'twilio', 'sendgrid', 'axios', 'S3'];
-// Their real methods return promises; S3 (aws-sdk v2) returns a request object synchronously.
-const ASYNC_VENDORS = new Set(['razorpay', 'twilio', 'sendgrid', 'axios']);
+const VENDORS = ['razorpay', 'twilio', 'sendgrid', 'blob'];
+// Their real methods return promises.
+const ASYNC_VENDORS = new Set(VENDORS);
 
 const mocks = new Map();
 
 /**
  * Answers one vendor call with `handler` until api.reset() / clearVendorMocks().
  * @param {string} call Dotted call path as the app makes it, e.g. 'razorpay.orders.create',
- *   'twilio.messages.create', 'sendgrid.send', 'axios.get', 'S3.upload'.
+ *   'twilio.messages.create', 'sendgrid.send', 'blob.put'.
  * @param {(...args: any[]) => unknown} handler Receives the call's arguments; its return value is the result.
  */
 const mockVendorCall = (call, handler) => {
@@ -78,8 +79,7 @@ const STUBS = {
   razorpay: (real) => stubFactory('razorpay', { validateWebhookSignature: real.validateWebhookSignature }),
   twilio: () => stubFactory('twilio'),
   '@sendgrid/mail': () => stubClient('sendgrid', ['setApiKey', 'setTimeout']),
-  axios: () => stubClient('axios'),
-  'aws-sdk/clients/s3': () => stubFactory('S3'),
+  '@vercel/blob': () => stubClient('blob'),
 };
 
 const installVendorStubs = () => {

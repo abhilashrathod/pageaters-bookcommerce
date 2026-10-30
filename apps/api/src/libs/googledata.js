@@ -5,7 +5,7 @@ const { models } = require('../constants');
 
 const router = express.Router();
 
-const { returnProductImage } = require('../helpers/image-url.helper');
+const { imageUrl } = require('../helpers/image-url.helper');
 
 const Book = mongoose.model(models.STORE_BOOK);
 
@@ -44,7 +44,7 @@ async function writeGoogleData (req, res, next) {
       'g:description': product.description,
       'g:link': `https://pageaters.com/books/${product.bookId}`,
       'g:price': `${returnDiscountedAmount(product.price, product.currentDiscount)} INR`,
-      'g:image_link': `${returnProductImage(product.poster, 375, 247)}`,
+      'g:image_link': imageUrl(product.poster),
       'g:availability': `${product.inventory > 0 ? 'in_stock' : 'out_of_stock'}`,
       'g:gtin': `${product.ISBN}`,
     };

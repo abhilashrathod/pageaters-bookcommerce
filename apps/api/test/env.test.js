@@ -1,7 +1,10 @@
 const { describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { parseEnv, EnvError } = require('../src/env');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const { parseEnv, EnvError, VARIABLES } = require('../src/env');
 
 // Fake values only. Each distinctive value is asserted to never appear in an error message.
 const MINIMAL = Object.freeze({
@@ -72,8 +75,10 @@ describe('parseEnv', () => {
 
   test('rejects missing required variables, naming each one', () => {
     const error = failure({});
-    for (const name of Object.keys(MINIMAL)) assert.match(error.message, new RegExp(`${name}: is required`));
-    assert.deepEqual([...error.variables].sort(), Object.keys(MINIMAL).sort());
+    // RAZORPAY_KEY_ID is required only with PAYMENTS_ADAPTER=razorpay (6b).
+    const required = ['ENCRYPTION_KEY', 'MONGODB_URI'];
+    for (const name of required) assert.match(error.message, new RegExp(`${name}: is required`));
+    assert.deepEqual([...error.variables].sort(), required);
   });
 
   test('rejects an ENCRYPTION_KEY that is not 32 bytes', () => {
@@ -165,7 +170,9 @@ describe('parseEnv', () => {
       ALLOWED_ORIGINS: 'https://SECRETORIGINqq7.example/path',
       MAIL_FROM: 'SECRETMAILqq7',
       TWILIO_PHONE: 'SECRETPHONEqq7',
-      IMAGE_CDN_URL: 'SECRETCDNqq7',
+      DELHIVERY_BASE_URL: 'SECRETBASEURLqq7',
+      SHIPPING_ADAPTER: 'SECRETSHIPPINGqq7',
+      STORAGE_ADAPTER: 'SECRETSTORAGEqq7',
     };
     const error = failure(bad);
     assert.doesNotMatch(error.message, /SECRET|qq7/);
@@ -240,4 +247,116 @@ describe('parseEnv adapters', () => {
     assert.deepEqual([...error.variables].sort(), ['MAIL_FROM', 'TWILIO_ACCOUNT_SID', 'TWILIO_PHONE']);
     assert.doesNotMatch(error.message, /SECRET|qq7/);
   });
+});
+
+describe('parseEnv payments adapter', () => {
+  const RAZORPAY = Object.freeze({
+    PAYMENTS_ADAPTER: 'razorpay',
+    RAZORPAY_KEY_ID: 'rzp_test_FAKEKEY123',
+    RAZORPAY_KEY_SECRET: 'fake-razorpay-secret',
+    RAZORPAY_WEBHOOK_SECRET: 'fake-webhook-secret',
+  });
+  const WITHOUT_KEY = Object.freeze({ MONGODB_URI: MINIMAL.MONGODB_URI, ENCRYPTION_KEY: MINIMAL.ENCRYPTION_KEY });
+
+  test('defaults to the mock and needs no Razorpay key', () => {
+    const env = parseEnv(WITHOUT_KEY);
+    assert.equal(env.PAYMENTS_ADAPTER, 'mock');
+    assert.equal(env.RAZORPAY_KEY_ID, undefined);
+  });
+
+  test('selects Razorpay when its keys are all set', () => {
+    assert.equal(parseEnv({ ...WITHOUT_KEY, ...RAZORPAY }).PAYMENTS_ADAPTER, 'razorpay');
+  });
+
+  test('requires the key id, key secret and webhook secret only when PAYMENTS_ADAPTER=razorpay', () => {
+    const error = failure({ ...WITHOUT_KEY, PAYMENTS_ADAPTER: 'razorpay' });
+    assert.deepEqual([...error.variables].sort(), ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET']);
+    assert.match(error.message, /RAZORPAY_KEY_ID: is required when PAYMENTS_ADAPTER=razorpay/);
+  });
+
+  // Critical guard (AGENTS.md §6): a live key is refused whichever adapter is selected.
+  test('refuses a live key with the mock adapter too, without echoing it', () => {
+    for (const PAYMENTS_ADAPTER of [undefined, 'mock', 'razorpay']) {
+      const error = failure({ ...RAZORPAY, ...WITHOUT_KEY, PAYMENTS_ADAPTER, RAZORPAY_KEY_ID: 'rzp_live_SECRETqq7' });
+      assert.deepEqual(error.variables, ['RAZORPAY_KEY_ID']);
+      assert.match(error.message, /RAZORPAY_KEY_ID: is a live key/);
+      assert.doesNotMatch(error.message, /SECRET|qq7/);
+    }
+    const error = failure({ ...WITHOUT_KEY, PAYMENTS_ADAPTER: 'mock', RAZORPAY_KEY_ID: 'notarazorpaykey42' });
+    assert.match(error.message, /RAZORPAY_KEY_ID: must start with rzp_test_/);
+  });
+
+  test('refuses an unknown adapter name without echoing it', () => {
+    const error = failure({ ...MINIMAL, PAYMENTS_ADAPTER: 'stripeqq7' });
+    assert.deepEqual(error.variables, ['PAYMENTS_ADAPTER']);
+    assert.doesNotMatch(error.message, /qq7/);
+  });
+
+  // Without a secret no webhook verifies; a deployed API must not run that way unnoticed.
+  test('requires the webhook secret in staging and production, with either adapter', () => {
+    for (const APP_ENV of ['staging', 'production']) {
+      for (const PAYMENTS_ADAPTER of [undefined, 'mock']) {
+        const error = failure({ ...MINIMAL, APP_ENV, PAYMENTS_ADAPTER });
+        assert.deepEqual(error.variables, ['RAZORPAY_WEBHOOK_SECRET']);
+        assert.match(error.message, new RegExp(`RAZORPAY_WEBHOOK_SECRET: is required when APP_ENV=${APP_ENV}`));
+      }
+      const withRazorpay = failure({ ...WITHOUT_KEY, APP_ENV, PAYMENTS_ADAPTER: 'razorpay' });
+      assert.deepEqual(
+        [...withRazorpay.variables].sort(),
+        ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET'],
+        'reported once',
+      );
+      assert.equal(parseEnv({ ...MINIMAL, APP_ENV, RAZORPAY_WEBHOOK_SECRET: 'fake-webhook-secret' }).APP_ENV, APP_ENV);
+    }
+  });
+
+  test('the webhook secret stays optional in development and test, and is never echoed', () => {
+    for (const APP_ENV of [undefined, 'development', 'test']) {
+      assert.equal(parseEnv({ ...MINIMAL, APP_ENV }).RAZORPAY_WEBHOOK_SECRET, undefined);
+    }
+    const error = failure({ ...MINIMAL, APP_ENV: 'production', RAZORPAY_WEBHOOK_SECRET: ' ', RAZORPAY_KEY_ID: 'rzp_live_SECRETqq7' });
+    assert.deepEqual([...error.variables].sort(), ['RAZORPAY_KEY_ID', 'RAZORPAY_WEBHOOK_SECRET']);
+    assert.doesNotMatch(error.message, /SECRETqq7/);
+    // An invalid APP_ENV is reported by the schema and never echoed in a "required when" message.
+    const invalid = failure({ ...MINIMAL, APP_ENV: 'productionqq7' });
+    assert.deepEqual(invalid.variables, ['APP_ENV']);
+    assert.doesNotMatch(invalid.message, /qq7/);
+  });
+});
+
+describe('parseEnv shipping and storage adapters', () => {
+  test('default to the mocks and need no vendor key', () => {
+    const env = parseEnv(MINIMAL);
+    assert.deepEqual([env.SHIPPING_ADAPTER, env.STORAGE_ADAPTER], ['mock', 'mock']);
+    assert.equal(env.DELHIVERY_BASE_URL, 'https://staging-express.delhivery.com');
+  });
+
+  test('require the Delhivery token only when SHIPPING_ADAPTER=delhivery', () => {
+    const error = failure({ ...MINIMAL, SHIPPING_ADAPTER: 'delhivery' });
+    assert.deepEqual(error.variables, ['DELHIVERY_API_TOKEN']);
+    assert.match(error.message, /DELHIVERY_API_TOKEN: is required when SHIPPING_ADAPTER=delhivery/);
+    assert.equal(parseEnv({ ...MINIMAL, SHIPPING_ADAPTER: 'delhivery', DELHIVERY_API_TOKEN: 'fake-token' }).SHIPPING_ADAPTER, 'delhivery');
+  });
+
+  test('require the Blob token only when STORAGE_ADAPTER=blob', () => {
+    const error = failure({ ...MINIMAL, STORAGE_ADAPTER: 'blob' });
+    assert.deepEqual(error.variables, ['BLOB_READ_WRITE_TOKEN']);
+    assert.match(error.message, /BLOB_READ_WRITE_TOKEN: is required when STORAGE_ADAPTER=blob/);
+    assert.equal(parseEnv({ ...MINIMAL, STORAGE_ADAPTER: 'blob', BLOB_READ_WRITE_TOKEN: 'fake-blob-token' }).STORAGE_ADAPTER, 'blob');
+  });
+
+  test('ignore the removed S3 and image CDN variables', () => {
+    const env = parseEnv({ ...MINIMAL, S3_REGION: 'x', S3_ACCESS_KEY_ID: 'x', S3_SECRET_ACCESS_KEY: 'x', IMAGE_CDN_URL: 'not a url' });
+    for (const name of ['S3_REGION', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'IMAGE_CDN_URL']) assert.equal(name in env, false, name);
+  });
+});
+
+test('.env.example documents exactly the variables the API reads, plus the seed-only ones', () => {
+  const documented = fs
+    .readFileSync(path.join(__dirname, '..', '.env.example'), 'utf8')
+    .split('\n')
+    .map((line) => line.match(/^([A-Z0-9_]+)=/)?.[1])
+    .filter(Boolean);
+  const seedOnly = ['SUPER_ADMIN_EMAIL', 'SUPER_ADMIN_PASSWORD'];
+  assert.deepEqual([...documented].sort(), [...VARIABLES, ...seedOnly].sort());
 });
