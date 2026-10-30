@@ -372,9 +372,19 @@ This file is temporary: when every phase is done, archive the decision log into 
     built from `STOREFRONT_URL`, the old business's social links removed from e-mails. 840 API tests
   - Follow-ups: the seed still hashes with HMAC (upgraded on first login) — switch `seed/src/accounts.ts` to the API's
     scrypt format and fix its comment; the storefront should log the shopper out after a password change (Phase 7);
-    owner decisions pending on `PUT /users/:id` (unused: remove, or restrict to USER accounts) and the 19 e-mail,
-    sitemap and storefront images on the closed old Cloudinary account (copy to Blob, or remove)
-- [ ] Replace lunr in-memory index with MongoDB text index / Atlas Search (the mail queue moved to adapters 6a)
+    owner decisions (2026-10-30), done: `PUT /users/:id` removed (no admin route edits a user now), and the 19
+    e-mail, sitemap and storefront images on the closed old Cloudinary account removed (the owner adds replacements
+    later; the storefront shows a text wordmark meanwhile). Also removed with them: the storefront's unused
+    `via.placeholder.com` image host and the leftover Brevo/PushOwl service worker; the home page's share URL now
+    comes from `NEXT_PUBLIC_SITE_URL` instead of the root domain
+- [x] Replace lunr in-memory index with a per-request MongoDB query (the mail queue moved to adapters 6a)
+  - Done 2026-10-30 (api-engineer, reviewed + audited): reworded from "MongoDB text index / Atlas Search" — `$text`
+    can't match the start of a word (type-ahead `tw` → "Two") and Atlas Search isn't in the in-memory test DB or
+    within the free tier's index cap; see `docs/adr/0002-catalogue-search-word-prefix-regex.md`. All five searches use
+    an escaped, case-insensitive word-start regex over lunr's fields (≤ 100 chars, ≤ 5 terms, AND across terms, OR
+    across fields), at most 10 live records, most popular first (categories: most books), 1 s query time limit; a
+    non-string `q` answers `[]` and control characters count as spaces. Catalogue writes are visible at once. Removed: `libs/indexing.js`, the indexing on connect, ADMIN
+    `/re-index`, the `lunr` dependency, `api.reindex()` in the tests
 - [ ] Central error handler, pino logging, request IDs, `/health`
   - Remove `logRequest` (`extendReq.middleware.js`): it `console.log`s full request headers (the `_PID` session
     cookie), `req.user` and `req.allParams()` (plaintext passwords on failed login, password change and reset) and
@@ -410,6 +420,7 @@ This file is temporary: when every phase is done, archive the decision log into 
       build/runtime that its public Razorpay key starts with `rzp_test_`; with tests
 - [ ] Demo shopper one-click login (no signup/OTP); remove the email-OTP login too, which can sign into any account by email, the demo shopper included
 - [ ] Admin catalog read-only; order lifecycle via mock shipping allowed
+  - The demo admin must not issue store credit (`POST /store-credit` adds to another account's balance; AGENTS.md §6 "cannot touch other accounts"); record which admin issued a credit (7 audit, 2026-10-30)
 - [ ] Razorpay test-mode checkout (the `rzp_live_` boot guard is done: `env.js` refuses live keys in every environment)
 - [ ] Mock email/SMS → outbox collection + outbox view: capped/TTL'd and swept by the weekly cleanup; an entry is
       visible only to its addressee (super-admin sees all) or its links and tokens are redacted; forgot-password and
@@ -444,6 +455,12 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Header/nav/footer/announcement from CMS globals; footer credits "Cover images via Open Library" (their covers guidance)
 - [ ] Caching with tags + revalidation route; draft mode for CMS preview
 - [ ] SEO: metadata API, sitemap, robots (noindex for demo), product feed
+- [ ] Drop every image host of the closed AWS account (audit 2026-10-30): `next.config.js` `images.domains` still
+      allows the `storebooks` S3 bucket and the `d2jesamohckae0` CloudFront host, `core/_variables.ts` `BUCKETS_ORIGINS`
+      names six `pageaters-*` buckets, and six listing pages hard-code `pageaters-assets` hero images. Deleted bucket
+      names can be registered by anyone, who would then serve content on our pages. The legacy storefront can't drop
+      them alone (next/image throws for an unlisted host), so the rebuild serves images from Blob / Open Library only.
+      Also replace the text wordmark with the owner's new logo, and add favicons and share images back
 - [ ] Demo banner; move the GA measurement ID to env (owner keeps GA; decide whether the demo uses the old property)
 - **Checkpoint:** visual comparison with original store
 
