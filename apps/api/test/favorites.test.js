@@ -136,11 +136,17 @@ describe('POST /favorites', () => {
     assert.deepEqual(await wishlistOf(shopper.user), [String(ids.bookOne)]);
   });
 
-  test('refuses a missing, unknown or soft-deleted book', async () => {
-    for (const body of [{}, { product: String(new mongoose.Types.ObjectId()) }, { product: String(ids.bookDeleted) }]) {
+  test('refuses an unknown or soft-deleted book', async () => {
+    for (const body of [{ product: String(new mongoose.Types.ObjectId()) }, { product: String(ids.bookDeleted) }]) {
       assertBody(await api.request('/favorites', { method: 'POST', body, cookie: shopper.cookie }), 400, badRequest('BOOK_NOT_EXIST'));
     }
     assert.deepEqual(await wishlistOf(shopper.user), []);
+  });
+
+  // Phase 4: the product id is required (was: a missing product reached the service and answered BOOK_NOT_EXIST).
+  test('refuses a missing product id (validator, before auth)', async () => {
+    assertBody(await api.request('/favorites', { method: 'POST', body: {}, cookie: shopper.cookie }), 400, invalidId);
+    assertBody(await api.request('/favorites', { method: 'POST', body: {} }), 400, invalidId);
   });
 
   test('legacy: answers success but saves nothing for an account without a favourites document', async () => {

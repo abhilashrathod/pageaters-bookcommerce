@@ -89,7 +89,8 @@ const createAddress = async (user, fields) => {
 
 /**
  * Updates one of the user's addresses (`$set` of the given fields; fields left out stay as they are).
- * Legacy (fixed in the legacy-bugs step): no validator, the pincode isn't re-checked, and the existence check is an
+ * The route validates the fields (`addressUpdatePayloadSchema`, Phase 4).
+ * Legacy (fixed in the legacy-bugs step): the pincode's serviceability isn't re-checked, and the existence check is an
  * unfiltered `findOne()`, so another user's or an unknown id answers success with `null` (nothing changes) unless
  * the collection is empty. `isDefault` clears the user's other defaults even when nothing is updated.
  * @param {{ userId: string, email?: string }} user The caller (`req.user`).

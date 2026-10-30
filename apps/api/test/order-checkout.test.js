@@ -151,8 +151,16 @@ describe('POST /orders/attempt', () => {
     assertBody(await post('/orders/attempt', { address: String(address._id) }, cookie), 400, badRequest('CART_NOT_EXIST'));
   });
 
-  test('legacy: a malformed cart cookie answers 500', async () => {
-    assertBody(await post('/orders/attempt', { address: String(address._id) }, `${shopper.cookie}; _CID=nope`), 500, serverError);
+  // Phase 4: a cart cookie that is not a cart id counts as none (was: 'nope' answered 500, and a JSON cookie such as
+  // `j:{"$ne":null}` reached Cart.findOne as an operator and priced whichever cart matched).
+  test('a malformed cart cookie, operator objects included, counts as no cart', async () => {
+    const other = await createUser();
+    await fillCart(other.user, { products: [{ product: ids.bookTwo, quantity: 3 }] });
+    for (const value of ['nope', encodeURIComponent('j:{"$ne":null}')]) {
+      const cookie = `${shopper.cookie}; _CID=${value}`;
+      assertBody(await post('/orders/attempt', { address: String(address._id) }, cookie), 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
+    }
+    assert.equal(await Order().countDocuments(), 0);
   });
 
   test("legacy: prices another user's cart (the cart is not filtered by user)", async () => {
@@ -178,8 +186,9 @@ describe('POST /orders/attempt', () => {
     assertBody(await post('/orders/attempt', { address: 'nope' }), 400, joiError('INVALID_ID'));
   });
 
-  test('legacy: a missing address is not validated and finds no address', async () => {
-    assertBody(await post('/orders/attempt', {}), 400, badRequest('ORDER_ADDRESS_ATTEMPT_FAILED'));
+  // Phase 4: the address id is required (was: a missing address reached the service, ORDER_ADDRESS_ATTEMPT_FAILED).
+  test('refuses a missing address id (validator)', async () => {
+    assertBody(await post('/orders/attempt', {}), 400, joiError('INVALID_ID'));
   });
 });
 
@@ -409,8 +418,15 @@ describe('PATCH /orders/credit', () => {
     assertBody(await patch({ uniqueId: order.orderId, amount: 101 }), 400, badRequest('STORE_CREDIT_UNAVAILABLE'));
   });
 
-  test('refuses a negative amount', async () => {
-    assertBody(await patch({ uniqueId: order.orderId, amount: -1 }), 400, badRequest('STORE_CREDIT_NEGATIVE'));
+  // Phase 4: the validator refuses it (object-form 400; was the service's string-form STORE_CREDIT_NEGATIVE), and a
+  // non-number (was a cast error, 500), more than two decimals or more than 100000 with INVALID_AMOUNT.
+  test('refuses a negative, non-numeric, sub-paise or huge amount, and a malformed order id', async () => {
+    assertBody(await patch({ uniqueId: order.orderId, amount: -1 }), 400, joiError('STORE_CREDIT_NEGATIVE'));
+    for (const amount of ['5', null, 1.005, 100_001]) {
+      assertBody(await patch({ uniqueId: order.orderId, amount }), 400, joiError('INVALID_AMOUNT'));
+    }
+    assertBody(await patch({ uniqueId: { $ne: null }, amount: 1 }), 400, joiError('ORDER_INFO_ATTEMPT_FAILED'));
+    assert.equal((await Order().findById(order._id)).storeCredit, 0);
   });
 
   test('refuses more than the order total', async () => {

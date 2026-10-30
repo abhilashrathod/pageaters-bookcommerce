@@ -10,7 +10,7 @@ const { ORDER_STAGES } = require('../src/constants/enums');
 // replacement shipments, the Razorpay refund webhook and the Delhivery shipment. Each transition is tried from every
 // stage, so the allowed and refused source stages are pinned. Written against the legacy controller first.
 
-const { badRequest, forbidden, ok, okString, serverError } = envelopes;
+const { badRequest, badRequestObject, forbidden, ok, okString, serverError } = envelopes;
 const WEBHOOK_OK = { status: 'ok' };
 const STAGES = Object.values(ORDER_STAGES);
 
@@ -238,8 +238,10 @@ describe('POST /orders/admin-cancel/:id', () => {
 
   test('legacy: finds the order by uniqueId and userId from the body, not by the :id in the path', async () => {
     const order = await orderFor({ orderStatus: 'paid' });
+    // Phase 4: the shared contract requires uniqueId and userId in the body (was: the service found no order).
     const res = await call('POST', `/orders/admin-cancel/${order._id}`, { reason: 'Out of stock' });
-    assertBody(res, 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
+    assertBody(res, 400, badRequestObject('INVALID_REQUEST'));
+    assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
     const wrongUser = await cancel(order, { userId: String(admin.user._id) });
     assertBody(wrongUser, 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
     assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
@@ -323,20 +325,31 @@ describe('POST /orders/return/:uniqueId (return and replace requests)', () => {
     assert.equal(unchanged.requests.length, 0);
   });
 
-  test('legacy: an unknown type saves an open request and an empty history entry, then answers 500', async () => {
+  // Phase 4: the validator refuses a missing or unknown type (was: an open request and an empty history entry were
+  // saved, then the e-mail threw: 500).
+  test('refuses a missing or unknown type, and changes nothing', async () => {
     const order = await orderFor({
       orderStatus: 'fulfilled',
       orderHistory: [{ title: 'fulfilled', description: 'Delivered', time: daysAgo(1) }],
     });
-    const res = await call('POST', `/orders/return/${order.orderId}`, { reason: 'Damaged' }, shopper.cookie);
-    assertBody(res, 500, serverError);
+    for (const body of [{ reason: 'Damaged' }, { type: 'cancel' }, { type: 'return', reason: 'r'.repeat(501) }, { type: 'return', books: ['nope'] }]) {
+      const res = await call('POST', `/orders/return/${order.orderId}`, body, shopper.cookie);
+      assertBody(res, 400, badRequestObject(body.books ? 'INVALID_ID' : 'ORDER_INFO_ATTEMPT_FAILED'));
+    }
     const saved = await Order().findById(order._id);
     assert.equal(saved.orderStatus, 'fulfilled');
-    assert.equal(saved.requests.length, 1);
+    assert.equal(saved.requests.length, 0);
     assert.deepEqual(
       saved.orderHistory.map((entry) => entry.title),
-      ['fulfilled', ''],
+      ['fulfilled'],
     );
+  });
+
+  test('refuses a malformed order id and unknown keys', async () => {
+    const order = await orderFor({ orderStatus: 'fulfilled' });
+    assertBody(await call('POST', '/orders/return/OD-1', { type: 'return' }, shopper.cookie), 400, badRequestObject('ORDER_INFO_ATTEMPT_FAILED'));
+    const res = await call('POST', `/orders/return/${order.orderId}`, { type: 'return', orderStatus: 'returned' }, shopper.cookie);
+    assertBody(res, 400, badRequestObject('INVALID_REQUEST'));
   });
 
   test("refuses another user's order", async () => {
@@ -615,13 +628,35 @@ describe('POST /orders/create-shipment/:orderId (Delhivery)', () => {
     assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
   });
 
-  test('answers 500 when Delhivery is unreachable, and without dimensions', async () => {
+  test('answers 500 when Delhivery is unreachable', async () => {
     const order = await orderFor({ orderStatus: 'paid' });
     mockVendorCall('axios', () => {
       throw new Error('Delhivery down');
     });
     assertBody(await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS }), 500, serverError);
-    assertBody(await call('POST', `/orders/create-shipment/${order._id}`, {}), 500, serverError);
+    assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
+  });
+
+  // Phase 4: validated with the shared contract (was: missing dimensions threw a TypeError, 500).
+  test('refuses missing or non-positive dimensions before calling Delhivery', async () => {
+    const order = await orderFor({ orderStatus: 'paid' });
+    mockDelhivery();
+    for (const body of [{}, { dimensions: { ...DIMENSIONS, weight: 0 } }, { dimensions: { ...DIMENSIONS, width: '20' } }]) {
+      assertBody(await call('POST', `/orders/create-shipment/${order._id}`, body), 400, badRequestObject('INVALID_REQUEST'));
+    }
+    assert.deepEqual(calls, []);
+    assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
+  });
+
+  // Phase 4: the path id is validated after the merge, so a query or body value can't replace it with an operator.
+  test('refuses an orderId operator from the query or body', async () => {
+    const order = await orderFor({ orderStatus: 'paid' });
+    mockDelhivery();
+    const path = `/orders/create-shipment/${order._id}`;
+    assertBody(await call('POST', `${path}?orderId[$ne]=x`, { dimensions: DIMENSIONS }), 400, badRequestObject('INVALID_REQUEST'));
+    assertBody(await call('POST', path, { dimensions: DIMENSIONS, orderId: { $ne: 'x' } }), 400, badRequestObject('INVALID_REQUEST'));
+    assertBody(await call('POST', path, { dimensions: DIMENSIONS, orderId: 'nope' }), 400, badRequestObject('INVALID_ID'));
+    assert.deepEqual(calls, []);
     assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
   });
 

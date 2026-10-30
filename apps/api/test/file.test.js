@@ -66,8 +66,6 @@ describe('POST /file/upload', () => {
     assert.equal(record.mimeType, 'image/png');
   });
 
-  // Legacy, not tested: an unknown or missing fileModule goes to the book bucket and answers 200, but the
-  // unawaited File.create then fails model validation as an unhandled rejection (it would fail this test file).
   test('picks the bucket per module', async () => {
     const cases = [
       ['STORE_BOOK', 'storebooks'],
@@ -84,16 +82,22 @@ describe('POST /file/upload', () => {
     await eventually(async () => (await File().countDocuments()) === cases.length);
   });
 
-  test('legacy: an array fileModule (`fileModule[]=AUTHOR` or a repeated field) goes to the book bucket', async (t) => {
-    // The File record can't store an array (an unhandled rejection after the response, see above), so the write is
-    // stubbed here; this test is about the bucket.
-    t.mock.method(File(), 'create', async () => {});
-    for (const fields of [{ 'fileModule[]': 'AUTHOR' }, { fileModule: ['AUTHOR', 'AUTHOR'] }]) {
-      uploads = [];
-      const res = await upload({ fields: { ...fields, title: 'x' }, file: PNG });
-      assert.equal(res.status, 200);
-      assert.equal(uploads[0].Bucket, 'storebooks');
+  // Phase 4: the module is checked before the upload. Was: an unknown, missing or array module went to the book
+  // bucket and answered 200, then the unawaited File.create failed model validation as an unhandled rejection,
+  // leaving an orphaned S3 object.
+  test('refuses a missing, unknown or array fileModule with INVALID_FILE before uploading', async () => {
+    const invalid = [{}, { fileModule: 'NOPE' }, { fileModule: 'author' }, { 'fileModule[]': 'AUTHOR' }, { fileModule: ['AUTHOR', 'AUTHOR'] }];
+    for (const fields of invalid) {
+      assertBody(await upload({ fields: { ...fields, title: 'x' }, file: PNG }), 400, badRequest('INVALID_FILE'));
     }
+    assert.deepEqual(uploads, []);
+    assert.equal(await File().countDocuments(), 0);
+  });
+
+  test('DEFAULT uploads to the book bucket', async () => {
+    assert.equal((await upload({ fields: { fileModule: 'DEFAULT', title: 'x' }, file: PNG })).status, 200);
+    assert.equal(uploads[0].Bucket, 'storebooks');
+    await eventually(async () => (await File().countDocuments()) === 1);
   });
 
   test('refuses a request without a file, or with an unsupported extension', async () => {
@@ -112,7 +116,7 @@ describe('POST /file/upload', () => {
         throw new Error('S3 down');
       },
     }));
-    assertBody(await upload({ fields: { title: 'x' }, file: PNG }), 500, serverError);
+    assertBody(await upload({ fields: { fileModule: 'AUTHOR', title: 'x' }, file: PNG }), 500, serverError);
     assert.equal(await File().countDocuments(), 0);
   });
 });

@@ -42,7 +42,7 @@ const setSessionCookies = (res, { token, cartId }) => {
 
 module.exports.register = async (req, res) => {
   try {
-    const { email, password } = req.allParams();
+    const { email, password } = req.validated;
     const session = await authSession.register({ email, password, ipAddress: req.ip });
     setSessionCookies(res, session);
     return res.ok({ message: 'REGISTRATION_SUCCESS', data: {} });
@@ -53,7 +53,7 @@ module.exports.register = async (req, res) => {
 
 module.exports.login = async (req, res) => {
   try {
-    const { email, password } = req.allParams();
+    const { email, password } = req.validated;
     const { profile, ...session } = await authSession.login({ email, password, ipAddress: req.ip });
     setSessionCookies(res, session);
     return res.ok({ message: profile.emailVerified ? 'LOGIN_SUCCESS' : 'EMAIL_VERIFICATION_PENDING', data: profile });
@@ -108,7 +108,7 @@ module.exports.updatePassword = async (req, res) => {
 
 module.exports.forgotPassword = async (req, res) => {
   try {
-    const { email } = req.allParams();
+    const { email } = req.validated;
     await authAccount.forgotPassword({ email });
     return res.ok('FORGOT_PASSWORD_MAIL_SENT');
   } catch (e) {
@@ -118,7 +118,7 @@ module.exports.forgotPassword = async (req, res) => {
 
 module.exports.resendForgetPasswordEmail = async (req, res) => {
   try {
-    const { email } = req.allParams();
+    const { email } = req.validated;
     await authAccount.resendForgotPasswordEmail({ email });
     return res.ok('FORGOT_PASSWORD_MAIL_SENT');
   } catch (e) {
@@ -128,7 +128,7 @@ module.exports.resendForgetPasswordEmail = async (req, res) => {
 
 module.exports.resetPassword = async (req, res) => {
   try {
-    const { email, token, newPassword, confirmPassword } = req.allParams();
+    const { email, token, newPassword, confirmPassword } = req.validated;
     await authAccount.resetPassword({ email, token, newPassword, confirmPassword });
     return res.ok('PASSWORD_UPDATED');
   } catch (e) {
@@ -138,7 +138,7 @@ module.exports.resetPassword = async (req, res) => {
 
 module.exports.verifyEmail = async (req, res) => {
   try {
-    const { email, token } = req.allParams();
+    const { email, token } = req.validated;
     await authVerification.verifyEmail({ email, token });
     return res.ok('EMAIL_VERIFIED');
   } catch (e) {
@@ -148,7 +148,7 @@ module.exports.verifyEmail = async (req, res) => {
 
 module.exports.resendVerificationEmail = async (req, res) => {
   try {
-    const { email } = req.allParams();
+    const { email } = req.validated;
     await authVerification.resendVerificationEmail({ email });
     return res.ok();
   } catch (e) {

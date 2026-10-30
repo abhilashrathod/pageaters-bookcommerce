@@ -1,7 +1,7 @@
 const { get } = require('lodash');
 
-const { enums } = require('../constants');
 const { AppError, handleControllerError } = require('../helpers/appError.helper');
+const { cartIdFrom } = require('../helpers/cart-cookie.helper');
 const orderAnalytics = require('../services/order-analytics.service');
 const orderCheckout = require('../services/order-checkout.service');
 const orderLifecycle = require('../services/order-lifecycle.service');
@@ -17,7 +17,6 @@ const orderShipping = require('../services/order-shipping.service');
 // queries, analytics and notifications.
 
 const userIdOf = (req) => get(req, 'user.userId', '');
-const cartIdOf = (req) => req.cookies[enums.TOKEN_ID.CART_COOKIE];
 // Razorpay signs the raw body; the legacy check re-serialises the parsed body, which matches for JSON Razorpay sends.
 const webhookEvent = (req) => ({
   rawBody: JSON.stringify(req.body),
@@ -30,7 +29,7 @@ const webhookEvent = (req) => ({
 module.exports.attempt = async (req, res) => {
   try {
     const { address } = req.allParams();
-    await orderCheckout.attemptOrder(userIdOf(req), cartIdOf(req), address);
+    await orderCheckout.attemptOrder(userIdOf(req), cartIdFrom(req), address);
     return res.ok({ message: 'ORDER_ADDRESS_SUCCESS', data: {} });
   } catch (e) {
     return handleControllerError(res, e);
@@ -40,7 +39,7 @@ module.exports.attempt = async (req, res) => {
 module.exports.create = async (req, res) => {
   try {
     const { method, instructions, giftOptions } = req.allParams();
-    const data = await orderCheckout.placeOrder(userIdOf(req), cartIdOf(req), { method, instructions, giftOptions });
+    const data = await orderCheckout.placeOrder(userIdOf(req), cartIdFrom(req), { method, instructions, giftOptions });
     return res.ok({ message: 'ORDER_CREATE_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);

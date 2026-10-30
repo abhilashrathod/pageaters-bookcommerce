@@ -19,7 +19,7 @@ module.exports.getAllByUser = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    const data = await addressService.createAddress(req.user, addressFields(req.allParams()));
+    const data = await addressService.createAddress(req.user, addressFields(req.validated));
     return res.ok({ message: 'ADDRESS_CREATE_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);
@@ -28,7 +28,7 @@ module.exports.create = async (req, res) => {
 
 module.exports.update = async (req, res) => {
   try {
-    const params = req.allParams();
+    const params = req.validated;
     const data = await addressService.updateAddress(req.user, params.id, addressFields(params));
     return res.ok({ message: 'ADDRESS_UPDATE_SUCCESS', data });
   } catch (e) {
@@ -68,7 +68,7 @@ module.exports.destroy = async (req, res) => {
 
 module.exports.checkServiceability = async (req, res) => {
   try {
-    const { pincode } = req.allParams();
+    const { pincode } = req.validated;
     const data = await addressService.checkPincode(pincode);
     return res.ok({ message: 'PINCODE_SUCCESS', data });
   } catch (e) {

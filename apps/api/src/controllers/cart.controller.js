@@ -2,6 +2,7 @@ const { get } = require('lodash');
 
 const { enums } = require('../constants');
 const { handleControllerError } = require('../helpers/appError.helper');
+const { cartIdFrom } = require('../helpers/cart-cookie.helper');
 const cartBooks = require('../services/cart-books.service');
 const cartExtras = require('../services/cart-extras.service');
 const cartRead = require('../services/cart-read.service');
@@ -14,7 +15,7 @@ const CART_COOKIE_OPTIONS = {
 };
 
 const cartOf = (req) => ({
-  cartId: req.cookies[enums.TOKEN_ID.CART_COOKIE],
+  cartId: cartIdFrom(req),
   userId: get(req, 'user.userId', ''),
 });
 

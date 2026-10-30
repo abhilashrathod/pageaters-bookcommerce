@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const S3 = require('aws-sdk/clients/s3');
 const { kebabCase } = require('lodash');
 
+const { adminFileModuleSchema } = require('@pageaters/shared');
+
 const { AWS } = require('../appConfig');
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
@@ -27,30 +29,32 @@ const BUCKETS = {
   [enums.FILE_MODULES.ASSETS]: enums.BUCKETS.ASSETS,
 };
 
-// Strict match as the legacy `switch`: only a string module picks its bucket (an array from a repeated or `[]`
-// multipart field falls to the book bucket).
-const getBucketName = (fileModule) =>
-  typeof fileModule === 'string' && Object.hasOwn(BUCKETS, fileModule) ? BUCKETS[fileModule] : enums.BUCKETS.BOOK;
+// DEFAULT (the only known module without a bucket of its own) uses the book bucket.
+const getBucketName = (fileModule) => (Object.hasOwn(BUCKETS, fileModule) ? BUCKETS[fileModule] : enums.BUCKETS.BOOK);
 
 /**
- * Uploads an image to the bucket of its file module (unknown modules use the book bucket) as
- * `<kebab title>-<random>-<timestamp>.<ext>`, and records it in the `file` collection.
- * Legacy (fixed in the legacy-bugs step): the record is created without awaiting it, so a failed write (e.g. an
- * unknown `fileModule`, which the model's enum refuses) is an unhandled rejection after the response; the caller
- * gets the storage key, not a URL.
+ * Uploads an image to the bucket of its file module (DEFAULT uses the book bucket) as
+ * `<kebab title>-<random>-<timestamp>.<ext>`, and records it in the `file` collection. The module must be one the
+ * File model accepts (`AdminFileModule` in @pageaters/shared), checked before the upload.
+ * Legacy (fixed in the adapters step): the record is created without awaiting it, so a failed write is an unhandled
+ * rejection after the response; the caller gets the storage key, not a URL.
  * @param {{ fileModule?: string, title?: string, file?: { originalname: string, buffer: Buffer, mimetype: string } }} input
  *   `file` is the multer file.
  * @returns {Promise<string>} The storage key (file name).
- * @throws {AppError} NO_FILE_PRESENT (400); UNSUPPORTED_FILE_TYPE (400) unless the extension is jpg, jpeg or png.
+ * @throws {AppError} NO_FILE_PRESENT (400); UNSUPPORTED_FILE_TYPE (400) unless the extension is jpg, jpeg or png;
+ *   INVALID_FILE (400) for a missing or unknown `fileModule` (an array from a repeated field too).
  */
-const uploadFile = async ({ fileModule = '', title, file }) => {
-  const slug = kebabCase(title);
-  const bucketName = getBucketName(fileModule);
-
+const uploadFile = async ({ fileModule, title, file }) => {
   if (!file) throw new AppError('NO_FILE_PRESENT');
 
   const ext = file.originalname.split('.').pop();
   if (!Object.values(enums.VALID_FILE_TYPES).includes(ext)) throw new AppError('UNSUPPORTED_FILE_TYPE');
+
+  // Before the upload: the File model accepts only these modules, so an unknown one would leave an orphaned object.
+  if (!adminFileModuleSchema.safeParse(fileModule).success) throw new AppError('INVALID_FILE');
+
+  const slug = kebabCase(title);
+  const bucketName = getBucketName(fileModule);
 
   const fileName = `${slug}-${generateRandomString(10)}-${Date.now()}.${ext}`;
 

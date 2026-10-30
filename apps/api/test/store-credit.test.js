@@ -7,7 +7,7 @@ const { asJson, assertBody, assertGuarded, createUser, envelopes, eventually, mo
 // /api/v1/store-credit over HTTP: issue credit (admin), balance and history (shopper). Pins the legacy envelopes
 // byte for byte, written against the legacy controller before the service refactor.
 
-const { ok, created, badRequest, serverError } = envelopes;
+const { ok, created, badRequest, badRequestObject } = envelopes;
 
 let api;
 let admin;
@@ -80,14 +80,21 @@ describe('POST /store-credit (issue)', () => {
     assert.equal(await mongoose.model('store_credit_transactions').countDocuments(), 0);
   });
 
-  test('legacy: no validator, so a negative credit lowers the balance', async () => {
-    assertBody(await issue({ userId: String(shopper.user._id), credit: -40 }), 201, created('STORE_CREDIT_SUCCESS'));
-    assert.equal(await balanceOf(shopper.user), -40);
-    assert.equal((await transactionsOf(shopper.user))[0].amount, -40);
+  // Phase 4: validated with the shared admin contract, credit a positive amount in rupees with at most two decimals
+  // (was: no validator, so a negative credit lowered the balance). Sub-paise amounts answer the contract's
+  // INVALID_AMOUNT; the other checks have no code and answer INVALID_REQUEST.
+  test('refuses a negative, zero, missing, non-numeric or sub-paise credit and changes nothing', async () => {
+    for (const credit of [-40, 0, undefined, '10']) {
+      assertBody(await issue({ userId: String(shopper.user._id), credit }), 400, badRequestObject('INVALID_REQUEST'));
+    }
+    assertBody(await issue({ userId: String(shopper.user._id), credit: 1.234 }), 400, badRequestObject('INVALID_AMOUNT'));
+    assert.equal(await balanceOf(shopper.user), 0);
+    assert.deepEqual(await transactionsOf(shopper.user), []);
   });
 
-  test('legacy: a malformed user id answers 500', async () => {
-    assertBody(await issue({ userId: 'not-an-id', credit: 10 }), 500, serverError);
+  // Phase 4: was a cast error (500).
+  test('refuses a malformed user id with INVALID_ID', async () => {
+    assertBody(await issue({ userId: 'not-an-id', credit: 10 }), 400, badRequestObject('INVALID_ID'));
   });
 });
 

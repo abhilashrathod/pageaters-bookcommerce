@@ -15,7 +15,7 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    const { email } = req.allParams();
+    const { email } = req.validated;
     const added = await subscriberService.addSubscriber(email);
     return res.ok({ message: added ? 'SUBSCRIBER_CREATE_SUCCESS' : 'SUBSCRIBER_EXIST', data: {} });
   } catch (e) {

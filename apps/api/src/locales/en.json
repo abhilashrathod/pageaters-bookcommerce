@@ -225,5 +225,7 @@
 	"REVIEW_DELETE_SUCCESS": "Review Deleted Successfully",
 	"REVIEW_EXISTS": "You have already submitted review for this product",
 	"REVIEW_SUCCESS": "Review information fetched",
-	"REVIEW_PURCHASE_ERROR": "Only purchased items can be reviewed"
+	"REVIEW_PURCHASE_ERROR": "Only purchased items can be reviewed",
+	"INVALID_AMOUNT": "Invalid amount",
+	"INVALID_REQUEST": "Invalid request"
 }

@@ -15,8 +15,12 @@ cp .env.example .env   # then fill in the values
 pnpm dev               # node --watch, loads .env if present
 pnpm start             # same without watch
 pnpm lint              # ESLint (flat config on @pageaters/config/eslint/node)
-pnpm test              # node --test: env validation and boot smoke tests, no database needed
+pnpm test              # node --test: HTTP tests on an in-memory MongoDB, vendors stubbed
 ```
+
+The API `require()`s the built `@pageaters/shared` (its `dist/`). From the repo root, `pnpm turbo run test
+--filter=api` (or `pnpm test`) builds it first (`test` depends on `^build`); to run `pnpm --filter api test` or
+`pnpm dev` directly, build it once with `pnpm --filter @pageaters/shared build` (again after changing it).
 
 `.env.example` documents every variable with its default and rule, and marks which are required to boot
 (`MONGODB_URI`, `ENCRYPTION_KEY`, `RAZORPAY_KEY_ID`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`).
@@ -34,7 +38,6 @@ src/server.js     local entry: validates env, connects to MongoDB, listens on PO
 src/routes/       route definitions
 src/controllers/  request handlers
 src/models/       Mongoose models
-src/validators/   Joi request schemas
 src/middlewares/  auth, validation, response helpers
 src/helpers/      shared logic (orders, mail, encryption)
 src/libs/         search index, sitemap, Google product feed

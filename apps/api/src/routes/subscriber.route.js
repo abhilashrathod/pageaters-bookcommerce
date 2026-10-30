@@ -3,13 +3,13 @@ const router = new Router();
 
 const { USER_ROLES } = require('./../constants/enums');
 
-const requestValidator = require('../middlewares/requestValidator.middleware');
+const validate = require('../middlewares/validate.middleware');
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
 
 const controller = require('./../controllers/subscriber.controller');
-const validator = require('./../validators/subscriber.validator');
+const { subscriberRootPayloadSchema } = require('@pageaters/shared');
 
-router.post('/', requestValidator(validator.rootPayload), controller.create);
+router.post('/', validate(subscriberRootPayloadSchema), controller.create);
 
 // ADMIN
 router.get('/', permissionValidator(USER_ROLES.ADMIN), controller.getAll);

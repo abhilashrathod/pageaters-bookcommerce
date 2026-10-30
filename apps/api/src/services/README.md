@@ -38,6 +38,28 @@ module.exports.add = async (req, res) => {
 };
 ```
 
+### Request validation
+
+Routes validate with `validate(schema)` (`middlewares/validate.middleware.js`) and a request schema from
+`@pageaters/shared` (`src/requests/*`, admin ones in `src/requests/admin/*`), loaded with `require()`:
+
+```js
+const { favoritesRequestPayloadSchema } = require('@pageaters/shared');
+router.post('/', validate(favoritesRequestPayloadSchema), permissionValidator(USER_ROLES.USER), controller.add);
+```
+
+- It checks `req.allParams()`; query keys the schema doesn't list are ignored (cache-busters), unknown body keys are
+  refused by the strict shopper schemas. A failure answers the object-form 400 with the first issue's message as the
+  code (`res.error({ message })` shape: `statusCode, status, message, error, data`).
+- `req.body` and `req.query` stay as sent. The parsed value is `req.validated`: emails trimmed and lower-cased, text
+  trimmed, defaults applied, unknown keys of non-strict schemas dropped. **Passwords are never trimmed** (the schemas
+  check the trimmed length but return the value as sent).
+- Read `req.validated` where a rule depends on the parsed value — today every route that takes an email (auth,
+  subscriber, address create/update) and the pincode check. Other controllers still read `req.allParams()`; moving
+  them changes behaviour (e.g. `quantity` defaults) and needs its own pinned test.
+- A new rule goes in the shared schema (with a test there), never in the API. Codes must exist in
+  `src/locales/en.json`; an issue without a code (unknown keys, enum values, bare checks) answers the fixed `INVALID_REQUEST`, so a 400 never echoes client input or schema text.
+
 `handleControllerError` maps an `AppError` to the legacy envelope: 401 → `res.unauthorized(code)`, 403 →
 `res.forbidden()`, 400 without `data` → `res.error(code)`, other 4xx (or `data` given) →
 `res.error({ statusCode, message: code, data })`; 5xx and non-`AppError`s → `res.internalServerError(e)`. The

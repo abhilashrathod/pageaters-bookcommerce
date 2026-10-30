@@ -208,10 +208,12 @@ describe('GET /cart/retrieve', () => {
     assertBody(await api.request('/cart/retrieve'), 401, unauthorized('NO_AUTH_HEADER'));
   });
 
-  test('legacy: a cart id that is not an ObjectId answers 500', async () => {
-    const res = await api.request('/cart/retrieve', { cookie: `${shopper.cookie}; _CID=not-an-id` });
-    assert.equal(res.status, 500);
-    assert.equal(res.body.status, 'SOME_ERROR_OCCURRED');
+  // Phase 4: the cart cookie must be a cart id (was: a malformed id answered 500, and a JSON cookie such as
+  // `j:{"$ne":null}` reached the cart queries as an operator object).
+  test('a cart cookie that is not an ObjectId answers CART_NOT_EXIST, operator objects included', async () => {
+    for (const value of ['not-an-id', encodeURIComponent('j:{"$ne":null}'), encodeURIComponent('j:{"$in":["a"]}'), encodeURIComponent('j:["a"]')]) {
+      assertBody(await api.request('/cart/retrieve', { cookie: `${shopper.cookie}; _CID=${value}` }), 400, envelopes.badRequest('CART_NOT_EXIST'));
+    }
   });
 });
 

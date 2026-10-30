@@ -14,6 +14,7 @@
   "author": "",
   "license": "UNLICENSED",
   "dependencies": {
+    "@pageaters/shared": "workspace:*",
     "@sendgrid/mail": "8.1.6",
     "aws-sdk": "^2.939.0",
     "axios": "1.21.0",
@@ -28,7 +29,6 @@
     "express-slow-down": "3.1.1",
     "helmet": "8.3.0",
     "i18n": "^0.8.6",
-    "joi": "^14.3.1",
     "js2xmlparser": "^5.0.0",
     "jsonwebtoken": "9.0.3",
     "lodash": "^4.17.15",
