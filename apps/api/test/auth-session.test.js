@@ -9,7 +9,7 @@ const { hashSessionToken } = require('../src/helpers/encryption.helper');
 // Sessions over HTTP: register, login, logout (token revoke), GET and PUT /auth/me. Envelopes and cookies (names,
 // values, flags, expiry) are pinned exactly, so the controller → service refactor can't change them.
 
-const { badRequest, ok, unauthorized } = envelopes;
+const { badRequest, ok, serverError, unauthorized } = envelopes;
 const joiError = envelopes.badRequestObject;
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -114,6 +114,16 @@ describe('POST /auth/register', () => {
     assert.equal(await User().countDocuments({ email: body.email }), 1);
   });
 
+  test('a failed account write answers 500 and starts no session (every write is awaited)', async (t) => {
+    t.mock.method(User().prototype, 'save', async () => {
+      throw new Error('write failed');
+    });
+    const res = await api.request('/auth/register', { method: 'POST', body });
+    assertBody(res, 500, serverError);
+    assert.deepEqual(cookiesOf(res), []);
+    assert.equal(await AccessTokens().countDocuments(), 0);
+  });
+
   test('validates the payload', async () => {
     assertBody(await api.request('/auth/register', { method: 'POST', body: { ...body, email: 'nope' } }), 400, joiError('INVALID_EMAIL'));
     assertBody(await api.request('/auth/register', { method: 'POST', body: { email: body.email } }), 400, joiError('INVALID_PASSWORD'));
@@ -175,6 +185,20 @@ describe('POST /auth/login', () => {
   });
 });
 
+describe('POST /auth/login: a failed write', () => {
+  test('answers 500 and starts no session (the login stamp is awaited)', async (t) => {
+    const { user } = await createUser();
+    await AccessTokens().deleteMany({});
+    t.mock.method(User(), 'updateOne', async () => {
+      throw new Error('write failed');
+    });
+    const res = await api.request('/auth/login', { method: 'POST', body: { email: user.email, password: PASSWORD } });
+    assertBody(res, 500, serverError);
+    assert.deepEqual(cookiesOf(res), []);
+    assert.equal(await AccessTokens().countDocuments(), 0);
+  });
+});
+
 describe('POST /auth/logout (revoke token)', () => {
   test('revokes the session token and clears both cookies', async () => {
     const { user, token, cookie } = await createUser();
@@ -227,16 +251,18 @@ describe('PUT /auth/me', () => {
     assertBody(res, 200, ok('PROFILE_UPDATED', profileOf(fresh)));
   });
 
-  test('legacy: contactNo is validated but ignored; an empty name changes nothing', async () => {
+  test('an empty name changes nothing', async () => {
     const { user, cookie } = await createUser();
-    const res = await api.request('/auth/me', { method: 'PUT', body: { fullName: '', contactNo: '9000000099' }, cookie });
-    assert.equal(res.status, 200);
+    assert.equal((await api.request('/auth/me', { method: 'PUT', body: { fullName: '' }, cookie })).status, 200);
+    assert.equal((await User().findById(user._id)).fullName, user.fullName);
+  });
+
+  test('refuses a contact number: it changes only through the OTP flow', async () => {
+    const { user, cookie } = await createUser();
+    for (const body of [{ fullName: 'Test Renamed', contactNo: '9000000099' }, { contactNo: '' }, { contactNo: '12' }]) {
+      assertBody(await api.request('/auth/me', { method: 'PUT', body, cookie }), 400, joiError('INVALID_REQUEST'));
+    }
     const fresh = await User().findById(user._id);
-    assert.deepEqual([fresh.fullName, fresh.contactNo], [user.fullName, user.contactNo]);
-    assertBody(
-      await api.request('/auth/me', { method: 'PUT', body: { contactNo: '12' }, cookie }),
-      400,
-      joiError('INVALID_PHONE'),
-    );
+    assert.deepEqual([fresh.fullName, fresh.contactNo, fresh.contactVerified], [user.fullName, user.contactNo, user.contactVerified]);
   });
 });

@@ -25,16 +25,15 @@ const matchesCartAvailability = (book, products) =>
   products.length === 0 || book.availability === products[0].product.availability;
 
 /**
- * Adds a book to the cart, or adds to its quantity when it is already there.
- * Legacy, kept: `quantity` gets no default (the validator's default isn't applied), so a new book without one is
- * stored with the model default 1 and skips the limit and stock checks (an out-of-stock book is added); an existing
- * book without one becomes NaN and fails (500).
- * @param {{ cartId: string, userId: string, product: string, quantity?: number }} input
- * @returns {Promise<true | object>} Legacy: `true` for a new book, the updated cart document for an existing one.
+ * Adds a book to the cart, or adds to its quantity when it is already there. The limit and stock checks always run
+ * on the resulting quantity.
+ * @param {{ cartId: string, userId: string, product: string, quantity?: number }} input `quantity` defaults to 1
+ *   (the route's schema applies the same default).
+ * @returns {Promise<void>}
  * @throws {AppError} CART_NOT_EXIST, BOOK_NOT_EXIST, BUNDLE_BOOKS_ALREADY_PRESENT, QUANTITY_LIMIT, INVALID_QUANTITY (400).
  * @throws {ProductMismatchError} When the book's availability doesn't fit the cart.
  */
-const addBook = async ({ cartId, userId, product, quantity }) => {
+const addBook = async ({ cartId, userId, product, quantity = 1 }) => {
   const userCart = await findUserCart(cartId, userId, ADD_POPULATE);
   const currentCart = userCart.toObject();
 
@@ -68,15 +67,11 @@ const addBook = async ({ cartId, userId, product, quantity }) => {
   if (total > book.inventory) throw new AppError('INVALID_QUANTITY');
 
   if (alreadyThere) {
-    return Cart.findOneAndUpdate(
-      { ...ownCart(userCart), 'products.product': getId(product) },
-      { $set: { 'products.$.quantity': total } },
-      { new: true },
-    );
+    await Cart.updateOne({ ...ownCart(userCart), 'products.product': getId(product) }, { $set: { 'products.$.quantity': total } });
+    return;
   }
 
-  await Cart.findOneAndUpdate(ownCart(userCart), { $addToSet: { products: { product, quantity, addedOn: new Date() } } }, { new: true });
-  return true;
+  await Cart.updateOne(ownCart(userCart), { $addToSet: { products: { product, quantity, addedOn: new Date() } } });
 };
 
 /**
@@ -112,7 +107,7 @@ const removeBook = async ({ cartId, userId, id }) => {
 };
 
 /**
- * Empties the cart. Legacy bug, kept: only the books are removed; bundles, mystery boxes and add-ons stay.
+ * Empties the cart: every line goes (books, bundles, mystery boxes and add-ons); the cart itself and its cookie stay.
  * @param {{ cartId: string, userId: string }} input
  * @returns {Promise<void>}
  * @throws {AppError} CART_NOT_EXIST (400).
@@ -121,7 +116,7 @@ const emptyCart = async ({ cartId, userId }) => {
   if (!cartId) throw new AppError('CART_NOT_EXIST');
   const userCart = await findUserCart(cartId, userId);
 
-  await Cart.findOneAndUpdate(ownCart(userCart), { $set: { products: [] } }, { new: true });
+  await Cart.updateOne(ownCart(userCart), { $set: { products: [], bundles: [], mysteryBoxes: [], addOns: [] } });
 };
 
 module.exports = { addBook, emptyCart, removeBook, setBookQuantity };

@@ -24,7 +24,16 @@ const checkServiceabilityInternal = async (pincode) => {
   }
 };
 
-const clearDefault = (userId) => Address.updateMany({ isDeleted: false, userId }, { $set: { isDefault: false } });
+// Clears the user's default address, except `keep` (an address id) when given. The `$ne` is server-built, so it is
+// marked trusted (sanitizeFilter neutralises untrusted operators).
+const clearDefault = (userId, keep) =>
+  Address.updateMany({ isDeleted: false, userId, ...(keep && { _id: mongoose.trusted({ $ne: keep }) }) }, { $set: { isDefault: false } });
+
+// The fields a shopper sets on an address (create and update): the single allowlist, so a request can never set
+// `userId`, `isDeleted`, `deletedAt` or `country`. Fields left out (undefined) are skipped.
+const ADDRESS_FIELDS = ['fullName', 'contactNo', 'email', 'city', 'state', 'pinCode', 'addressLine1', 'addressLine2', 'landmark', 'isDefault', 'type'];
+const pickAddressFields = (fields) =>
+  Object.fromEntries(ADDRESS_FIELDS.filter((field) => fields[field] !== undefined).map((field) => [field, fields[field]]));
 
 /**
  * The user's live addresses.
@@ -50,8 +59,7 @@ const getAddress = async (userId, id) => {
  * Adds an address after checking its pincode with the courier; a default address clears the user's other defaults.
  * Legacy: a courier error counts as unserviceable; `email` falls back to the account email when empty.
  * @param {{ userId: string, email?: string }} user The caller (`req.user`: `userId`, `email`).
- * @param {object} fields fullName, email, contactNo, city, state, pinCode, addressLine1, addressLine2, landmark,
- *   type, isDefault.
+ * @param {object} fields The validated request; only ADDRESS_FIELDS are read.
  * @returns {Promise<object>} The new address document.
  * @throws {AppError} PINCODE_ERROR (400, object form) when the pincode isn't serviceable.
  */
@@ -60,56 +68,36 @@ const createAddress = async (user, fields) => {
 
   if (fields.isDefault) await clearDefault(user.userId);
 
-  const { fullName, contactNo, city, state, pinCode, addressLine1, addressLine2, isDefault, landmark, type } = fields;
-  return Address.create({
-    userId: user.userId,
-    fullName,
-    contactNo,
-    email: fields.email ? fields.email : user.email,
-    city,
-    state,
-    pinCode,
-    addressLine1,
-    addressLine2,
-    isDefault,
-    landmark,
-    type,
-  });
+  const picked = pickAddressFields(fields);
+  return Address.create({ ...picked, userId: user.userId, email: picked.email ? picked.email : user.email });
 };
 
 /**
- * Updates one of the user's addresses (`$set` of the given fields; fields left out stay as they are).
- * The route validates the fields (`addressUpdatePayloadSchema`, Phase 4).
- * Legacy (fixed in the legacy-bugs step): the pincode's serviceability isn't re-checked, and the existence check is an
- * unfiltered `findOne()`, so another user's or an unknown id answers success with `null` (nothing changes) unless
- * the collection is empty. `isDefault` clears the user's other defaults even when nothing is updated.
- * @param {{ userId: string, email?: string }} user The caller (`req.user`).
+ * Updates one of the user's live addresses: only the ADDRESS_FIELDS that were sent are set; the others stay as they
+ * are. A new PIN code must be serviceable, as on create. `isDefault: true` clears the user's other defaults only
+ * after the update has succeeded, so a failed update never leaves the user without a default. The route validates
+ * the fields (`addressUpdatePayloadSchema`).
+ * @param {{ userId: string }} user The caller (`req.user`).
  * @param {string} id Address id.
- * @param {object} fields As for createAddress.
- * @returns {Promise<object | null>} The updated address, or null when it isn't the user's.
- * @throws {AppError} ADDRESS_NOT_EXIST (400) when there is no address at all.
+ * @param {object} fields The validated request; only ADDRESS_FIELDS are read, each optional.
+ * @returns {Promise<object>} The updated address.
+ * @throws {AppError} ADDRESS_NOT_EXIST (400) when it isn't the user's, is deleted or doesn't exist (also when it is
+ *   deleted while the update runs); PINCODE_ERROR (400, object form) when a new pincode isn't serviceable.
  */
 const updateAddress = async (user, id, fields) => {
-  if (!(await Address.findOne())) throw new AppError('ADDRESS_NOT_EXIST');
+  const address = await getAddress(user.userId, id);
 
-  if (fields.isDefault) await clearDefault(user.userId);
+  const changes = pickAddressFields(fields);
 
-  const { fullName, contactNo, city, state, pinCode, addressLine1, addressLine2, landmark, isDefault, type } = fields;
-  const payload = {
-    fullName,
-    contactNo,
-    email: fields.email ? fields.email : user.email,
-    city,
-    state,
-    pinCode,
-    addressLine1,
-    addressLine2,
-    landmark,
-    isDefault,
-    type,
-  };
+  if (changes.pinCode && changes.pinCode !== address.pinCode && !(await checkServiceabilityInternal(changes.pinCode))) {
+    throw new AppError('PINCODE_ERROR', { data: {} });
+  }
 
-  return Address.findOneAndUpdate({ _id: id, isDeleted: false, userId: user.userId }, { $set: payload }, { new: true });
+  const updated = await Address.findOneAndUpdate({ _id: address._id, isDeleted: false, userId: user.userId }, { $set: changes }, { new: true });
+  if (!updated) throw new AppError('ADDRESS_NOT_EXIST', { debugMessage: 'DELETED_DURING_UPDATE' });
+
+  if (changes.isDefault) await clearDefault(user.userId, updated._id);
+  return updated;
 };
 
 /**
@@ -141,10 +129,11 @@ const deleteAddress = async (userId, id) => {
 };
 
 /**
- * Asks the courier whether a pincode is serviceable.
- * Legacy: also answers the courier's raw record (`raw`); a courier error propagates (500, the clean adapter error).
+ * Asks the courier whether a pincode is serviceable. Answers only the summary the storefront needs
+ * (`shopperPincodeServiceabilitySchema`), never the courier's raw record. A courier error propagates (500, the clean
+ * adapter error).
  * @param {string} pincode Validated: 6 digits.
- * @returns {Promise<{ main: object, raw: object }>} `main`: serviceable, isCod, isPrepaid, district, state.
+ * @returns {Promise<{ main: object }>} `main`: serviceable, isCod, isPrepaid, district, state.
  * @throws {AppError} PINCODE_ERROR (400, object form) when the courier has no record for it.
  */
 const checkPincode = async (pincode) => {
@@ -160,7 +149,6 @@ const checkPincode = async (pincode) => {
       district: get(pincodeRes, 'postal_code.district', ''),
       state: get(pincodeRes, 'postal_code.state_code', ''),
     },
-    raw: pincodeRes,
   };
 };
 

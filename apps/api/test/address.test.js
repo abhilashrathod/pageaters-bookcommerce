@@ -6,6 +6,7 @@ const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, sta
 const shipping = require('../src/adapters/shipping');
 const { addressFields } = require('./helpers/fixtures/store');
 const t = require('../src/locales/en.json');
+const { shopperAddressResponseSchema, shopperPincodeServiceabilityResponseSchema } = require('@pageaters/shared');
 
 // /api/v1/addresses over HTTP: a shopper's delivery addresses and the pincode serviceability check (the mock
 // shipping adapter: every well-formed pincode is serviceable except 999000 and 999999). Written against the legacy
@@ -14,9 +15,6 @@ const t = require('../src/locales/en.json');
 const { ok, okString, badRequest, badRequestObject, serverError } = envelopes;
 
 const Address = () => mongoose.model('address');
-
-// The mock courier's record for a serviceable pincode.
-const PINCODE_RECORD = { postal_code: { pin: 999001, cod: 'Y', pre_paid: 'Y', district: 'Mock District', state_code: 'MK' } };
 
 let api;
 let shopper;
@@ -135,26 +133,79 @@ describe('PUT /addresses/:id', () => {
     assert.equal(updated.city, 'Other Test City');
   });
 
-  test('legacy: no validator; fields left out stay as they were and email falls back to the account', async () => {
+  test('sets only the fields sent: the others, the email included, stay as they were', async () => {
     const mine = await insertAddress(shopper.user, { landmark: 'Test Landmark' });
-    await api.request(`/addresses/${mine._id}`, { method: 'PUT', body: { city: 'Only City' }, cookie: shopper.cookie });
-    const updated = asJson(await Address().findById(mine._id));
-    assert.equal(updated.city, 'Only City');
-    assert.equal(updated.email, shopper.user.email);
-    assert.equal(updated.landmark, 'Test Landmark');
-    assert.equal(updated.fullName, 'Test Receiver');
+    const res = await api.request(`/addresses/${mine._id}`, { method: 'PUT', body: { city: 'Only City' }, cookie: shopper.cookie });
+    const updated = await Address().findById(mine._id);
+    assertBody(res, 200, ok('ADDRESS_UPDATE_SUCCESS', asJson(updated)));
+    assert.deepEqual(
+      [updated.city, updated.email, updated.landmark, updated.fullName, updated.pinCode],
+      ['Only City', 'receiver@example.com', 'Test Landmark', 'Test Receiver', '999001'],
+    );
+    assert.ok(shopperAddressResponseSchema.safeParse(res.body).success);
   });
 
-  test("legacy: another user's address answers success with data null and is not changed", async () => {
+  test('never sets the owner, the deleted flag or the country, whatever the body says', async () => {
     const other = await createUser();
-    const theirs = await insertAddress(other.user);
-    assertBody(await api.request(`/addresses/${theirs._id}`, { method: 'PUT', body: { city: 'Hacked' }, cookie: shopper.cookie }), 200, ok('ADDRESS_UPDATE_SUCCESS', null));
-    assert.equal((await Address().findById(theirs._id)).city, 'Test City');
+    const mine = await insertAddress(shopper.user);
+    const body = { userId: String(other.user._id), isDeleted: true, deletedAt: 'now', country: 'US', city: 'New City' };
+    assert.equal((await api.request(`/addresses/${mine._id}`, { method: 'PUT', body, cookie: shopper.cookie })).status, 200);
+    const updated = await Address().findById(mine._id);
+    assert.deepEqual([String(updated.userId), updated.isDeleted, updated.deletedAt, updated.country, updated.city], [String(shopper.user._id), false, '', 'IN', 'New City']);
   });
 
-  test('legacy: the existence check is an unfiltered findOne, so ADDRESS_NOT_EXIST only when no address exists at all', async () => {
-    const id = new mongoose.Types.ObjectId();
-    assertBody(await api.request(`/addresses/${id}`, { method: 'PUT', body: {}, cookie: shopper.cookie }), 400, badRequest('ADDRESS_NOT_EXIST'));
+  test("another user's, a deleted or an unknown address answers ADDRESS_NOT_EXIST and nothing changes", async () => {
+    const other = await createUser();
+    const theirs = await insertAddress(other.user, { isDefault: true });
+    const deleted = await insertAddress(shopper.user, { isDeleted: true });
+    const unknown = new mongoose.Types.ObjectId();
+    for (const id of [theirs._id, deleted._id, unknown]) {
+      const res = await api.request(`/addresses/${id}`, { method: 'PUT', body: { city: 'Hacked', isDefault: true }, cookie: shopper.cookie });
+      assertBody(res, 400, badRequest('ADDRESS_NOT_EXIST'));
+    }
+    const after = await Address().findById(theirs._id);
+    assert.deepEqual([after.city, after.isDefault], ['Test City', true]);
+    assert.equal((await Address().findById(deleted._id)).city, 'Test City');
+  });
+
+  test('a new pincode must be serviceable; an unchanged one is not re-checked', async () => {
+    const mine = await insertAddress(shopper.user);
+    const put = (body) => api.request(`/addresses/${mine._id}`, { method: 'PUT', body, cookie: shopper.cookie });
+    assertBody(await put({ pinCode: '999000', city: 'New City' }), 400, badRequestObject('PINCODE_ERROR'));
+    assert.deepEqual([(await Address().findById(mine._id)).pinCode, (await Address().findById(mine._id)).city], ['999001', 'Test City']);
+
+    shipping.clear();
+    assert.equal((await put({ pinCode: '999001' })).status, 200);
+    assert.deepEqual(courierCalls(), []);
+    assert.equal((await put({ pinCode: '999002' })).status, 200);
+    assert.equal(courierCalls().length, 1);
+    assert.equal((await Address().findById(mine._id)).pinCode, '999002');
+  });
+
+  test('a failed update keeps the existing default (the others are cleared only after the update)', async (t) => {
+    const first = await insertAddress(shopper.user, { isDefault: true });
+    const second = await insertAddress(shopper.user);
+    t.mock.method(Address(), 'findOneAndUpdate', async () => {
+      throw new Error('write failed');
+    });
+    const res = await api.request(`/addresses/${second._id}`, { method: 'PUT', body: { isDefault: true }, cookie: shopper.cookie });
+    assertBody(res, 500, serverError);
+    assert.deepEqual([(await Address().findById(first._id)).isDefault, (await Address().findById(second._id)).isDefault], [true, false]);
+  });
+
+  test('an address deleted while the update runs answers ADDRESS_NOT_EXIST and clears no default', async (t) => {
+    const first = await insertAddress(shopper.user, { isDefault: true });
+    const second = await insertAddress(shopper.user);
+    const model = Address();
+    const original = model.findOneAndUpdate;
+    // The race: the address is soft-deleted after the ownership check, right before the update.
+    t.mock.method(model, 'findOneAndUpdate', async function (...args) {
+      await model.updateOne({ _id: second._id }, { isDeleted: true });
+      return original.apply(this, args);
+    });
+    const res = await api.request(`/addresses/${second._id}`, { method: 'PUT', body: { isDefault: true }, cookie: shopper.cookie });
+    assertBody(res, 400, badRequest('ADDRESS_NOT_EXIST'));
+    assert.equal((await Address().findById(first._id)).isDefault, true);
   });
 
   test('isDefault clears the other defaults', async () => {
@@ -205,12 +256,10 @@ describe('DELETE /addresses/:id', () => {
 });
 
 describe('GET /addresses/check-pincode/:pincode', () => {
-  test('legacy: answers the summary and the courier’s raw record', async () => {
-    assertBody(
-      await api.request('/addresses/check-pincode/999001'),
-      200,
-      ok('PINCODE_SUCCESS', { main: { serviceable: true, isCod: 'Y', isPrepaid: 'Y', district: 'Mock District', state: 'MK' }, raw: PINCODE_RECORD }),
-    );
+  test('answers the summary only, never the courier’s raw record', async () => {
+    const res = await api.request('/addresses/check-pincode/999001');
+    assertBody(res, 200, ok('PINCODE_SUCCESS', { main: { serviceable: true, isCod: 'Y', isPrepaid: 'Y', district: 'Mock District', state: 'MK' } }));
+    assert.ok(shopperPincodeServiceabilityResponseSchema.safeParse(res.body).success);
   });
 
   test('an unserviceable pincode answers the object-form 400', async () => {

@@ -38,9 +38,9 @@ module.exports.retrieve = async (req, res) => {
 
 module.exports.add = async (req, res) => {
   try {
-    const { product, quantity } = req.allParams();
-    const data = await cartBooks.addBook({ ...cartOf(req), product, quantity });
-    return res.ok({ message: 'CART_UPDATE_SUCCESS', data });
+    const { product, quantity } = req.validated;
+    await cartBooks.addBook({ ...cartOf(req), product, quantity });
+    return res.ok({ message: 'CART_UPDATE_SUCCESS', data: true });
   } catch (e) {
     return handleControllerError(res, e);
   }
@@ -151,9 +151,9 @@ module.exports.removeBox = async (req, res) => {
 
 module.exports.addAddon = async (req, res) => {
   try {
-    const { addOn, quantity } = req.allParams();
-    const { merged, data } = await cartExtras.addAddOn({ ...cartOf(req), addOn, quantity });
-    return res.ok({ message: merged ? 'ADD_ON_UPDATE_SUCCESS' : 'CART_UPDATE_SUCCESS', data });
+    const { addOn, quantity } = req.validated;
+    const { merged } = await cartExtras.addAddOn({ ...cartOf(req), addOn, quantity });
+    return res.ok({ message: merged ? 'ADD_ON_UPDATE_SUCCESS' : 'CART_UPDATE_SUCCESS', data: true });
   } catch (e) {
     return handleControllerError(res, e);
   }

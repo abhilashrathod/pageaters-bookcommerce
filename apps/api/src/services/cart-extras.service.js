@@ -127,17 +127,16 @@ const findAddOn = async (id) => {
 };
 
 /**
- * Adds an add-on to the cart, or adds to its quantity when it is already there.
- * Legacy, kept: `quantity` has no default, so a new add-on without one gets the model default 1 (skipping the
- * checks) and an existing one fails (NaN, 500). The limit message differs: QUANTITY_LIMIT for a new line,
- * ADD_ON_ADD_QUANTITY_LIMIT when adding to one.
- * @param {{ cartId: string, userId: string, addOn: string, quantity?: number }} input
- * @returns {Promise<{ merged: boolean, data: true | object | null }>} `merged` with the updated cart document when
- *   the add-on was already there; otherwise `data` is `true` (legacy).
+ * Adds an add-on to the cart, or adds to its quantity when it is already there. The limit and stock checks always run
+ * on the resulting quantity. The limit message differs: QUANTITY_LIMIT for a new line, ADD_ON_ADD_QUANTITY_LIMIT when
+ * adding to one.
+ * @param {{ cartId: string, userId: string, addOn: string, quantity?: number }} input `quantity` defaults to 1 (the
+ *   route's schema applies the same default).
+ * @returns {Promise<{ merged: boolean }>} `merged` when the add-on was already in the cart.
  * @throws {AppError} CART_NOT_EXIST, ADD_ON_NOT_EXIST, QUANTITY_LIMIT, ADD_ON_ADD_QUANTITY_LIMIT,
  *   INVALID_QUANTITY (400).
  */
-const addAddOn = async ({ cartId, userId, addOn, quantity }) => {
+const addAddOn = async ({ cartId, userId, addOn, quantity = 1 }) => {
   const userCart = await findUserCart(cartId, userId, ADD_ON_POPULATE);
   const currentCart = userCart.toObject();
   const addOnRes = await findAddOn(getId(addOn));
@@ -148,18 +147,14 @@ const addAddOn = async ({ cartId, userId, addOn, quantity }) => {
     const total = alreadyThere.quantity + quantity;
     if (total > MAX_ADD_ON_QUANTITY) throw new AppError('ADD_ON_ADD_QUANTITY_LIMIT');
     if (total > addOnRes.inventory) throw new AppError('INVALID_QUANTITY');
-    const data = await Cart.findOneAndUpdate(
-      { ...ownCart(userCart), 'addOns.addOn': getId(addOn) },
-      { $set: { 'addOns.$.quantity': total } },
-      { new: true },
-    );
-    return { merged: true, data };
+    await Cart.updateOne({ ...ownCart(userCart), 'addOns.addOn': getId(addOn) }, { $set: { 'addOns.$.quantity': total } });
+    return { merged: true };
   }
 
   if (quantity > MAX_ADD_ON_QUANTITY) throw new AppError('QUANTITY_LIMIT');
   if (quantity > addOnRes.inventory) throw new AppError('INVALID_QUANTITY');
-  await Cart.findOneAndUpdate(ownCart(userCart), { $addToSet: { addOns: { addOn, quantity, addedOn: new Date() } } }, { new: true });
-  return { merged: false, data: true };
+  await Cart.updateOne(ownCart(userCart), { $addToSet: { addOns: { addOn, quantity, addedOn: new Date() } } });
+  return { merged: false };
 };
 
 /**

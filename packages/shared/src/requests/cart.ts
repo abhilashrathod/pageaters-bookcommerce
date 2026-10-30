@@ -13,3 +13,11 @@ export const cartItemAddPayloadSchema = z.strictObject({
   quantity: z.preprocess(joiNumber, z.number({ error: 'REQUIRED_QUANTITY' }).int().min(1).max(CART_QUANTITY_MAX)).default(1),
 });
 export type CartItemAddPayload = z.infer<typeof cartItemAddPayloadSchema>;
+
+// POST /cart/add/addOn (no validator in the legacy API, whose missing quantity made a repeat add a 500). The same
+// rules as a book: `quantity` accepts numeric strings and defaults to 1; the API's own limit is 5 (QUANTITY_LIMIT).
+export const cartAddOnAddPayloadSchema = z.strictObject({
+  addOn: objectIdFieldSchema,
+  quantity: cartItemAddPayloadSchema.shape.quantity,
+});
+export type CartAddOnAddPayload = z.infer<typeof cartAddOnAddPayloadSchema>;

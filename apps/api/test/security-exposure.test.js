@@ -3,7 +3,6 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const mongoose = require('mongoose');
-const ejs = require('ejs');
 const {
   adminUserDetailsResponseSchema,
   adminUserListResponseSchema,
@@ -316,14 +315,13 @@ describe('links use the storefront from config, never the reserved root domain',
     assert.equal(html.includes('evil.example.com'), false, 'data cannot replace STOREFRONT_URL');
   });
 
-  test('stock alert e-mails link to the storefront book page', async (t) => {
+  test('stock alert e-mails link to the storefront book page', async () => {
     await loadStore();
     await mongoose.model('stock_alert').create({ user: shopper.user._id, product: ids.bookOne });
-    // The STOCK_ALERT template ships as en.html (legacy bug, never renders): render its data instead.
-    t.mock.method(ejs, 'renderFile', async (file, data) => JSON.stringify(data));
     const res = await asAdmin(`/stock-alerts/${ids.bookOne}/users`, { method: 'POST' });
     assert.equal(res.status, 200);
-    const data = JSON.parse(sentEmails()[0].html);
-    assert.equal(data.LINK, `${STOREFRONT}/books/test-book-one`);
+    const { html } = sentEmails()[0];
+    assert.doesNotMatch(html, ROOT_DOMAIN);
+    assert.ok(html.includes(`href="${STOREFRONT}/books/test-book-one"`));
   });
 });

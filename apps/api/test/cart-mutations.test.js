@@ -5,10 +5,11 @@ const mongoose = require('mongoose');
 const { assertBody, createUser, envelopes, fixtureId, ids, loadCatalog, startTestApp } = require('./helpers');
 const { cartIds, cartSession, loadCartFixtures } = require('./helpers/fixtures/cart');
 const t = require('../src/locales/en.json');
+const { shopperCartWriteResponseSchema } = require('@pageaters/shared');
 
 // Cart mutations over HTTP (books, bundles, mystery boxes, add-ons, empty, clear). Envelopes are pinned byte for byte
-// (raw JSON, key order included), so the controller → service refactor can't change them. Legacy bugs are pinned
-// too: they are fixed in their own PLAN.md step, not here.
+// (raw JSON, key order included), so the controller → service refactor can't change them. Legacy bugs still open are
+// pinned too ("legacy: …"); the fixed ones say what they were ("was: …").
 
 const { badRequest, ok, unauthorized } = envelopes;
 const joiError = envelopes.badRequestObject;
@@ -45,8 +46,6 @@ const Cart = () => mongoose.model('cart');
 const reloadCart = () => Cart().findById(session.cart._id);
 const setCart = (fields) => Cart().updateOne({ _id: session.cart._id }, fields);
 const lines = async (field, ref) => (await reloadCart())[field].map((item) => [String(item[ref]), item.quantity]);
-// What a cart document serialises to (the `data` some mutations answer with).
-const cartJson = async () => JSON.parse(JSON.stringify(await reloadCart()));
 
 describe('guards on every shopper route', () => {
   const routes = [
@@ -96,10 +95,11 @@ describe('POST /cart/add', () => {
     assert.deepEqual(await lines('products', 'product'), [[String(ids.bookOne), 2]]);
   });
 
-  test('legacy: adding a book already in the cart adds the quantities and answers the whole cart', async () => {
+  test('adding a book already in the cart adds the quantities and answers data true (was: the cart document)', async () => {
     await post('/add', { product: String(ids.bookOne) });
     const res = await post('/add', { product: String(ids.bookOne), quantity: 1 });
-    assertBody(res, 200, ok('CART_UPDATE_SUCCESS', await cartJson()));
+    assertBody(res, 200, ok('CART_UPDATE_SUCCESS', true));
+    assert.ok(shopperCartWriteResponseSchema.safeParse(res.body).success);
     assert.deepEqual(await lines('products', 'product'), [[String(ids.bookOne), 2]]);
   });
 
@@ -121,9 +121,9 @@ describe('POST /cart/add', () => {
     assert.deepEqual(await lines('products', 'product'), []);
   });
 
-  test('legacy: an out-of-stock book added without a quantity skips the stock check and is added', async () => {
-    assertBody(await post('/add', { product: String(cartIds.bookOutOfStock) }), 200, ok('CART_UPDATE_SUCCESS', true));
-    assert.deepEqual(await lines('products', 'product'), [[String(cartIds.bookOutOfStock), 1]]);
+  test('an out-of-stock book added without a quantity is checked as 1 and refused (was: added unchecked)', async () => {
+    assertBody(await post('/add', { product: String(cartIds.bookOutOfStock) }), 400, badRequest('INVALID_QUANTITY'));
+    assert.deepEqual(await lines('products', 'product'), []);
   });
 
   test('a soft-deleted or unknown book answers BOOK_NOT_EXIST', async () => {
@@ -136,11 +136,10 @@ describe('POST /cart/add', () => {
     assertBody(await post('/add', { product: String(ids.bookOne), quantity: 0 }), 400, joiError('REQUIRED_QUANTITY'));
   });
 
-  test('legacy: adding a book already in the cart without a quantity answers 500', async () => {
+  test('adding a book already in the cart without a quantity adds 1 (was: 500)', async () => {
     await post('/add', { product: String(ids.bookOne) });
-    const res = await post('/add', { product: String(ids.bookOne) });
-    assert.equal(res.status, 500);
-    assert.equal(res.body.status, 'SOME_ERROR_OCCURRED');
+    assertBody(await post('/add', { product: String(ids.bookOne) }), 200, ok('CART_UPDATE_SUCCESS', true));
+    assert.deepEqual(await lines('products', 'product'), [[String(ids.bookOne), 2]]);
   });
 
   test('a book of another availability answers PRODUCT_ITEM_MISMATCH with a custom message', async () => {
@@ -200,7 +199,7 @@ describe('DELETE /cart/remove/:id', () => {
 });
 
 describe('DELETE /cart/empty and /cart/clear', () => {
-  test('legacy: empty removes the books only and keeps bundles, boxes and add-ons', async () => {
+  test('empty removes every line: books, bundles, boxes and add-ons (was: books only); the cart and cookie stay', async () => {
     await setCart({
       products: [{ product: ids.bookOne }],
       bundles: [{ bundle: cartIds.bundle }],
@@ -211,7 +210,7 @@ describe('DELETE /cart/empty and /cart/clear', () => {
     assertBody(res, 200, ok('CART_DELETE_SUCCESS', true));
     assert.deepEqual(res.headers.getSetCookie(), []);
     const cart = await reloadCart();
-    assert.deepEqual([cart.products.length, cart.bundles.length, cart.mysteryBoxes.length, cart.addOns.length], [0, 1, 1, 1]);
+    assert.deepEqual([cart.products.length, cart.bundles.length, cart.mysteryBoxes.length, cart.addOns.length], [0, 0, 0, 0]);
   });
 
   test('clear only clears the cart cookie', async () => {
@@ -299,15 +298,16 @@ describe('mystery boxes', () => {
 });
 
 describe('add-ons', () => {
-  test('adds a new add-on and answers data true; the model default makes the quantity 1', async () => {
+  test('adds a new add-on and answers data true; the quantity defaults to 1', async () => {
     assertBody(await post('/add/addOn', { addOn: String(cartIds.addOn) }), 200, ok('CART_UPDATE_SUCCESS', true));
     assert.deepEqual(await lines('addOns', 'addOn'), [[String(cartIds.addOn), 1]]);
   });
 
-  test('adding an add-on already in the cart adds the quantities and answers the whole cart', async () => {
+  test('adding an add-on already in the cart adds the quantities and answers data true (was: the cart document)', async () => {
     await post('/add/addOn', { addOn: String(cartIds.addOn), quantity: 2 });
     const res = await post('/add/addOn', { addOn: String(cartIds.addOn), quantity: 3 });
-    assertBody(res, 200, ok('ADD_ON_UPDATE_SUCCESS', await cartJson()));
+    assertBody(res, 200, ok('ADD_ON_UPDATE_SUCCESS', true));
+    assert.ok(shopperCartWriteResponseSchema.safeParse(res.body).success);
     assert.deepEqual(await lines('addOns', 'addOn'), [[String(cartIds.addOn), 5]]);
   });
 
@@ -327,11 +327,24 @@ describe('add-ons', () => {
     assertBody(await post('/add/addOn', { addOn: String(cartIds.addOnDeleted) }), 400, badRequest('ADD_ON_NOT_EXIST'));
   });
 
-  test('legacy: adding an add-on already in the cart without a quantity answers 500 (no default quantity)', async () => {
+  test('adding an add-on already in the cart without a quantity adds 1 (was: 500, no default quantity)', async () => {
     await post('/add/addOn', { addOn: String(cartIds.addOn) });
-    const res = await post('/add/addOn', { addOn: String(cartIds.addOn) });
-    assert.equal(res.status, 500);
-    assert.equal(res.body.status, 'SOME_ERROR_OCCURRED');
+    assertBody(await post('/add/addOn', { addOn: String(cartIds.addOn) }), 200, ok('ADD_ON_UPDATE_SUCCESS', true));
+    assert.deepEqual(await lines('addOns', 'addOn'), [[String(cartIds.addOn), 2]]);
+  });
+
+  test('a new add-on without a quantity is checked as 1: out of stock answers INVALID_QUANTITY', async () => {
+    await mongoose.model('add_on').updateOne({ _id: cartIds.addOn }, { inventory: 0 });
+    assertBody(await post('/add/addOn', { addOn: String(cartIds.addOn) }), 400, badRequest('INVALID_QUANTITY'));
+    assert.deepEqual(await lines('addOns', 'addOn'), []);
+  });
+
+  test('validates the add-on id and quantity (was: no validator)', async () => {
+    assertBody(await post('/add/addOn', {}), 400, joiError('INVALID_ID'));
+    assertBody(await post('/add/addOn', { addOn: 'nope' }), 400, joiError('INVALID_ID'));
+    assertBody(await post('/add/addOn', { addOn: String(cartIds.addOn), quantity: 0 }), 400, joiError('REQUIRED_QUANTITY'));
+    assertBody(await post('/add/addOn', { addOn: String(cartIds.addOn), quantity: 'two' }), 400, joiError('REQUIRED_QUANTITY'));
+    assert.deepEqual(await lines('addOns', 'addOn'), []);
   });
 
   test('PUT /update/addOn/:id sets the quantity, with the same checks', async () => {

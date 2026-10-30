@@ -176,6 +176,7 @@
 	"STOCK_ALERT_CHECK_NOT_EXIST": "Subscription to Stock Alert Doesn't Exist",
 	"STOCK_ALERT_DELETE_SUCCESS": "Unsubscribed to Stock Alert",
 	"STOCK_ALERT_EXISTS": "You've Already Subscribed to this Product's Stock Alerts",
+	"STOCK_ALERT_NOT_EXIST": "You haven't subscribed to this product's stock alerts",
 	"SUBSCRIPTION_EXISTS": "Subscription already activated",
 	"INVALID_QUANTITY": "QUANTITY ERROR: Requested quantity higher than available stock.",
 	"REQUIRED_QUANTITY": "Please fill quantity for the product. Minimum 1 required.",

@@ -57,7 +57,7 @@ export const auth = {
   logout: defineEndpoint({ method: 'POST', path: '/auth/logout', body: revokeValidationPayloadSchema, response: empty }),
   // GET /auth/me
   me: defineEndpoint({ method: 'GET', path: '/auth/me', response: profile }),
-  // PUT /auth/me — the legacy API only saves `fullName` (a sent `contactNo` is validated, then ignored).
+  // PUT /auth/me — the name only; the contact number changes through the OTP flow (`sendContactOtp`…), never here.
   updateProfile: defineEndpoint({ method: 'PUT', path: '/auth/me', body: updateProfilePayloadSchema, response: profile }),
   // PUT /auth/password
   updatePassword: defineEndpoint({ method: 'PUT', path: '/auth/password', body: updatePasswordPayloadSchema, response: empty }),

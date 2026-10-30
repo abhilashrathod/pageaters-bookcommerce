@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import {
+  cartAddOnAddPayloadSchema,
   cartBoxPreferencesSchema,
   cartItemAddPayloadSchema,
   cartResponseSchema,
   objectIdSchema,
-  shopperCartAddResponseSchema,
   shopperCartWriteResponseSchema,
   shopperEmptyResponseSchema,
 } from '@pageaters/shared';
@@ -12,11 +12,11 @@ import {
 import { defineEndpoint } from '../../core/endpoint.ts';
 
 // The shopper's cart (`apps/api/src/routes/cart.routes.js`). Every route needs the session and the cart cookies
-// (no cart cookie → 400 `CART_NOT_EXIST`). Writes answer `true` (see `shopperCartAddSchema` for the exception), so
-// read the cart again for prices. Items are addressed by the catalog ObjectId (never the public `bookId`…); the path
-// params are named after the item kind here, whatever the route calls them. The admin cart views are 2c's.
+// (no cart cookie → 400 `CART_NOT_EXIST`). Every write answers `true`, so read the cart again for prices. Items are
+// addressed by the catalog ObjectId (never the public `bookId`…); the path params are named after the item kind
+// here, whatever the route calls them. The admin cart views are 2c's.
 //
-// Payloads without a shared schema (bundle, box and add-on lines, quantity updates) are typed here from the API's
+// Payloads without a shared schema (bundle and box lines, quantity updates) are typed here from the API's
 // controllers and listed for Phase 4. Quantity limits: 2 per book, 1 per bundle or box, 5 per add-on.
 const write = shopperCartWriteResponseSchema.shape.data;
 const quantity = z.number().int().min(1);
@@ -30,7 +30,7 @@ export const cart = {
     method: 'POST',
     path: '/cart/add',
     body: cartItemAddPayloadSchema.required({ product: true }),
-    response: shopperCartAddResponseSchema.shape.data,
+    response: write,
   }),
   // POST /cart/add/bundle — no validator in the legacy API; `quantity` defaults to 1, the only allowed value.
   addBundle: defineEndpoint({
@@ -50,12 +50,12 @@ export const cart = {
     }),
     response: write,
   }),
-  // POST /cart/add/addOn — `quantity` is required (the legacy API has no default here).
+  // POST /cart/add/addOn — `quantity` defaults to 1; adding an add-on already in the cart adds to its quantity.
   addAddOn: defineEndpoint({
     method: 'POST',
     path: '/cart/add/addOn',
-    body: z.strictObject({ addOn: objectIdSchema, quantity }),
-    response: shopperCartAddResponseSchema.shape.data,
+    body: cartAddOnAddPayloadSchema,
+    response: write,
   }),
   // PUT /cart/update/:product — sets a book line's quantity.
   updateQuantity: defineEndpoint({
@@ -79,7 +79,7 @@ export const cart = {
   removeBox: defineEndpoint({ method: 'DELETE', path: '/cart/remove/box/:box', response: write }),
   // DELETE /cart/remove/addOn/:addOn
   removeAddOn: defineEndpoint({ method: 'DELETE', path: '/cart/remove/addOn/:addOn', response: write }),
-  // DELETE /cart/empty — removes the book lines only; bundles, boxes and add-ons stay.
+  // DELETE /cart/empty — removes every line: books, bundles, mystery boxes and add-ons (the cart itself stays).
   empty: defineEndpoint({ method: 'DELETE', path: '/cart/empty', response: write }),
   // DELETE /cart/clear — clears the cart cookie (the cart itself stays); answers `{}`.
   clear: defineEndpoint({ method: 'DELETE', path: '/cart/clear', response: shopperEmptyResponseSchema.shape.data }),

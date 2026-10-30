@@ -2,7 +2,6 @@ import {
   addressCreatePayloadSchema,
   shopperAddressListResponseSchema,
   shopperAddressResponseSchema,
-  shopperAddressUpdateResponseSchema,
   shopperEmptyResponseSchema,
   shopperPincodeServiceabilityResponseSchema,
 } from '@pageaters/shared';
@@ -21,13 +20,14 @@ export const addresses = {
   // POST /addresses — the PIN code must be serviceable (else 400 `PINCODE_ERROR`); `isDefault: true` unsets the
   // previous default.
   create: defineEndpoint({ method: 'POST', path: '/addresses', body: addressCreatePayloadSchema, response: address }),
-  // PUT /addresses/:id — no validator in the legacy API, which `$set`s every field from the payload (an omitted one
-  // may be cleared), so the full create payload is required. Resolves to null when the id isn't the shopper's.
+  // PUT /addresses/:id — sets only the fields sent; the others stay. A new PIN code must be serviceable (else 400
+  // `PINCODE_ERROR`); `isDefault: true` unsets the previous default. An id that isn't one of the shopper's live
+  // addresses is a 400 `ADDRESS_NOT_EXIST`.
   update: defineEndpoint({
     method: 'PUT',
     path: '/addresses/:id',
-    body: addressCreatePayloadSchema,
-    response: shopperAddressUpdateResponseSchema.shape.data,
+    body: addressCreatePayloadSchema.partial(),
+    response: address,
   }),
   // DELETE /addresses/:id — soft delete.
   remove: defineEndpoint({ method: 'DELETE', path: '/addresses/:id', response: shopperEmptyResponseSchema.shape.data }),

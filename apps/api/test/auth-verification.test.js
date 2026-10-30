@@ -9,7 +9,7 @@ const { hashOneTimeToken } = require('../src/helpers/encryption.helper');
 // Verification over HTTP: email verification (verify + resend, mailed through SendGrid) and contact-number OTPs
 // (send / resend / verify, texted to +91<number>). The mock e-mail and SMS adapters record what would be sent.
 
-const { badRequest, ok, okString, unauthorized } = envelopes;
+const { badRequest, ok, okString, serverError, unauthorized } = envelopes;
 const joiError = envelopes.badRequestObject;
 
 const User = () => mongoose.model('user');
@@ -33,15 +33,18 @@ beforeEach(async () => {
 // Sends are awaited before the response, so the mails are recorded by the time it arrives.
 const expectMails = (count) => assert.equal(sentEmails().length, count);
 
-// The user model's own unawaited saves (send/resend OTP) land shortly after the response.
+// The OTP writes (send/resend) are awaited before the response, so the user's state is final when it arrives.
 const userWhen = async (id, check) => {
-  for (let i = 0; i < 50; i += 1) {
-    const user = await User().findById(id).select('+contactOtp');
-    if (check(user)) return user;
-    await new Promise((resolve) => setTimeout(resolve, 20));
-  }
-  assert.fail('user state not reached in time');
+  const user = await User().findById(id).select('+contactOtp');
+  assert.ok(check(user), 'user state not reached');
+  return user;
 };
+
+// Fails every conditional OTP write (the text allowance is taken with findOneAndUpdate).
+const failOtpWrites = (t) =>
+  t.mock.method(User(), 'findOneAndUpdate', () => {
+    throw new Error('write failed');
+  });
 
 describe('POST /auth/verify-email', () => {
   const verifyToken = async (id) => (await User().findById(id)).generateVerifyEmailToken();
@@ -155,6 +158,15 @@ describe('POST /auth/contact/send', () => {
     await userWhen(user._id, (u) => u.contactOtp);
   });
 
+  test('a failed OTP write answers 500 and texts nothing (the allowance fails closed)', async (t) => {
+    const { user, cookie } = await createUser();
+    failOtpWrites(t);
+    assertBody(await api.request('/auth/contact/send', { method: 'POST', body: { contactNo: '9000000042' }, cookie }), 500, serverError);
+    assert.deepEqual(sentTexts(), []);
+    const fresh = await User().findById(user._id).select('+contactOtp');
+    assert.deepEqual([fresh.contactOtp, fresh.lastMessageSentOn], ['', '']);
+  });
+
   test('validates the number before the session check', async () => {
     assertBody(await api.request('/auth/contact/send', { method: 'POST', body: { contactNo: '12' } }), 400, joiError('INVALID_PHONE'));
     assertBody(await api.request('/auth/contact/send', { method: 'POST', body: { contactNo: '9000000042' } }), 401, unauthorized('NO_AUTH_HEADER'));
@@ -177,6 +189,16 @@ describe('POST /auth/contact/resend', () => {
     assertBody(await api.request('/auth/contact/resend', { method: 'POST', cookie }), 400, badRequest('CONTACT_VERIFICATION_NOT_EXIST'));
     await User().updateOne({ _id: user._id }, { contactOtp: '123456', contactOtpExpiresAt: inMinutes(5), lastMessageSentOn: new Date().toISOString() });
     assertBody(await api.request('/auth/contact/resend', { method: 'POST', cookie }), 400, badRequest('RESEND_OTP_LIMIT_EXCEEDED'));
+    assert.deepEqual(sentTexts(), []);
+  });
+});
+
+describe('POST /auth/contact/resend: a failed write', () => {
+  test('answers 500 and texts nothing (the allowance fails closed)', async (t) => {
+    const { user, cookie } = await createUser();
+    await User().updateOne({ _id: user._id }, { contactOtp: '123456', contactOtpExpiresAt: inMinutes(5), contactNo: '9000000043' });
+    failOtpWrites(t);
+    assertBody(await api.request('/auth/contact/resend', { method: 'POST', cookie }), 500, serverError);
     assert.deepEqual(sentTexts(), []);
   });
 });

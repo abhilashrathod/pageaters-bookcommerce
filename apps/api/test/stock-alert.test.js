@@ -8,6 +8,7 @@ const { asJson, assertBody, assertGuarded, captureLogs, createUser, envelopes, i
 // send the alerts. Written against the legacy controller before the service refactor.
 
 const { ok, okString, badRequest, serverError } = envelopes;
+const { HOST } = require('../src/appConfig');
 
 const StockAlert = () => mongoose.model('stock_alert');
 
@@ -95,8 +96,12 @@ describe('subscribe, check and unsubscribe', () => {
     assert.equal(await StockAlert().countDocuments({ user: shopper.user._id }), 2);
   });
 
-  test('legacy: unsubscribing a missing alert answers STOCK_ALERT_EXISTS', async () => {
-    assertBody(await api.request(`/stock-alerts/${ids.bookOne}`, { method: 'DELETE', cookie: shopper.cookie }), 400, badRequest('STOCK_ALERT_EXISTS'));
+  test('unsubscribing a missing or closed alert answers STOCK_ALERT_NOT_EXIST (was: STOCK_ALERT_EXISTS)', async () => {
+    const unsubscribe = () => api.request(`/stock-alerts/${ids.bookOne}`, { method: 'DELETE', cookie: shopper.cookie });
+    assertBody(await unsubscribe(), 400, badRequest('STOCK_ALERT_NOT_EXIST'));
+    await subscribe(ids.bookOne);
+    assert.equal((await unsubscribe()).status, 200);
+    assertBody(await unsubscribe(), 400, badRequest('STOCK_ALERT_NOT_EXIST'));
   });
 });
 
@@ -133,7 +138,7 @@ describe('admin', () => {
     assert.equal(asJson(alert).user.email, shopper.user.email);
   });
 
-  test('POST /stock-alerts/:product/users closes the alerts; legacy: the STOCK_ALERT email never renders', async (t) => {
+  test('POST /stock-alerts/:product/users mails every subscriber and closes the alerts (was: the e-mail never rendered)', async (t) => {
     const logs = captureLogs(t);
     const other = await createUser();
     await subscribe(ids.bookOne);
@@ -148,15 +153,35 @@ describe('admin', () => {
     assert.equal(await StockAlert().countDocuments({ product: ids.bookOne, isDeleted: false }), 0);
     assert.equal(await StockAlert().countDocuments({ product: ids.bookTwo, isDeleted: false }), 1);
 
-    // The template ships only en.html; mail.service renders en.ejs, so nothing is sent. Each failure is logged by
-    // template name, never with the recipient.
-    assert.deepEqual(sentEmails(), []);
-    const logged = messagesAt(logs);
-    assert.equal(logged.length, 2);
-    for (const line of logged) {
-      assert.match(line, /^Email STOCK_ALERT not sent \(/);
-      assert.doesNotMatch(line, /@/);
+    const book = await mongoose.model('storeBook').findById(ids.bookOne);
+    const mails = sentEmails();
+    assert.deepEqual(mails.map((mail) => mail.to).sort(), [shopper.user.email, other.user.email].sort());
+    for (const mail of mails) {
+      assert.equal(mail.subject, `Back in stock: ${book.title}`);
+      assert.ok(mail.html.includes(`href="${HOST}/books/${encodeURIComponent(book.bookId)}"`));
+      assert.ok(mail.html.includes(`src="${book.poster}"`));
+      assert.ok(mail.html.includes(`INR ${book.price}`));
     }
+    assert.ok(mails.some((mail) => mail.html.includes(`Hello ${shopper.user.fullName},`)));
+    assert.equal(await mongoose.model('log_email').countDocuments({ emailModule: 'STOCK_ALERT' }), 2);
+    assert.deepEqual(messagesAt(logs), []);
+  });
+
+  test('the e-mail escapes the subscriber name and leaves out a poster without a public URL', async () => {
+    await mongoose.model('user').updateOne({ _id: shopper.user._id }, { fullName: '<b>Test</b>' });
+    await mongoose.model('storeBook').updateOne({ _id: ids.bookOne }, { poster: 'legacy/key.png' });
+    await subscribe(ids.bookOne);
+    await api.request(`/stock-alerts/${ids.bookOne}/users`, { method: 'POST', cookie: admin.cookie });
+    const [{ html }] = sentEmails();
+    assert.ok(html.includes('Hello &lt;b&gt;Test&lt;/b&gt;,'));
+    assert.equal(html.includes('<img'), false);
+  });
+
+  test('control characters in the title never reach the subject as header lines', async () => {
+    await mongoose.model('storeBook').updateOne({ _id: ids.bookOne }, { title: 'Test\r\nBcc: someone@example.com\tBook' });
+    await subscribe(ids.bookOne);
+    await api.request(`/stock-alerts/${ids.bookOne}/users`, { method: 'POST', cookie: admin.cookie });
+    assert.equal(sentEmails()[0].subject, 'Back in stock: Test Bcc: someone@example.com Book');
   });
 
   test('closes each alert right after its send, so a failure part-way leaves the handled ones closed', async (t) => {

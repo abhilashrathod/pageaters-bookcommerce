@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { PopulatedCart, PopulatedCustomerOrder, ShopperCartAdd, User } from '@pageaters/shared';
+import type { PopulatedCart, PopulatedCustomerOrder, User } from '@pageaters/shared';
 
 import { createApiClient } from '../../index.ts';
 import type { ApiClient } from '../../index.ts';
@@ -15,7 +15,8 @@ type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 type Result<F extends (...args: never[]) => Promise<unknown>> = Awaited<ReturnType<F>>;
 const _orderDetail: Same<Result<ApiClient['orders']['detail']>, PopulatedCustomerOrder> = true;
 const _cartDetail: Same<Result<ApiClient['cart']['detail']>, PopulatedCart> = true;
-const _cartAdd: Same<Result<ApiClient['cart']['add']>, ShopperCartAdd> = true;
+const _cartAdd: Same<Result<ApiClient['cart']['add']>, true> = true;
+const _cartAddOn: Same<Result<ApiClient['cart']['addAddOn']>, true> = true;
 const _me: Same<Result<ApiClient['auth']['me']>, User> = true;
 const _check: Same<Result<ApiClient['favorites']['check']>, boolean> = true;
 const _cartAddInput: Same<Parameters<ApiClient['cart']['add']>[0], { product: string; quantity?: number }> = true;

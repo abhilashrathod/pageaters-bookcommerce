@@ -51,14 +51,14 @@ const rows: Row[] = [
   ['auth.me', (c) => c.auth.me(), f.user],
   ['cart.detail', (c) => c.cart.detail(), f.populatedCart],
   ['cart.add (new line)', (c) => c.cart.add({ product: book }), true],
-  ['cart.add (raised quantity)', (c) => c.cart.add({ product: book }), f.cartDocument],
+  ['cart.addAddOn', (c) => c.cart.addAddOn({ addOn: f.addOn._id }), true],
   ['cart.remove', (c) => c.cart.remove({ product: book }), true],
   ['favorites.list', (c) => c.favorites.list(), f.favorites],
   ['favorites.list (no document)', (c) => c.favorites.list(), null],
   ['favorites.check', (c) => c.favorites.check({ product: book }), false],
   ['addresses.list', (c) => c.addresses.list(), [f.address]],
   ['addresses.detail', (c) => c.addresses.detail({ id: f.address._id }), f.address],
-  ['addresses.update (not found)', (c) => c.addresses.update({ id: f.address._id, ...newAddress() }), null],
+  ['addresses.update', (c) => c.addresses.update({ id: f.address._id, city: f.address.city }), f.address],
   ['addresses.checkPincode', (c) => c.addresses.checkPincode({ pincode: '560001' }), pincode()],
   ['orders.detail', (c) => c.orders.detail({ uniqueId: 'OD-0000000001' }), f.customerOrder],
   ['orders.list', (c) => c.orders.list(), [f.customerOrderListItem]],
@@ -78,11 +78,6 @@ const rows: Row[] = [
   ['stockAlerts.subscribe', (c) => c.stockAlerts.subscribe({ product: book }), f.stockAlert],
 ];
 
-function newAddress() {
-  const { fullName, contactNo, email, city, state, pinCode, isDefault, addressLine1 } = f.address;
-  return { fullName, contactNo, email, city, state, pinCode, isDefault, addressLine1 };
-}
-
 function pincode() {
   return { main: { serviceable: true, isCod: 'Y', isPrepaid: 'Y', district: 'Bengaluru', state: 'KA' } };
 }
@@ -98,6 +93,13 @@ void describe('shopper endpoints: responses', () => {
     const leaky = { ...f.user, password: 'hash', salt: 'salt', contactOtp: '123456', razorPayCustId: 'cust_TEST', role: 'USER' };
     const profile = await validatingClient(leaky).auth.login({ email: f.user.email, password: 'x' });
     assert.deepEqual(profile, { ...f.user, role: 'USER' });
+  });
+
+  void it('rejects a cart document from a cart write (every write answers true)', async () => {
+    const error: unknown = await validatingClient(f.cartDocument)
+      .cart.add({ product: book })
+      .catch((e: unknown) => e);
+    assert.ok(isApiError(error));
   });
 
   void it('drops the courier raw record', async () => {

@@ -26,9 +26,9 @@ const mailResetLink = (user, token) =>
   });
 
 /**
- * Updates the profile and answers it (User.getProfile).
- * Legacy, kept: only a non-empty `fullName` is saved; `contactNo` passes the validator but is ignored (numbers change
- * only through contact verification).
+ * Updates the profile and answers it (User.getProfile). Only a non-empty `fullName` is saved. The contact number is
+ * not a profile field: the route's schema refuses it, since a number changes only through the OTP flow
+ * (auth-verification.service), so it is always one the user proved they hold.
  * @param {{ userId: string, fullName?: string }} input
  * @returns {Promise<object | null>} The profile.
  */

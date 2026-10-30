@@ -16,6 +16,6 @@ export const stockAlerts = {
     body: z.strictObject({ product: objectIdSchema }),
     response: shopperStockAlertResponseSchema.shape.data,
   }),
-  // DELETE /stock-alerts/:product — quirk: with no open alert it answers 400 `STOCK_ALERT_EXISTS` (sic).
+  // DELETE /stock-alerts/:product — with no open alert it answers 400 `STOCK_ALERT_NOT_EXIST`.
   unsubscribe: defineEndpoint({ method: 'DELETE', path: '/stock-alerts/:product', response: shopperEmptyResponseSchema.shape.data }),
 };

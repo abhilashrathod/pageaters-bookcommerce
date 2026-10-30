@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { HOST } = require('../appConfig');
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
+const { imageUrl } = require('../helpers/image-url.helper');
 const { sendTemplateMail } = require('./mail.service');
 
 // Back-in-stock alerts: a shopper subscribes to a store book; an admin sends the alerts, which closes them.
@@ -14,6 +15,10 @@ const SUBSCRIBER_POPULATE = [
   { path: 'user', select: 'fullName email contactNo' },
   { path: 'product', select: `title bookId poster price currentDiscount` },
 ];
+
+// A value for a mail header: control characters (CR, LF, tab…) become spaces, so a title can't add header lines.
+// eslint-disable-next-line no-control-regex
+const oneLine = (value) => String(value ?? '').replace(/[\u0000-\u001f\u007f]+/g, ' ').trim();
 
 const activeAlert = (userId, product) => StockAlert.findOne({ user: userId, product, isDeleted: false });
 
@@ -42,9 +47,8 @@ const listSubscribers = (product) => StockAlert.find({ isDeleted: false, product
  * Sends a STOCK_ALERT email for every open alert on a product, closing each alert right after its send attempt
  * (sent or failed, as before), one at a time. If the request dies part-way (a vendor timeout, the function's time
  * limit), the alerts already handled stay closed, so a retry mails only the rest.
- * Legacy: the STOCK_ALERT template ships only `en.html` while mail.service renders `en.ejs`, so no email is ever
- * sent. The book link is the storefront's book page (`HOST`, from STOREFRONT_URL; was the reserved root domain's
- * `/book/…`, a path the storefront doesn't have).
+ * The book link is the storefront's book page (`HOST`, from STOREFRONT_URL; was the reserved root domain's `/book/…`,
+ * a path the storefront doesn't have); the poster goes through imageUrl ('' when it has no public URL).
  * @param {string} product Store book id.
  * @returns {Promise<number>} How many alerts were closed.
  */
@@ -56,11 +60,12 @@ const sendAlerts = async (product) => {
     await sendTemplateMail({
       emailModule: 'STOCK_ALERT',
       to: sub.user.email,
+      subject: `Back in stock: ${oneLine(sub.product.title)}`,
       data: {
         NAME: sub.user.fullName,
         PRODUCT: sub.product.title,
         LINK: `${HOST}/books/${encodeURIComponent(sub.product.bookId)}`,
-        IMAGE: sub.product.poster,
+        IMAGE: imageUrl(sub.product.poster),
         PRICE: sub.product.price,
       },
     });
@@ -95,11 +100,11 @@ const subscribe = async (userId, product) => {
  * @param {string} userId
  * @param {string} product Store book id.
  * @returns {Promise<void>}
- * @throws {AppError} STOCK_ALERT_EXISTS (400) when there is no open alert (legacy: the wrong key).
+ * @throws {AppError} STOCK_ALERT_NOT_EXIST (400) when there is no open alert (was STOCK_ALERT_EXISTS).
  */
 const unsubscribe = async (userId, product) => {
   const alert = await activeAlert(userId, product);
-  if (!alert) throw new AppError('STOCK_ALERT_EXISTS');
+  if (!alert) throw new AppError('STOCK_ALERT_NOT_EXIST');
 
   alert.isDeleted = true;
   alert.deletedAt = new Date();

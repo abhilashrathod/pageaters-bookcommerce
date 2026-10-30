@@ -63,14 +63,11 @@ export const resetPasswordPayloadSchema = z.strictObject({
 });
 export type ResetPasswordPayload = z.infer<typeof resetPasswordPayloadSchema>;
 
+// PUT /auth/me: the name only. The contact number is not accepted here (unknown key → 400 INVALID_REQUEST): it
+// changes only through the OTP flow (POST /auth/contact/send → /auth/contact/verify), so an unverified number can't
+// be stored on the account (the legacy schema accepted `contactNo` and the API ignored it).
 export const updateProfilePayloadSchema = z.strictObject({
   fullName: fullNameFieldSchema,
-  // Optional; '' (or only spaces) clears the number, anything else must be 10 digits after trimming.
-  contactNo: z
-    .string({ error: 'INVALID_PHONE' })
-    .trim()
-    .regex(/^(?:\d{10})?$/)
-    .optional(),
 });
 export type UpdateProfilePayload = z.infer<typeof updateProfilePayloadSchema>;
 
