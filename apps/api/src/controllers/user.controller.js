@@ -13,10 +13,10 @@ module.exports.getAll = async (req, res) => {
   }
 };
 
-// Legacy: changes nothing (see userService.updateUser).
+// The id comes from the path only, so a body or query `id` can't redirect the update to another account.
 module.exports.update = async (req, res) => {
   try {
-    const data = await userService.updateUser();
+    const data = await userService.updateUser(req.params.id, req.body ?? {});
     return res.ok({ message: 'USER_UPDATE_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);

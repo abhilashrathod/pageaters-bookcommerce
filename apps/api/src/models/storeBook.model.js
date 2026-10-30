@@ -43,7 +43,10 @@ const schema = new Schema({
     totalReviews: { type: Number, default: 0 },
     averageReviews: { type: Number, default: 0 },
 
-    wholeSalePriceHistory: [{ type: Number, default: 0 }],
+    // Business-sensitive (AGENTS.md §7): never selected by default and never set through the API. Only a query
+    // that asks for it (`.select('+wholeSalePriceHistory')`) reads it; nothing in the API does. No default: a new
+    // book doesn't get the key at all.
+    wholeSalePriceHistory: { type: [Number], default: undefined, select: false },
     inventory: { type: Number, default: 0 },
 
     currentDiscount: { type: Number, default: 0 },

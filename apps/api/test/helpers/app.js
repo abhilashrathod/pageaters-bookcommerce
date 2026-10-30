@@ -41,6 +41,9 @@ const startTestApp = async () => {
 
   trackDbOperations();
   const app = require('../../src/app');
+  // The rate limits are on in the app; every request here comes from 127.0.0.1 (security-perimeter.test.js turns
+  // them back on to test them).
+  require('../../src/middlewares/rateLimit.middleware').settings.enabled = false;
   await require('../../src/helpers/connectToDb.helper')();
 
   const server = await new Promise((resolve) => {

@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { generateRandomNumber } = require('../helpers/utils.helper');
-const { debitStoreCredit, deductInventory, resetCart } = require('./order-fulfilment.service');
+const { debitStoreCredit, deductInventory, resetCart, undoStoreCreditDebit } = require('./order-fulfilment.service');
 const { sendConfirmationEmail, sendConfirmationSms } = require('./order-notifications.service');
-const { createPaymentOrder } = require('./order-payment.service');
+const { createPaymentOrder, unclaimedPayment } = require('./order-payment.service');
 const {
   CART_POPULATE,
   buildOrderLines,
@@ -17,8 +17,11 @@ const {
 } = require('./order-pricing.service');
 const { ORDER_POPULATE } = require('./order-queries.service');
 
-// Checkout: attempt (choose the address; one `attempted` order per user) → place (COD confirms at once; online
-// creates a Razorpay order and waits for the payment webhook, order-payment.service.js).
+// Checkout: attempt (choose the address) → place (COD confirms at once; online creates a Razorpay order and waits
+// for the payment webhook, order-payment.service.js). A user has one pending order (`attempted` or `created`):
+// attempting again takes it over, so the checkout read, the store credit and placing always act on that one order.
+// Every status change is a conditional update on the status it was read in and on no payment being claimed for it
+// (`razorPaymentId` empty), so a concurrent place, re-attempt or payment webhook can't both win.
 
 const Order = mongoose.model(models.ORDER);
 const Cart = mongoose.model(models.CART);
@@ -31,22 +34,27 @@ const CONFIRMED_DESCRIPTION =
 const PENDING_FIELDS =
   'orderId userId subTotal orderDate storeCredit total shipping giftOptions deliveryInstructions orderHistory deliveryAddress boxed bundles products total';
 
+/** Razorpay's smallest payment is ₹1 (100 paise): a smaller total can't be paid online. */
+const MIN_ONLINE_TOTAL = 1;
+
 /**
- * Starts (or restarts) checkout: prices the cart and stores the user's single `attempted` order with the chosen
- * address. A restart keeps the order document (and any store credit applied to it) but gives it a new order id.
- * Legacy: the cart is looked up by id only, not by owner; a missing `address` finds no address.
+ * Starts (or restarts) checkout: prices the user's own cart and stores the user's pending order with the chosen
+ * address as `attempted`. A restart takes over the existing pending order, `created` included: it gets a new order
+ * id, loses its payment order (`razorOrderId`; a payment for that Razorpay order no longer confirms anything) and its
+ * store credit (re-apply it with PATCH /orders/credit). Legacy: a missing `address` finds no address.
  * @param {string} userId
  * @param {string | undefined} cartId From the cart cookie.
  * @param {string | undefined} address Address id.
  * @returns {Promise<void>}
- * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no cart cookie), CART_NOT_EXIST, ORDER_ADDRESS_ATTEMPT_FAILED (not
- *   the user's live address). A malformed cart id rejects with a CastError (→ 500).
+ * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no cart cookie, or the pending order's payment is being confirmed or
+ *   it changed meanwhile), CART_NOT_EXIST (no such cart for this user), ORDER_ADDRESS_ATTEMPT_FAILED (not the
+ *   user's live address). A malformed cart id rejects with a CastError (→ 500).
  */
 const attemptOrder = async (userId, cartId, address) => {
   const orderId = `OD-${generateRandomNumber(10)}`;
   if (!cartId || !userId) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
 
-  const cart = await Cart.findOne({ _id: cartId }).populate(CART_POPULATE);
+  const cart = await Cart.findOne({ _id: cartId, user: userId }).populate(CART_POPULATE);
   if (!cart) throw new AppError('CART_NOT_EXIST');
 
   const subTotal = await cartSubTotal(cart);
@@ -63,38 +71,49 @@ const attemptOrder = async (userId, cartId, address) => {
     subTotal,
     total: subTotal + shipping,
     shipping,
+    razorOrderId: '',
+    storeCredit: 0,
   };
 
-  const query = { userId, orderStatus: enums.ORDER_STAGES.ATTEMPTED };
-  if (await Order.findOne(query)) {
-    await Order.findOneAndUpdate(query, { $set: payload }, { new: true });
-  } else {
+  const pending = await Order.findOne({ userId, $or: PENDING });
+  if (!pending) {
     await Order.create(payload);
+    return;
   }
+  const taken = await Order.updateOne(
+    { _id: pending._id, orderStatus: pending.orderStatus, razorPaymentId: unclaimedPayment() },
+    { $set: payload },
+  );
+  if (taken.matchedCount !== 1) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
 };
 
 /**
- * Places the user's attempted (or created, unpaid) order from their cart at today's prices.
+ * Places the user's pending order from their cart at today's prices.
  * - `online`: creates a Razorpay order for the total; the order becomes `created` and nothing else happens until
- *   the payment webhook.
- * - `cod`: the order becomes `confirmed`; then stock is taken, the cart emptied, the SMS sent (production), applied
- *   store credit debited and the confirmation e-mail sent (production).
- * Total = subtotal + shipping + gift charges − store credit applied to the order.
+ *   the payment webhook. A total under ₹1 can't be paid online.
+ * - `cod`: the order becomes `confirmed`; then applied store credit is debited (when the balance no longer covers
+ *   it, the order goes back to how it was and the request is refused), stock is taken, the cart emptied, the SMS and
+ *   the confirmation e-mail sent (production). A total of 0 (all store credit) is placed this way.
+ * Total = subtotal + shipping + gift charges − store credit applied to the order. Gift charges come from the server's
+ * package prices (order-pricing giftChargesOf); the cost a request sends is ignored.
  * @param {string} userId
  * @param {string | undefined} cartId From the cart cookie; must be the user's cart.
  * @param {{ method: 'cod' | 'online', instructions?: string, giftOptions: object }} checkout
  * @returns {Promise<{ razorOrderId: string, total: number, orderId: string } | { total: number, orderId: string }>}
  *   The response data: with `razorOrderId` for online payment.
- * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no cart cookie, or no attempted/created order), CART_NOT_EXIST.
- *   Legacy: a missing `giftOptions`, or a cart item soft-deleted since, throws a TypeError (→ 500); a Razorpay
- *   failure rejects (→ 500) and leaves the order as it was.
+ * @throws {AppError} INVALID_REQUEST (a gift without a known package), ORDER_INFO_ATTEMPT_FAILED (no cart cookie, no
+ *   pending order, its payment is being confirmed, or another request placed it meanwhile), CART_NOT_EXIST,
+ *   STORE_CREDIT_SURPLUS (the applied credit is more than the order now costs), STORE_CREDIT_UNAVAILABLE (more than
+ *   the balance), INVALID_PAYMENT_METHOD (online for a total under ₹1). Nothing changes on a refusal. Legacy: a
+ *   missing `giftOptions`, or a cart item soft-deleted since, throws a TypeError (→ 500); a Razorpay failure rejects
+ *   (→ 500) and leaves the order as it was.
  */
-const placeOrder = async (userId, cartId, { method, instructions, giftOptions }) => {
-  const giftCharges = giftChargesOf(giftOptions);
+const placeOrder = async (userId, cartId, { method, instructions, giftOptions: requested }) => {
+  const { giftCharges, giftOptions } = giftChargesOf(requested);
   if (!cartId || !userId) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
 
   const order = await Order.findOne({ $or: PENDING, userId }).populate({ path: 'deliveryAddress' });
-  if (!order) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
+  if (!order || order.razorPaymentId) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
 
   const cart = await Cart.findOne({ _id: cartId, user: userId }).populate(CART_POPULATE);
   if (!cart) throw new AppError('CART_NOT_EXIST');
@@ -104,45 +123,80 @@ const placeOrder = async (userId, cartId, { method, instructions, giftOptions })
   const weight = await cartWeight(cart);
   const shipping = await shippingFor(subTotal, lines.boxes.length > 0);
   const storeCredit = order.storeCredit || 0;
+  if (storeCredit > subTotal + shipping + giftCharges) throw new AppError('STORE_CREDIT_SURPLUS');
   const total = orderTotalOf({ subTotal, shipping, giftCharges, storeCredit });
 
+  const user = await User.findOne({ _id: userId });
+  if (storeCredit > 0 && !(user && user.storeCredit >= storeCredit)) throw new AppError('STORE_CREDIT_UNAVAILABLE');
+
   const online = method === 'online';
+  if (online && total < MIN_ONLINE_TOTAL) throw new AppError('INVALID_PAYMENT_METHOD');
   const paymentOrder = online ? await createPaymentOrder(order.orderId, total) : undefined;
 
-  order.razorOrderId = online ? paymentOrder.id : '';
-  order.orderStatus = online ? enums.ORDER_STAGES.CREATED : enums.ORDER_STAGES.CONFIRMED;
-  order.products = lines.products;
-  order.bundles = lines.bundles;
-  order.boxes = lines.boxes;
-  order.addOns = lines.addOns;
-  order.weight = weight;
-  order.giftOptions = giftOptions;
-  order.deliveryInstructions = instructions;
-  order.subTotal = subTotal;
-  order.shipping = shipping;
-  order.total = total;
-  order.storeCredit = storeCredit;
-  order.orderDate = new Date().toISOString();
-  order.giftCard = null;
-  order.discount = null;
+  const placed = {
+    razorOrderId: online ? paymentOrder.id : '',
+    orderStatus: online ? enums.ORDER_STAGES.CREATED : enums.ORDER_STAGES.CONFIRMED,
+    products: lines.products,
+    bundles: lines.bundles,
+    boxes: lines.boxes,
+    addOns: lines.addOns,
+    weight,
+    giftOptions,
+    deliveryInstructions: instructions,
+    subTotal,
+    shipping,
+    total,
+    storeCredit,
+    orderDate: new Date().toISOString(),
+    giftCard: null,
+    discount: null,
+  };
+  const history = online
+    ? undefined
+    : { _id: new mongoose.Types.ObjectId(), title: enums.ORDER_STAGES.CONFIRMED, description: CONFIRMED_DESCRIPTION, time: new Date().toISOString() };
+  if (!online) placed.payment = { method: 'cod' };
 
-  if (!online) {
-    order.orderHistory.push({ title: enums.ORDER_STAGES.CONFIRMED, description: CONFIRMED_DESCRIPTION, time: new Date().toISOString() });
-    order.payment = { method: 'cod' };
-  }
-
-  await order.save();
+  const before = { orderStatus: order.orderStatus, razorOrderId: order.razorOrderId, payment: order.payment };
+  const claimed = await Order.updateOne(
+    { _id: order._id, userId, orderStatus: order.orderStatus, razorPaymentId: unclaimedPayment() },
+    history ? { $set: placed, $push: { orderHistory: history } } : { $set: placed },
+  );
+  if (claimed.matchedCount !== 1) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
 
   if (online) return { razorOrderId: paymentOrder.id, total, orderId: order.orderId };
 
-  const user = await User.findOne({ _id: order.userId });
+  // Puts the order back as it was read (compensation; there are no transactions).
+  const revert = () =>
+    Order.updateOne(
+      { _id: order._id, orderStatus: enums.ORDER_STAGES.CONFIRMED },
+      { $set: before, $pull: { orderHistory: { _id: history._id } } },
+    );
+
+  if (storeCredit > 0) {
+    const transaction = await debitStoreCredit(order._id, order.userId, storeCredit).catch(async (e) => {
+      await revert();
+      throw e;
+    });
+    if (!transaction) {
+      await revert();
+      throw new AppError('STORE_CREDIT_UNAVAILABLE');
+    }
+    try {
+      await Order.updateOne({ _id: order._id }, { $set: { storeCreditTransaction: transaction } });
+    } catch (e) {
+      await undoStoreCreditDebit(transaction, order.userId, storeCredit);
+      await revert();
+      throw e;
+    }
+    order.storeCreditTransaction = transaction;
+  }
+
+  Object.assign(order, placed);
+  order.orderHistory.push(history);
+
   await deductInventory(order);
   await resetCart(order.userId);
   await sendConfirmationSms(user, order.orderId);
-  if (storeCredit > 0) {
-    order.storeCreditTransaction = await debitStoreCredit(order._id, order.userId, storeCredit);
-    await order.save();
-  }
   await sendConfirmationEmail(user, order);
 
   return { total, orderId: order.orderId };

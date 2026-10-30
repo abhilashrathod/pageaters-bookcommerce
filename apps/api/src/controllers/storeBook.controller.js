@@ -1,13 +1,12 @@
 const { handleControllerError } = require('../helpers/appError.helper');
 const storeBookService = require('../services/store-book.service');
-const storeBookExportService = require('../services/store-book-export.service');
 
 // Thin controller: read the request, call one service, answer with the res.* helpers (src/services/README.md).
 
 const bookFields = (params) => {
   const { type, title, tagline, eyebrow, author, description, message, tags, language, popularity, pages, readingLevel } = params;
   const { version, availability, dimensions, weight, categories, ISBN, publicationYear, publisher, editorsPick } = params;
-  const { newRelease, bestSeller, preOrder, poster, images, wholeSalePriceHistory, inventory, currentDiscount } = params;
+  const { newRelease, bestSeller, preOrder, poster, images, inventory, currentDiscount } = params;
   const { relatedBooks, relatedBundles, relatedCollections, price, rentPrice, membersPrice, membersRentPrice } = params;
   return {
     type,
@@ -36,7 +35,6 @@ const bookFields = (params) => {
     preOrder,
     poster,
     images,
-    wholeSalePriceHistory,
     inventory,
     currentDiscount,
     relatedBooks,
@@ -113,25 +111,6 @@ module.exports.destroy = async (req, res) => {
     const { id } = req.allParams();
     await storeBookService.deleteBook(id);
     return res.ok('BOOK_DELETE_SUCCESS');
-  } catch (e) {
-    return handleControllerError(res, e);
-  }
-};
-
-// FOR DEV PURPOSES ONLY. Legacy: unauthenticated; a failed download answers plain text (removed in the security
-// step).
-module.exports.bulkExport = async (req, res) => {
-  try {
-    const filePath = await storeBookExportService.writeCatalogCsv();
-
-    res.download(filePath, 'product_template.csv', (err) => {
-      if (err) {
-        console.error('Error sending file:', err);
-        res.status(500).send('Error sending file');
-      }
-      // Delete the temporary file after sending
-      storeBookExportService.removeExportFile(filePath);
-    });
   } catch (e) {
     return handleControllerError(res, e);
   }

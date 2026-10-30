@@ -123,7 +123,8 @@ describe('POST /orders/attempt', () => {
     assert.equal(order.subTotal, 2 * 449 + 639 + 949 + 3 * 84);
   });
 
-  test('a second attempt updates the same order, with a new order id, and keeps applied store credit', async () => {
+  // Phase 4 7c: a restart resets the applied store credit (legacy kept it; it could then exceed a smaller cart).
+  test('a second attempt updates the same order, with a new order id, and resets applied store credit', async () => {
     await fillCart(shopper.user, { products: [{ product: ids.bookOne, quantity: 1 }] });
     await post('/orders/attempt', { address: String(address._id) });
     const first = await Order().findOne({ userId: shopper.user._id });
@@ -136,7 +137,7 @@ describe('POST /orders/attempt', () => {
     assert.equal(String(orders[0]._id), String(first._id));
     assert.notEqual(orders[0].orderId, first.orderId);
     assert.equal(orders[0].subTotal, 898);
-    assert.equal(orders[0].storeCredit, 20);
+    assert.equal(orders[0].storeCredit, 0);
   });
 
   test('refuses without a cart cookie', async () => {
@@ -164,13 +165,14 @@ describe('POST /orders/attempt', () => {
     assert.equal(await Order().countDocuments(), 0);
   });
 
-  test("legacy: prices another user's cart (the cart is not filtered by user)", async () => {
+  // Phase 4 7c: the cart must be the shopper's own (legacy priced another user's cart).
+  test("refuses another user's cart", async () => {
     const other = await createUser();
     await fillCart(other.user, { products: [{ product: ids.bookTwo, quantity: 3 }] });
     const otherCart = await Cart().findOne({ user: other.user._id });
     const res = await post('/orders/attempt', { address: String(address._id) }, `${shopper.cookie}; _CID=${otherCart._id}`);
-    assertBody(res, 200, ok('ORDER_ADDRESS_SUCCESS', {}));
-    assert.equal((await Order().findOne({ userId: shopper.user._id })).subTotal, 3 * 449);
+    assertBody(res, 400, badRequest('CART_NOT_EXIST'));
+    assert.equal(await Order().countDocuments(), 0);
   });
 
   test("refuses another user's address, a deleted address and an unknown address", async () => {
@@ -212,17 +214,17 @@ describe('POST /orders/create — pricing', () => {
     await Book().updateOne({ _id: ids.bookOne }, { weight: 300 });
   });
 
-  test('COD: totals, unfloored order lines, weight, gift charges and confirmation', async () => {
+  test('COD: totals, floored order lines, weight, gift charges and confirmation', async () => {
     const attempted = await attemptWith(FULL_CART);
-    const giftOptions = { isGift: true, details: { package: 'Test wrap', from: 'Test Sender', message: 'Enjoy', cost: 30 } };
+    const giftOptions = { isGift: true, details: { package: 'Standard', from: 'Test Sender', message: 'Enjoy', cost: 79 } };
     const res = await post('/orders/create', { method: 'cod', instructions: 'Ring twice', giftOptions });
 
     const subTotal = 2 * 449 + 639 + 949 + 3 * 84;
-    assertBody(res, 200, ok('ORDER_CREATE_SUCCESS', { total: subTotal + 0 + 30, orderId: attempted.orderId }));
+    assertBody(res, 200, ok('ORDER_CREATE_SUCCESS', { total: subTotal + 0 + 79, orderId: attempted.orderId }));
 
     const order = await Order().findById(attempted._id);
     assert.equal(order.orderStatus, 'confirmed');
-    assert.deepEqual([order.subTotal, order.shipping, order.storeCredit, order.total], [subTotal, 0, 0, subTotal + 30]);
+    assert.deepEqual([order.subTotal, order.shipping, order.storeCredit, order.total], [subTotal, 0, 0, subTotal + 79]);
     assert.equal(order.weight, 2 * 300 + 700 + 900);
     assert.equal(order.deliveryInstructions, 'Ring twice');
     assert.equal(order.razorOrderId, '');
@@ -236,38 +238,47 @@ describe('POST /orders/create — pricing', () => {
       ['confirmed'],
     );
 
-    // Legacy: order lines are not floored, while the subtotal adds floored cart lines.
+    // Phase 4 7c: order lines are floored per unit like the cart, so they add up to the subtotal (legacy stored
+    // 898.2 here while the subtotal counted 898).
     const [product] = order.products;
     assert.deepEqual(
       [product.quantity, product.price, product.discount, product.productTotal, product.weight],
-      [2, 499, 10, 2 * unit(499, 10), 600],
+      [2, 499, 10, 2 * Math.floor(unit(499, 10)), 600],
     );
     assert.equal(String(product.product), String(ids.bookOne));
     const [bundle] = order.bundles;
-    assert.deepEqual([bundle.quantity, bundle.price, bundle.discount, bundle.total, bundle.weight], [1, 799, 20, unit(799, 20), 700]);
+    assert.deepEqual([bundle.quantity, bundle.price, bundle.discount, bundle.total, bundle.weight], [1, 799, 20, 639, 700]);
     assert.equal(String(bundle.bundle), String(orderIds.bundleOne));
     const [box] = order.boxes;
-    assert.deepEqual([box.quantity, box.price, box.discount, box.total, box.weight], [1, 999, 5, unit(999, 5), 900]);
+    assert.deepEqual([box.quantity, box.price, box.discount, box.total, box.weight], [1, 999, 5, 949, 900]);
     assert.equal(box.preferences.preferredGenres, 'Test genre');
     const [addOn] = order.addOns;
-    assert.deepEqual([addOn.quantity, addOn.price, addOn.discount, addOn.total], [3, 99, 15, 3 * unit(99, 15)]);
-    assert.notEqual(product.productTotal, 2 * 449);
+    assert.deepEqual([addOn.quantity, addOn.price, addOn.discount, addOn.total], [3, 99, 15, 3 * 84]);
+    assert.equal(product.productTotal + bundle.total + box.total + addOn.total, order.subTotal);
   });
 
-  test('gift charges count only when isGift is true; a gift without details costs 0', async () => {
+  test('gift charges count only when isGift is true', async () => {
     await attemptWith({ products: [{ product: ids.bookOne, quantity: 1 }] });
-    let res = await post('/orders/create', { method: 'cod', giftOptions: { isGift: false, details: { cost: 30 } } });
-    assert.equal(res.body.data.total, 449 + 50);
-
-    await attemptWith({ products: [{ product: ids.bookOne, quantity: 1 }] });
-    res = await post('/orders/create', { method: 'cod', giftOptions: { isGift: true } });
+    const res = await post('/orders/create', { method: 'cod', giftOptions: { isGift: false, details: { package: 'Premium', cost: 30 } } });
     assert.equal(res.body.data.total, 449 + 50);
   });
 
-  test('legacy: the gift cost is taken from the request as sent', async () => {
-    await attemptWith({ products: [{ product: ids.bookOne, quantity: 1 }] });
-    const res = await post('/orders/create', { method: 'cod', giftOptions: { isGift: true, details: { cost: 1000 } } });
-    assert.equal(res.body.data.total, 449 + 50 + 1000);
+  // Phase 4 7c: legacy charged the cost the request sent (any amount, 0 included).
+  test('charges the server price of the gift package and stores it, whatever cost the request sends', async () => {
+    for (const [name, price] of [['Basic', 49], ['Standard', 79], ['Premium', 99]]) {
+      await attemptWith({ products: [{ product: ids.bookOne, quantity: 1 }] });
+      const res = await post('/orders/create', { method: 'cod', giftOptions: { isGift: true, details: { package: name, cost: 0 } } });
+      assert.equal(res.body.data.total, 449 + 50 + price);
+      assert.equal((await Order().findOne({ orderId: res.body.data.orderId })).giftOptions.details.cost, price);
+    }
+  });
+
+  test('refuses a gift without a known package, before anything changes', async () => {
+    const attempted = await attemptWith({ products: [{ product: ids.bookOne, quantity: 1 }] });
+    for (const giftOptions of [{ isGift: true }, { isGift: true, details: { cost: 49 } }, { isGift: true, details: { package: 'Gold', cost: 1 } }]) {
+      assertBody(await post('/orders/create', { method: 'cod', giftOptions }), 400, badRequest('INVALID_REQUEST'));
+    }
+    assert.equal((await Order().findById(attempted._id)).orderStatus, 'attempted');
   });
 
   test('subtracts store credit applied to the order and debits it from the user', async () => {
@@ -296,7 +307,7 @@ describe('POST /orders/create — pricing', () => {
     const inventories = async () =>
       (
         await Book()
-          .find({ _id: { $in: [ids.bookOne, ids.bookTwo] } })
+          .find({ _id: mongoose.trusted({ $in: [ids.bookOne, ids.bookTwo] }) })
           .sort({ _id: 1 })
       ).map((b) => b.inventory);
     assert.deepEqual(
@@ -368,7 +379,7 @@ describe('POST /orders/create — online payment (mock payments adapter)', () =>
     const { razorOrderId } = res.body.data;
     const event = {
       event: 'payment.captured',
-      payload: { payment: { entity: { id: 'pay_test_e2e', order_id: razorOrderId, method: 'upi', amount: 49900 } } },
+      payload: { payment: { entity: { id: 'pay_test_e2e', order_id: razorOrderId, method: 'upi', status: 'captured', currency: 'INR', amount: 49900 } } },
     };
     assertBody(await webhook('/orders/confirm', event, true), 200, WEBHOOK_OK);
 
@@ -462,10 +473,13 @@ describe('PATCH /orders/credit', () => {
     assert.equal((await Order().findById(othersOrder._id)).storeCredit, 0);
   });
 
-  test('legacy: applies to an order in any stage, even a delivered one', async () => {
-    const delivered = await createOrder(shopper.user, { orderStatus: 'fulfilled' });
-    assertBody(await patch({ uniqueId: delivered.orderId, amount: 10 }), 200, ok('ORDER_UPDATE_SUCCESS', {}));
-    assert.equal((await Order().findById(delivered._id)).storeCredit, 10);
+  // Phase 4 7c: legacy applied credit to an order in any stage, even a delivered one.
+  test('refuses an order that is no longer attempted', async () => {
+    for (const orderStatus of ['created', 'confirmed', 'paid', 'fulfilled']) {
+      const placed = await createOrder(shopper.user, { orderStatus, storeCredit: 5 });
+      assertBody(await patch({ uniqueId: placed.orderId, amount: 10 }), 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
+      assert.equal((await Order().findById(placed._id)).storeCredit, 5);
+    }
   });
 });
 
@@ -539,6 +553,8 @@ describe('POST /orders/confirm (Razorpay payment webhook)', () => {
           id: 'pay_test_1',
           order_id: orderId,
           method: 'card',
+          status: 'captured',
+          currency: 'INR',
           amount: 49900,
           card: { name: 'Test Card', last4: '1111', network: 'Visa' },
         },
@@ -568,7 +584,9 @@ describe('POST /orders/confirm (Razorpay payment webhook)', () => {
     const paid = await Order().findById(order._id);
     assert.equal(paid.orderStatus, 'paid');
     assert.equal(paid.razorPaymentId, 'pay_test_1');
-    assert.deepEqual(paid.payment, event.payload.payment.entity);
+    // Phase 4 7c: a payment summary, without the card holder name (legacy stored the raw entity).
+    const { card, ...rest } = event.payload.payment.entity;
+    assert.deepEqual(paid.payment, { ...rest, card: { last4: card.last4, network: card.network } });
     assert.deepEqual(
       paid.orderHistory.map((entry) => entry.title),
       ['paid'],
@@ -582,7 +600,7 @@ describe('POST /orders/confirm (Razorpay payment webhook)', () => {
     assert.equal((await Cart().findOne({ user: shopper.user._id })).products.length, 0);
     const stock = await eventually(async () => {
       const books = await Book()
-        .find({ _id: { $in: [ids.bookOne, ids.bookTwo] } })
+        .find({ _id: mongoose.trusted({ $in: [ids.bookOne, ids.bookTwo] }) })
         .sort({ _id: 1 });
       const values = books.map((b) => b.inventory);
       return values[0] === 22 && values[1] === 24 ? values : undefined;

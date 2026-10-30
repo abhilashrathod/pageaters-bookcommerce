@@ -27,15 +27,8 @@ router.post('/create', permissionValidator(USER_ROLES.USER), validate(orderCreat
 router.get('/retrieve', permissionValidator(USER_ROLES.USER), controller.retrieve);
 router.patch('/credit', permissionValidator(USER_ROLES.USER), validate(orderStoreCreditPayloadSchema), controller.applyStoreCredit);
 
-router.post(
-  '/create-shipment/:orderId',
-  permissionValidator(USER_ROLES.USER),
-  validate(adminShipmentCreateRequestSchema),
-  controller.createShipmentForDelhivery,
-);
 router.post('/return/:uniqueId', permissionValidator(USER_ROLES.USER), validate(orderReturnPayloadSchema), controller.returnRequest);
 router.post('/cancel/:uniqueId', permissionValidator(USER_ROLES.USER), validate(orderCancelPayloadSchema), controller.cancelRequest);
-
 
 /**
  *  ADMIN ROUTES
@@ -46,7 +39,14 @@ router.get('/', permissionValidator(USER_ROLES.ADMIN), controller.getAll);
 router.get('/getById/:id', permissionValidator(USER_ROLES.ADMIN), controller.getById);
 router.get('/search', permissionValidator(USER_ROLES.ADMIN), controller.search);
 
-// ADMIN: forward order
+// ADMIN: forward order (create-shipment was guarded only as USER with no owner filter: any shopper could ship any
+// paid order)
+router.post(
+  '/create-shipment/:orderId',
+  permissionValidator(USER_ROLES.ADMIN),
+  validate(adminShipmentCreateRequestSchema),
+  controller.createShipmentForDelhivery,
+);
 router.post('/ship', permissionValidator(USER_ROLES.ADMIN), validate(adminOrderShipPayloadSchema), controller.ship);
 router.patch('/ship/:id/complete', permissionValidator(USER_ROLES.ADMIN), controller.completeShipment);
 
@@ -65,6 +65,7 @@ router.post('/admin-cancel/:id', permissionValidator(USER_ROLES.ADMIN), validate
  *  WEBHOOKS
  *  ***************************************************************************************************/
 
+// Public by design: Razorpay calls them, and each verifies the signature over the raw body (req.rawBody, app.js).
 router.post('/confirm', controller.verifyAndConfirm);
 router.post('/refund/processed', controller.completeRefund);
 

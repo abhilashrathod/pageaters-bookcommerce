@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const convert = require('xml-js');
+const { HOST } = require('../appConfig');
 const { models } = require('../constants');
 
 const router = express.Router();
@@ -30,7 +31,7 @@ async function writeGoogleData (req, res, next) {
       channel: {
         title: 'Pageaters',
         description: 'Our original book collection contains only the highest quality books, allowing you to have an exceptional reading experience.',
-        link: 'https://pageaters.com',
+        link: HOST,
         item: [],
       },
     },
@@ -42,7 +43,7 @@ async function writeGoogleData (req, res, next) {
       'g:id': product.bookId,
       'g:title': `${product.title.trim()} ${product.tagline.trim()}`,
       'g:description': product.description,
-      'g:link': `https://pageaters.com/books/${product.bookId}`,
+      'g:link': `${HOST}/books/${product.bookId}`,
       'g:price': `${returnDiscountedAmount(product.price, product.currentDiscount)} INR`,
       'g:image_link': imageUrl(product.poster),
       'g:availability': `${product.inventory > 0 ? 'in_stock' : 'out_of_stock'}`,

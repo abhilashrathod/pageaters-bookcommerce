@@ -1,14 +1,16 @@
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
 
-const { ENCRYPTION_KEY } = require('./../appConfig');
+const { hashSessionToken, verifyJwtToken } = require('./../helpers/encryption.helper');
 const { models, enums } = require('./../constants');
 
 const User = mongoose.model(models.USER);
 const AccessTokens = mongoose.model(models.ACCESS_TOKEN);
 
-const SELECTION_STRING = '-isDeleted -createdAt -updatedAt -salt -password -forgotPasswordToken -verifyEmailToken -forgotPasswordToken -lastPasswordSetAt -lastLoginAt -notifications -razorPayCustId';
-
+// A session is valid when its JWT verifies, its access_tokens record (stored by hash) exists and is not revoked
+// (logout, password change and reset revoke them), the JWT's `sessionVersion` is the account's current one (a password
+// set raises it, which also ends a JWT a racing login issued), and the account is active with a permitted role.
+// `req.user` is the JWT's claims (`userId`, `email`, `role`…); the account is read only for its role, status and
+// session version, so no secret or stamp reaches the request.
 module.exports = (...permissionsRequired) => {
   return [
     // step 1:
@@ -25,43 +27,42 @@ module.exports = (...permissionsRequired) => {
     (req, res, next) => {
       const accessToken = req.cookies[enums.TOKEN_ID.ACCESS_TOKEN_COOKIE];
 
-      jwt.verify(accessToken, ENCRYPTION_KEY, (err, data) => {
-        if (err) {
-          return res.unauthorized('INVALID_TOKEN');
-        }
-        req.user = data;
-        next();
-      });
+      try {
+        req.user = verifyJwtToken(accessToken);
+      } catch {
+        return res.unauthorized('INVALID_TOKEN');
+      }
+      next();
     },
     async (req, res, next) => {
+      const accessToken = req.cookies[enums.TOKEN_ID.ACCESS_TOKEN_COOKIE];
       const { userId } = req.user;
 
-      const user = await User.findOne({ _id: userId, status: enums.USER_STATUS.ACTIVE, isDeleted: false }).select(SELECTION_STRING);
+      if (typeof accessToken !== 'string' || !mongoose.isValidObjectId(userId)) {
+        return res.unauthorized('INVALID_TOKEN');
+      }
 
-      // if no user then send back
+      const session = await AccessTokens.exists({ token: hashSessionToken(accessToken), userId, revoked: null });
+      if (!session) {
+        return res.unauthorized('INVALID_TOKEN');
+      }
+
+      const user = await User.findOne({ _id: userId, status: enums.USER_STATUS.ACTIVE, isDeleted: false })
+        .select('role sessionVersion status isDeleted')
+        .lean();
+
       if (!user) {
         return res.unauthorized('INVALID_USER');
       }
 
-      // if scheduled for deletion send back
-      if (user.scheduledForDeletion) {
-        return res.unauthorized('SCHEDULED_FOR_DELETION');
+      if ((user.sessionVersion ?? 0) !== (req.user.sessionVersion ?? 0)) {
+        return res.unauthorized('INVALID_TOKEN');
       }
 
       // check user role and privileges
-      if (user.role === enums.USER_ROLES.ADMIN) {
-        //
-      } else if (permissionsRequired.length) {
-        if (!permissionsRequired.includes(user.role)) {
-          console.log(`permissionsRequired: ${permissionsRequired}`);
-          console.log(`user.role: ${user.role}`);
-
-          return res.forbidden();
-        }
+      if (user.role !== enums.USER_ROLES.ADMIN && permissionsRequired.length && !permissionsRequired.includes(user.role)) {
+        return res.forbidden();
       }
-
-      const tokens = await AccessTokens.find({ account: userId });
-      req.user.ownsToken = token => !!tokens.find(x => x.token === token);
 
       next();
     },

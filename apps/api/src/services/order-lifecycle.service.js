@@ -4,6 +4,7 @@ const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { getId } = require('../helpers/utils.helper');
 const { restoreInventory } = require('./order-fulfilment.service');
+const { adminOrderView } = require('./order-queries.service');
 const { sendAdminCancelEmail, sendDeliveredEmail, sendShippedEmail } = require('./order-notifications.service');
 
 // Admin status transitions. The full map, with the other services' transitions:
@@ -30,7 +31,7 @@ const historyEntry = (title, description) => ({ title, description, time: new Da
  * Admin: hands a paid or confirmed order to the courier with a tracking id and e-mails the buyer.
  * @param {string} orderId Order `_id`.
  * @param {string} shipmentTrackingId
- * @returns {Promise<object>} The shipped order, buyer and address populated.
+ * @returns {Promise<object>} The shipped order, buyer and address populated, `payment` as the summary (adminOrderView).
  * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such order in `paid`/`confirmed`).
  */
 const shipOrder = async (orderId, shipmentTrackingId) => {
@@ -43,13 +44,13 @@ const shipOrder = async (orderId, shipmentTrackingId) => {
   await order.save();
 
   await sendShippedEmail(order);
-  return order;
+  return adminOrderView(order);
 };
 
 /**
  * Admin: marks a shipped order delivered (`fulfilled`) and e-mails the buyer.
  * @param {string} id Order `_id`.
- * @returns {Promise<object>} The order, buyer and address populated.
+ * @returns {Promise<object>} The order, buyer and address populated, `payment` as the summary (adminOrderView).
  * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such order in `shipped`).
  */
 const completeShipment = async (id) => {
@@ -61,7 +62,7 @@ const completeShipment = async (id) => {
   await order.save();
 
   await sendDeliveredEmail(order);
-  return order;
+  return adminOrderView(order);
 };
 
 /**

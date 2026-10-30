@@ -45,7 +45,7 @@ const orderFor = (overrides = {}) =>
 const inventories = async () =>
   (
     await Book()
-      .find({ _id: { $in: [ids.bookOne, ids.bookTwo] } })
+      .find({ _id: mongoose.trusted({ $in: [ids.bookOne, ids.bookTwo] }) })
       .sort({ _id: 1 })
   ).map((b) => b.inventory);
 
@@ -462,9 +462,14 @@ describe('return and replacement shipments (admin)', () => {
 });
 
 describe('POST /orders/refund/processed (Razorpay refund webhook)', () => {
+  // Phase 4 7c: the event must carry the refund entity for the payment that paid the order (legacy needed only the
+  // Razorpay order id), and the order stores a payment summary with the UPI id masked (legacy: the raw entity).
   const refundEvent = (orderId = 'order_test_9') => ({
     event: 'refund.processed',
-    payload: { payment: { entity: { id: 'pay_test_9', order_id: orderId, method: 'upi', vpa: 'test@upi', amount_refunded: 49900 } } },
+    payload: {
+      refund: { entity: { id: 'rfnd_test_9', payment_id: 'pay_test_9', amount: 49900 } },
+      payment: { entity: { id: 'pay_test_9', order_id: orderId, method: 'upi', vpa: 'test@upi', amount: 49900, amount_refunded: 49900 } },
+    },
   });
   const webhook = async (payload, signature) => {
     const raw = JSON.stringify(payload);
@@ -478,14 +483,15 @@ describe('POST /orders/refund/processed (Razorpay refund webhook)', () => {
     });
     return { status: res.status, body: await res.json() };
   };
+  const paidWith = (overrides) => orderFor({ razorOrderId: 'order_test_9', razorPaymentId: 'pay_test_9', ...overrides });
 
-  test('marks the order refunded and stores the payment entity', async () => {
-    const order = await orderFor({ orderStatus: 'returned', razorOrderId: 'order_test_9' });
+  test('marks the order refunded and stores the payment summary', async () => {
+    const order = await paidWith({ orderStatus: 'returned' });
     const event = refundEvent();
     assertBody(await webhook(event, true), 200, WEBHOOK_OK);
     const refunded = await Order().findById(order._id);
     assert.equal(refunded.orderStatus, 'refunded');
-    assert.deepEqual(refunded.payment, event.payload.payment.entity);
+    assert.deepEqual(refunded.payment, { ...event.payload.payment.entity, vpa: 'te***@upi' });
     assert.deepEqual(
       refunded.orderHistory.map((entry) => entry.title),
       ['refunded'],
@@ -493,13 +499,13 @@ describe('POST /orders/refund/processed (Razorpay refund webhook)', () => {
   });
 
   test('legacy: refunds an order in any stage', async () => {
-    const order = await orderFor({ orderStatus: 'attempted', razorOrderId: 'order_test_9' });
+    const order = await paidWith({ orderStatus: 'attempted' });
     await webhook(refundEvent(), true);
     assert.equal((await Order().findById(order._id)).orderStatus, 'refunded');
   });
 
   test('answers ok and changes nothing without or with a bad signature, or for an unknown order', async () => {
-    const order = await orderFor({ orderStatus: 'returned', razorOrderId: 'order_test_9' });
+    const order = await paidWith({ orderStatus: 'returned' });
     assertBody(await webhook(refundEvent()), 200, WEBHOOK_OK);
     assertBody(await webhook(refundEvent(), razorpaySignature('{}')), 200, WEBHOOK_OK);
     assertBody(await webhook(refundEvent('order_unknown'), true), 200, WEBHOOK_OK);
@@ -637,12 +643,14 @@ describe('POST /orders/create-shipment/:orderId (mock shipping adapter)', () => 
     assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
   });
 
-  test("legacy (security step): guarded only as USER — a shopper can ship another user's paid order", async () => {
+  // 7a: ADMIN only (was: guarded only as USER with no owner filter — a shopper could ship any paid order).
+  test('a shopper cannot create a shipment, not even for their own order', async () => {
     const other = await createUser();
     const order = await orderFor({ orderStatus: 'paid' });
-    const res = await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS }, other.cookie);
-    assert.equal(res.status, 200);
-    assert.equal((await Order().findById(order._id)).orderStatus, 'shipped');
-    mailed(1);
+    for (const cookie of [other.cookie, shopper.cookie]) {
+      assertBody(await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS }, cookie), 403, forbidden);
+    }
+    assert.deepEqual(shipments(), []);
+    assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
   });
 });

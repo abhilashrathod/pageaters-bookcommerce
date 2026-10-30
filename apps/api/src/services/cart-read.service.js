@@ -37,6 +37,14 @@ const findUserCart = async (cartId, userId, populate) => {
 };
 
 /**
+ * The filter every cart write uses: the found cart's own `_id` and owner, never the cookie value, so a write can only
+ * reach the cart `findUserCart` checked (an operator object in place of the id can't widen it to another user's).
+ * @param {{ _id: unknown, user: unknown }} cart The document `findUserCart` returned.
+ * @returns {{ _id: unknown, user: unknown }}
+ */
+const ownCart = (cart) => ({ _id: cart._id, user: cart.user });
+
+/**
  * The user's cart, populated and priced (see cart-pricing.service).
  * @param {string} cartId From the cart cookie.
  * @param {string} userId
@@ -70,4 +78,4 @@ const getCartById = async (id) => {
 const listCarts = ({ page, limit }) =>
   Cart.paginate({}, { page, limit, populate: { path: 'user', select: 'fullName email' } });
 
-module.exports = { findUserCart, getCartById, getUserCart, listCarts };
+module.exports = { findUserCart, getCartById, getUserCart, listCarts, ownCart };

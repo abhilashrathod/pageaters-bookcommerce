@@ -2,14 +2,13 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { asJson, assertBody, assertGuarded, createUser, envelopes, eventually, paged, sentEmails, startTestApp } = require('./helpers');
-const { addressFields } = require('./helpers/fixtures/store');
+const { asJson, assertBody, assertGuarded, createUser, envelopes, paged, startTestApp } = require('./helpers');
 const t = require('../src/locales/en.json');
 
-// /api/v1/subscribers (newsletter sign-up) and /api/v1/public/contactUs over HTTP, written against the legacy
-// controllers before the service refactor.
+// /api/v1/subscribers (newsletter sign-up) over HTTP, written against the legacy controller before the service
+// refactor. (POST /public/contactUs, an unauthenticated mail trigger, was removed in PLAN.md 7a.)
 
-const { ok, okString, serverError } = envelopes;
+const { ok } = envelopes;
 
 let api;
 let admin;
@@ -66,36 +65,5 @@ describe('GET /subscribers (admin)', () => {
       200,
       ok('SUBSCRIBER_LIST_SUCCESS', paged([], { totalDocs: 1, limit: 0, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null })),
     );
-  });
-});
-
-describe('POST /public/contactUs', () => {
-  const payload = {
-    ORDER_ID: 'TEST-ORDER-1',
-    PRODUCTS: [{ product: { title: 'Test Book One', poster: 'test-cover.png' }, quantity: 1 }],
-    BUNDLES: [{ bundle: { title: 'Test Bundle One', poster: 'test-bundle.png' }, quantity: 1 }],
-    BOXES: [],
-    ADDRESS: addressFields(),
-    FULL_NAME: 'Test Receiver',
-    ORDER_DATE: '2026-01-01',
-    GIFT_CHARGES: 0,
-    STORE_CREDIT: 0,
-    SHIPPING: 0,
-    SUBTOTAL: 0,
-    TOTAL: 0,
-  };
-
-  test('legacy: unauthenticated, queues an order-confirmation mail to the shop', async () => {
-    assertBody(await api.request('/public/contactUs', { method: 'POST', body: payload }), 200, okString('MAIL_SENT'));
-    // Sent and logged before the response.
-    assert.equal(await mongoose.model('log_email').countDocuments(), 1);
-    assert.deepEqual(sentEmails().map(({ to, subject }) => ({ to, subject })), [{ to: 'owner@example.com', subject: 'Order Confirmation #TEST-ORDER-1 - Pageaters' }]);
-  });
-
-  test('legacy: answers 500 without PRODUCTS or BUNDLES', async () => {
-    assertBody(await api.request('/public/contactUs', { method: 'POST', body: {} }), 500, serverError);
-    assertBody(await api.request('/public/contactUs', { method: 'POST', body: { PRODUCTS: [] } }), 500, serverError);
-    // res.internalServerError logs the request to log_api without awaiting; let it land before the app stops.
-    await eventually(async () => (await mongoose.model('log_api').countDocuments()) === 2);
   });
 });

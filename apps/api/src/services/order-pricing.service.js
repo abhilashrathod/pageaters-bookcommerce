@@ -2,14 +2,15 @@ const { styleText } = require('node:util');
 const mongoose = require('mongoose');
 const { get, sumBy } = require('lodash');
 
-const { models } = require('../constants');
+const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { calculateTotal } = require('./cart-pricing.service');
 
 // Order money: the cart subtotal, shipping, gift charges, store credit and the priced order lines.
 //
-// Two roundings meet here (legacy, kept): the subtotal adds cart lines floored per unit (cart-pricing calculateTotal),
-// while the order lines store unfloored totals — 2 × (499 − 10%) is 898 in the subtotal but 898.2 on the line.
+// One rounding everywhere: each unit price is floored after its discount (cart-pricing calculateTotal), so the order
+// lines add up to the subtotal — 2 × (499 − 10%) is 898 on the line and in the subtotal (the legacy order lines
+// stored 898.2; Phase 4 step 7c).
 
 const Order = mongoose.model(models.ORDER);
 const User = mongoose.model(models.USER);
@@ -20,6 +21,13 @@ const AddOn = mongoose.model(models.ADD_ON);
 
 /** Free shipping strictly above this subtotal. */
 const FREE_SHIPPING_ABOVE = 599;
+
+/**
+ * Gift-wrap packages and their price in rupees, by the package name the storefront sends. The server's price list:
+ * the cost a request sends is ignored. Prices from the legacy storefront's `GIFT_PACKAGES`
+ * (`apps/storefront/core/_variables.ts`).
+ */
+const GIFT_PACKAGES = Object.freeze({ Basic: 49, Standard: 79, Premium: 99 });
 
 /** Populate options for a cart being priced (also applied, harmlessly, to orders in two legacy lookups). */
 const CART_POPULATE = [
@@ -37,7 +45,8 @@ const CART_POPULATE = [
   { path: 'mysteryBoxes.box', select: 'boxId title images currentDiscount price weight' },
 ];
 
-const discounted = (price, discount) => price - (discount * price) / 100;
+// The unit price after the discount, floored like the cart's (cart-pricing calculateTotal).
+const discounted = (price, discount) => Math.floor(price - (discount * price) / 100);
 
 /**
  * Total weight of cart lines: Σ catalog weight × quantity over books, bundles and boxes (add-ons weigh nothing).
@@ -96,12 +105,20 @@ const shippingFor = async (subTotal, hasMysteryBox) =>
   (await calculateShipping(subTotal > FREE_SHIPPING_ABOVE, hasMysteryBox)).deliveryAmount;
 
 /**
- * Gift wrapping charge: the `details.cost` the shopper sent when `isGift`, else 0. Legacy: the cost is not checked
- * against any price list, and a missing `giftOptions` throws a TypeError (→ 500).
- * @param {{ isGift: boolean, details?: { cost?: number } }} giftOptions
- * @returns {number}
+ * Gift wrapping: the price of the chosen package from the server's list (GIFT_PACKAGES) when `isGift`, else 0. The
+ * `details.cost` a request sends is never used: the returned options carry the server's price, so the order stores
+ * what was charged. Legacy, kept: a missing `giftOptions` throws a TypeError (→ 500).
+ * @param {{ isGift: boolean, details?: { package?: string, cost?: number } }} giftOptions
+ * @returns {{ giftCharges: number, giftOptions: object }} The charge and the options to store.
+ * @throws {AppError} INVALID_REQUEST when `isGift` names no known package (none, or one not in the list).
  */
-const giftChargesOf = (giftOptions) => (giftOptions.isGift ? get(giftOptions, 'details.cost', 0) : 0);
+const giftChargesOf = (giftOptions) => {
+  if (!giftOptions.isGift) return { giftCharges: 0, giftOptions };
+  const name = get(giftOptions, 'details.package', '');
+  if (!Object.hasOwn(GIFT_PACKAGES, name)) throw new AppError('INVALID_REQUEST');
+  const giftCharges = GIFT_PACKAGES[name];
+  return { giftCharges, giftOptions: { ...giftOptions, details: { ...giftOptions.details, cost: giftCharges } } };
+};
 
 /**
  * Amount payable: subtotal + shipping + gift charges − store credit.
@@ -111,8 +128,8 @@ const giftChargesOf = (giftOptions) => (giftOptions.isGift ? get(giftOptions, 'd
 const orderTotalOf = ({ subTotal, shipping, giftCharges, storeCredit }) => subTotal + shipping + giftCharges - storeCredit;
 
 /**
- * Prices a populated cart's items at today's catalog prices as order lines. Line totals are not floored (legacy).
- * Mystery boxes keep their preferences.
+ * Prices a populated cart's items at today's catalog prices as order lines: quantity × floor(discounted unit price),
+ * the cart's rounding, so the lines add up to the subtotal. Mystery boxes keep their preferences.
  * @param {object} cart Cart populated with CART_POPULATE.
  * @returns {Promise<{ products: object[], bundles: object[], boxes: object[], addOns: object[] }>}
  * @throws {TypeError} when an item was soft-deleted from the catalog since it was added (legacy → 500).
@@ -178,30 +195,34 @@ const buildOrderLines = async (cart) => {
 };
 
 /**
- * Sets how much of the user's store credit an order will use. The balance itself moves only when the order is
- * confirmed (COD) or paid (webhook). Legacy: the order may be in any stage, and the checks run in this order.
+ * Sets how much of the user's store credit an order will use. Only an `attempted` order takes credit: once the
+ * order is placed its total (and the payment order made for it) is fixed. The balance itself moves only when the
+ * order is confirmed (COD) or paid (webhook), with a guarded debit (order-fulfilment debitStoreCredit), so credit
+ * applied to several orders can't take the balance below 0. The checks run in this order.
  * @param {string} userId
  * @param {string} uniqueId Public order id (`OD-…`).
  * @param {number} amount
  * @returns {Promise<void>}
- * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such order for this user), STORE_CREDIT_UNAVAILABLE (more than the
- *   balance), STORE_CREDIT_NEGATIVE, STORE_CREDIT_SURPLUS (more than the order total).
+ * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such attempted order for this user), STORE_CREDIT_UNAVAILABLE
+ *   (more than the balance), STORE_CREDIT_NEGATIVE, STORE_CREDIT_SURPLUS (more than the order total).
  */
 const applyStoreCredit = async (userId, uniqueId, amount) => {
   const user = await User.findOne({ _id: userId }).select('storeCredit');
-  const order = await Order.findOne({ orderId: uniqueId, userId }).populate(CART_POPULATE);
+  const order = await Order.findOne({ orderId: uniqueId, userId, orderStatus: enums.ORDER_STAGES.ATTEMPTED });
 
   if (!order || !user) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
   if (amount > user.storeCredit) throw new AppError('STORE_CREDIT_UNAVAILABLE');
   if (amount < 0) throw new AppError('STORE_CREDIT_NEGATIVE');
   if (amount > order.total) throw new AppError('STORE_CREDIT_SURPLUS');
 
-  order.storeCredit = amount;
-  await order.save();
+  // Conditional: an order placed meanwhile keeps the credit its total was computed with.
+  const applied = await Order.updateOne({ _id: order._id, orderStatus: enums.ORDER_STAGES.ATTEMPTED }, { $set: { storeCredit: amount } });
+  if (applied.matchedCount !== 1) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
 };
 
 module.exports = {
   CART_POPULATE,
+  GIFT_PACKAGES,
   applyStoreCredit,
   buildOrderLines,
   cartSubTotal,

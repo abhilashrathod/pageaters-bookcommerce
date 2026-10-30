@@ -4,7 +4,7 @@ const { models } = require('../constants');
 const { BOOK_AVAILABILITY } = require('../constants/enums');
 const { AppError } = require('../helpers/appError.helper');
 const { getId } = require('../helpers/utils.helper');
-const { findUserCart } = require('./cart-read.service');
+const { findUserCart, ownCart } = require('./cart-read.service');
 
 // Books in the shopper's cart: add, set quantity, remove, empty. Rules: at most 2 of a book, never more than its
 // stock, all books of one availability (available / pre-order / import / procurement), only available books next to
@@ -46,7 +46,8 @@ const matchesCartAvailability = (book, products) =>
  * @throws {ProductMismatchError} When the book's availability doesn't fit the cart.
  */
 const addBook = async ({ cartId, userId, product, quantity }) => {
-  const currentCart = (await findUserCart(cartId, userId, ADD_POPULATE)).toObject();
+  const userCart = await findUserCart(cartId, userId, ADD_POPULATE);
+  const currentCart = userCart.toObject();
 
   const found = await Book.findOne({ _id: product, isDeleted: false }).select('price availability inventory');
   if (!found) throw new AppError('BOOK_NOT_EXIST');
@@ -79,13 +80,13 @@ const addBook = async ({ cartId, userId, product, quantity }) => {
 
   if (alreadyThere) {
     return Cart.findOneAndUpdate(
-      { _id: cartId, 'products.product': getId(product) },
+      { ...ownCart(userCart), 'products.product': getId(product) },
       { $set: { 'products.$.quantity': total } },
       { new: true },
     );
   }
 
-  await Cart.findOneAndUpdate({ _id: cartId }, { $addToSet: { products: { product, quantity, addedOn: new Date() } } }, { new: true });
+  await Cart.findOneAndUpdate(ownCart(userCart), { $addToSet: { products: { product, quantity, addedOn: new Date() } } }, { new: true });
   return true;
 };
 
@@ -96,7 +97,7 @@ const addBook = async ({ cartId, userId, product, quantity }) => {
  * @throws {AppError} CART_NOT_EXIST, BOOK_NOT_EXIST, QUANTITY_LIMIT, INVALID_QUANTITY (400).
  */
 const setBookQuantity = async ({ cartId, userId, id, quantity }) => {
-  await findUserCart(cartId, userId);
+  const userCart = await findUserCart(cartId, userId);
 
   const book = await Book.findOne({ _id: id, isDeleted: false }).select('price inventory');
   if (!book) throw new AppError('BOOK_NOT_EXIST');
@@ -104,7 +105,7 @@ const setBookQuantity = async ({ cartId, userId, id, quantity }) => {
   if (quantity > MAX_BOOK_QUANTITY) throw new AppError('QUANTITY_LIMIT');
   if (quantity > book.inventory) throw new AppError('INVALID_QUANTITY');
 
-  await Cart.findOneAndUpdate({ _id: cartId, 'products.product': getId(id) }, { $set: { 'products.$.quantity': quantity } }, { new: true });
+  await Cart.findOneAndUpdate({ ...ownCart(userCart), 'products.product': getId(id) }, { $set: { 'products.$.quantity': quantity } }, { new: true });
 };
 
 /**
@@ -114,11 +115,11 @@ const setBookQuantity = async ({ cartId, userId, id, quantity }) => {
  * @throws {AppError} CART_NOT_EXIST, BOOK_NOT_EXIST (400).
  */
 const removeBook = async ({ cartId, userId, id }) => {
-  await findUserCart(cartId, userId);
+  const userCart = await findUserCart(cartId, userId);
 
   if (!(await Book.findOne({ _id: id }))) throw new AppError('BOOK_NOT_EXIST');
 
-  await Cart.findOneAndUpdate({ _id: cartId }, { $pull: { products: { product: id } } }, { new: true });
+  await Cart.findOneAndUpdate(ownCart(userCart), { $pull: { products: { product: id } } }, { new: true });
 };
 
 /**
@@ -129,9 +130,9 @@ const removeBook = async ({ cartId, userId, id }) => {
  */
 const emptyCart = async ({ cartId, userId }) => {
   if (!cartId) throw new AppError('CART_NOT_EXIST');
-  await findUserCart(cartId, userId);
+  const userCart = await findUserCart(cartId, userId);
 
-  await Cart.findOneAndUpdate({ _id: cartId }, { $set: { products: [] } }, { new: true });
+  await Cart.findOneAndUpdate(ownCart(userCart), { $set: { products: [] } }, { new: true });
 };
 
 module.exports = { ProductMismatchError, addBook, emptyCart, removeBook, setBookQuantity };

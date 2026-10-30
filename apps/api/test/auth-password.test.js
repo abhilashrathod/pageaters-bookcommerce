@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
 const { assertBody, createUser, envelopes, PASSWORD, sentEmails, startTestApp } = require('./helpers');
+const { hashOneTimeToken } = require('../src/helpers/encryption.helper');
 
 // Passwords over HTTP: change (PUT /auth/password), forgot / resend / reset. Reset mails go out through the mock
 // email adapter, which records them (sentEmails). Envelopes are pinned byte for byte.
@@ -34,18 +35,18 @@ const expectMails = (count) => assert.equal(sentEmails().length, count);
 const login = (email, password) => api.request('/auth/login', { method: 'POST', body: { email, password } });
 
 describe('PUT /auth/password', () => {
-  test('legacy: answers PASSWORD_UPDATED but saves the current password again, not the new one', async () => {
+  test('saves the new password, answers PASSWORD_UPDATED and ends the session', async () => {
     const { user, cookie } = await createUser();
-    const before = await User().findById(user._id);
     const body = { password: PASSWORD, newPassword: 'test-password-new', confirmPassword: 'test-password-new' };
 
-    assertBody(await api.request('/auth/password', { method: 'PUT', body, cookie }), 200, okString('PASSWORD_UPDATED'));
+    const res = await api.request('/auth/password', { method: 'PUT', body, cookie });
+    assertBody(res, 200, okString('PASSWORD_UPDATED'));
+    assert.deepEqual(res.headers.getSetCookie(), ['_PID=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax']);
 
     const after = await User().findById(user._id);
-    assert.notEqual(after.salt, before.salt); // it was hashed again…
-    assert.ok(after.isPasswordValid(PASSWORD)); // …from the old password
-    assert.equal((await login(user.email, PASSWORD)).status, 200);
-    assertBody(await login(user.email, 'test-password-new'), 400, badRequest('INVALID_LOGIN_ATTEMPT'));
+    assert.ok(await after.isPasswordValid('test-password-new'));
+    assertBody(await login(user.email, PASSWORD), 400, badRequest('INVALID_LOGIN_ATTEMPT'));
+    assert.equal((await login(user.email, 'test-password-new')).status, 200);
   });
 
   test('a wrong current password answers INVALID_PASSWORD; a mismatched confirmation PASSWORDS_DO_NOT_MATCH', async () => {
@@ -68,7 +69,7 @@ describe('POST /auth/forgot-password', () => {
     assertBody(await api.request('/auth/forgot-password', { method: 'POST', body: { email: user.email } }), 200, okString('FORGOT_PASSWORD_MAIL_SENT'));
 
     const fresh = await User().findById(user._id);
-    assert.ok(fresh.forgotPasswordToken);
+    assert.match(fresh.forgotPasswordToken, /^[0-9a-f]{64}$/); // the hash, never the token
     assert.ok(Date.now() - Date.parse(fresh.lastForgotPasswordSentOn) < MINUTE);
 
     expectMails(1);
@@ -77,8 +78,10 @@ describe('POST /auth/forgot-password', () => {
       { from: mail.from, to: mail.to, subject: mail.subject },
       { from: 'no-reply@demo.pageaters.com', to: user.email, subject: 'Pageaters Account - Reset Password Requested' },
     );
-    const link = `http://localhost:3000/auth/reset?token=${fresh.forgotPasswordToken}&amp;email=${encodeURIComponent(user.email)}`;
-    assert.ok(mail.html.includes(link), 'reset link in the mail');
+    const link = mail.html.match(/http:\/\/localhost:3000\/auth\/reset\?token=([A-Za-z0-9_-]{43})&amp;email=([^"<>\s]+)/);
+    assert.ok(link, 'reset link in the mail');
+    assert.equal(link[2], encodeURIComponent(user.email));
+    assert.equal(hashOneTimeToken(link[1]), fresh.forgotPasswordToken);
     assert.ok(mail.html.includes(user.fullName));
   });
 
@@ -101,10 +104,10 @@ describe('POST /auth/forgot-password', () => {
 });
 
 describe('POST /auth/forgot-password/resend', () => {
-  test('re-mails the stored token after a minute and stamps the time', async () => {
+  test('after a minute mails a fresh token that replaces the stored one, and stamps the time', async () => {
     const { user } = await createUser();
     const stamp = new Date(Date.now() - 2 * MINUTE).toISOString();
-    await User().updateOne({ _id: user._id }, { forgotPasswordToken: 'stored-token', lastForgotPasswordSentOn: stamp });
+    await User().updateOne({ _id: user._id }, { forgotPasswordToken: 'stored-hash', lastForgotPasswordSentOn: stamp });
 
     assertBody(
       await api.request('/auth/forgot-password/resend', { method: 'POST', body: { email: user.email } }),
@@ -112,10 +115,10 @@ describe('POST /auth/forgot-password/resend', () => {
       okString('FORGOT_PASSWORD_MAIL_SENT'),
     );
     const fresh = await User().findById(user._id);
-    assert.equal(fresh.forgotPasswordToken, 'stored-token');
     assert.ok(fresh.lastForgotPasswordSentOn > stamp);
     expectMails(1);
-    assert.ok(sentEmails()[0].html.includes(`token=stored-token&amp;email=${encodeURIComponent(user.email)}`));
+    const [, token] = sentEmails()[0].html.match(/token=([A-Za-z0-9_-]{43})&amp;email=/);
+    assert.equal(hashOneTimeToken(token), fresh.forgotPasswordToken);
   });
 
   test('within a minute answers FORGOT_PASSWORD_LIMIT_EXCEEDED; an unknown email NO_USER_FOUND_FOR_THIS_EMAIL', async () => {
@@ -175,7 +178,7 @@ describe('POST /auth/reset-password', () => {
       400,
       badRequest('PASSWORDS_DO_NOT_MATCH'),
     );
-    assert.ok((await User().findById(user._id)).isPasswordValid(PASSWORD));
+    assert.ok(await (await User().findById(user._id)).isPasswordValid(PASSWORD));
   });
 
   test('validates the payload', async () => {

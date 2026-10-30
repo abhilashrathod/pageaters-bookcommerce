@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+const { HOST } = require('../appConfig');
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { sendTemplateMail } = require('./mail.service');
@@ -42,7 +43,8 @@ const listSubscribers = (product) => StockAlert.find({ isDeleted: false, product
  * (sent or failed, as before), one at a time. If the request dies part-way (a vendor timeout, the function's time
  * limit), the alerts already handled stay closed, so a retry mails only the rest.
  * Legacy: the STOCK_ALERT template ships only `en.html` while mail.service renders `en.ejs`, so no email is ever
- * sent; the email links point at the reserved root domain (fixed in the security step).
+ * sent. The book link is the storefront's book page (`HOST`, from STOREFRONT_URL; was the reserved root domain's
+ * `/book/…`, a path the storefront doesn't have).
  * @param {string} product Store book id.
  * @returns {Promise<number>} How many alerts were closed.
  */
@@ -57,7 +59,7 @@ const sendAlerts = async (product) => {
       data: {
         NAME: sub.user.fullName,
         PRODUCT: sub.product.title,
-        LINK: `https://pageaters.com/book/${sub.product.bookId}`,
+        LINK: `${HOST}/books/${encodeURIComponent(sub.product.bookId)}`,
         IMAGE: sub.product.poster,
         PRICE: sub.product.price,
       },

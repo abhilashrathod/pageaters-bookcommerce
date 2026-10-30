@@ -51,10 +51,6 @@ describe('auth payloads', () => {
   test('logout refuses unknown keys after the session check', async () => {
     assertUncoded(await post('/auth/logout', { other: 1 }, shopper.cookie));
   });
-
-  test('DELETE /auth/me needs the password', async () => {
-    assertBody(await api.request('/auth/me', { method: 'DELETE', body: {}, cookie: shopper.cookie }), 400, invalid('INVALID_PASSWORD'));
-  });
 });
 
 describe('address payloads', () => {

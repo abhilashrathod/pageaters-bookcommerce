@@ -31,7 +31,7 @@ beforeEach(async () => {
   admin = await createUser({ role: 'ADMIN' });
 });
 
-// Multipart upload through the app's multer middleware (api.request only sends JSON).
+// Multipart upload through the route's multer middleware (api.request only sends JSON).
 const upload = async ({ fields = {}, file, cookie = admin.cookie } = {}) => {
   const form = new FormData();
   for (const [key, value] of Object.entries(fields)) [value].flat().forEach((item) => form.append(key, item));
@@ -40,7 +40,10 @@ const upload = async ({ fields = {}, file, cookie = admin.cookie } = {}) => {
   return { status: res.status, body: await res.json() };
 };
 
-const PNG = { name: 'cover.png', type: 'image/png', content: 'not-really-a-png' };
+// 7a: the content must start with the format's signature bytes.
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const PNG = { name: 'cover.png', type: 'image/png', content: Buffer.concat([PNG_SIGNATURE, Buffer.from('test-image-bytes')]) };
+const JPEG = { name: 'photo.jpeg', type: 'image/jpeg', content: Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.from('test-image-bytes')]) };
 
 describe('POST /file/upload', () => {
   test('needs an ADMIN session', async () => {
@@ -83,7 +86,7 @@ describe('POST /file/upload', () => {
     assert.equal(await File().countDocuments(), cases.length);
 
     storage.clear();
-    await upload({ fields: { fileModule: 'AUTHOR', title: 'x' }, file: { ...PNG, name: 'photo.jpeg', type: 'text/html' } });
+    await upload({ fields: { fileModule: 'AUTHOR', title: 'x' }, file: { ...JPEG, type: 'text/html' } });
     assert.equal(uploads()[0].contentType, 'image/jpeg', 'never the client-sent type');
   });
 
@@ -111,8 +114,9 @@ describe('POST /file/upload', () => {
     assert.deepEqual(uploads(), []);
   });
 
-  test('legacy: a JSON body (no multipart) answers 500', async () => {
-    assertBody(await api.request('/file/upload', { method: 'POST', body: { title: 'x' }, cookie: admin.cookie }), 500, serverError);
+  // 7a: the route reads the single parsed file (was: `req.files[0]` of undefined, 500).
+  test('a JSON body (no multipart) answers NO_FILE_PRESENT', async () => {
+    assertBody(await api.request('/file/upload', { method: 'POST', body: { title: 'x' }, cookie: admin.cookie }), 400, badRequest('NO_FILE_PRESENT'));
   });
 
   test('a storage failure answers 500 and records nothing', async (t) => {

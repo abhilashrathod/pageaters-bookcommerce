@@ -32,6 +32,9 @@ const schema = z.object({
     .transform(Number)
     .refine((port) => port >= 1 && port <= 65535, 'must be a whole number between 1 and 65535')
     .default(5005),
+  // Set by Vercel itself (`1`) in its builds and functions; unset locally. Read for `trust proxy` (app.js) and to refuse
+  // APP_ENV=test on Vercel (TEST_MODE_ON_VERCEL below).
+  VERCEL: z.string().optional(),
   STOREFRONT_URL: httpUrl('must be an http(s) URL').default('http://localhost:3000'),
   ALLOWED_ORIGINS: z
     .string()
@@ -167,6 +170,10 @@ const parseEnv = (source) => {
     const value = input[name];
     const echoes = typeof value === 'string' && value.length > 0 && issue.message.includes(value);
     problems.push({ name, reason: echoes ? 'is invalid' : issue.message });
+  }
+  // APP_ENV=test switches test-only behaviour on; a deployment must never run that way.
+  if (input.APP_ENV === 'test' && input.VERCEL !== undefined && !problems.some(({ name }) => name === 'APP_ENV')) {
+    problems.push({ name: 'APP_ENV', reason: 'must not be test on Vercel (VERCEL is set)' });
   }
   for (const problem of missingAdapterKeys(input)) {
     if (!problems.some(({ name }) => name === problem.name)) problems.push(problem);

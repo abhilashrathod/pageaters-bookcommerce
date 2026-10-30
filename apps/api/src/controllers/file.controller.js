@@ -15,8 +15,8 @@ module.exports.upload = async (req, res) => {
 module.exports.uploadBucket = async (req, res) => {
   try {
     const { fileModule, title } = req.allParams();
-    // Legacy: without a multipart body `req.files` is undefined and this throws (500).
-    const fileUrl = await fileService.uploadFile({ fileModule, title, file: req.files[0] });
+    // `req.file`: the single `file` field parsed by middlewares/upload.middleware.js (undefined without one).
+    const fileUrl = await fileService.uploadFile({ fileModule, title, file: req.file });
     return res.ok({ message: 'FILE_UPLOADED', data: { fileUrl } });
   } catch (e) {
     return handleControllerError(res, e);

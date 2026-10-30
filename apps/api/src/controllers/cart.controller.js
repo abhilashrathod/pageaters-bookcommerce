@@ -1,5 +1,6 @@
 const { get } = require('lodash');
 
+const { ENVIRONMENT } = require('../appConfig');
 const { enums } = require('../constants');
 const { handleControllerError } = require('../helpers/appError.helper');
 const { cartIdFrom } = require('../helpers/cart-cookie.helper');
@@ -10,8 +11,12 @@ const cartRead = require('../services/cart-read.service');
 // Thin controller: read the request, call one service, answer with the res.* helpers (src/services/README.md).
 // The shopper's cart is addressed by the cart cookie; this controller owns that cookie.
 
+// SameSite=Lax and Secure outside development/test, as the session cookie (PLAN.md 7a/7b): a cross-site form can't
+// write to the shopper's cart.
 const CART_COOKIE_OPTIONS = {
   httpOnly: true,
+  sameSite: 'lax',
+  secure: !['development', 'test'].includes(ENVIRONMENT),
 };
 
 const cartOf = (req) => ({
@@ -66,7 +71,7 @@ module.exports.remove = async (req, res) => {
 
 // Revokes the cart cookie only; the cart itself is untouched.
 module.exports.clear = async (req, res) => {
-  res.cookie(enums.TOKEN_ID.CART_COOKIE, '', { httpOnly: true, expires: 0 });
+  res.cookie(enums.TOKEN_ID.CART_COOKIE, '', { ...CART_COOKIE_OPTIONS, expires: new Date(0) });
   return res.ok('CART_DELETE_SUCCESS');
 };
 

@@ -2,30 +2,36 @@ const mongoose = require('mongoose');
 
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
-const { generateJwtToken } = require('../helpers/encryption.helper');
+const { generateJwtToken, hashPassword, hashSessionToken } = require('../helpers/encryption.helper');
 
 // Sessions: signup, login, token revoke and the profile a session reads. Services return the token and cart id;
 // the controller sets the cookies.
 //
-// A session is a JWT (7 days for shoppers, 30 for admins, helpers/encryption.helper.js) that is also stored in
-// access_tokens. Legacy: the permission middleware checks only the JWT, so a revoked token keeps working until it
-// expires.
+// A session is a JWT (7 days for shoppers, 30 for admins, signed with the `jwt` subkey of ENCRYPTION_KEY,
+// helpers/encryption.helper.js) whose SHA-256 is stored in access_tokens. The permission middleware accepts it only
+// while that record is not revoked and its `sessionVersion` claim is the account's: logout revokes one; a password
+// change or reset revokes all of the user's and raises the version, which also ends a JWT a racing login signed.
 
 const User = mongoose.model(models.USER);
 const AccessTokens = mongoose.model(models.ACCESS_TOKEN);
 const Cart = mongoose.model(models.CART);
 const Favorites = mongoose.model(models.FAVORITES);
 
-// Signs a session token for the user and stores it.
+// Signs a session token for the user and stores its hash, with the JWT's own expiry (the TTL index removes it then).
 const startSession = async (user, ipAddress) => {
   const { token, payload } = generateJwtToken(user, ipAddress);
-  await AccessTokens.create({ ...payload, token });
+  const days = user.role === enums.USER_ROLES.ADMIN ? 30 : 7;
+  await AccessTokens.create({
+    ...payload,
+    token: hashSessionToken(token),
+    expires: new Date(payload.createdAt + days * 24 * 60 * 60 * 1000),
+  });
   return token;
 };
 
 /**
  * Creates a shopper account with its cart, favourites and a session. No mail is sent (the verification mail goes
- * out only on resend). Legacy: the last save of the new user is not awaited.
+ * out only on resend), so the verification token stored here is never mailed.
  * @param {{ email: string, password: string, ipAddress: string }} input
  * @returns {Promise<{ token: string, cartId: import('mongoose').Types.ObjectId }>}
  * @throws {AppError} USER_ALREADY_REGISTERED (400).
@@ -36,11 +42,7 @@ const register = async ({ email, password, ipAddress }) => {
   const user = await User.create({ email, role: enums.USER_ROLES.USER });
 
   await user.setPassword(password);
-  const verifyToken = await user.generateVerifyEmailToken();
-
-  user.verifyEmailToken = verifyToken;
-  user.lastVerifyEmailSentOn = new Date().toISOString();
-  user.save();
+  await user.generateVerifyEmailToken();
 
   const cart = await Cart.create({ user: user._id });
   await Favorites.create({ userId: user._id });
@@ -50,19 +52,31 @@ const register = async ({ email, password, ipAddress }) => {
 };
 
 /**
- * Logs an active account in: stamps the login time (legacy: not awaited), starts a session and finds the cart.
+ * Logs an active account in: checks the password in constant time, upgrades a legacy or weaker hash to today's
+ * scrypt, stamps the login time, starts a session and finds the cart. An unknown email (or a wrong password, whatever
+ * the stored hash) costs one scrypt hash, so response time does not tell accounts apart.
+ * The rehash and the stamp are written only while the stored hash is still the one checked: a login that overlaps a
+ * password change or reset fails instead of writing the old password back, and a JWT it signs after the change
+ * carries the old `sessionVersion`, which the middleware refuses.
  * @param {{ email: string, password: string, ipAddress: string }} input
  * @returns {Promise<{ token: string, cartId: import('mongoose').Types.ObjectId | '', profile: object }>} `cartId` is
  *   '' for an account without a cart; `profile` is User.getProfile's projection.
  * @throws {AppError} INVALID_LOGIN_ATTEMPT (400) for an unknown or inactive account or a wrong password.
  */
 const login = async ({ email, password, ipAddress }) => {
-  const user = await User.findOne({ email, status: enums.USER_STATUS.ACTIVE });
-  if (!user) throw new AppError('INVALID_LOGIN_ATTEMPT', { debugMessage: 'INVALID_USER' });
-  if (!user.isPasswordValid(password)) throw new AppError('INVALID_LOGIN_ATTEMPT', { debugMessage: 'INVALID_PASSWORD' });
+  const user = await User.findOne({ email, status: enums.USER_STATUS.ACTIVE, isDeleted: false }).select('+sessionVersion');
+  if (!user) {
+    await hashPassword(password);
+    throw new AppError('INVALID_LOGIN_ATTEMPT', { debugMessage: 'INVALID_USER' });
+  }
 
-  user.lastLoginAt = new Date().toISOString();
-  user.save();
+  const { valid, needsRehash } = await user.checkPassword(password);
+  if (!valid) throw new AppError('INVALID_LOGIN_ATTEMPT', { debugMessage: 'INVALID_PASSWORD' });
+
+  const update = { lastLoginAt: new Date().toISOString() };
+  if (needsRehash) Object.assign(update, { password: await hashPassword(password), salt: '' });
+  const written = await User.updateOne({ _id: user._id, password: user.password }, { $set: update });
+  if (written.matchedCount !== 1) throw new AppError('INVALID_LOGIN_ATTEMPT', { debugMessage: 'PASSWORD_CHANGED' });
 
   const token = await startSession(user, ipAddress);
 
@@ -82,12 +96,23 @@ const login = async ({ email, password, ipAddress }) => {
 const revokeToken = async ({ token, userId, ipAddress }) => {
   if (!token) throw new AppError('INVALID_TOKEN', { status: 401 });
 
-  const accessToken = await AccessTokens.findOne({ token, userId });
+  const accessToken = await AccessTokens.findOne({ token: hashSessionToken(token), userId });
   if (!accessToken) throw new AppError('TOKEN_UNMATCHED', { status: 401 });
 
   accessToken.revoked = Date.now();
   accessToken.revokedByIp = ipAddress;
   await accessToken.save();
+};
+
+/**
+ * Revokes every open session of the user (after a password change or reset) and raises the account's
+ * `sessionVersion`, so a JWT signed in the meantime is refused too.
+ * @param {{ userId: string | import('mongoose').Types.ObjectId, ipAddress?: string }} input
+ * @returns {Promise<void>}
+ */
+const revokeAllSessions = async ({ userId, ipAddress = '' }) => {
+  await User.updateOne({ _id: userId }, { $inc: { sessionVersion: 1 } });
+  await AccessTokens.updateMany({ userId, revoked: null }, { $set: { revoked: new Date(), revokedByIp: ipAddress } });
 };
 
 /**
@@ -97,4 +122,4 @@ const revokeToken = async ({ token, userId, ipAddress }) => {
  */
 const getProfile = (userId) => User.getProfile(userId);
 
-module.exports = { getProfile, login, register, revokeToken };
+module.exports = { getProfile, login, register, revokeAllSessions, revokeToken };

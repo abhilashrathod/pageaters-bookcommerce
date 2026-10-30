@@ -42,7 +42,7 @@ const findActive = async (query, unwrap) => {
  */
 const listProductSets = ({ page, limit, categories }) => {
   const query = { isActive: true };
-  if (categories) query.categories = { $in: isArray(categories) ? categories : categories.split(',') };
+  if (categories) query.categories = mongoose.trusted({ $in: isArray(categories) ? categories : categories.split(',') });
 
   return ProductSets.paginate(query, { page, limit });
 };

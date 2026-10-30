@@ -101,7 +101,7 @@ describe("a category's books", () => {
   });
 
   test('GET /categories/:id/products pages its live books, sorted', async () => {
-    const docs = asJson(await Book().find({ _id: { $in: [ids.bookOne, ids.bookTwo] } }).select(PRODUCT_FIELDS).populate(PRODUCT_POPULATE).sort({ popularity: -1 }));
+    const docs = asJson(await Book().find({ _id: mongoose.trusted({ $in: [ids.bookOne, ids.bookTwo] }) }).select(PRODUCT_FIELDS).populate(PRODUCT_POPULATE).sort({ popularity: -1 }));
     assertBody(await api.request(`/categories/${ids.categoryFiction}/products?page=1&limit=10&sortBy=popularity&sortOrder=-1`), 200, ok('BOOK_LIST_SUCCESS', firstPage(docs, 2)));
     assertBody(await api.request(`/categories/${ids.categoryFiction}/products?page=1&limit=10&sortBy=bookId`), 400, badRequest('SORTING_NOT_ALLOWED'));
   });

@@ -219,7 +219,8 @@ describe('DELETE /cart/empty and /cart/clear', () => {
     const res = await del('/clear');
     // res.ok('KEY') (string form): `data` before `message`.
     assertBody(res, 200, { statusCode: 200, status: 'CART_DELETE_SUCCESS', data: {}, message: t.CART_DELETE_SUCCESS });
-    assert.deepEqual(res.headers.getSetCookie(), ['_CID=; Path=/; HttpOnly']);
+    // Was `_CID=; Path=/; HttpOnly`: `expires: 0` never expired the cookie; it is now cleared with an Expires in the past.
+    assert.deepEqual(res.headers.getSetCookie(), ['_CID=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax']);
     assert.equal((await reloadCart()).products.length, 1);
   });
 });

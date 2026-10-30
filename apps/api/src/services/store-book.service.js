@@ -8,11 +8,10 @@ const { generateRandomNumber, getId, arrayDifference } = require('../helpers/uti
 const { addBackLinks } = require('./catalog-links.service');
 
 // Store books (the products): public list, detail and search; admin create/update/delete with their side effects
-// on category counts, the author's book list and the two-way related-record links. The CSV export is in
-// store-book-export.service.js.
+// on category counts, the author's book list and the two-way related-record links.
 //
-// Legacy (fixed in the security step): detail answers the whole document, `wholeSalePriceHistory` included, and
-// create/update accept and store it.
+// `wholeSalePriceHistory` (business-sensitive) is `select: false` in the model, so no read here sends it, and
+// create/update never take it from the request (it isn't in pickBookFields).
 
 const Book = mongoose.model(models.STORE_BOOK);
 const Category = mongoose.model(models.CATEGORY);
@@ -34,7 +33,7 @@ const pickBookFields = (fields) => {
   const { type, title, tagline, eyebrow, description, tags, message, language, pages, version, readingLevel, popularity } = fields;
   const { availability, dimensions, weight, categories, relatedCollections, relatedBooks, relatedBundles } = fields;
   const { ISBN, publicationYear, publisher, editorsPick, bestSeller, newRelease, preOrder, poster, images } = fields;
-  const { wholeSalePriceHistory, inventory, currentDiscount, price, rentPrice, membersPrice, membersRentPrice } = fields;
+  const { inventory, currentDiscount, price, rentPrice, membersPrice, membersRentPrice } = fields;
   return {
     type,
     title,
@@ -64,7 +63,6 @@ const pickBookFields = (fields) => {
     preOrder,
     poster,
     images,
-    wholeSalePriceHistory,
     inventory,
     currentDiscount,
     price,
@@ -164,7 +162,7 @@ const searchBooks = async (booksIndex, q) => {
   if (!booksIndex || !q) return [];
 
   const lunrIdArray = booksIndex.search(`${q}*`).map(({ ref }) => getId(ref));
-  return Book.find({ _id: { $in: lunrIdArray }, isDeleted: false })
+  return Book.find({ _id: mongoose.trusted({ $in: lunrIdArray }), isDeleted: false })
     .select('title ISBN bookId author poster weight price popularity inventory editorsPick newRelease preOrder currentDiscount bestSeller')
     .limit(10)
     .populate({ path: 'author', select: 'name' });
@@ -173,7 +171,7 @@ const searchBooks = async (booksIndex, q) => {
 /**
  * A live store book by id, with author, related books/bundles/collections and categories (admin).
  * @param {string} id
- * @returns {Promise<object>} The whole document (legacy: `wholeSalePriceHistory` included).
+ * @returns {Promise<object>} The whole document except `wholeSalePriceHistory` (select: false).
  * @throws {AppError} BOOK_NOT_EXIST (400).
  */
 const getBookById = async (id) => {
@@ -189,7 +187,7 @@ const getBookById = async (id) => {
 /**
  * A live store book by its public `bookId`, populated as getBookById plus the related books' author and categories.
  * @param {string} bookId
- * @returns {Promise<object>} The whole document (legacy: `wholeSalePriceHistory` included, on a public route).
+ * @returns {Promise<object>} The whole document except `wholeSalePriceHistory` (select: false); a public route.
  * @throws {AppError} BOOK_NOT_EXIST (400).
  */
 const getBookByBookId = async (bookId) => {

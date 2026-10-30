@@ -1,9 +1,13 @@
-const { Schema, model } = require('mongoose');
+const { Schema, model, trusted } = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 
-const { hashString, encrypt, generateRandomString, decrypt } = require('./../helpers/encryption.helper');
+const { generateOneTimeToken, hashPassword, verifyPassword } = require('./../helpers/encryption.helper');
 
 const { enums, models } = require('./../constants');
+
+const HOUR = 60 * 60 * 1000;
+const FORGOT_PASSWORD_TOKEN_TTL = HOUR;
+const VERIFY_EMAIL_TOKEN_TTL = 24 * HOUR;
 
 const schema = new Schema(
   {
@@ -15,24 +19,38 @@ const schema = new Schema(
     contactNo: { type: String, default: '' },
     role: { type: String, enum: Object.values(enums.USER_ROLES), default: enums.USER_ROLES.USER },
 
+    // `password` is a scrypt hash with its own salt (helpers/encryption.helper.js); `salt` is set only for legacy
+    // HMAC-SHA512 hashes, which are replaced at the next login.
     salt: { type: String, default: '' },
     password: { type: String, default: '' },
     status: { type: String, enum: Object.values(enums.USER_STATUS), default: enums.USER_STATUS.ACTIVE },
 
     isDeleted: { type: Boolean, default: false },
 
+    // One-time tokens hold the SHA-256 of the token mailed in the link. Expiries, attempt counters and send limits
+    // are `select: false`, so no projection exposes them by accident.
     verifyEmailToken: { type: String, default: '' },
+    verifyEmailTokenExpiresAt: { type: Date, default: null, select: false },
     lastVerifyEmailSentOn: { type: String, default: '' },
     emailVerified: { type: Boolean, default: false },
 
     contactVerified: { type: Boolean, default: false },
     lastMessageSentOn: { type: String, default: '' },
-    contactOtp: { type: String, default: '' },
+    contactOtp: { type: String, default: '', select: false },
+    contactOtpExpiresAt: { type: Date, default: null, select: false },
+    contactOtpAttempts: { type: Number, default: 0, select: false },
+    // Texts sent (send and resend) in the 24-hour window that started at `contactOtpSendWindowStart`.
+    contactOtpSendCount: { type: Number, default: 0, select: false },
+    contactOtpSendWindowStart: { type: Date, default: null, select: false },
 
     forgotPasswordToken: { type: String, default: '' },
+    forgotPasswordTokenExpiresAt: { type: Date, default: null, select: false },
     lastForgotPasswordSentOn: { type: String, default: '' },
 
     lastPasswordSetAt: { type: String, default: '' },
+    // Raised by every password set and revoke-all; a session JWT carries the value it was issued with and is refused
+    // once they differ.
+    sessionVersion: { type: Number, default: 0, select: false },
     lastLoginAt: { type: String, default: '' },
 
     razorPayCustId: { type: String, default: '' },
@@ -63,102 +81,75 @@ class User {
     return user;
   }
 
-  static async verifyEmail(email, token) {
-    email = email.replace(/\s/g, '+');
-
-    let tokenData;
-
-    try {
-      tokenData = decrypt(token);
-      tokenData = JSON.parse(tokenData);
-    } catch (e) {
-      return { success: false, message: 'INVALID_TOKEN', helper: 'INVALID_TOKEN' };
-    }
-
-    const user = await this.findOne({ email: tokenData.email, verifyEmailToken: { $ne: '' }, isDeleted: false });
-
-    if (!user) {
-      return { success: false, message: 'INVALID_TOKEN', helper: 'USER_NOT_FOUND' };
-    } else if (user._id.toString() !== tokenData.userId) {
-      return { success: false, message: 'INVALID_TOKEN', helper: 'TOKEN_OF_OTHER_USER' };
-    } else if (user.email !== email) {
-      return { success: false, message: 'INVALID_TOKEN', helper: 'EMAIL_DOES_NOT_MATCH' };
-    } else if (tokenData.motive !== 'VERIFY_EMAIL') {
-      return { success: false, message: 'INVALID_TOKEN', helper: 'INCORRECT_MOTIVE' };
-    }
-
-    user.verifyEmailToken = '';
-    user.lastVerifyEmailSentOn = '';
-    user.emailVerified = true;
-    user.status = enums.USER_STATUS.ACTIVE;
-
-    await user.save();
-
-    return { success: true };
+  /**
+   * Checks a password against the stored hash (scrypt, or the legacy HMAC-SHA512) in constant time.
+   * @param {string} password
+   * @returns {Promise<{ valid: boolean, needsRehash: boolean }>}
+   */
+  checkPassword(password) {
+    return verifyPassword(password, this.password, this.salt);
   }
 
-  isPasswordValid(password) {
-    try {
-      const hashedPassword = hashString(password, this.salt);
-
-      return hashedPassword === this.password;
-    } catch (e) {
-      console.log(e);
-      return false;
-    }
+  /**
+   * Whether `password` is the account's password.
+   * @param {string} password
+   * @returns {Promise<boolean>}
+   */
+  async isPasswordValid(password) {
+    return (await this.checkPassword(password)).valid;
   }
 
+  /**
+   * Replaces the stored hash with a scrypt hash of `password` (not saved) and empties the legacy `salt`.
+   * @param {string} password
+   * @returns {Promise<void>}
+   */
+  async hashPassword(password) {
+    this.password = await hashPassword(password);
+    this.salt = '';
+  }
+
+  /**
+   * Stores a new verification token (24 h, single use) and returns it; only its hash is kept.
+   * @returns {Promise<string>} The token for the link.
+   */
   async generateVerifyEmailToken() {
-    const dataToEncrypt = {
-      userId: this._id,
-      createdAt: Date.now(),
-      motive: 'VERIFY_EMAIL',
-      email: this.email,
-    };
+    const { token, hash } = generateOneTimeToken();
 
-    const token = encrypt(JSON.stringify(dataToEncrypt));
-
-    this.verifyEmailToken = token;
+    this.verifyEmailToken = hash;
+    this.verifyEmailTokenExpiresAt = new Date(Date.now() + VERIFY_EMAIL_TOKEN_TTL);
     this.lastVerifyEmailSentOn = new Date().toISOString();
     await this.save();
 
     return token;
   }
 
-  async generateForgotPasswordToken(user) {
-    const dataToEncrypt = {
-      userId: user._id,
-      createdAt: Date.now(),
-      motive: 'FORGOT_PASSWORD',
-      email: user.email,
-    };
+  /**
+   * Stores a new password-reset token (1 h, single use) and returns it; only its hash is kept.
+   * @returns {Promise<string>} The token for the link.
+   */
+  async generateForgotPasswordToken() {
+    const { token, hash } = generateOneTimeToken();
 
-    const token = encrypt(JSON.stringify(dataToEncrypt));
-
-    user.forgotPasswordToken = token;
-    user.lastForgotPasswordSentOn = new Date().toISOString();
-
-    await user.save();
+    this.forgotPasswordToken = hash;
+    this.forgotPasswordTokenExpiresAt = new Date(Date.now() + FORGOT_PASSWORD_TOKEN_TTL);
+    this.lastForgotPasswordSentOn = new Date().toISOString();
+    await this.save();
 
     return token;
   }
 
-  generateAuthToken(id, email, role) {
-    const dataToEncrypt = {
-      userId: id,
-      createdAt: Date.now(),
-      role,
-      motive: 'AUTH',
-      email,
-    };
-
-    return encrypt(JSON.stringify(dataToEncrypt));
-  }
-
+  /**
+   * Sets a new password, clears any pending reset and raises `sessionVersion` (atomically, with `$inc`), which ends
+   * every session JWT issued before; the caller also revokes the stored sessions (auth-session.service).
+   * @param {string} password
+   * @returns {Promise<void>}
+   */
   async setPassword(password) {
-    this.salt = generateRandomString(16);
-    this.password = hashString(password, this.salt);
+    await this.hashPassword(password);
+    this.$inc('sessionVersion', 1);
     this.forgotPasswordToken = '';
+    this.forgotPasswordTokenExpiresAt = null;
     this.lastForgotPasswordSentOn = '';
     this.lastPasswordSetAt = new Date().toISOString();
 

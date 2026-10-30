@@ -2,7 +2,7 @@ const path = require('path');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
 
-const { PROJECT_ROOT, DEFAULT_LANGUAGE, NO_REPLY_EMAIL } = require('../appConfig');
+const { PROJECT_ROOT, DEFAULT_LANGUAGE, NO_REPLY_EMAIL, HOST } = require('../appConfig');
 const { models } = require('../constants');
 const email = require('../adapters/email');
 
@@ -23,9 +23,11 @@ const RENDER_OPTIONS = Object.freeze({});
 const describe = (error) => [error?.name ?? 'Error', error?.code].filter(Boolean).join(' ');
 
 /**
- * Renders and sends one template e-mail, then records it in log_email (`from`, `to`, `subject`, the rendered
- * `html` and `emailModule`, as the legacy queue did). Never rejects: like the legacy queue, a failure never fails
- * the request. A render or send failure is logged as "not sent", a failed log write as "sent, not logged"; both
+ * Renders and sends one template e-mail, then records it in log_email: `emailModule`, `to` and `subject` only
+ * (the time is the record's `createdAt`; the model expires it after 30 days). The rendered html is never stored:
+ * it carries reset/verify tokens and buyer details. Every template also gets `STOREFRONT_URL` (the storefront
+ * origin from config, `HOST`) for its links; a `data` key of that name can't replace it. Never rejects: like the
+ * legacy queue, a failure never fails the request. A render or send failure is logged as "not sent", a failed log write as "sent, not logged"; both
  * with the template name and the error's name/code only, never the recipient or the body.
  * Logging is console.error until the pino step (Phase 4 step 9).
  * @param {{ emailModule: string, to: string, subject?: string, data?: object, language?: string }} mail
@@ -35,7 +37,7 @@ const sendTemplateMail = async ({ emailModule, to, subject, data = {}, language 
   const file = path.join(PROJECT_ROOT, 'src', 'templates', 'email', emailModule, `${language}.ejs`);
   let message;
   try {
-    const html = await ejs.renderFile(file, { ...data }, RENDER_OPTIONS);
+    const html = await ejs.renderFile(file, { ...data, STOREFRONT_URL: HOST }, RENDER_OPTIONS);
     message = { from: NO_REPLY_EMAIL, to, subject, html };
     await email.send(message);
   } catch (error) {
@@ -43,7 +45,7 @@ const sendTemplateMail = async ({ emailModule, to, subject, data = {}, language 
     return;
   }
   try {
-    await Email.create({ ...message, emailModule });
+    await Email.create({ emailModule, to, subject });
   } catch (error) {
     console.error(`Email ${emailModule} sent, not logged (${describe(error)})`);
   }

@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const js2xmlparser = require('js2xmlparser');
 const moment = require('moment');
+const { HOST } = require('../appConfig');
 const { models } = require('../constants');
 
 const router = express.Router();
@@ -14,60 +15,60 @@ const Category = mongoose.model(models.CATEGORY);
 const { imageUrl } = require('../helpers/image-url.helper');
 
 const URLS = {
-  COLLECTION: 'https://pageaters.com/collections',
-  BOOK: 'https://pageaters.com/books',
-  BUNDLE: 'https://pageaters.com/bundles',
-  CATEGORY: 'https://pageaters.com/categories',
+  COLLECTION: `${HOST}/collections`,
+  BOOK: `${HOST}/books`,
+  BUNDLE: `${HOST}/bundles`,
+  CATEGORY: `${HOST}/categories`,
 };
 
 const CONSTANT_PAGES = [
   {
     pageTitle: 'Bundles',
-    url: 'https://pageaters.com/bundles',
+    url: `${HOST}/bundles`,
     description: '',
   }, {
     pageTitle: 'Collections',
-    url: 'https://pageaters.com/collections',
+    url: `${HOST}/collections`,
     description: '',
   }, {
     pageTitle: 'Categories',
-    url: 'https://pageaters.com/categories',
+    url: `${HOST}/categories`,
     description: '',
   }, {
     pageTitle: 'Login',
-    url: 'https://pageaters.com/auth/login',
+    url: `${HOST}/auth/login`,
     description: '',
   }, {
     pageTitle: 'Sign up',
-    url: 'https://pageaters.com/auth/register',
+    url: `${HOST}/auth/register`,
     description: '',
   }, {
     pageTitle: 'Mystery boxes',
-    url: 'https://pageaters.com/mystery-boxes',
+    url: `${HOST}/mystery-boxes`,
     description: 'buy Mystery box of Pageaters',
   }, {
     pageTitle: 'About',
-    url: 'https://pageaters.com/about',
+    url: `${HOST}/about`,
     description: 'Pageaters about',
   }, {
     pageTitle: 'Cancellation',
-    url: 'https://pageaters.com/cancellation',
+    url: `${HOST}/cancellation`,
     description: 'Cancellation & return policy of Pageaters',
   }, {
     pageTitle: 'Contact',
-    url: 'https://pageaters.com/contact',
+    url: `${HOST}/contact`,
     description: 'Contact Pageaters, customer support & query resolution about Pageaters',
   }, {
     pageTitle: 'Privacy Policy',
-    url: 'https://pageaters.com/privacy-policy',
+    url: `${HOST}/privacy-policy`,
     description: 'Pageaters Privacy Policy',
   }, {
     pageTitle: 'Terms and conditions',
-    url: 'https://pageaters.com/terms-and-conditions',
+    url: `${HOST}/terms-and-conditions`,
     description: 'Pageaters Terms of use',
   }, {
     pageTitle: 'Shipping policy',
-    url: 'https://pageaters.com/shipping',
+    url: `${HOST}/shipping`,
     description: 'Pageaters shipping policy',
   },
 
@@ -86,13 +87,13 @@ router.get('/', async function(req, res, next) {
     today = today.format('YYYY-MM-DD');
     //add site root url
     const rootUrl = {};
-    rootUrl.loc = 'https://pageaters.com/';
+    rootUrl.loc = `${HOST}/`;
     rootUrl.lastmod = today;
     rootUrl.changefreq = 'daily';
     rootUrl.priority = '1.0';
     rootUrl['image:image'] = {
       'image:loc': 'https://res.cloudinary.com/pageaters/image/upload/v1673173795/web-banner_ogzs01.png',
-      'image:caption': 'pageaters.com. Our original book collection contains only the highest quality books, allowing you to have an exceptional reading experience.',
+      'image:caption': 'Pageaters. Our original book collection contains only the highest quality books, allowing you to have an exceptional reading experience.',
     };
     collection.push(rootUrl);
 

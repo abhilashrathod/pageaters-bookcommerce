@@ -3,6 +3,7 @@ const { get } = require('lodash');
 
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
+const { literalPattern } = require('../helpers/search-pattern.helper');
 
 // Order reads: the shopper's own orders, and the admin list, lookup and search. Orders still in checkout
 // (`attempted`, `created`) are hidden from the lists.
@@ -12,22 +13,27 @@ const Order = mongoose.model(models.ORDER);
 const NOT_PLACED = [enums.ORDER_STAGES.ATTEMPTED, enums.ORDER_STAGES.CREATED];
 
 /**
- * The buyer-facing summary of a stored Razorpay payment: card name/last4/network, bank, UPI id, wallet, EMI
+ * The buyer-facing summary of a stored payment: card name/last4/network, bank, UPI id, wallet, EMI
  * (legacy: issuer/rate/duration under the card field names) or just the method for COD.
+ * Accepts both shapes an order may hold: a full Razorpay payment entity (orders stored before the security step)
+ * or an already-built summary (`name`, `last4`, `network`, `upi_id`…), which it returns unchanged — so mapping is
+ * idempotent and nothing else (payer email/phone, card id/type, bank reference…) ever passes through.
  * Legacy: an unknown method gives `undefined`; a `null` payment throws a TypeError (→ 500 in `getUserOrder`).
- * @param {object} payment The order's `payment` (Razorpay payment entity).
+ * @param {object} payment The order's `payment` (Razorpay payment entity or summary).
  * @returns {object|undefined}
  */
 const orderPaymentInfo = (payment) => {
   let payload;
+  // Entity path first, then the summary's own key.
+  const read = (entityPath, summaryKey) => get(payment, entityPath, get(payment, summaryKey, ''));
 
   switch (payment.method) {
     case enums.PAYMENT_METHODS.CARD:
       payload = {
         method: enums.PAYMENT_METHODS.CARD,
-        name: get(payment, 'card.name', ''),
-        last4: get(payment, 'card.last4', ''),
-        network: get(payment, 'card.network', ''),
+        name: read('card.name', 'name'),
+        last4: read('card.last4', 'last4'),
+        network: read('card.network', 'network'),
       };
       return payload;
 
@@ -42,7 +48,7 @@ const orderPaymentInfo = (payment) => {
     case enums.PAYMENT_METHODS.UPI:
       payload = {
         method: enums.PAYMENT_METHODS.UPI,
-        upi_id: get(payment, 'vpa', ''),
+        upi_id: read('vpa', 'upi_id'),
       };
       return payload;
 
@@ -56,9 +62,9 @@ const orderPaymentInfo = (payment) => {
     case enums.PAYMENT_METHODS.EMI:
       payload = {
         method: enums.PAYMENT_METHODS.EMI,
-        name: get(payment, 'emi.issuer', ''),
-        last4: get(payment, 'emi.rate', ''),
-        network: get(payment, 'emi.duration', ''),
+        name: read('emi.issuer', 'name'),
+        last4: read('emi.rate', 'last4'),
+        network: read('emi.duration', 'network'),
       };
       return payload;
 
@@ -70,6 +76,18 @@ const orderPaymentInfo = (payment) => {
     default:
       return payload;
   }
+};
+
+/**
+ * An order document as the admin reads send it: its JSON (virtuals included) with `payment` mapped through
+ * `orderPaymentInfo`. An order without a payment keeps `payment: null`; an unknown method drops the key.
+ * @param {object} order Order document.
+ * @returns {object}
+ */
+const adminOrderView = (order) => {
+  const data = order.toJSON();
+  data.payment = data.payment ? orderPaymentInfo(data.payment) : null;
+  return data;
 };
 
 /** Populate options for an order shown to its buyer (address and items with display fields). */
@@ -122,7 +140,7 @@ const getUserOrder = async (userId, uniqueId) => {
  * @returns {Promise<object[]>}
  */
 const listUserOrders = (userId) =>
-  Order.find({ userId, orderStatus: { $nin: NOT_PLACED } })
+  Order.find({ userId, orderStatus: mongoose.trusted({ $nin: NOT_PLACED }) })
     .select('orderId orderDate deliveryAddress orderStatus shipmentTrackingId products boxes bundles total')
     .sort({ createdAt: -1 })
     .populate(ORDER_POPULATE);
@@ -134,7 +152,7 @@ const listUserOrders = (userId) =>
  * @returns {Promise<object>} mongoose-paginate-v2 result.
  */
 const listOrders = ({ page, limit, status }) => {
-  const query = { $and: [{ orderStatus: { $nin: NOT_PLACED } }] };
+  const query = { $and: [{ orderStatus: mongoose.trusted({ $nin: NOT_PLACED }) }] };
   if (status) query.$and.push({ orderStatus: status });
 
   return Order.paginate(query, {
@@ -147,11 +165,10 @@ const listOrders = ({ page, limit, status }) => {
 };
 
 /**
- * Admin: any order by `_id`, every field.
- * Legacy (PLAN.md security step): `payment` is the raw Razorpay payment entity, payer contact and card/bank/VPA
- * included. A malformed id rejects with a CastError (→ 500).
+ * Admin: any order by `_id`, every field, with `payment` as the summary (`adminOrderView`): the stored Razorpay
+ * entity (payer email/phone, card/bank/VPA details) never leaves. A malformed id rejects with a CastError (→ 500).
  * @param {string} id
- * @returns {Promise<object>}
+ * @returns {Promise<object>} The order as JSON (virtuals included, as the document serialised before).
  * @throws {AppError} ORDER_NOT_EXIST
  */
 const getOrderById = async (id) => {
@@ -160,16 +177,25 @@ const getOrderById = async (id) => {
     { path: 'boxes.box', select: 'boxId title images currentDiscount price weight' },
   ]);
   if (!order) throw new AppError('ORDER_NOT_EXIST');
-  return order;
+  return adminOrderView(order);
 };
 
 /**
- * Admin: orders in any stage whose public id matches `q`, case-insensitively.
- * Legacy (PLAN.md security step): `q` goes into `$regex` raw — an invalid pattern rejects (→ 500).
- * @param {string} q
- * @returns {Promise<object[]>}
+ * Admin: orders in any stage whose public id contains `q` as literal text (helpers/search-pattern.helper.js:
+ * escaped, at most 100 characters), case-insensitively, each with `payment` as the summary.
+ * @param {unknown} q
+ * @returns {Promise<object[]>} [] for an empty `q`.
  */
-const searchOrders = (q) =>
-  Order.find({ orderId: { $regex: q, $options: 'i' } }).populate([{ path: 'deliveryAddress' }, BUYER, ...ADMIN_LIST_ITEMS, ADMIN_BOXES]);
+const searchOrders = async (q) => {
+  const pattern = literalPattern(q);
+  if (!pattern) return [];
+  const orders = await Order.find({ orderId: mongoose.trusted({ $regex: pattern, $options: 'i' }) }).populate([
+    { path: 'deliveryAddress' },
+    BUYER,
+    ...ADMIN_LIST_ITEMS,
+    ADMIN_BOXES,
+  ]);
+  return orders.map(adminOrderView);
+};
 
-module.exports = { ORDER_POPULATE, getOrderById, getUserOrder, listOrders, listUserOrders, searchOrders };
+module.exports = { ORDER_POPULATE, adminOrderView, getOrderById, getUserOrder, listOrders, listUserOrders, orderPaymentInfo, searchOrders };

@@ -1,17 +1,21 @@
 const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
+const { pick } = require('lodash');
+const { userSchema } = require('@pageaters/shared');
 
 const { asJson, assertBody, assertGuarded, createUser, envelopes, ids, loadCatalog, paged, startTestApp } = require('./helpers');
 const { addressFields, loadStore, storeIds } = require('./helpers/fixtures/store');
 
 // /api/v1/users (admin customer views) over HTTP, written against the legacy controller before the service
-// refactor. The known data leaks (full user documents with password hash and salt, raw `$regex` search) are
-// pinned here; the security step fixes them.
+// refactor. Since 7d every user is sent as the shared `userSchema` fields only (no password hash, salt, OTP,
+// tokens or `razorPayCustId`) and search takes `q` as literal text; test/security-exposure.test.js pins the leaks.
 
-const { ok, serverError } = envelopes;
+const { badRequest, ok } = envelopes;
 
 const User = () => mongoose.model('user');
+// A user as the admin views send it: the `userSchema` fields, in that order.
+const adminView = (doc) => pick(asJson(doc), Object.keys(userSchema.shape));
 
 let api;
 let admin;
@@ -47,13 +51,13 @@ describe('auth', () => {
 });
 
 describe('GET /users', () => {
-  test('legacy: pages USER accounts as full documents, password hash and salt included', async () => {
+  test('pages USER accounts, userSchema fields only', async () => {
     const other = await createUser();
-    const docs = asJson(await User().find({ role: 'USER' }));
+    const docs = (await User().find({ role: 'USER' })).map(adminView);
     const res = await api.request('/users?page=1&limit=10', { cookie: admin.cookie });
     assertBody(res, 200, ok('USER_LIST_SUCCESS', paged(docs, { totalDocs: 2, limit: 10, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null })));
     assert.deepEqual(res.body.data.docs.map((u) => u.email), [shopper.user.email, other.user.email]);
-    assert.ok(res.body.data.docs[0].password && res.body.data.docs[0].salt);
+    assert.equal(Object.hasOwn(res.body.data.docs[0], 'password'), false);
   });
 
   test('legacy: without page/limit answers no documents', async () => {
@@ -64,24 +68,32 @@ describe('GET /users', () => {
 });
 
 describe('GET /users/search', () => {
-  test('finds accounts of any role by email, case-insensitive, as full documents', async () => {
+  test('finds accounts of any role by email, case-insensitive, userSchema fields only', async () => {
     const res = await api.request(`/users/search?q=${encodeURIComponent(shopper.user.email.toUpperCase())}`, { cookie: admin.cookie });
-    assertBody(res, 200, ok('USER_LIST_SUCCESS', asJson(await User().find({ _id: shopper.user._id }))));
+    assertBody(res, 200, ok('USER_LIST_SUCCESS', [adminView(await User().findById(shopper.user._id))]));
   });
 
-  test('legacy: q is a raw regex (".*" matches everyone; an invalid one answers 500)', async () => {
-    const res = await api.request('/users/search?q=.*', { cookie: admin.cookie });
-    assert.deepEqual(res.body.data.map((u) => u.email), [admin.user.email, shopper.user.email]);
-    assertBody(await api.request('/users/search?q=(', { cookie: admin.cookie }), 500, serverError);
+  test('7d: q is literal text (".*" and "(" match nothing here)', async () => {
+    assertBody(await api.request('/users/search?q=.*', { cookie: admin.cookie }), 200, ok('USER_LIST_SUCCESS', []));
+    assertBody(await api.request('/users/search?q=(', { cookie: admin.cookie }), 200, ok('USER_LIST_SUCCESS', []));
   });
 });
 
 describe('PUT /users/:id', () => {
-  test('legacy: changes nothing and answers the first user in the collection, whatever the id', async () => {
-    const before = asJson(await User().findById(admin.user._id));
-    const res = await api.request(`/users/${shopper.user._id}`, { method: 'PUT', body: { fullName: 'Changed' }, cookie: admin.cookie });
-    assertBody(res, 200, ok('USER_UPDATE_SUCCESS', before));
-    assert.equal((await User().findById(shopper.user._id)).fullName, shopper.user.fullName);
+  test('7d: updates the addressed user\'s profile text only and answers it as userSchema fields', async () => {
+    const body = { fullName: 'Test Changed', gender: 'other', role: 'ADMIN', email: 'changed@example.com', storeCredit: 1000, password: 'x' };
+    const res = await api.request(`/users/${shopper.user._id}`, { method: 'PUT', body, cookie: admin.cookie });
+    const after = await User().findById(shopper.user._id);
+    assertBody(res, 200, ok('USER_UPDATE_SUCCESS', adminView(after)));
+    assert.deepEqual(
+      { fullName: after.fullName, gender: after.gender, role: after.role, email: after.email, storeCredit: after.storeCredit, password: after.password },
+      { fullName: 'Test Changed', gender: 'other', role: 'USER', email: shopper.user.email, storeCredit: shopper.user.storeCredit, password: shopper.user.password },
+    );
+    assert.equal((await User().findById(admin.user._id)).fullName, admin.user.fullName, 'no other account changes');
+  });
+
+  test('7d: an unknown id answers USER_NOT_FOUND', async () => {
+    assertBody(await api.request(`/users/${new mongoose.Types.ObjectId()}`, { method: 'PUT', body: { fullName: 'Test X' }, cookie: admin.cookie }), 400, badRequest('USER_NOT_FOUND'));
   });
 });
 
@@ -119,7 +131,7 @@ describe('GET /users/:id', () => {
       res,
       200,
       ok('USER_LIST_SUCCESS', {
-        user: asJson(await User().findById(shopper.user._id)),
+        user: adminView(await User().findById(shopper.user._id)),
         cart: asJson(cart),
         addresses: asJson(await mongoose.model('address').find({ userId: shopper.user._id })),
         orders: asJson(orders),

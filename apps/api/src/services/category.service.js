@@ -73,7 +73,7 @@ const searchCategories = async (categoryIndex, q) => {
   if (!categoryIndex) return [];
 
   const lunrIdArray = categoryIndex.search(`${q}*`).map(({ ref }) => getId(ref));
-  return Category.find({ _id: { $in: lunrIdArray }, isDeleted: false }).select('categoryId title numberOfBooks _id').limit(10);
+  return Category.find({ _id: mongoose.trusted({ $in: lunrIdArray }), isDeleted: false }).select('categoryId title numberOfBooks _id').limit(10);
 };
 
 /**
@@ -100,7 +100,7 @@ const getCategoryByCategoryId = (categoryId) => findLive({ categoryId });
  * @returns {Promise<{ trending: object[], newArrivals: object[], mostDiscounted: object[] }>}
  */
 const getOverview = async (id, { page, limit, sortOrder }) => {
-  const query = { isDeleted: false, type: enums.PRODUCT_TYPES.BOOK, categories: id, inventory: { $gt: 0 } };
+  const query = { isDeleted: false, type: enums.PRODUCT_TYPES.BOOK, categories: id, inventory: mongoose.trusted({ $gt: 0 }) };
   const options = {
     page,
     limit,

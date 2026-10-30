@@ -85,7 +85,8 @@ describe('passwords', () => {
     assert.equal((await register('padded@example.com', `${' '.repeat(127)}x`)).status, 200);
     assertBody(await register('long@example.com', `${' '.repeat(128)}x`), 400, invalid('INVALID_PASSWORD'));
     assertBody(await login('padded@example.com', 'p'.repeat(129)), 400, invalid('INVALID_PASSWORD'));
-    assertBody(await api.request('/auth/me', { method: 'DELETE', body: { password: 'p'.repeat(129) }, cookie: shopper.cookie }), 400, invalid('INVALID_PASSWORD'));
+    const change = { password: 'p'.repeat(129), newPassword: 'test-password-2', confirmPassword: 'test-password-2' };
+    assertBody(await api.request('/auth/password', { method: 'PUT', body: change, cookie: shopper.cookie }), 400, invalid('INVALID_PASSWORD'));
   });
 });
 

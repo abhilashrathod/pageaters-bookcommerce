@@ -1,3 +1,4 @@
+const path = require('path');
 const mongoose = require('mongoose');
 const { kebabCase } = require('lodash');
 
@@ -30,6 +31,13 @@ const folderOf = (fileModule) => (Object.hasOwn(FOLDERS, fileModule) ? FOLDERS[f
 // The stored content type follows the checked extension, never the client's multipart header.
 const CONTENT_TYPES = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png' };
 
+// The leading bytes ("magic numbers") each allowed extension's content must start with.
+const JPEG = Buffer.from([0xff, 0xd8, 0xff]);
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const SIGNATURES = { jpg: JPEG, jpeg: JPEG, png: PNG };
+
+const contentMatches = (buffer, ext) => Buffer.isBuffer(buffer) && buffer.subarray(0, SIGNATURES[ext].length).equals(SIGNATURES[ext]);
+
 /**
  * Stores an image publicly as `uploads/<module folder>/<kebab title>-<random>-<timestamp>.<ext>` (DEFAULT uses the
  * books folder), then records it in the `file` collection. The module must be one the File model accepts
@@ -37,7 +45,9 @@ const CONTENT_TYPES = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png' 
  * @param {{ fileModule?: string, title?: string, file?: { originalname: string, buffer: Buffer, mimetype: string } }} input
  *   `file` is the multer file.
  * @returns {Promise<string>} The file's public URL.
- * @throws {AppError} NO_FILE_PRESENT (400); UNSUPPORTED_FILE_TYPE (400) unless the extension is jpg, jpeg or png;
+ * The stored content type and the record's `mimeType` follow the checked extension, never the client's header.
+ * @throws {AppError} NO_FILE_PRESENT (400); UNSUPPORTED_FILE_TYPE (400) unless the extension (any case) is jpg, jpeg or png
+ *   and the content starts with that format's signature bytes;
  *   INVALID_FILE (400) for a missing or unknown `fileModule` (an array from a repeated field too). A storage failure
  *   rejects with the adapter's clean error (→ 500) and records nothing; a failed record write rejects (→ 500) after
  *   the file was stored.
@@ -45,8 +55,10 @@ const CONTENT_TYPES = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png' 
 const uploadFile = async ({ fileModule, title, file }) => {
   if (!file) throw new AppError('NO_FILE_PRESENT');
 
-  const ext = file.originalname.split('.').pop();
+  // The real extension, lower-cased: a bare name such as `png` has none and is refused.
+  const ext = path.extname(String(file.originalname)).slice(1).toLowerCase();
   if (!Object.values(enums.VALID_FILE_TYPES).includes(ext)) throw new AppError('UNSUPPORTED_FILE_TYPE');
+  if (!contentMatches(file.buffer, ext)) throw new AppError('UNSUPPORTED_FILE_TYPE');
 
   // Before the upload: the File model accepts only these modules, so an unknown one would leave an orphaned file.
   if (!adminFileModuleSchema.safeParse(fileModule).success) throw new AppError('INVALID_FILE');
@@ -58,7 +70,7 @@ const uploadFile = async ({ fileModule, title, file }) => {
     contentType: CONTENT_TYPES[ext],
   });
 
-  await File.create({ fileName, fileModule, fileUrl: url, mimeType: file.mimetype });
+  await File.create({ fileName, fileModule, fileUrl: url, mimeType: CONTENT_TYPES[ext] });
 
   return url;
 };

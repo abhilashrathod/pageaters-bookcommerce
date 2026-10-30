@@ -14,7 +14,6 @@ router.get('/', async (req, res) => {
 // Every route below reads or writes MongoDB; the health route above answers without it.
 router.use(requireDb);
 
-router.use('/public', require('./public.routes'));
 router.use('/auth', require('./auth.routes'));
 router.use('/file', require('./file.routes'));
 router.use('/add-ons', require('./add-on.routes'));

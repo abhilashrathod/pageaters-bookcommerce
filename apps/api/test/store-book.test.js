@@ -1,14 +1,12 @@
 const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
 const mongoose = require('mongoose');
 
 const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, eventually, ids, loadCatalog, paged, startTestApp } = require('./helpers');
 const { loadStore, storeIds } = require('./helpers/fixtures/store');
 
-// /api/v1/store-books over HTTP: public list, detail and search, the unauthenticated CSV export, and admin CRUD
-// with its side effects on categories, authors, bundles and collections. Written against the legacy controller
+// /api/v1/store-books over HTTP: public list, detail and search, and admin CRUD with
+// its side effects on categories, authors, bundles and collections. Written against the legacy controller
 // before the service refactor. `wholeSalePriceHistory` uses obviously fake values only (AGENTS.md §7).
 
 const { ok, okString, badRequest, serverError } = envelopes;
@@ -41,8 +39,6 @@ const PUBLIC_POPULATE = [
   ...RELATED,
 ];
 const ADMIN_POPULATE = [{ path: 'author', select: '_id authorId name avatar' }, { path: 'relatedBooks', select: RELATED_BOOK_FIELDS }, ...RELATED];
-
-const EXPORT_FILE = path.join(__dirname, '..', 'public', 'product_template.csv');
 
 let api;
 let admin;
@@ -113,11 +109,11 @@ describe('GET /store-books', () => {
 });
 
 describe('detail', () => {
-  test('legacy: public detail by bookId sends the whole document, wholeSalePriceHistory included', async () => {
+  test('public detail by bookId sends the whole document except wholeSalePriceHistory (7d)', async () => {
     const book = asJson(await Book().findById(ids.bookOne).populate(PUBLIC_POPULATE));
     const res = await api.request('/store-books/unique/test-book-one');
     assertBody(res, 200, ok('BOOK_LIST_SUCCESS', book));
-    assert.deepEqual(res.body.data.wholeSalePriceHistory, [1]);
+    assert.equal(Object.hasOwn(res.body.data, 'wholeSalePriceHistory'), false);
     assert.equal(res.body.data.relatedBooks[0].author.name, 'Test Author B');
     assertBody(await api.request('/store-books/unique/test-book-deleted'), 400, badRequest('BOOK_NOT_EXIST'));
   });
@@ -157,7 +153,8 @@ describe('POST /store-books', () => {
     const book = await Book().findOne({ title: 'Test Book New' });
     assertBody(res, 200, ok('BOOK_CREATE_SUCCESS', asCreated(book)));
     assert.match(book.bookId, /^BK-\d{10}$/);
-    assert.deepEqual(book.wholeSalePriceHistory, [1]);
+    // 7d: a wholeSalePriceHistory in the request is not stored.
+    assert.equal((await Book().findById(book._id).select('+wholeSalePriceHistory').lean()).wholeSalePriceHistory, undefined);
     assert.equal((await Category().findById(ids.categoryFiction)).numberOfBooks, 3);
     assert.deepEqual((await Author().findById(ids.authorB)).books.map(String), [String(book._id)]);
     assert.deepEqual((await Book().findById(ids.bookOne)).relatedBooks.map(String), [String(ids.bookTwo), String(book._id)]);
@@ -204,46 +201,5 @@ describe('DELETE /store-books/:id', () => {
     assert.deepEqual((await mongoose.model('bundle').findById(storeIds.bundleOne)).bundledBooks.map(String), [String(ids.bookOne)]);
     assert.deepEqual((await mongoose.model('collection').findById(storeIds.collectionTwo)).books, []);
     assertBody(await api.request(`/store-books/${ids.bookTwo}`, { method: 'DELETE', cookie: admin.cookie }), 400, badRequest('BOOK_NOT_EXIST'));
-  });
-});
-
-describe('GET /store-books/bulk/export', () => {
-  // `send` refuses to serve a path with a dot segment, so where the API lives under one (e.g. a .claude/worktrees
-  // checkout) the download fails with the controller's plain-text 500. The CSV is checked from the file on disk.
-  const servedFromDotPath = EXPORT_FILE.split(path.sep).some((part) => part.startsWith('.'));
-
-  test('legacy: unauthenticated; writes the catalog CSV to local disk, sends it and deletes it', async (t) => {
-    await Book().updateOne({ _id: ids.bookOne }, { tagline: 'A Test', publisher: 'Test Press', description: 'Line one\nLine two' });
-    const written = [];
-    const { unlinkSync } = fs;
-    t.mock.method(fs, 'unlinkSync', (file) => {
-      written.push(fs.readFileSync(file, 'utf8'));
-      return unlinkSync(file);
-    });
-
-    const res = await fetch(`${api.baseUrl}/store-books/bulk/export`, { signal: AbortSignal.timeout(10_000) });
-    const text = await res.text();
-    // The file is captured when the download callback deletes it, which may come after the response ends.
-    assert.ok(await eventually(() => written.length === 1 && !fs.existsSync(EXPORT_FILE)));
-    if (servedFromDotPath) {
-      assert.equal(res.status, 500);
-      assert.equal(text, 'Error sending file');
-    } else {
-      assert.equal(res.status, 200);
-      // Express leaves a plain filename unquoted.
-      assert.equal(res.headers.get('content-disposition'), 'attachment; filename=product_template.csv');
-      assert.equal(text, written[0]);
-    }
-
-    const [header, ...rows] = written[0].trim().split('\n');
-    assert.equal(
-      header,
-      'Slug,Title,Body (HTML),Brand,Release Year,Categories,Tags,Inventory,Sell Price,Discount,Weight,dimensions,SKU,MRP,Language,ISBN,Version,Pages,Availability,Poster',
-    );
-    // 6b: the poster URL passes through (was: prefixed with the legacy S3 bucket URL).
-    assert.deepEqual(rows.sort(), [
-      'test-book-one-a-test,Test Book One (A Test),Line one<br>Line two,Test Press,,Test Fiction,Test Author A,25,449,10,0,,test-book-one,499,English,9990000000001,,200,available,https://images.example.com/test-cover.png',
-      'test-book-two,Test Book Two ,,,,Test Fiction,Test Author B,25,449,10,0,,test-book-two,499,English,9990000000002,,200,available,https://images.example.com/test-cover.png',
-    ]);
   });
 });

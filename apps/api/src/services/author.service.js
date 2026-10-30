@@ -38,7 +38,7 @@ const createAuthor = async ({ name, intro, avatar, books }) => {
   const author = await Author.create({ authorId: `AU-${generateRandomNumber(10)}`, name, intro, avatar, books });
 
   if (books.length > 0) {
-    await Books.updateMany({ _id: { $in: books } }, { $set: { author: author._id } }, { multi: true });
+    await Books.updateMany({ _id: mongoose.trusted({ $in: books }) }, { $set: { author: author._id } }, { multi: true });
   }
 
   return author;
@@ -59,7 +59,7 @@ const updateAuthor = async (id, { name, intro, avatar, books }) => {
   const authorRes = await Author.findOneAndUpdate({ _id: id }, { $set: { name, intro, avatar, books } }, { new: true });
 
   if (books.length > 0) {
-    await Books.updateMany({ _id: { $in: books } }, { $set: { author: author._id } }, { multi: true });
+    await Books.updateMany({ _id: mongoose.trusted({ $in: books }) }, { $set: { author: author._id } }, { multi: true });
   }
 
   return authorRes;
@@ -75,7 +75,7 @@ const searchAuthors = async (authorIndex, q) => {
   if (!authorIndex) return [];
 
   const lunrIdArray = authorIndex.search(`${q}*`).map(({ ref }) => getId(ref));
-  return Author.find({ _id: { $in: lunrIdArray }, isDeleted: false });
+  return Author.find({ _id: mongoose.trusted({ $in: lunrIdArray }), isDeleted: false });
 };
 
 /**
@@ -119,7 +119,7 @@ const deleteAuthor = async (id) => {
   author.deletedAt = new Date();
 
   if (author.books.length > 0) {
-    await Books.updateMany({ _id: { $in: author.books } }, { $set: { author: null } }, { multi: true });
+    await Books.updateMany({ _id: mongoose.trusted({ $in: author.books }) }, { $set: { author: null } }, { multi: true });
   }
 
   author.books = [];

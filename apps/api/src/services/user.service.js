@@ -1,10 +1,15 @@
 const mongoose = require('mongoose');
+const { pick } = require('lodash');
+const { userSchema } = require('@pageaters/shared');
 
 const { models, enums } = require('../constants');
+const { AppError } = require('../helpers/appError.helper');
+const { literalPattern } = require('../helpers/search-pattern.helper');
 
 // Admin views of customer accounts (/users). Not the shopper's own profile (auth services).
-// Legacy (fixed in the security step): every function here answers full user documents — password hash, salt,
-// OTP, tokens and `razorPayCustId` included — instead of mapping through the shared user schema.
+// Every user leaves this service as the shared `userSchema` fields only: the queries select just those fields and
+// `toAdminUser` picks them again, so the password hash, salt, OTP, tokens, rate-limit stamps and `razorPayCustId`
+// never leave the database.
 
 const Users = mongoose.model(models.USER);
 const Address = mongoose.model(models.ADDRESS);
@@ -21,6 +26,21 @@ const CART_POPULATE = [
   { path: 'mysteryBoxes.box', select: 'boxId title images currentDiscount price' },
 ];
 
+// The fields of the shared user contract (packages/shared/src/commerce/user.ts), in its order.
+const USER_FIELDS = Object.keys(userSchema.shape);
+const USER_SELECT = USER_FIELDS.join(' ');
+
+// Fields an admin may change on a customer: profile text only. Email and phone need the owner's verification,
+// role/status are privileges and store credit has its own audited endpoint.
+const ADMIN_EDITABLE_FIELDS = ['fullName', 'dateOfBirth', 'gender'];
+
+/**
+ * A user document (or plain object) as the admin views send it: the `userSchema` fields only.
+ * @param {object | null} user
+ * @returns {object | null}
+ */
+const toAdminUser = (user) => (user ? pick(typeof user.toObject === 'function' ? user.toObject() : user, USER_FIELDS) : null);
+
 const ORDER_POPULATE = [
   { path: 'deliveryAddress' },
   {
@@ -33,27 +53,43 @@ const ORDER_POPULATE = [
 ];
 
 /**
- * One page of shopper (USER role) accounts. Legacy: full documents; without `limit` the page has no documents.
+ * One page of shopper (USER role) accounts, `userSchema` fields only.
+ * Legacy: without `limit` the page has no documents.
  * @param {{ page?, limit? }} paging
  * @returns {Promise<object>} The mongoose-paginate-v2 result.
  */
-const listUsers = ({ page, limit }) => Users.paginate({ role: enums.USER_ROLES.USER }, { page, limit });
+const listUsers = async ({ page, limit }) => {
+  const result = await Users.paginate({ role: enums.USER_ROLES.USER }, { page, limit, select: USER_SELECT });
+  return { ...result, docs: result.docs.map(toAdminUser) };
+};
 
 /**
- * "Updates" a user. Legacy (fixed in the legacy-bugs step): runs `findOneAndUpdate({})` with no filter and no
- * update, so nothing changes and it answers the first user in the collection, whatever was asked.
- * @returns {Promise<object | null>} The first user document (full).
+ * Updates the addressed user's profile text (`fullName`, `dateOfBirth`, `gender`); any other field in `fields` is
+ * ignored. Was `findOneAndUpdate({})`: no filter and no update, answering the first user in the collection with
+ * its full document. No client calls this route (the api-client leaves `PUT /users/:id` out).
+ * @param {string} id User id.
+ * @param {object} fields Request fields; only the editable ones that are strings are applied.
+ * @returns {Promise<object>} The updated user, `userSchema` fields only.
+ * @throws {AppError} USER_NOT_FOUND (400) for an unknown id.
  */
-const updateUser = () => Users.findOneAndUpdate({});
+const updateUser = async (id, fields = {}) => {
+  const update = {};
+  for (const field of ADMIN_EDITABLE_FIELDS) {
+    if (typeof fields[field] === 'string') update[field] = fields[field];
+  }
+  const user = await Users.findOneAndUpdate({ _id: id }, { $set: update }, { new: true }).select(USER_SELECT);
+  if (!user) throw new AppError('USER_NOT_FOUND');
+  return toAdminUser(user);
+};
 
 /**
- * An account with its cart, addresses (deleted ones included) and orders, newest first. Unknown ids answer
- * `user: null, cart: null` and empty lists.
+ * An account (`userSchema` fields only) with its cart, addresses (deleted ones included) and orders, newest
+ * first. Unknown ids answer `user: null, cart: null` and empty lists.
  * @param {string} id User id.
  * @returns {Promise<{ user: object | null, cart: object | null, addresses: object[], orders: object[] }>}
  */
 const getUserDetails = async (id) => {
-  const user = await Users.findOne({ _id: id });
+  const user = toAdminUser(await Users.findOne({ _id: id }).select(USER_SELECT));
   const cart = await Cart.findOne({ user: id }).populate(CART_POPULATE);
   const addresses = await Address.find({ userId: id });
   const orders = await Order.find({ userId: id })
@@ -65,12 +101,16 @@ const getUserDetails = async (id) => {
 };
 
 /**
- * Accounts of any role whose email matches `q`, case-insensitive.
- * Legacy (fixed in the security step): `q` goes into `$regex` unescaped (regex injection / ReDoS; an invalid
- * pattern is a 500).
- * @param {string} q
- * @returns {Promise<object[]>} Full user documents.
+ * Accounts of any role whose email contains `q` as literal text (helpers/search-pattern.helper.js: escaped, at
+ * most 100 characters), case-insensitive; `userSchema` fields only.
+ * @param {unknown} q
+ * @returns {Promise<object[]>} [] for an empty `q`.
  */
-const searchUsers = (q) => Users.find({ email: { $regex: q, $options: 'i' } });
+const searchUsers = async (q) => {
+  const pattern = literalPattern(q);
+  if (!pattern) return [];
+  const users = await Users.find({ email: mongoose.trusted({ $regex: pattern, $options: 'i' }) }).select(USER_SELECT);
+  return users.map(toAdminUser);
+};
 
-module.exports = { getUserDetails, listUsers, searchUsers, updateUser };
+module.exports = { getUserDetails, listUsers, searchUsers, toAdminUser, updateUser };

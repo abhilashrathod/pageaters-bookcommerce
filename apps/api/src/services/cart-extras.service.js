@@ -4,7 +4,7 @@ const { models } = require('../constants');
 const { BOOK_AVAILABILITY } = require('../constants/enums');
 const { AppError } = require('../helpers/appError.helper');
 const { getId } = require('../helpers/utils.helper');
-const { findUserCart } = require('./cart-read.service');
+const { findUserCart, ownCart } = require('./cart-read.service');
 
 // Bundles, mystery boxes and add-ons in the shopper's cart. One of each bundle and box; up to 5 of an add-on, never
 // more than its stock. Bundles and boxes only go with available books.
@@ -39,7 +39,8 @@ const cartTakesBundlesAndBoxes = (products) =>
  *   QUANTITY_OUT_OF_STOCK (any bundled book out of stock), BUNDLE_BOOKS_ALREADY_PRESENT (400).
  */
 const addBundle = async ({ cartId, userId, bundle, quantity = 1 }) => {
-  const currentCart = (await findUserCart(cartId, userId, ADD_POPULATE)).toObject();
+  const userCart = await findUserCart(cartId, userId, ADD_POPULATE);
+  const currentCart = userCart.toObject();
 
   const bundleRes = await Bundle.findOne({ _id: bundle, isDeleted: false }).select('bundledBooks currentDiscount price membersPrice');
   if (!bundleRes) throw new AppError('BUNDLE_NOT_EXIST');
@@ -61,7 +62,7 @@ const addBundle = async ({ cartId, userId, bundle, quantity = 1 }) => {
     }
   }
 
-  await Cart.findOneAndUpdate({ _id: cartId }, { $addToSet: { bundles: { bundle, quantity, addedOn: new Date() } } }, { new: true });
+  await Cart.findOneAndUpdate(ownCart(userCart), { $addToSet: { bundles: { bundle, quantity, addedOn: new Date() } } }, { new: true });
 };
 
 /**
@@ -71,11 +72,11 @@ const addBundle = async ({ cartId, userId, bundle, quantity = 1 }) => {
  * @throws {AppError} CART_NOT_EXIST, BUNDLE_NOT_EXIST (400).
  */
 const removeBundle = async ({ cartId, userId, bundleId }) => {
-  await findUserCart(cartId, userId);
+  const userCart = await findUserCart(cartId, userId);
 
   if (!(await Bundle.findOne({ _id: bundleId, isDeleted: false }))) throw new AppError('BUNDLE_NOT_EXIST');
 
-  await Cart.findOneAndUpdate({ _id: cartId }, { $pull: { bundles: { bundle: bundleId } } }, { new: true });
+  await Cart.findOneAndUpdate(ownCart(userCart), { $pull: { bundles: { bundle: bundleId } } }, { new: true });
 };
 
 /**
@@ -89,7 +90,8 @@ const removeBundle = async ({ cartId, userId, bundleId }) => {
 const addBox = async ({ cartId, userId, box, preferences, quantity = 1 }) => {
   if (quantity > 1) throw new AppError('QUANTITY_LIMIT_BOX');
 
-  const currentCart = (await findUserCart(cartId, userId, ADD_POPULATE)).toObject();
+  const userCart = await findUserCart(cartId, userId, ADD_POPULATE);
+  const currentCart = userCart.toObject();
 
   if (!(await MysteryBox.findOne({ _id: box, isDeleted: false }).select('boxId'))) throw new AppError('MYSTERY_BOX_NOT_EXIST');
 
@@ -98,7 +100,7 @@ const addBox = async ({ cartId, userId, box, preferences, quantity = 1 }) => {
   if (!cartTakesBundlesAndBoxes(currentCart.products)) throw new AppError('BOX_ITEM_MISMATCH');
 
   await Cart.findOneAndUpdate(
-    { _id: cartId },
+    ownCart(userCart),
     { $addToSet: { mysteryBoxes: { box, quantity, preferences, addedOn: new Date() } } },
     { new: true },
   );
@@ -111,11 +113,11 @@ const addBox = async ({ cartId, userId, box, preferences, quantity = 1 }) => {
  * @throws {AppError} CART_NOT_EXIST, MYSTERY_BOX_NOT_EXIST (400).
  */
 const removeBox = async ({ cartId, userId, boxId }) => {
-  await findUserCart(cartId, userId);
+  const userCart = await findUserCart(cartId, userId);
 
   if (!(await MysteryBox.findOne({ _id: boxId, isDeleted: false }).select('boxId'))) throw new AppError('MYSTERY_BOX_NOT_EXIST');
 
-  await Cart.findOneAndUpdate({ _id: cartId }, { $pull: { mysteryBoxes: { box: boxId } } }, { new: true });
+  await Cart.findOneAndUpdate(ownCart(userCart), { $pull: { mysteryBoxes: { box: boxId } } }, { new: true });
 };
 
 const findAddOn = async (id) => {
@@ -136,7 +138,8 @@ const findAddOn = async (id) => {
  *   INVALID_QUANTITY (400).
  */
 const addAddOn = async ({ cartId, userId, addOn, quantity }) => {
-  const currentCart = (await findUserCart(cartId, userId, ADD_ON_POPULATE)).toObject();
+  const userCart = await findUserCart(cartId, userId, ADD_ON_POPULATE);
+  const currentCart = userCart.toObject();
   const addOnRes = await findAddOn(getId(addOn));
 
   const alreadyThere = currentCart.addOns.find((x) => x.addOn._id.toString() === addOn.toString());
@@ -146,7 +149,7 @@ const addAddOn = async ({ cartId, userId, addOn, quantity }) => {
     if (total > MAX_ADD_ON_QUANTITY) throw new AppError('ADD_ON_ADD_QUANTITY_LIMIT');
     if (total > addOnRes.inventory) throw new AppError('INVALID_QUANTITY');
     const data = await Cart.findOneAndUpdate(
-      { _id: cartId, 'addOns.addOn': getId(addOn) },
+      { ...ownCart(userCart), 'addOns.addOn': getId(addOn) },
       { $set: { 'addOns.$.quantity': total } },
       { new: true },
     );
@@ -155,7 +158,7 @@ const addAddOn = async ({ cartId, userId, addOn, quantity }) => {
 
   if (quantity > MAX_ADD_ON_QUANTITY) throw new AppError('QUANTITY_LIMIT');
   if (quantity > addOnRes.inventory) throw new AppError('INVALID_QUANTITY');
-  await Cart.findOneAndUpdate({ _id: cartId }, { $addToSet: { addOns: { addOn, quantity, addedOn: new Date() } } }, { new: true });
+  await Cart.findOneAndUpdate(ownCart(userCart), { $addToSet: { addOns: { addOn, quantity, addedOn: new Date() } } }, { new: true });
   return { merged: false, data: true };
 };
 
@@ -166,13 +169,13 @@ const addAddOn = async ({ cartId, userId, addOn, quantity }) => {
  * @throws {AppError} CART_NOT_EXIST, ADD_ON_NOT_EXIST, QUANTITY_LIMIT, INVALID_QUANTITY (400).
  */
 const setAddOnQuantity = async ({ cartId, userId, id, quantity }) => {
-  await findUserCart(cartId, userId);
+  const userCart = await findUserCart(cartId, userId);
   const addOnRes = await findAddOn(id);
 
   if (quantity > MAX_ADD_ON_QUANTITY) throw new AppError('QUANTITY_LIMIT');
   if (quantity > addOnRes.inventory) throw new AppError('INVALID_QUANTITY');
 
-  await Cart.findOneAndUpdate({ _id: cartId, 'addOns.addOn': getId(id) }, { $set: { 'addOns.$.quantity': quantity } }, { new: true });
+  await Cart.findOneAndUpdate({ ...ownCart(userCart), 'addOns.addOn': getId(id) }, { $set: { 'addOns.$.quantity': quantity } }, { new: true });
 };
 
 /**
@@ -182,10 +185,10 @@ const setAddOnQuantity = async ({ cartId, userId, id, quantity }) => {
  * @throws {AppError} CART_NOT_EXIST, ADD_ON_NOT_EXIST (400).
  */
 const removeAddOn = async ({ cartId, userId, addOnId }) => {
-  await findUserCart(cartId, userId);
+  const userCart = await findUserCart(cartId, userId);
   await findAddOn(addOnId);
 
-  await Cart.findOneAndUpdate({ _id: cartId }, { $pull: { addOns: { addOn: addOnId } } }, { new: true });
+  await Cart.findOneAndUpdate(ownCart(userCart), { $pull: { addOns: { addOn: addOnId } } }, { new: true });
 };
 
 module.exports = { addAddOn, addBox, addBundle, removeAddOn, removeBox, removeBundle, setAddOnQuantity };

@@ -48,8 +48,10 @@ describe('sendTemplateMail', () => {
       { from: 'no-reply@demo.pageaters.com', to: 'reader@example.com', subject: 'Test subject' },
     );
     assert.ok(mail.html.includes('OD-TEST-1') && mail.html.includes('Test Reader'));
+    // 7d: the log keeps module, recipient, subject and time only (never the rendered html).
     const [log] = await EmailLog().find().lean();
-    assert.deepEqual({ ...mail, emailModule: 'CANCEL_ORDER' }, { from: log.from, to: log.to, subject: log.subject, html: log.html, emailModule: log.emailModule });
+    assert.deepEqual(Object.keys(log).sort(), ['_id', 'createdAt', 'emailModule', 'subject', 'to', 'updatedAt']);
+    assert.deepEqual({ emailModule: log.emailModule, to: log.to, subject: log.subject }, { emailModule: 'CANCEL_ORDER', to: mail.to, subject: mail.subject });
   });
 
   test('template data never acts as ejs options (settings, client, escapeFunction, delimiter)', async () => {
@@ -85,31 +87,5 @@ describe('sendTemplateMail', () => {
       errors.mock.calls.map((call) => call.arguments.join(' ')),
       ['Email CANCEL_ORDER sent, not logged (MongoServerError 11000)'],
     );
-  });
-});
-
-describe('POST /public/contactUs', () => {
-  test('passes on only the template keys: option keys in the body have no effect', async () => {
-    const body = {
-      ORDER_ID: 'TEST-ORDER-2',
-      PRODUCTS: [],
-      BUNDLES: [],
-      BOXES: [],
-      ADDRESS: {},
-      FULL_NAME: 'Test Receiver',
-      ORDER_DATE: '2026-01-01',
-      GIFT_CHARGES: 0,
-      STORE_CREDIT: 0,
-      SHIPPING: 0,
-      SUBTOTAL: 0,
-      TOTAL: 0,
-      ...OPTION_KEYS,
-    };
-    const res = await api.request('/public/contactUs', { method: 'POST', body });
-    assert.equal(globalThis[MARKER], undefined, 'no code from the request ran');
-    assert.equal(res.status, 200);
-    const mails = sentEmails();
-    assert.equal(mails.length, 1);
-    assert.ok(mails[0].html.includes('TEST-ORDER-2'));
   });
 });

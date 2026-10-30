@@ -82,12 +82,13 @@ test('GET / renders the index page', async () => {
   assert.match(res.headers.get('content-type'), /text\/html/);
 });
 
-test('OPTIONS preflight is answered by the catch-all route', async () => {
+// 7a: the one cors() setup answers preflights (204; was 200 from a catch-all OPTIONS route).
+test('OPTIONS preflight from an allowed origin is answered by cors()', async () => {
   const res = await fetch(`${BASE}/api/v1/categories`, {
     method: 'OPTIONS',
     headers: { Origin: 'http://localhost:3000' },
   });
-  assert.equal(res.status, 200);
+  assert.equal(res.status, 204);
   assert.equal(res.headers.get('access-control-allow-origin'), 'http://localhost:3000');
 });
 

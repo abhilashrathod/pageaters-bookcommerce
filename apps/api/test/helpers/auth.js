@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 // Fake accounts created the way the app creates them: the user model's own password hashing, the cart and
-// favourites that signup creates, and a session token from the app's own JWT helper, stored like login stores it.
+// favourites that signup creates, and a session token from the app's own JWT helper, stored (as its hash) like login stores it.
 
 const PASSWORD = 'test-password-1';
 
@@ -15,7 +15,7 @@ let counter = 0;
  *   `Cookie` header value.
  */
 const createUser = async ({ role = 'USER', favorites = true } = {}) => {
-  const { generateJwtToken } = require('../../src/helpers/encryption.helper');
+  const { generateJwtToken, hashSessionToken } = require('../../src/helpers/encryption.helper');
   const { TOKEN_ID } = require('../../src/constants/enums');
   const User = mongoose.model('user');
 
@@ -34,7 +34,7 @@ const createUser = async ({ role = 'USER', favorites = true } = {}) => {
   if (favorites) await mongoose.model('favorites').create({ userId: user._id });
 
   const { token, payload } = generateJwtToken(user, '127.0.0.1');
-  await mongoose.model('access_token').create({ ...payload, token });
+  await mongoose.model('access_token').create({ ...payload, token: hashSessionToken(token) });
 
   return { user, token, cookie: `${TOKEN_ID.ACCESS_TOKEN_COOKIE}=${token}`, password: PASSWORD };
 };

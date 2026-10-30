@@ -117,7 +117,7 @@ const searchBundles = async (bundlesIndex, q) => {
   if (!bundlesIndex) return [];
 
   const lunrIdArray = bundlesIndex.search(`${q}*`).map(({ ref }) => getId(ref));
-  return Bundles.find({ _id: { $in: lunrIdArray }, isDeleted: false });
+  return Bundles.find({ _id: mongoose.trusted({ $in: lunrIdArray }), isDeleted: false });
 };
 
 /**

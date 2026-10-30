@@ -17,7 +17,6 @@
 	"EMAIL_UNAVAILABLE": "Email Unavailable",
 	"UNAUTHORIZED": "You're Unauthorized to use this content. Please login to continue.",
 	"INVALID_USER": "User isn't valid or not active anymore",
-	"SCHEDULED_FOR_DELETION": "User is scheduled to be deleted. Access not granted.",
 	"SOME_ERROR_OCCURRED": "Something went wrong",
 	"INVALID_LOGIN_ATTEMPT": "Authentication Failed. Email or Password is invalid",
 	"INVALID_CODE": "Invalid or non-present code",
@@ -227,5 +226,7 @@
 	"REVIEW_SUCCESS": "Review information fetched",
 	"REVIEW_PURCHASE_ERROR": "Only purchased items can be reviewed",
 	"INVALID_AMOUNT": "Invalid amount",
-	"INVALID_REQUEST": "Invalid request"
+	"INVALID_REQUEST": "Invalid request",
+	"TOO_MANY_REQUESTS": "Too many requests. Please try again later.",
+	"FILE_TOO_LARGE": "File is too large. The maximum size is 4 MB."
 }

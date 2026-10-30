@@ -20,7 +20,8 @@ const User = () => mongoose.model('user');
 const EmailLog = () => mongoose.model('log_email');
 
 const POSTER = 'https://images.example.com/test-cover.png';
-const GIFT = { isGift: true, details: { package: 'Test wrap', from: 'Test Sender', message: 'Enjoy', cost: 30 } };
+// Phase 4 7c: a known package, charged at the server's price (Basic: 49).
+const GIFT = { isGift: true, details: { package: 'Basic', from: 'Test Sender', message: 'Enjoy', cost: 49 } };
 const CART = {
   products: [{ product: ids.bookOne, quantity: 2 }],
   bundles: [{ bundle: orderIds.bundleOne, quantity: 1 }],
@@ -102,17 +103,18 @@ describe('order confirmation (COD checkout)', () => {
     assert.equal(mail.html.includes('Test Bundle One'), false);
     assert.ok(mail.html.includes(shopper.user.fullName));
     assert.ok(mail.html.includes(address.addressLine1));
-    // 2 × 449 + 639 + 949 = 2486 (free shipping), + 30 gift − 40 credit.
+    // 2 × 449 + 639 + 949 = 2486 (free shipping), + 49 gift − 40 credit.
     assert.match(mail.html, />INR 2486</);
-    assert.match(mail.html, /Gift Charges[\s\S]*>INR 30</);
+    assert.match(mail.html, /Gift Charges[\s\S]*>INR 49</);
     assert.match(mail.html, /Store Credit[\s\S]*>INR 40</);
-    assert.match(mail.html, />INR 2476</);
+    assert.match(mail.html, />INR 2495</);
 
     const logs = await EmailLog().find().lean();
     assert.equal(logs.length, 1);
+    // 7d: logged without the rendered html (buyer name, address, totals).
     assert.deepEqual(
       { from: logs[0].from, to: logs[0].to, subject: logs[0].subject, html: logs[0].html, emailModule: logs[0].emailModule },
-      { ...mail, emailModule: 'ORDER_CONFIRMATION' },
+      { from: undefined, to: mail.to, subject: mail.subject, html: undefined, emailModule: 'ORDER_CONFIRMATION' },
     );
   });
 
@@ -170,7 +172,7 @@ describe('order confirmation (payment webhook)', () => {
   const confirm = async () => {
     const payload = {
       event: 'payment.captured',
-      payload: { payment: { entity: { id: 'pay_test_1', order_id: 'order_test_1', amount: 49900 } } },
+      payload: { payment: { entity: { id: 'pay_test_1', order_id: 'order_test_1', status: 'captured', currency: 'INR', amount: 111700 } } },
     };
     const raw = JSON.stringify(payload);
     const res = await fetch(`${api.baseUrl}/orders/confirm`, {
@@ -193,7 +195,7 @@ describe('order confirmation (payment webhook)', () => {
       bundles: [{ quantity: 1, price: 799, discount: 20, total: 639.2, bundle: orderIds.bundleOne }],
       subTotal: 1088,
       shipping: 0,
-      total: 1098,
+      total: 1117, // 1088 + 49 gift − 20 credit
     });
 
   test('outside production the paid order sends nothing', async () => {
@@ -217,7 +219,7 @@ describe('order confirmation (payment webhook)', () => {
     assert.ok(mail.html.includes(`src="${POSTER}"`));
     assert.ok(mail.html.includes('src="https://images.example.com/test-bundle.png"'));
     assert.ok(mail.html.includes('Test Book One') && mail.html.includes('Test Bundle One'));
-    assert.match(mail.html, /Gift Charges[\s\S]*>INR 30</);
+    assert.match(mail.html, /Gift Charges[\s\S]*>INR 49</);
     assert.match(mail.html, /Store Credit[\s\S]*>INR 20</);
   });
 });

@@ -160,7 +160,7 @@ describe('GET /cart/retrieve', () => {
     ];
     assertBody(res, 200, ok('CART_LIST_SUCCESS', cartBody(cart, 3595, addOns)));
     // legacy: the cart id is an ObjectId, so Express serialises the cookie as JSON (`j:"<id>"`).
-    assert.deepEqual(res.headers.getSetCookie(), [`_CID=j%3A%22${cart._id}%22; Path=/; HttpOnly`]);
+    assert.deepEqual(res.headers.getSetCookie(), [`_CID=j%3A%22${cart._id}%22; Path=/; HttpOnly; SameSite=Lax`]);
   });
 
   test('an empty cart totals 0', async () => {

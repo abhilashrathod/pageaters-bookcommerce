@@ -17,12 +17,19 @@ const orderShipping = require('../services/order-shipping.service');
 // queries, analytics and notifications.
 
 const userIdOf = (req) => get(req, 'user.userId', '');
-// Razorpay signs the raw body; the legacy check re-serialises the parsed body, which matches for JSON Razorpay sends.
-const webhookEvent = (req) => ({
-  rawBody: JSON.stringify(req.body),
-  signature: req.get('x-razorpay-signature'),
-  payload: req.allParams().payload,
-});
+// Razorpay signs the raw body: verify over the exact bytes received (`req.rawBody`, kept by the JSON parser in
+// app.js), never a re-serialisation of the parsed body. No JSON body → '' (which no signature matches). The payload
+// is read from those same signed bytes, never from req.allParams(), where query keys could add unsigned fields.
+const webhookEvent = (req) => {
+  const rawBody = req.rawBody ? req.rawBody.toString('utf8') : '';
+  let payload;
+  try {
+    payload = JSON.parse(rawBody).payload;
+  } catch {
+    payload = undefined;
+  }
+  return { rawBody, signature: req.get('x-razorpay-signature'), payload };
+};
 
 /* SHOPPER: checkout ****************************************************************************************/
 

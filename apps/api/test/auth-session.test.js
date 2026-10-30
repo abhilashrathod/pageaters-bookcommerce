@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 
 const { assertBody, createUser, envelopes, PASSWORD, startTestApp } = require('./helpers');
+const { hashSessionToken } = require('../src/helpers/encryption.helper');
 
 // Sessions over HTTP: register, login, logout (token revoke), GET and PUT /auth/me. Envelopes and cookies (names,
 // values, flags, expiry) are pinned exactly, so the controller → service refactor can't change them.
@@ -16,16 +17,10 @@ const User = () => mongoose.model('user');
 const Cart = () => mongoose.model('cart');
 const AccessTokens = () => mongoose.model('access_token');
 
-// The session cookie's expiry is fixed when the auth controller is loaded (legacy: every session cookie of a
-// process expires 30 days after it started), so it lies between these two instants plus 30 days.
-let loadedFrom;
-let loadedBy;
 let api;
 
 before(async () => {
-  loadedFrom = Date.now();
   api = await startTestApp();
-  loadedBy = Date.now();
 });
 
 after(async () => {
@@ -38,14 +33,17 @@ beforeEach(async () => {
 
 const cookiesOf = (res) => res.headers.getSetCookie();
 
-// `_PID=<jwt>; Path=/; Expires=<load time + 30 days>; HttpOnly` → the token, after checking the attributes.
+// `_PID=<jwt>; Max-Age=<30 days>; Path=/; Expires=<now + 30 days>; HttpOnly; SameSite=Lax` (no `Secure` under
+// APP_ENV=test) → the token, after checking the attributes.
 const assertSessionCookie = (cookie) => {
-  const match = cookie.match(/^_PID=([^;]+); Path=\/; Expires=([^;]+); HttpOnly$/);
+  const match = cookie.match(/^_PID=([^;]+); Max-Age=2592000; Path=\/; Expires=([^;]+); HttpOnly; SameSite=Lax$/);
   assert.ok(match, `unexpected session cookie: ${cookie}`);
   const expires = Date.parse(match[2]);
-  assert.ok(expires >= Math.floor((loadedFrom + 30 * DAY) / 1000) * 1000 && expires <= loadedBy + 30 * DAY, match[2]);
+  assert.ok(Math.abs(expires - (Date.now() + 30 * DAY)) < 5000, match[2]);
   return match[1];
 };
+
+const CLEARED_SESSION_COOKIE = '_PID=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax';
 
 const cartCookie = (cartId) => `_CID=j%3A%22${cartId}%22; Path=/; HttpOnly`;
 
@@ -89,7 +87,7 @@ describe('POST /auth/register', () => {
 
     assert.equal(user.role, 'USER');
     assert.equal(user.emailVerified, false);
-    assert.ok(user.isPasswordValid(body.password));
+    assert.ok(await user.isPasswordValid(body.password));
     assert.ok(user.verifyEmailToken);
     assert.ok(await mongoose.model('favorites').findOne({ userId: user._id }));
 
@@ -99,7 +97,7 @@ describe('POST /auth/register', () => {
       { userId: String(user._id), role: 'USER', email: body.email, motive: 'AUTH' },
     );
     assert.equal(claims.exp - claims.iat, 7 * 24 * 60 * 60);
-    const stored = await AccessTokens().findOne({ token });
+    const stored = await AccessTokens().findOne({ token: hashSessionToken(token) });
     assert.ok(stored);
     assert.equal(stored.revoked, null);
 
@@ -139,7 +137,7 @@ describe('POST /auth/login', () => {
     const [session, cartSet] = cookiesOf(res);
     const token = assertSessionCookie(session);
     assert.equal(cartSet, cartCookie(cart._id));
-    assert.ok(await AccessTokens().findOne({ token }));
+    assert.ok(await AccessTokens().findOne({ token: hashSessionToken(token) }));
   });
 
   test('an unverified email answers EMAIL_VERIFICATION_PENDING with the profile', async () => {
@@ -183,22 +181,23 @@ describe('POST /auth/logout (revoke token)', () => {
     const res = await api.request('/auth/logout', { method: 'POST', cookie });
 
     assertBody(res, 200, ok('TOKEN_REVOKED', {}));
-    assert.deepEqual(cookiesOf(res), ['_PID=; Path=/; HttpOnly', '_CID=; Path=/; HttpOnly']);
-    const stored = await AccessTokens().findOne({ token, userId: user._id });
+    assert.deepEqual(cookiesOf(res), [CLEARED_SESSION_COOKIE, '_CID=; Path=/; HttpOnly']);
+    const stored = await AccessTokens().findOne({ token: hashSessionToken(token), userId: user._id });
     assert.ok(stored.revoked instanceof Date);
     assert.equal(stored.revokedByIp, '127.0.0.1');
   });
 
-  test('legacy: a revoked token still opens a session', async () => {
+  test('a revoked token no longer opens a session (401 INVALID_TOKEN)', async () => {
     const { cookie } = await createUser();
     await api.request('/auth/logout', { method: 'POST', cookie });
-    assert.equal((await api.request('/auth/me', { cookie })).status, 200);
+    assertBody(await api.request('/auth/me', { cookie }), 401, unauthorized('INVALID_TOKEN'));
   });
 
-  test('a valid token that was never stored answers 401 TOKEN_UNMATCHED', async () => {
+  test('a valid JWT without a stored session answers 401 INVALID_TOKEN (the middleware refuses it)', async () => {
     const { token, cookie } = await createUser();
-    await AccessTokens().deleteMany({ token });
-    assertBody(await api.request('/auth/logout', { method: 'POST', cookie }), 401, unauthorized('TOKEN_UNMATCHED'));
+    await AccessTokens().deleteMany({ token: hashSessionToken(token) });
+    assertBody(await api.request('/auth/logout', { method: 'POST', cookie }), 401, unauthorized('INVALID_TOKEN'));
+    assertBody(await api.request('/auth/me', { cookie }), 401, unauthorized('INVALID_TOKEN'));
   });
 
   test('without a session answers 401 NO_AUTH_HEADER', async () => {
@@ -239,14 +238,5 @@ describe('PUT /auth/me', () => {
       400,
       joiError('INVALID_PHONE'),
     );
-  });
-});
-
-describe('account deletion (left in the controller, to be removed)', () => {
-  // ACCOUNT_ALREADY_ACTIVE is not in en.json, so i18n answers the key itself.
-  test('legacy: GET /auth/recoverAccount always answers ACCOUNT_ALREADY_ACTIVE', async () => {
-    const { cookie } = await createUser();
-    const key = 'ACCOUNT_ALREADY_ACTIVE';
-    assertBody(await api.request('/auth/recoverAccount', { cookie }), 400, { statusCode: 400, status: key, error: key, message: key, data: {} });
   });
 });

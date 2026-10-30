@@ -1,33 +1,34 @@
-const mongoose = require('mongoose');
 const { get } = require('lodash');
 
-const { models, enums } = require('../constants');
+const { ENVIRONMENT } = require('../appConfig');
+const { enums } = require('../constants');
 const { handleControllerError } = require('../helpers/appError.helper');
-const { encrypt } = require('../helpers/encryption.helper');
 const authAccount = require('../services/auth-account.service');
 const authSession = require('../services/auth-session.service');
 const authVerification = require('../services/auth-verification.service');
 
 // Thin controller: read the request, call one service, answer with the res.* helpers (src/services/README.md).
 // Services return tokens and ids; this controller owns the session and cart cookies.
-//
-// deleteAccount and recoverAccount are left here as they were (they still use the user model directly): both are
-// removed in a later step (owner decision 2026-10-29).
 
-const User = mongoose.model(models.USER);
-
-// Legacy: `expires` is computed once, when this module loads, so every session cookie a process sets expires
-// 30 days after the process started (the JWT itself lasts 7 days, 30 for admins).
-const ACCESS_TOKEN_OPTIONS = {
+// The session cookie: HttpOnly, SameSite=Lax (storefront and API are same-site under demo.pageaters.com) and Secure
+// everywhere but local development and tests (plain http). It lasts 30 days from when it is set (the JWT itself
+// lasts 7 days, 30 for admins); clearing it expires it at once.
+const SESSION_COOKIE_BASE = Object.freeze({
   httpOnly: true,
-  expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-};
+  sameSite: 'lax',
+  secure: !['development', 'test'].includes(ENVIRONMENT),
+});
 
+const ACCESS_TOKEN_OPTIONS = { ...SESSION_COOKIE_BASE, maxAge: 30 * 24 * 60 * 60 * 1000 };
+
+const ACCESS_TOKEN_CLEARED_OPTIONS = { ...SESSION_COOKIE_BASE, expires: new Date(0) };
+
+// The cart cookie keeps its legacy options here (aligned with cart.controller separately).
 const CART_COOKIE_OPTIONS = {
   httpOnly: true,
 };
 
-const REVOKED_COOKIE_OPTIONS = {
+const CART_COOKIE_CLEARED_OPTIONS = {
   httpOnly: true,
   expires: 0,
 };
@@ -66,8 +67,8 @@ module.exports.revokeToken = async (req, res) => {
   try {
     const token = req.cookies[enums.TOKEN_ID.ACCESS_TOKEN_COOKIE];
     await authSession.revokeToken({ token, userId: userIdOf(req), ipAddress: req.ip });
-    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, '', REVOKED_COOKIE_OPTIONS);
-    res.cookie(enums.TOKEN_ID.CART_COOKIE, '', REVOKED_COOKIE_OPTIONS);
+    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, '', ACCESS_TOKEN_CLEARED_OPTIONS);
+    res.cookie(enums.TOKEN_ID.CART_COOKIE, '', CART_COOKIE_CLEARED_OPTIONS);
     return res.ok({ message: 'TOKEN_REVOKED', data: {} });
   } catch (e) {
     return handleControllerError(res, e);
@@ -99,7 +100,9 @@ module.exports.updateProfile = async (req, res) => {
 module.exports.updatePassword = async (req, res) => {
   try {
     const { password, newPassword, confirmPassword } = req.allParams();
-    await authAccount.updatePassword({ userId: userIdOf(req), password, newPassword, confirmPassword });
+    await authAccount.updatePassword({ userId: userIdOf(req), password, newPassword, confirmPassword, ipAddress: req.ip });
+    // Every session ended with the old password, this one included.
+    res.cookie(enums.TOKEN_ID.ACCESS_TOKEN_COOKIE, '', ACCESS_TOKEN_CLEARED_OPTIONS);
     return res.ok('PASSWORD_UPDATED');
   } catch (e) {
     return handleControllerError(res, e);
@@ -129,7 +132,7 @@ module.exports.resendForgetPasswordEmail = async (req, res) => {
 module.exports.resetPassword = async (req, res) => {
   try {
     const { email, token, newPassword, confirmPassword } = req.validated;
-    await authAccount.resetPassword({ email, token, newPassword, confirmPassword });
+    await authAccount.resetPassword({ email, token, newPassword, confirmPassword, ipAddress: req.ip });
     return res.ok('PASSWORD_UPDATED');
   } catch (e) {
     return handleControllerError(res, e);
@@ -158,7 +161,7 @@ module.exports.resendVerificationEmail = async (req, res) => {
 
 module.exports.sendContactVerification = async (req, res) => {
   try {
-    const { contactNo } = req.allParams();
+    const { contactNo } = req.validated;
     await authVerification.sendContactVerification({ userId: userIdOf(req), contactNo });
     return res.ok({ message: 'CONTACT_VERIFICATION_INITIATED', data: {} });
   } catch (e) {
@@ -177,53 +180,10 @@ module.exports.resendContactVerification = async (req, res) => {
 
 module.exports.verifyContact = async (req, res) => {
   try {
-    const { otp } = req.allParams();
+    const { otp } = req.validated;
     await authVerification.verifyContact({ userId: userIdOf(req), otp });
     return res.ok('OTP_VERIFICATION_SUCCESS');
   } catch (e) {
     return handleControllerError(res, e);
-  }
-};
-
-module.exports.deleteAccount = async (req, res) => {
-  try {
-    const { password } = req.allParams();
-    let { user } = req;
-
-    user = await User.findOne({ _id: user._id, isDeleted: false });
-
-    if (!user.isPasswordValid(password)) {
-      return res.error('INVALID_PASSWORD');
-    }
-
-    user.isDeleted = true;
-    user.deletedAt = new Date();
-    user.scheduledForDeletion = true;
-    await user.save();
-
-    return res.ok('ACCOUNT_DELETED');
-  } catch (e) {
-    return res.internalServerError(e);
-  }
-};
-
-module.exports.recoverAccount = async (req, res) => {
-  try {
-    const { user } = req;
-
-    if (!user.scheduledForDeletion) {
-      return res.error('ACCOUNT_ALREADY_ACTIVE');
-    }
-
-    user.isDeleted = false;
-    user.deletedAt = null;
-    user.scheduledForDeletion = false;
-    await user.save();
-
-    const token = encrypt(JSON.stringify({ userId: user._id, createdAt: Date.now() }));
-
-    return res.ok({ message: 'ACCOUNT_RECOVERED', data: { user, token } });
-  } catch (e) {
-    return res.internalServerError(e);
   }
 };

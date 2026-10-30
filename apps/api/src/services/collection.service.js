@@ -121,7 +121,7 @@ const searchCollections = async (collectionIndex, q) => {
   if (!collectionIndex) return [];
 
   const lunrIdArray = collectionIndex.search(`${q}*`).map(({ ref }) => getId(ref));
-  return Collection.find({ _id: { $in: lunrIdArray }, isDeleted: false });
+  return Collection.find({ _id: mongoose.trusted({ $in: lunrIdArray }), isDeleted: false });
 };
 
 /**

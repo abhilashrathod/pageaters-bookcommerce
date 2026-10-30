@@ -70,22 +70,49 @@ const resetCart = async (userId) => {
 };
 
 /**
- * Takes store credit spent on an order off the user's balance and records the DEBIT transaction.
+ * Takes store credit spent on an order off the user's balance and records the DEBIT transaction. The balance is
+ * debited with a guarded update (only while it still covers `amount`), so it never goes below 0, even when the same
+ * balance was applied to several orders or two debits race. There are no transactions: when recording the DEBIT
+ * fails, the balance is put back before the error propagates.
  * @param {string} orderId Order `_id`.
  * @param {string} userId
- * @param {number} amount
- * @returns {Promise<import('mongoose').Types.ObjectId>} The transaction's `_id`.
+ * @param {number} amount More than 0.
+ * @returns {Promise<import('mongoose').Types.ObjectId | null>} The transaction's `_id`, or null when the balance no
+ *   longer covers `amount` (nothing was debited or recorded).
  */
 const debitStoreCredit = async (orderId, userId, amount) => {
-  await User.findOneAndUpdate({ _id: userId }, { $inc: { storeCredit: -amount } }, { new: true });
-  const transaction = await StoreCreditTransaction.create({
-    orderId,
-    creditId: `SC-${generateRandomNumber(10)}`,
-    userId,
-    amount,
-    action: 'DEBIT',
-  });
-  return transaction._id;
+  // Server-built operator: trusted, so sanitizeFilter (Phase 4 7a) keeps it.
+  const debited = await User.findOneAndUpdate(
+    { _id: userId, storeCredit: mongoose.trusted({ $gte: amount }) },
+    { $inc: { storeCredit: -amount } },
+  );
+  if (!debited) return null;
+  try {
+    const transaction = await StoreCreditTransaction.create({
+      orderId,
+      creditId: `SC-${generateRandomNumber(10)}`,
+      userId,
+      amount,
+      action: 'DEBIT',
+    });
+    return transaction._id;
+  } catch (e) {
+    await User.updateOne({ _id: userId }, { $inc: { storeCredit: amount } });
+    throw e;
+  }
 };
 
-module.exports = { debitStoreCredit, deductInventory, resetCart, restoreInventory };
+/**
+ * Undoes a debitStoreCredit whose order could not be completed: puts `amount` back on the balance and deletes the
+ * DEBIT transaction. Compensation for a failed later write (there are no MongoDB transactions).
+ * @param {import('mongoose').Types.ObjectId} transactionId What debitStoreCredit returned.
+ * @param {string} userId
+ * @param {number} amount The amount debited.
+ * @returns {Promise<void>}
+ */
+const undoStoreCreditDebit = async (transactionId, userId, amount) => {
+  await User.updateOne({ _id: userId }, { $inc: { storeCredit: amount } });
+  await StoreCreditTransaction.deleteOne({ _id: transactionId });
+};
+
+module.exports = { debitStoreCredit, deductInventory, resetCart, restoreInventory, undoStoreCreditDebit };

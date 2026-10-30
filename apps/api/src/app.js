@@ -4,22 +4,24 @@ const compression = require('compression');
 const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
-const multer = require('multer');
 const i18n = require('i18n');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
-const slowDown = require('express-slow-down');
 
-const { PROJECT_ROOT, DEFAULT_LANGUAGE, AVAILABLE_LOCALES, PROJECT_NAME, ALLOWED_ORIGINS, ENVIRONMENT } = require('./appConfig');
+const { PROJECT_ROOT, DEFAULT_LANGUAGE, AVAILABLE_LOCALES, PROJECT_NAME, ALLOWED_ORIGINS, ENVIRONMENT, ON_VERCEL } = require('./appConfig');
+const { USER_ROLES } = require('./constants/enums');
 const requireDb = require('./middlewares/requireDb.middleware');
+const { limiters } = require('./middlewares/rateLimit.middleware');
 
-// Builds the Express app only: no listen, no database connect, no timers, no queries. src/server.js runs it
-// locally; a serverless handler can import it as-is, because requireDb connects on the first database-backed
-// request.
+// Builds the Express app only: no listen, no database connect, no queries, and no timers beyond the rate-limit
+// stores' unref'd expiry timers. src/server.js runs it locally; a serverless handler can import it as-is, because
+// requireDb connects on the first database-backed request.
 const app = express();
 
 require('./models');
+
+// Needs the models registered.
+const permissionValidator = require('./middlewares/permissionVerification.middleware');
 
 if (ENVIRONMENT !== 'test') {
   app.use(morgan(':method :url :status - :response-time ms'));
@@ -28,16 +30,23 @@ if (ENVIRONMENT !== 'test') {
 // Helmet
 app.use(helmet());
 
-// For NGINX
-app.set('trust proxy', 1);
+// req.ip (the rate-limit key) comes from X-Forwarded-For only behind Vercel's proxy, which sets that header itself;
+// anywhere else the header is client-controlled and ignored (the socket address is used).
+app.set('trust proxy', ON_VERCEL ? 1 : false);
 
 // Express 5 defaults to the simple query parser; keep qs parsing (nested keys) as in Express 4.
 app.set('query parser', 'extended');
 
-// parse JSON and urlencoded bodies
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ extended: true, limit: '100mb', parameterLimit: 100000 }));
-app.use(cookieParser());
+// CORS: the one setup, an allowlist from ALLOWED_ORIGINS (src/env.js). An allowed origin is echoed with credentials;
+// any other gets no Access-Control-Allow-* headers, so the browser blocks it. Preflights answer 204 here.
+app.use(
+  cors({
+    origin: ALLOWED_ORIGINS,
+    credentials: true,
+    methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Accept-Language'],
+  }),
+);
 app.set('views', path.join(PROJECT_ROOT, 'src', 'views'));
 app.set('view engine', 'ejs');
 
@@ -56,6 +65,20 @@ app.use(i18n.init);
 // extend req and response
 app.use(require('./middlewares/extendReq.middleware'));
 
+// Rate limits (middlewares/rateLimit.middleware.js): a general limit on every request, slowed down before it; the
+// stricter named limits sit on their routes.
+app.use(limiters.slowDown, limiters.general);
+
+// Bodies: JSON only, 100 kb at most (a larger one answers 413). No client sends urlencoded bodies, and a form post is
+// the cross-site (CSRF) path, so they are not parsed. Multipart is parsed only on the upload route
+// (middlewares/upload.middleware.js), with its own limit. The raw bytes of a JSON body stay on `req.rawBody`: the
+// Razorpay webhooks verify their signature over exactly those bytes.
+const keepRawBody = (req, res, buffer) => {
+  req.rawBody = buffer;
+};
+app.use(express.json({ limit: '100kb', verify: keepRawBody }));
+app.use(cookieParser());
+
 // Search indexes (lunr): built once per process when the first MongoDB connection opens, never at import, so
 // loading the app queues no queries. src/server.js connects at boot; a serverless instance connects on its first
 // database-backed request. GET /re-index rebuilds them.
@@ -67,61 +90,17 @@ else mongoose.connection.once('connected', () => runIndexing(app));
 app.disable('x-powered-by');
 app.set('env', ENVIRONMENT);
 
-// Handle `OPTIONS` request.
-app.all('/{*splat}', (req, res, next) => {
-  const origin = req.headers.origin;
-  if (ALLOWED_ORIGINS.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept, Authorization, Accept-Language, x-client-id, x-client-secret, x-client-device',
-  );
-  res.header('Access-Control-Allow-Credentials', 'true');
-
-  if (req.method == 'OPTIONS') {
-    return res.status(200).end();
-  } else {
-    next();
-  }
-});
-
 // delete all headers related to cache
 app.use((req, res, next) => {
   req.headers['if-none-match'] = '';
   req.headers['if-modified-since'] = '';
-  res.header('Access-Control-Expose-Headers', 'Content-Disposition');
   next();
 });
 
 // compression responses
 app.use(compression({ threshold: 512 }));
 
-let corsOptions = {
-  origin: true,
-  credentials: true,
-};
-app.use(cors(corsOptions));
-
 app.use(`/resources`, express.static(path.join(PROJECT_ROOT, 'resources')));
-
-// multer for file upload
-app.use(multer().any());
-
-// rate limiting
-const apiLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute will have "max" 75 API request
-  limit: 150,
-  message: 'LIMIT REACHED: Too many requests were created from this IP. Please try again after an hour. Please contact support in such case if you were not responsible',
-});
-
-// slow down before threshold
-const speedLimiter = slowDown({
-  windowMs: 60 * 1000, // 1 minute
-  delayAfter: 125,
-  delayMs: (used, req) => (used - req.slowDown.limit) * 500, // +500 ms per request over delayAfter (v1 behaviour)
-});
 
 // load routes
 const router = require('./routes');
@@ -141,8 +120,8 @@ app.use('/sitemap.xml', requireDb, siteMap);
 const writeGoogleData = require('./libs/googledata');
 app.use('/googleproducts.xml', requireDb, writeGoogleData);
 
-// for re-indexing
-app.get('/re-index', requireDb, (req, res) => {
+// Rebuilds the search indexes: ADMIN only (it was public, and every call rebuilds every index).
+app.get('/re-index', requireDb, permissionValidator(USER_ROLES.ADMIN), (req, res) => {
   runIndexing(app);
 
   return res.send({

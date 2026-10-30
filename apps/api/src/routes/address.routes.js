@@ -13,6 +13,7 @@ const {
 
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
 const validate = require('../middlewares/validate.middleware');
+const { limiters } = require('../middlewares/rateLimit.middleware');
 
 router.get('/', permissionValidator(USER_ROLES.USER), controller.getAllByUser);
 router.get('/:id', validate(addressGetPayloadSchema), permissionValidator(USER_ROLES.USER), controller.getById);
@@ -22,7 +23,8 @@ router.put('/:id', permissionValidator(USER_ROLES.USER), validate(addressUpdateP
 
 router.delete('/:id', validate(addressGetPayloadSchema), permissionValidator(USER_ROLES.USER), controller.destroy);
 
-router.get('/check-pincode/:pincode', validate(addressPincodePayloadSchema), controller.checkServiceability);
+// Public: each check spends the courier's API quota, so it has its own stricter limit.
+router.get('/check-pincode/:pincode', limiters.pincodeCheck, validate(addressPincodePayloadSchema), controller.checkServiceability);
 router.patch('/:id', validate(addressGetPayloadSchema), permissionValidator(USER_ROLES.USER), controller.makeDefault);
 
 

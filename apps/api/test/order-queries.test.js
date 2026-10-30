@@ -293,10 +293,10 @@ describe('GET /orders/getById/:id (admin)', () => {
     assert.equal(res.body.data.products[0].product.author.name, 'Test Author A');
   });
 
-  test('legacy (security step): returns the raw Razorpay payment entity, payer contact included', async () => {
+  test('7d: returns the payment summary, never the Razorpay entity (payer contact, card details)', async () => {
     const order = await createOrder(shopper.user, { payment: CARD_PAYMENT });
     const res = await get(`/orders/getById/${order._id}`);
-    assert.deepEqual(res.body.data.payment, CARD_PAYMENT);
+    assert.equal(JSON.stringify(res.body.data.payment), JSON.stringify({ method: 'card', name: 'Test Card', last4: '1111', network: 'Visa' }));
   });
 
   test('refuses an unknown id; a malformed id answers 500', async () => {
@@ -318,11 +318,11 @@ describe('GET /orders/search (admin)', () => {
     assert.deepEqual(keys(res.body.data[0].userId), ['_id', 'contactNo', 'email', 'fullName', 'id']);
   });
 
-  test('legacy (security step): q is a raw regular expression', async () => {
+  test('7d: q is literal text, not a regular expression', async () => {
     await createOrder(shopper.user, { orderId: 'OD-1234567890' });
     await createOrder(shopper.user, { orderId: 'OD-9999999999' });
-    assert.equal((await get('/orders/search?q=^OD-.*0$')).body.data.length, 1);
-    assertBody(await get('/orders/search?q=('), 500, serverError);
+    assertBody(await get('/orders/search?q=^OD-.*0$'), 200, ok('ORDER_LIST_SUCCESS', []));
+    assertBody(await get('/orders/search?q=('), 200, ok('ORDER_LIST_SUCCESS', []));
   });
 });
 

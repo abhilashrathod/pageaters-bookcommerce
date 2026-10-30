@@ -13,6 +13,9 @@ module.exports = {
   NO_REPLY_EMAIL: env.MAIL_FROM,
   DEFAULT_LANGUAGE: 'en',
   AVAILABLE_LOCALES: ['en'],
-  HOST: env.STOREFRONT_URL,
+  // Without a trailing slash, so links built as `${HOST}/path` never get `//`.
+  HOST: env.STOREFRONT_URL.replace(/\/+$/, ''),
   ALLOWED_ORIGINS: env.ALLOWED_ORIGINS,
+  // Vercel sets VERCEL=1 in its builds and functions.
+  ON_VERCEL: env.VERCEL !== undefined,
 };
