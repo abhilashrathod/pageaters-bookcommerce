@@ -2,7 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, eventually, ids, loadCatalog, paged, startTestApp } = require('./helpers');
+const { asCreated, asJson, assertBody, assertGuarded, catalogState, createUser, envelopes, ids, loadCatalog, paged, startTestApp } = require('./helpers');
 const { loadStore, storeIds } = require('./helpers/fixtures/store');
 
 // /api/v1/store-books over HTTP: public list, detail and search, and admin CRUD with
@@ -102,9 +102,12 @@ describe('GET /store-books', () => {
     assertBody(await api.request('/store-books?page=1&limit=10&type=bundle'), 200, ok('BOOK_LIST_SUCCESS', firstPage([], 0)));
   });
 
-  test('refuses a sort field outside the allowlist; legacy: no page/limit answers no documents', async () => {
+  test('refuses a sort field outside the allowlist; without page/limit answers page 1 of 10, newest first', async () => {
     assertBody(await api.request('/store-books?page=1&limit=10&sortBy=price'), 400, badRequest('SORTING_NOT_ALLOWED'));
-    assertBody(await api.request('/store-books'), 200, ok('BOOK_LIST_SUCCESS', paged([], { totalDocs: 2, limit: 0, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null })));
+    const docs = asJson(await Book().find({ isDeleted: false, type: 'book' }).select(LIST_FIELDS).populate(LIST_POPULATE).sort({ createdAt: -1, _id: -1 }));
+    assertBody(await api.request('/store-books'), 200, ok('BOOK_LIST_SUCCESS', firstPage(docs, 2)));
+    const second = await api.request('/store-books?page=2&limit=1');
+    assert.deepEqual([second.body.data.page, second.body.data.docs.map((b) => b._id)], [2, [docs[1]._id]]);
   });
 });
 
@@ -158,9 +161,20 @@ describe('POST /store-books', () => {
     assert.deepEqual((await Book().findById(ids.bookOne)).relatedBooks.map(String), [String(ids.bookTwo), String(book._id)]);
   });
 
-  test('legacy: without categories or relatedBooks it answers 500 after creating the book', async () => {
-    assertBody(await api.request('/store-books', { method: 'POST', body: { title: 'Test Book Bare' }, cookie: admin.cookie }), 500, serverError);
-    assert.equal(await Book().countDocuments({ title: 'Test Book Bare' }), 1);
+  test('without categories or relatedBooks creates the book with none (the legacy answered 500 after creating it)', async () => {
+    const res = await api.request('/store-books', { method: 'POST', body: { title: 'Test Book Bare' }, cookie: admin.cookie });
+    const book = await Book().findOne({ title: 'Test Book Bare' });
+    assertBody(res, 200, ok('BOOK_CREATE_SUCCESS', asCreated(book)));
+    assert.deepEqual([book.categories, book.relatedBooks], [[], []]);
+    assert.equal((await Category().findById(ids.categoryFiction)).numberOfBooks, 2);
+  });
+
+  test('counts the book once per live category, skipping unknown and deleted ones and repeats', async () => {
+    const gone = await Category().create({ categoryId: 'test-gone', title: 'Test Gone', numberOfBooks: 4, isDeleted: true });
+    const categories = [String(ids.categoryFiction), String(ids.categoryFiction), String(gone._id), String(new mongoose.Types.ObjectId())];
+    assert.equal((await api.request('/store-books', { method: 'POST', body: newBook({ categories }), cookie: admin.cookie })).status, 200);
+    assert.equal((await Category().findById(ids.categoryFiction)).numberOfBooks, 3);
+    assert.equal((await Category().findById(gone._id)).numberOfBooks, 4);
   });
 });
 
@@ -176,16 +190,55 @@ describe('PUT /store-books/:id', () => {
     assert.equal((await Category().findById(ids.categoryFiction)).numberOfBooks, 2);
   });
 
-  test('legacy: every category added or removed counts one more book', async () => {
+  test('a category added counts one more book and one removed one fewer, before the response (the legacy counted both up, unawaited)', async () => {
     const other = await Category().create({ categoryId: 'test-other', title: 'Test Other', numberOfBooks: 0 });
-    await api.request(`/store-books/${ids.bookTwo}`, { method: 'PUT', body: newBook({ categories: [String(other._id)], relatedBooks: [] }), cookie: admin.cookie });
-    assert.ok(await eventually(async () => (await Category().findById(other._id)).numberOfBooks === 1));
-    assert.ok(await eventually(async () => (await Category().findById(ids.categoryFiction)).numberOfBooks === 3));
+    const res = await api.request(`/store-books/${ids.bookTwo}`, { method: 'PUT', body: newBook({ categories: [String(other._id)], relatedBooks: [] }), cookie: admin.cookie });
+    assert.equal(res.status, 200);
+    assert.equal((await Category().findById(other._id)).numberOfBooks, 1);
+    assert.equal((await Category().findById(ids.categoryFiction)).numberOfBooks, 1);
+    assert.deepEqual((await Book().findById(ids.bookTwo)).categories.map(String), [String(other._id)]);
   });
 
-  test('refuses a deleted book; legacy: without categories it answers 500', async () => {
+  test('a count never goes below 0', async () => {
+    await Category().updateOne({ _id: ids.categoryFiction }, { numberOfBooks: 0 });
+    await api.request(`/store-books/${ids.bookTwo}`, { method: 'PUT', body: newBook({ categories: [], relatedBooks: [] }), cookie: admin.cookie });
+    assert.equal((await Category().findById(ids.categoryFiction)).numberOfBooks, 0);
+  });
+
+  test('refuses a deleted book; without categories keeps them and every count (the legacy answered 500)', async () => {
     assertBody(await api.request(`/store-books/${ids.bookDeleted}`, { method: 'PUT', body: newBook(), cookie: admin.cookie }), 400, badRequest('BOOK_NOT_EXIST'));
-    assertBody(await api.request(`/store-books/${ids.bookTwo}`, { method: 'PUT', body: { title: 'x' }, cookie: admin.cookie }), 500, serverError);
+    const before = (await Book().findById(ids.bookTwo)).categories.map(String);
+    const res = await api.request(`/store-books/${ids.bookTwo}`, { method: 'PUT', body: { title: 'Test Book Two X' }, cookie: admin.cookie });
+    const book = await Book().findById(ids.bookTwo);
+    assertBody(res, 200, ok('BOOK_UPDATE_SUCCESS', asJson(book)));
+    assert.deepEqual([book.title, book.categories.map(String)], ['Test Book Two X', before]);
+    assert.equal((await Category().findById(ids.categoryFiction)).numberOfBooks, 2);
+  });
+});
+
+describe('book reference checks', () => {
+  test('refuses a reference that is not an id (list or single) on create and update, before writing anything', async () => {
+    const before = await catalogState();
+    for (const [body, code] of [
+      [newBook({ categories: null }), 'INVALID_REQUEST'],
+      [newBook({ categories: String(ids.categoryFiction) }), 'INVALID_REQUEST'],
+      [newBook({ categories: ['nope'] }), 'INVALID_ID'],
+      [newBook({ categories: [{ $gt: '' }] }), 'INVALID_REQUEST'],
+      [newBook({ relatedBooks: String(ids.bookOne) }), 'INVALID_REQUEST'],
+      [newBook({ relatedBundles: String(storeIds.bundleOne) }), 'INVALID_REQUEST'],
+      [newBook({ relatedCollections: ['nope'] }), 'INVALID_ID'],
+      [newBook({ author: 'nope' }), 'INVALID_ID'],
+      [newBook({ author: { $ne: null } }), 'INVALID_REQUEST'],
+    ]) {
+      for (const [method, path] of [
+        ['POST', '/store-books'],
+        ['PUT', `/store-books/${ids.bookTwo}`],
+      ]) {
+        const res = await api.request(path, { method, body, cookie: admin.cookie });
+        assertBody(res, 400, envelopes.badRequestObject(code));
+      }
+    }
+    assert.deepEqual(await catalogState(), before);
   });
 });
 

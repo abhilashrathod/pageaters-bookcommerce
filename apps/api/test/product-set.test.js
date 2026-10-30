@@ -2,7 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, ids, loadCatalog, paged, startTestApp } = require('./helpers');
+const { asCreated, asJson, assertBody, assertGuarded, catalogState, createUser, envelopes, ids, loadCatalog, paged, startTestApp } = require('./helpers');
 const { loadStore, storeIds } = require('./helpers/fixtures/store');
 
 // /api/v1/product-sets over HTTP: public detail by setId or slug (books in priority order); admin list and CRUD.
@@ -57,7 +57,7 @@ describe('auth', () => {
 
 describe('GET /product-sets (admin)', () => {
   test('pages active sets, optionally by categories (comma list or array)', async () => {
-    const all = asJson(await ProductSet().find({ isActive: true }));
+    const all = asJson(await ProductSet().find({ isActive: true }).sort({ createdAt: -1, _id: -1 }));
     const page = (docs) => paged(docs, { totalDocs: docs.length, limit: 10, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null });
     assertBody(await api.request('/product-sets?page=1&limit=10', { cookie: admin.cookie }), 200, ok('PRODUCT_SET_LIST_SUCCESS', page(all)));
     const fiction = all.filter((set) => set._id === String(storeIds.setOne));
@@ -66,10 +66,28 @@ describe('GET /product-sets (admin)', () => {
     assertBody(await api.request(`/product-sets?page=1&limit=10&categories[]=${ids.categoryFiction}`, { cookie: admin.cookie }), 200, ok('PRODUCT_SET_LIST_SUCCESS', page(fiction)));
   });
 
-  test('legacy: without page/limit answers no documents', async () => {
+  test('without page/limit answers page 1 of 10, newest first (the legacy answered no documents)', async () => {
     const res = await api.request('/product-sets', { cookie: admin.cookie });
-    assert.deepEqual(res.body.data.docs, []);
-    assert.equal(res.body.data.totalDocs, 2);
+    assert.deepEqual(res.body.data.docs.map((set) => set._id), asJson(await ProductSet().find({ isActive: true }).sort({ createdAt: -1, _id: -1 })).map((set) => set._id));
+    assert.deepEqual([res.body.data.page, res.body.data.limit, res.body.data.totalDocs], [1, 10, 2]);
+  });
+
+  test('an empty categories filter is no filter (the admin deal form with no category selected)', async () => {
+    const all = asJson(await ProductSet().find({ isActive: true }).sort({ createdAt: -1, _id: -1 }));
+    const page = paged(all, { totalDocs: all.length, limit: 10, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null });
+    assertBody(await api.request('/product-sets?categories=', { cookie: admin.cookie }), 200, ok('PRODUCT_SET_LIST_SUCCESS', page));
+  });
+
+  test('a bad page or limit answers INVALID_PAGING, as on every other list', async () => {
+    for (const query of ['limit=5000', 'limit=0', 'page=0', 'page=abc']) {
+      assertBody(await api.request(`/product-sets?${query}`, { cookie: admin.cookie }), 400, badRequest('INVALID_PAGING'));
+    }
+  });
+
+  test('refuses a categories filter that is not ids (7a audit)', async () => {
+    for (const query of ['categories=nope', `categories=${ids.categoryFiction},nope`, `categories[]=${ids.categoryFiction}&categories[]=nope`, 'categories[$ne]=x']) {
+      assertBody(await api.request(`/product-sets?${query}`, { cookie: admin.cookie }), 400, envelopes.badRequestObject('INVALID_ID'));
+    }
   });
 });
 
@@ -94,7 +112,51 @@ describe('detail', () => {
   });
 });
 
+describe('product-set reference checks', () => {
+  test('refuses a reference that is not an id (list or single) on create and update, before writing anything', async () => {
+    const before = await catalogState();
+    for (const [body, code] of [
+      [{ title: 'Test Set Bad', categories: String(ids.categoryFiction) }, 'INVALID_REQUEST'],
+      [{ title: 'Test Set Bad', products: [{ product: 'nope', priority: 1 }] }, 'INVALID_ID'],
+      [{ title: 'Test Set Bad', products: [{ product: { _id: 'nope', title: 'Test Book One' }, priority: 1 }] }, 'INVALID_ID'],
+      [{ title: 'Test Set Bad', products: [String(ids.bookOne)] }, 'INVALID_REQUEST'],
+      [{ title: 'Test Set Bad', products: null }, 'INVALID_REQUEST'],
+    ]) {
+      for (const [method, path] of [
+        ['POST', '/product-sets'],
+        ['PUT', `/product-sets/${storeIds.setOne}`],
+      ]) {
+        const res = await api.request(path, { method, body, cookie: admin.cookie });
+        assertBody(res, 400, envelopes.badRequestObject(code));
+      }
+    }
+    assert.deepEqual(await catalogState(), before);
+  });
+});
+
 describe('admin writes', () => {
+  test('the legacy admin posts each product as the populated book: accepted, and only its _id is stored', async () => {
+    const asAdminSends = async (bookIds) =>
+      (await Promise.all(bookIds.map((id) => mongoose.model('storeBook').findById(id).populate({ path: 'author', select: 'name' }))))
+        .map((book, index) => ({ product: asJson(book), priority: index + 1 }));
+    const storedProducts = async (id) => (await ProductSet().findById(id).lean()).products.map(({ product, priority }) => ({ product, priority }));
+
+    const created = await api.request('/product-sets', { method: 'POST', body: { title: 'Test Set Legacy', description: 'Fictional.', products: await asAdminSends([ids.bookOne, ids.bookTwo]), categories: [] }, cookie: admin.cookie });
+    assert.equal(created.status, 200);
+    const set = await ProductSet().findOne({ title: 'Test Set Legacy' });
+    assert.ok((await storedProducts(set._id)).every((item) => item.product instanceof mongoose.Types.ObjectId));
+    assert.deepEqual(await storedProducts(set._id), [
+      { product: new mongoose.Types.ObjectId(String(ids.bookOne)), priority: 1 },
+      { product: new mongoose.Types.ObjectId(String(ids.bookTwo)), priority: 2 },
+    ]);
+    // Nothing but the entry's own fields (Mongoose's _id, product, priority) is stored.
+    assert.deepEqual(Object.keys((await ProductSet().findById(set._id).lean()).products[0]).sort(), ['_id', 'priority', 'product']);
+
+    const updated = await api.request(`/product-sets/${set._id}`, { method: 'PUT', body: { title: 'Test Set Legacy', description: 'Fictional.', products: await asAdminSends([ids.bookTwo]), categories: [] }, cookie: admin.cookie });
+    assertBody(updated, 200, ok('PRODUCT_SET_UPDATE_SUCCESS', asJson(await ProductSet().findById(set._id))));
+    assert.deepEqual(await storedProducts(set._id), [{ product: new mongoose.Types.ObjectId(String(ids.bookTwo)), priority: 1 }]);
+  });
+
   test('POST creates a set with a slug from its title', async () => {
     const body = { title: 'Test Set New', description: 'Fictional.', products: [{ priority: 1, product: String(ids.bookOne) }], categories: [] };
     const res = await api.request('/product-sets', { method: 'POST', body, cookie: admin.cookie });

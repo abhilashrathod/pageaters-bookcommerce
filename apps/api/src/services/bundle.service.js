@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { generateRandomNumber } = require('../helpers/utils.helper');
+const { pageOptions } = require('../helpers/paging.helper');
 const { SEARCH_MAX_TIME_MS, SEARCH_RESULT_LIMIT, wordPrefixFilter } = require('../helpers/search-pattern.helper');
 const { addBackLinks } = require('./catalog-links.service');
 
@@ -22,24 +23,20 @@ const DETAIL_POPULATE = [
 ];
 
 /**
- * One page of live bundles (list fields), optionally in one category.
- * Legacy: without `limit` the page has no documents.
+ * One page of live bundles (list fields), optionally in one category. Paging defaults: helpers/paging.helper.js.
  * @param {{ page?, limit?, sortBy?, sortOrder?, category? }} options
  * @returns {Promise<object>} The mongoose-paginate-v2 result.
- * @throws {AppError} SORTING_NOT_ALLOWED (400).
+ * @throws {AppError} SORTING_NOT_ALLOWED (400), INVALID_PAGING (400).
  */
-const listBundles = ({ page, limit, sortBy, sortOrder, category }) => {
+const listBundles = ({ category, ...params }) => {
   const query = { isDeleted: false };
   if (category) query.categories = category;
 
-  if (sortBy && !SORTABLE.includes(sortBy)) throw new AppError('SORTING_NOT_ALLOWED');
-
-  return Bundles.paginate(query, { page, limit, select: LIST_FIELDS, sort: { [sortBy]: sortOrder } });
+  return Bundles.paginate(query, { ...pageOptions(params, { sortable: SORTABLE }), select: LIST_FIELDS });
 };
 
 /**
- * Creates a bundle and lists it on each of its books.
- * Legacy: without `bundledBooks` the bundle is created and then the call fails (500).
+ * Creates a bundle and lists it on each of its books (a list left out is empty).
  * @param {object} fields title, description, tags, poster, popularity, priority, currentDiscount, bundledBooks,
  *   categories, relatedBundles, relatedCollections, weight, price, membersPrice.
  * @returns {Promise<object>} The new bundle document.
@@ -73,8 +70,8 @@ const createBundle = async (fields) => {
 
 /**
  * Updates a live bundle and lists it on any of its books that don't list it yet (books removed from the bundle
- * keep the link). `weight` is not updatable.
- * Legacy: without `bundledBooks` the bundle is updated and then the call fails (500).
+ * keep the link). `weight` is not updatable. A field left out keeps its value (Mongoose drops undefined keys from
+ * `$set`).
  * @param {string} id
  * @param {object} fields As for createBundle, without weight.
  * @returns {Promise<object>} The updated bundle.

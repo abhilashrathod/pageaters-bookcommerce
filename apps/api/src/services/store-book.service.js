@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
-const { toArray } = require('lodash');
 
 const { models } = require('../constants');
 const enums = require('../constants/enums');
 const { AppError } = require('../helpers/appError.helper');
-const { generateRandomNumber, arrayDifference } = require('../helpers/utils.helper');
+const { generateRandomNumber } = require('../helpers/utils.helper');
+const { pageOptions } = require('../helpers/paging.helper');
 const { SEARCH_MAX_TIME_MS, SEARCH_RESULT_LIMIT, wordPrefixFilter } = require('../helpers/search-pattern.helper');
 const { addBackLinks } = require('./catalog-links.service');
 
@@ -73,22 +73,38 @@ const pickBookFields = (fields) => {
   };
 };
 
+// Adds one to `numberOfBooks` of each live category in `added` and takes one off each live category in `removed`
+// (never below 0). Unknown and soft-deleted categories are skipped.
+const countBooksIn = async ({ added = [], removed = [] }) => {
+  if (added.length) {
+    await Category.updateMany({ _id: mongoose.trusted({ $in: added }), isDeleted: false }, { $inc: { numberOfBooks: 1 } });
+  }
+  if (removed.length) {
+    await Category.updateMany(
+      { _id: mongoose.trusted({ $in: removed }), isDeleted: false, numberOfBooks: mongoose.trusted({ $gt: 0 }) },
+      { $inc: { numberOfBooks: -1 } },
+    );
+  }
+};
+
+// The ids in `next` that `current` doesn't have, as strings, once each.
+const idsNotIn = (next, current) => {
+  const have = new Set(current.map(String));
+  return [...new Set(next.map(String))].filter((id) => !have.has(id));
+};
+
 /**
- * One page of live store books of a type (default `book`), list fields, with author and categories.
- * Legacy: without `limit` the page has no documents.
+ * One page of live store books of a type (default `book`), list fields, with author and categories. Paging
+ * defaults: helpers/paging.helper.js.
  * @param {{ page?, limit?, sortBy?, sortOrder?, type? }} options
  * @returns {Promise<object>} The mongoose-paginate-v2 result.
- * @throws {AppError} SORTING_NOT_ALLOWED (400).
+ * @throws {AppError} SORTING_NOT_ALLOWED (400), INVALID_PAGING (400).
  */
-const listBooks = ({ page, limit, sortBy, sortOrder, type }) => {
-  if (sortBy && !SORTABLE.includes(sortBy)) throw new AppError('SORTING_NOT_ALLOWED');
-
-  return Book.paginate(
+const listBooks = ({ type, ...params }) =>
+  Book.paginate(
     { isDeleted: false, type: type || enums.PRODUCT_TYPES.BOOK },
     {
-      page,
-      limit,
-      sort: { [sortBy]: sortOrder },
+      ...pageOptions(params, { sortable: SORTABLE }),
       select: `title bookId ISBN author inventory poster images tags price weight popularity editorsPick newRelease preOrder currentDiscount bestSeller`,
       populate: [
         { path: 'author', select: 'name intro avatar' },
@@ -96,25 +112,19 @@ const listBooks = ({ page, limit, sortBy, sortOrder, type }) => {
       ],
     },
   );
-};
 
 /**
- * Creates a store book; adds one to each of its categories' `numberOfBooks`, adds it to its author's books and
- * lists it on each related book.
- * Legacy: without `categories` or `relatedBooks`, or with an unknown category or author, the book is created and
- * then the call fails (500).
+ * Creates a store book; adds one to each of its live categories' `numberOfBooks`, adds it to its author's books and
+ * lists it on each related book. A list left out is empty.
+ * Legacy: with an unknown author the book is created and then the call fails (500).
  * @param {object} fields The book fields (see pickBookFields) plus `author`.
  * @returns {Promise<object>} The new book document.
  */
 const createBook = async (fields) => {
-  const { author, categories, relatedBooks } = fields;
+  const { author, categories = [], relatedBooks } = fields;
   const bookRes = await Book.create({ bookId: `BK-${generateRandomNumber(10)}`, author, ...pickBookFields(fields) });
 
-  for (const category of categories) {
-    const categoryRes = await Category.findOne({ _id: category, isDeleted: false });
-    categoryRes.numberOfBooks = Number(categoryRes.numberOfBooks) + 1;
-    await categoryRes.save();
-  }
+  await countBooksIn({ added: idsNotIn(categories, []) });
 
   if (author) {
     const authorRes = await Author.findOne({ _id: author, isDeleted: false });
@@ -128,10 +138,9 @@ const createBook = async (fields) => {
 };
 
 /**
- * Updates a live store book (not its author) and lists it on any related book that doesn't list it yet.
- * Legacy (fixed in the legacy-bugs step): every category in the symmetric difference between the old and new
- * category lists — added or removed — gets one more `numberOfBooks`, saved without awaiting; without `categories`
- * or `relatedBooks` the call fails (500).
+ * Updates a live store book (not its author) and lists it on any related book that doesn't list it yet. A field
+ * left out keeps its value (Mongoose drops undefined keys from `$set`). When `categories` is given, each category
+ * added counts one more book and each one removed one fewer.
  * @param {string} id
  * @param {object} fields The book fields (see pickBookFields).
  * @returns {Promise<object>} The updated book.
@@ -142,15 +151,15 @@ const updateBook = async (id, fields) => {
   const book = await Book.findOne({ _id: id, isDeleted: false });
   if (!book) throw new AppError('BOOK_NOT_EXIST');
 
-  for (const category of arrayDifference(toArray(book.categories), categories)) {
-    const categoryRes = await Category.findOne({ _id: category, isDeleted: false });
-    categoryRes.numberOfBooks = Number(categoryRes.numberOfBooks) + 1;
-    void categoryRes.save();
-  }
-
   await addBackLinks(Book, relatedBooks, 'relatedBooks', book._id);
 
-  return Book.findOneAndUpdate({ _id: id }, { $set: pickBookFields(fields) }, { new: true });
+  const updated = await Book.findOneAndUpdate({ _id: id }, { $set: pickBookFields(fields) }, { new: true });
+
+  if (categories) {
+    await countBooksIn({ added: idsNotIn(categories, book.categories), removed: idsNotIn(book.categories, categories) });
+  }
+
+  return updated;
 };
 
 /**

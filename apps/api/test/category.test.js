@@ -60,20 +60,36 @@ describe('auth', () => {
 });
 
 describe('GET /categories', () => {
-  test('pages live categories; legacy: sortOrder goes through Number(), so "asc" and "desc" both sort ascending', async () => {
-    const ascending = asJson(await Category().find({ isDeleted: false }).select(LIST_FIELDS).sort({ title: 1 }));
-    for (const sortOrder of ['1', 'asc', 'desc']) {
+  test('pages live categories; sortOrder takes asc/desc/1/-1 alike (the legacy Number() made "asc"/"desc" NaN)', async () => {
+    const ascending = asJson(await Category().find({ isDeleted: false }).select(LIST_FIELDS).sort({ title: 1, _id: 1 }));
+    for (const sortOrder of ['1', 'asc']) {
       assertBody(await api.request(`/categories?page=1&limit=10&sortBy=title&sortOrder=${sortOrder}`), 200, ok('CATEGORY_LIST_SUCCESS', firstPage(ascending, 2)));
     }
-    assertBody(await api.request('/categories?page=1&limit=10&sortBy=title&sortOrder=-1'), 200, ok('CATEGORY_LIST_SUCCESS', firstPage([...ascending].reverse(), 2)));
+    for (const sortOrder of ['-1', 'desc']) {
+      assertBody(await api.request(`/categories?page=1&limit=10&sortBy=title&sortOrder=${sortOrder}`), 200, ok('CATEGORY_LIST_SUCCESS', firstPage([...ascending].reverse(), 2)));
+    }
   });
 
   test('refuses a sort field outside the allowlist', async () => {
     assertBody(await api.request('/categories?page=1&limit=10&sortBy=description'), 400, badRequest('SORTING_NOT_ALLOWED'));
   });
 
-  test('legacy: without page/limit answers no documents', async () => {
-    assertBody(await api.request('/categories'), 200, ok('CATEGORY_LIST_SUCCESS', paged([], { totalDocs: 2, limit: 0, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null })));
+  test('without page/limit/sortBy answers page 1 of 10, newest first (the legacy answered no documents)', async () => {
+    const newest = asJson(await Category().find({ isDeleted: false }).select(LIST_FIELDS).sort({ createdAt: -1, _id: -1 }));
+    assertBody(await api.request('/categories'), 200, ok('CATEGORY_LIST_SUCCESS', firstPage(newest, 2)));
+    // '' counts as missing (the admin sends every key).
+    assertBody(await api.request('/categories?page=&limit=&sortBy=&sortOrder='), 200, ok('CATEGORY_LIST_SUCCESS', firstPage(newest, 2)));
+  });
+
+  test('pages with a stable _id tiebreak and refuses a page, limit or order out of range', async () => {
+    await Category().updateMany({}, { title: 'Test Same' });
+    const page = async (n) => (await api.request(`/categories?page=${n}&limit=1&sortBy=title`)).body.data.docs.map((c) => c._id);
+    const seen = [...(await page(1)), ...(await page(2)), ...(await page(3))];
+    assert.deepEqual(seen, asJson(await Category().find({ isDeleted: false }).sort({ _id: -1 })).map((c) => c._id));
+    for (const query of ['page=0', 'page=abc', 'limit=0', 'limit=1001', 'limit=2.5', 'sortOrder=up']) {
+      assertBody(await api.request(`/categories?${query}`), 400, badRequest('INVALID_PAGING'));
+    }
+    assert.equal((await api.request('/categories?limit=1000')).status, 200);
   });
 });
 
@@ -100,7 +116,7 @@ describe("a category's books", () => {
   });
 
   test('GET /categories/:id/products pages its live books, sorted', async () => {
-    const docs = asJson(await Book().find({ _id: mongoose.trusted({ $in: [ids.bookOne, ids.bookTwo] }) }).select(PRODUCT_FIELDS).populate(PRODUCT_POPULATE).sort({ popularity: -1 }));
+    const docs = asJson(await Book().find({ _id: mongoose.trusted({ $in: [ids.bookOne, ids.bookTwo] }) }).select(PRODUCT_FIELDS).populate(PRODUCT_POPULATE).sort({ popularity: -1, _id: -1 }));
     assertBody(await api.request(`/categories/${ids.categoryFiction}/products?page=1&limit=10&sortBy=popularity&sortOrder=-1`), 200, ok('BOOK_LIST_SUCCESS', firstPage(docs, 2)));
     assertBody(await api.request(`/categories/${ids.categoryFiction}/products?page=1&limit=10&sortBy=bookId`), 400, badRequest('SORTING_NOT_ALLOWED'));
   });
@@ -112,8 +128,20 @@ describe("a category's books", () => {
     assertBody(res, 200, ok('BOOK_LIST_SUCCESS', { trending: [bookTwo], newArrivals: [bookTwo], mostDiscounted: [bookTwo] }));
   });
 
-  test('legacy: overview without page/limit answers empty lists', async () => {
-    assertBody(await api.request(`/categories/${ids.categoryFiction}/overview`), 200, ok('BOOK_LIST_SUCCESS', { trending: [], newArrivals: [], mostDiscounted: [] }));
+  test('overview without page/limit answers the first 10 of each, highest first (the legacy answered empty lists)', async () => {
+    const sortedBy = async (field) =>
+      asJson(await Book().find({ _id: mongoose.trusted({ $in: [ids.bookOne, ids.bookTwo] }) }).select(OVERVIEW_FIELDS).populate(PRODUCT_POPULATE).sort({ [field]: -1, _id: -1 }));
+    const expected = { trending: await sortedBy('popularity'), newArrivals: await sortedBy('publicationYear'), mostDiscounted: await sortedBy('currentDiscount') };
+    assert.deepEqual(expected.newArrivals.map((b) => b._id), [String(ids.bookOne), String(ids.bookTwo)]);
+    assertBody(await api.request(`/categories/${ids.categoryFiction}/overview`), 200, ok('BOOK_LIST_SUCCESS', expected));
+    assertBody(await api.request(`/categories/${ids.categoryFiction}/overview?limit=0`), 400, badRequest('INVALID_PAGING'));
+  });
+
+  test('GET /categories/:id/products defaults to page 1 of 10, newest first', async () => {
+    const docs = asJson(await Book().find({ _id: mongoose.trusted({ $in: [ids.bookOne, ids.bookTwo] }) }).select(PRODUCT_FIELDS).populate(PRODUCT_POPULATE).sort({ createdAt: -1, _id: -1 }));
+    assertBody(await api.request(`/categories/${ids.categoryFiction}/products`), 200, ok('BOOK_LIST_SUCCESS', firstPage(docs, 2)));
+    const ascending = asJson(await Book().find({ _id: mongoose.trusted({ $in: [ids.bookOne, ids.bookTwo] }) }).select(PRODUCT_FIELDS).populate(PRODUCT_POPULATE).sort({ popularity: 1, _id: 1 }));
+    assertBody(await api.request(`/categories/${ids.categoryFiction}/products?sortBy=popularity&sortOrder=asc`), 200, ok('BOOK_LIST_SUCCESS', firstPage(ascending, 2)));
   });
 });
 

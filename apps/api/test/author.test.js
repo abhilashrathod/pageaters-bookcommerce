@@ -69,8 +69,10 @@ describe('GET /authors', () => {
     assertBody(await api.request('/authors?page=1&limit=10&sortBy=intro'), 400, badRequest('SORTING_NOT_ALLOWED'));
   });
 
-  test('legacy: without page/limit answers no documents', async () => {
-    assertBody(await api.request('/authors'), 200, ok('AUTHOR_LIST_SUCCESS', paged([], { totalDocs: 2, limit: 0, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null })));
+  test('without page/limit/sortBy answers page 1 of 10, newest first (the legacy answered no documents)', async () => {
+    const docs = asJson(await Author().find({ isDeleted: false }).select(LIST_FIELDS).sort({ createdAt: -1, _id: -1 }));
+    assertBody(await api.request('/authors'), 200, ok('AUTHOR_LIST_SUCCESS', page1(docs, 2)));
+    assertBody(await api.request('/authors?limit=5000'), 400, badRequest('INVALID_PAGING'));
   });
 });
 
@@ -118,9 +120,24 @@ describe('POST /authors', () => {
     assert.equal(String((await Book().findById(ids.bookOne)).author), String(created._id));
   });
 
-  test('legacy: without books it answers 500 after creating the author', async () => {
-    assertBody(await api.request('/authors', { method: 'POST', body: { name: 'Test Author Bookless' }, cookie: admin.cookie }), 500, serverError);
-    assert.equal(await Author().countDocuments({ name: 'Test Author Bookless' }), 1);
+  test('without books creates an author with none (the legacy answered 500 after creating it)', async () => {
+    const res = await api.request('/authors', { method: 'POST', body: { name: 'Test Author Bookless' }, cookie: admin.cookie });
+    const created = await Author().findOne({ name: 'Test Author Bookless' });
+    assertBody(res, 200, ok('AUTHOR_CREATE_SUCCESS', asCreated(created)));
+    assert.deepEqual(created.books, []);
+  });
+
+  test('refuses books that are not a list of ids (7a audit), before writing anything', async () => {
+    for (const [books, code] of [
+      [['nope'], 'INVALID_ID'],
+      [[{ $gt: '' }], 'INVALID_REQUEST'],
+      [String(ids.bookOne), 'INVALID_REQUEST'],
+      [{ $ne: null }, 'INVALID_REQUEST'],
+    ]) {
+      const res = await api.request('/authors', { method: 'POST', body: { name: 'Test Author Bad', books }, cookie: admin.cookie });
+      assertBody(res, 400, envelopes.badRequestObject(code));
+    }
+    assert.equal(await Author().countDocuments({ name: 'Test Author Bad' }), 0);
   });
 });
 
@@ -139,9 +156,19 @@ describe('PUT /authors/:id', () => {
     }
   });
 
-  test('legacy: without books it answers 500 after updating', async () => {
-    assertBody(await api.request(`/authors/${ids.authorB}`, { method: 'PUT', body: { name: 'Test Author B3' }, cookie: admin.cookie }), 500, serverError);
-    assert.equal((await Author().findById(ids.authorB)).name, 'Test Author B3');
+  test('without books keeps the book list (the legacy answered 500 after updating)', async () => {
+    await Author().updateOne({ _id: ids.authorB }, { books: [ids.bookTwo] });
+    const res = await api.request(`/authors/${ids.authorB}`, { method: 'PUT', body: { name: 'Test Author B3' }, cookie: admin.cookie });
+    const author = await Author().findById(ids.authorB);
+    assertBody(res, 200, ok('AUTHOR_UPDATE_SUCCESS', asJson(author)));
+    assert.equal(author.name, 'Test Author B3');
+    assert.deepEqual(author.books.map(String), [String(ids.bookTwo)]);
+  });
+
+  test('refuses books that are not a list of ids (7a audit)', async () => {
+    const res = await api.request(`/authors/${ids.authorB}`, { method: 'PUT', body: { name: 'Test Author B4', books: [String(ids.bookOne), 'nope'] }, cookie: admin.cookie });
+    assertBody(res, 400, envelopes.badRequestObject('INVALID_ID'));
+    assert.equal((await Author().findById(ids.authorB)).name, 'Test Author B');
   });
 });
 

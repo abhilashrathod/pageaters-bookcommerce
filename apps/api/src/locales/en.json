@@ -67,6 +67,7 @@
 	"PASSWORDS_DO_NOT_MATCH": "Passwords do not match",
 	"FILE_UPLOADED": "FILE_UPLOADED",
 	"SORTING_NOT_ALLOWED": "Sorting on this field is not allowed",
+	"INVALID_PAGING": "Invalid page, limit or sort order",
 	"VERIFY_EMAIL_LIMIT_EXCEEDED": "Verification email resending limit exceeded, please try again after",
 	"RESEND_OTP_LIMIT_EXCEEDED": "Resend OTP limit exceeded. Please try again after 3 minutes",
 	"OTP_VERIFICATION_FAILED": "OTP information is invalid. Please try again.",

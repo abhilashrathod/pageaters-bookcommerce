@@ -1,10 +1,10 @@
-import type { z } from 'zod';
+import { z } from 'zod';
 
 import { collectionFieldsSchema } from '../../catalog/collection.ts';
-import { adminIdListSchema } from './common.ts';
+import { adminOptionalIdListSchema } from './common.ts';
 
-// POST /collections and PUT /collections/:id (collection.controller.js). Types first (see common.ts). `books` and
-// `relatedCollections` are iterated by both controllers (a missing list is a 500 today), so they are always required.
+// POST /collections and PUT /collections/:id (collection.controller.js). Types first (see common.ts). Reference lists
+// may be left out (common.ts).
 const collectionPayloadFields = collectionFieldsSchema.pick({
   title: true,
   description: true,
@@ -15,10 +15,10 @@ const collectionPayloadFields = collectionFieldsSchema.pick({
 });
 
 const collectionRelations = {
-  books: adminIdListSchema,
-  relatedCollections: adminIdListSchema,
-  relatedCategories: adminIdListSchema,
-  featuredAuthors: adminIdListSchema,
+  books: adminOptionalIdListSchema,
+  relatedCollections: adminOptionalIdListSchema,
+  relatedCategories: adminOptionalIdListSchema,
+  featuredAuthors: adminOptionalIdListSchema,
 };
 
 // The image is required on create, as every catalog document has one (https, `imageUrlSchema`). Until Phase 4/5
@@ -26,13 +26,14 @@ const collectionRelations = {
 export const adminCollectionCreatePayloadSchema = collectionPayloadFields.partial().extend({
   title: collectionFieldsSchema.shape.title,
   poster: collectionFieldsSchema.shape.poster,
-  books: collectionRelations.books,
-  relatedCollections: collectionRelations.relatedCollections,
-  relatedCategories: collectionRelations.relatedCategories.optional(),
-  featuredAuthors: collectionRelations.featuredAuthors.optional(),
+  ...collectionRelations,
 });
 export type AdminCollectionCreatePayload = z.infer<typeof adminCollectionCreatePayloadSchema>;
 
-// The update `$set`s every field it reads; an omitted one is written as null, so all are required.
-export const adminCollectionUpdatePayloadSchema = collectionPayloadFields.extend(collectionRelations).required();
+// The update `$set`s every field it reads, so the scalar fields are required; the reference lists may be left out.
+export const adminCollectionUpdatePayloadSchema = collectionPayloadFields.required().extend(collectionRelations);
 export type AdminCollectionUpdatePayload = z.infer<typeof adminCollectionUpdatePayloadSchema>;
+
+// What the API enforces on POST and PUT: every reference is an id (see common.ts).
+export const adminCollectionReferencesPayloadSchema = z.object(collectionRelations);
+export type AdminCollectionReferencesPayload = z.infer<typeof adminCollectionReferencesPayloadSchema>;

@@ -81,4 +81,15 @@ const paged = (docs, fields) => ({
   nextPage: fields.nextPage,
 });
 
-module.exports = { asCreated, asJson, assertBody, assertGuarded, envelopes, eventually, paged };
+// Every catalog document (books, authors, categories, collections, bundles, product sets), to check that a refused
+// write changed nothing: compare the value before and after.
+const catalogState = async () => {
+  const mongoose = require('mongoose');
+  const state = {};
+  for (const name of ['storeBook', 'author', 'category', 'collection', 'bundle', 'product_sets']) {
+    state[name] = asJson(await mongoose.model(name).find().sort({ _id: 1 }).lean());
+  }
+  return state;
+};
+
+module.exports = { asCreated, asJson, assertBody, assertGuarded, catalogState, envelopes, eventually, paged };

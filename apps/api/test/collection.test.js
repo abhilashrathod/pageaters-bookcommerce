@@ -2,13 +2,13 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, ids, loadCatalog, paged, startTestApp } = require('./helpers');
+const { asCreated, asJson, assertBody, assertGuarded, catalogState, createUser, envelopes, ids, loadCatalog, paged, startTestApp } = require('./helpers');
 const { loadStore, storeIds } = require('./helpers/fixtures/store');
 
 // /api/v1/collections over HTTP: public list, detail and search; admin CRUD with the two-way related-collection
 // links. Written against the legacy controller before the service refactor.
 
-const { ok, okString, badRequest, serverError } = envelopes;
+const { ok, okString, badRequest } = envelopes;
 
 const Collection = () => mongoose.model('collection');
 const Book = () => mongoose.model('storeBook');
@@ -75,9 +75,10 @@ describe('GET /collections', () => {
     assert.deepEqual(res.body.data.docs.map((c) => c._id), [String(storeIds.collectionOne)]);
   });
 
-  test('refuses a sort field outside the allowlist; legacy: no page/limit answers no documents', async () => {
+  test('refuses a sort field outside the allowlist; without page/limit answers page 1 of 10, newest first', async () => {
     assertBody(await api.request('/collections?page=1&limit=10&sortBy=price'), 400, badRequest('SORTING_NOT_ALLOWED'));
-    assertBody(await api.request('/collections'), 200, ok('COLLECTION_LIST_SUCCESS', paged([], { totalDocs: 2, limit: 0, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null })));
+    const docs = asJson(await Collection().find({ isDeleted: false }).select('title collectionId tags poster priority popularity books').populate(LIST_POPULATE).sort({ createdAt: -1, _id: -1 }));
+    assertBody(await api.request('/collections'), 200, ok('COLLECTION_LIST_SUCCESS', firstPage(docs, 2)));
   });
 });
 
@@ -108,9 +109,13 @@ describe('POST /collections', () => {
     assert.deepEqual((await Collection().findById(storeIds.collectionOne)).relatedCollections.map(String), [String(storeIds.collectionTwo), String(collection._id)]);
   });
 
-  test('legacy: without books or relatedCollections it answers 500 after creating', async () => {
-    assertBody(await api.request('/collections', { method: 'POST', body: { title: 'Test Collection Bare', books: [] }, cookie: admin.cookie }), 500, serverError);
-    assert.equal(await Collection().countDocuments({ title: 'Test Collection Bare' }), 1);
+  test('without books or relatedCollections creates it with empty lists (the legacy answered 500 after creating)', async () => {
+    for (const body of [{ title: 'Test Collection Bare', books: [] }, { title: 'Test Collection Bare 2' }]) {
+      const res = await api.request('/collections', { method: 'POST', body, cookie: admin.cookie });
+      const collection = await Collection().findOne({ title: body.title });
+      assertBody(res, 200, ok('COLLECTION_CREATE_SUCCESS', asCreated(collection)));
+      assert.deepEqual([collection.books, collection.relatedCollections], [[], []]);
+    }
   });
 });
 
@@ -125,8 +130,39 @@ describe('PUT /collections/:id', () => {
     assert.deepEqual((await Collection().findById(storeIds.collectionOne)).relatedCollections.map(String), [String(storeIds.collectionTwo)]);
   });
 
+  test('without books or relatedCollections keeps both lists', async () => {
+    const before = await Collection().findById(storeIds.collectionOne);
+    const res = await api.request(`/collections/${storeIds.collectionOne}`, { method: 'PUT', body: { title: 'Test Collection One B' }, cookie: admin.cookie });
+    const collection = await Collection().findById(storeIds.collectionOne);
+    assertBody(res, 200, ok('COLLECTION_UPDATE_SUCCESS', asJson(collection)));
+    assert.equal(collection.title, 'Test Collection One B');
+    assert.deepEqual([collection.books.map(String), collection.relatedCollections.map(String)], [before.books.map(String), before.relatedCollections.map(String)]);
+  });
+
   test('refuses a deleted collection', async () => {
     assertBody(await api.request(`/collections/${storeIds.collectionDeleted}`, { method: 'PUT', body: {}, cookie: admin.cookie }), 400, badRequest('COLLECTION_NOT_EXIST'));
+  });
+});
+
+describe('collection reference checks', () => {
+  test('refuses a reference that is not an id (list or single) on create and update, before writing anything', async () => {
+    const before = await catalogState();
+    for (const [body, code] of [
+      [{ title: 'Test Collection Bad', books: String(ids.bookOne) }, 'INVALID_REQUEST'],
+      [{ title: 'Test Collection Bad', books: [String(ids.bookOne), 'nope'] }, 'INVALID_ID'],
+      [{ title: 'Test Collection Bad', relatedCollections: null }, 'INVALID_REQUEST'],
+      [{ title: 'Test Collection Bad', relatedCategories: [{ $gt: '' }] }, 'INVALID_REQUEST'],
+      [{ title: 'Test Collection Bad', featuredAuthors: ['nope'] }, 'INVALID_ID'],
+    ]) {
+      for (const [method, path] of [
+        ['POST', '/collections'],
+        ['PUT', `/collections/${storeIds.collectionOne}`],
+      ]) {
+        const res = await api.request(path, { method, body, cookie: admin.cookie });
+        assertBody(res, 400, envelopes.badRequestObject(code));
+      }
+    }
+    assert.deepEqual(await catalogState(), before);
   });
 });
 

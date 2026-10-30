@@ -1,11 +1,11 @@
-import type { z } from 'zod';
+import { z } from 'zod';
 
 import { bookFieldsSchema } from '../../catalog/book.ts';
 import { objectIdSchema } from '../../primitives.ts';
-import { adminIdListSchema } from './common.ts';
+import { adminOptionalIdListSchema } from './common.ts';
 
-// POST /store-books and PUT /store-books/:id (storeBook.controller.js `create` / `update`). Types first: the API
-// validates nothing yet (see common.ts).
+// POST /store-books and PUT /store-books/:id (storeBook.controller.js `create` / `update`). Types first (see
+// common.ts): the API enforces only adminBookReferencesPayloadSchema (below) since Phase 4.
 //
 // Supplier prices are never part of this contract. The legacy controllers still read `wholeSalePriceHistory` from the
 // body and store it; these schemas leave it out and, since they strip unknown keys, drop it when a form value is
@@ -48,29 +48,34 @@ const bookPayloadFields = bookFieldsSchema.pick({
   membersRentPrice: true,
 });
 
-// `categories` and `relatedBooks` are iterated by both controllers, so a missing one is a 500 today: always required.
+// Reference lists may be left out (common.ts): create stores none, update keeps the current list. An update that
+// changes `categories` counts one more book in each category added and one fewer in each one removed.
 const bookRelations = {
-  categories: adminIdListSchema,
-  relatedBooks: adminIdListSchema,
-  relatedBundles: adminIdListSchema,
-  relatedCollections: adminIdListSchema,
+  categories: adminOptionalIdListSchema,
+  relatedBooks: adminOptionalIdListSchema,
+  relatedBundles: adminOptionalIdListSchema,
+  relatedCollections: adminOptionalIdListSchema,
 };
 
-// Create: model defaults fill whatever is left out, except the lists the controller walks and the poster.
+// Create: model defaults fill whatever is left out, except the title and the poster.
 // The image is required on create, as every catalog document has one (https, `imageUrlSchema`). Until Phase 4/5
 // the legacy upload answers with a stored key, not a URL, so a form fed by it fails this check.
 export const adminBookCreatePayloadSchema = bookPayloadFields.partial().extend({
   title: bookFieldsSchema.shape.title,
   poster: bookFieldsSchema.shape.poster,
   author: objectIdSchema.nullish(),
-  categories: bookRelations.categories,
-  relatedBooks: bookRelations.relatedBooks,
-  relatedBundles: bookRelations.relatedBundles.optional(),
-  relatedCollections: bookRelations.relatedCollections.optional(),
+  ...bookRelations,
 });
 export type AdminBookCreatePayload = z.infer<typeof adminBookCreatePayloadSchema>;
 
-// Update: the controller `$set`s every field it reads, so an omitted one is written as null (Mongoose 5 sends
-// `undefined` through): every field is required. `author` is not read on update (Phase 4).
-export const adminBookUpdatePayloadSchema = bookPayloadFields.extend(bookRelations).required();
+// Update: the controller `$set`s every field it reads, so every scalar field is required; the reference lists may
+// be left out. `author` is not read on update (Phase 4).
+export const adminBookUpdatePayloadSchema = bookPayloadFields.required().extend(bookRelations);
 export type AdminBookUpdatePayload = z.infer<typeof adminBookUpdatePayloadSchema>;
+
+// What the API enforces on POST and PUT: every reference is an id (see common.ts).
+export const adminBookReferencesPayloadSchema = z.object({
+  author: objectIdSchema.nullish(),
+  ...bookRelations,
+});
+export type AdminBookReferencesPayload = z.infer<typeof adminBookReferencesPayloadSchema>;

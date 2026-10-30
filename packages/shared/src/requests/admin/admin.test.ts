@@ -5,14 +5,21 @@ import type { z } from 'zod';
 import * as admin from './index.ts';
 import {
   adminAddOnListQuerySchema,
+  adminAuthorBooksPayloadSchema,
   adminAuthorUpdatePayloadSchema,
   adminBookCreatePayloadSchema,
+  adminBookReferencesPayloadSchema,
   adminBookUpdatePayloadSchema,
+  adminBundleReferencesPayloadSchema,
   adminBundleUpdatePayloadSchema,
   adminCategoryCreatePayloadSchema,
+  adminCollectionReferencesPayloadSchema,
   adminFileUploadFieldsSchema,
   adminOrderCancelPayloadSchema,
+  adminOptionalIdListSchema,
   adminOrderListQuerySchema,
+  adminProductSetReferencesPayloadSchema,
+  adminProductSetListFilterSchema,
   adminProductSetListQuerySchema,
   adminSearchQuerySchema,
   adminStoreCreditIssuePayloadSchema,
@@ -93,11 +100,14 @@ void describe('admin book payloads', () => {
     }
   });
 
-  void it('require the lists the controllers iterate, and every field on update', () => {
-    const { categories: _c, ...noCategories } = bookCreate;
-    assert.equal(adminBookCreatePayloadSchema.safeParse(noCategories).success, false);
+  void it('accept a left-out reference list, but require every scalar field on update', () => {
+    const { categories: _c, relatedBooks: _r, ...noLists } = bookCreate;
+    assert.ok(adminBookCreatePayloadSchema.safeParse(noLists).success);
+    const { categories: _uc, ...noCategories } = bookUpdate;
+    assert.ok(adminBookUpdatePayloadSchema.safeParse(noCategories).success);
     const { price: _p, ...noPrice } = bookUpdate;
     assert.equal(adminBookUpdatePayloadSchema.safeParse(noPrice).success, false);
+    assert.equal(adminBookUpdatePayloadSchema.safeParse({ ...bookUpdate, categories: ['nope'] }).success, false);
   });
 
   void it('reject a non-https poster', () => {
@@ -106,7 +116,8 @@ void describe('admin book payloads', () => {
 });
 
 void describe('admin update payloads', () => {
-  // The legacy updates `$set` every field they read, so an omitted one would be written as null.
+  // The updates `$set` every field they read, so each scalar field is required; a reference list may be left out
+  // (the update keeps it).
   const updates = Object.entries(admin).filter(([name]) => name.endsWith('UpdatePayloadSchema'));
 
   void it('are all found', () => {
@@ -114,9 +125,11 @@ void describe('admin update payloads', () => {
   });
 
   for (const [name, schema] of updates) {
-    void it(`${name} has no optional key`, () => {
+    void it(`${name} has no optional key but its reference lists`, () => {
       const { shape } = schema as { shape: Record<string, z.ZodType> };
-      for (const [key, field] of Object.entries(shape)) assert.equal(field.safeParse(undefined).success, false, key);
+      for (const [key, field] of Object.entries(shape)) {
+        if (field !== adminOptionalIdListSchema) assert.equal(field.safeParse(undefined).success, false, key);
+      }
     });
   }
 });
@@ -151,9 +164,70 @@ void describe('other admin payloads', () => {
     assert.deepEqual(adminOrderListQuerySchema.parse({ page: '2', status: 'paid' }), { page: 2, limit: 10, status: 'paid' });
     assert.equal(adminOrderListQuerySchema.safeParse({ status: 'lost' }).success, false);
     assert.deepEqual(adminProductSetListQuerySchema.parse({ categories: [id(2)] }), { page: 1, limit: 10, categories: [id(2)] });
+    // A single value arrives as a string; the API also takes one comma-separated value.
+    for (const categories of [id(2), `${id(2)},${id(3)}`]) {
+      assert.deepEqual(adminProductSetListQuerySchema.parse({ categories }), { page: 1, limit: 10, categories });
+    }
+    for (const categories of ['nope', `${id(2)},`, [id(2), 'nope'], { $ne: null }]) {
+      const result = adminProductSetListQuerySchema.safeParse({ categories });
+      assert.equal(result.success, false, JSON.stringify(categories));
+      assert.equal(result.error?.issues[0]?.message, 'INVALID_ID');
+    }
+    // '' (no category selected in the admin deal form) is no filter.
+    for (const schema of [adminProductSetListQuerySchema, adminProductSetListFilterSchema]) {
+      const parsed = schema.safeParse({ categories: '' });
+      assert.ok(parsed.success);
+      assert.equal(parsed.data.categories, undefined);
+    }
     assert.equal(adminAddOnListQuerySchema.safeParse({ sortBy: 'price' }).success, false);
     assert.equal(adminSearchQuerySchema.safeParse({ q: '   ' }).success, false);
     assert.equal(adminSearchQuerySchema.safeParse({ q: 'x'.repeat(101) }).success, false);
+  });
+
+  void it('check every reference list the API enforces', () => {
+    for (const [schema, key] of [
+      [adminAuthorBooksPayloadSchema, 'books'],
+      [adminProductSetReferencesPayloadSchema, 'categories'],
+      [adminBookReferencesPayloadSchema, 'categories'],
+      [adminBookReferencesPayloadSchema, 'relatedBooks'],
+      [adminBookReferencesPayloadSchema, 'relatedBundles'],
+      [adminBookReferencesPayloadSchema, 'relatedCollections'],
+      [adminCollectionReferencesPayloadSchema, 'books'],
+      [adminCollectionReferencesPayloadSchema, 'relatedCollections'],
+      [adminCollectionReferencesPayloadSchema, 'relatedCategories'],
+      [adminCollectionReferencesPayloadSchema, 'featuredAuthors'],
+      [adminBundleReferencesPayloadSchema, 'bundledBooks'],
+      [adminBundleReferencesPayloadSchema, 'categories'],
+      [adminBundleReferencesPayloadSchema, 'relatedBundles'],
+      [adminBundleReferencesPayloadSchema, 'relatedCollections'],
+    ] as const) {
+      assert.deepEqual(schema.parse({ [key]: [id(2)], title: 'kept out' }), { [key]: [id(2)] });
+      assert.deepEqual(schema.parse({}), {});
+      assert.equal(schema.safeParse({ [key]: [id(2), 'nope'] }).error?.issues[0]?.message, 'INVALID_ID');
+      for (const value of [id(2), [{ $gt: '' }], null])
+        assert.equal(schema.safeParse({ [key]: value }).success, false, JSON.stringify(value));
+    }
+  });
+
+  void it('check the book author and the product-set entries as references', () => {
+    assert.ok(adminBookReferencesPayloadSchema.safeParse({ author: id(1) }).success);
+    assert.ok(adminBookReferencesPayloadSchema.safeParse({ author: null }).success);
+    assert.equal(adminBookReferencesPayloadSchema.safeParse({ author: 'nope' }).error?.issues[0]?.message, 'INVALID_ID');
+    assert.ok(adminProductSetReferencesPayloadSchema.safeParse({ products: [{ product: id(1), priority: 1 }] }).success);
+    // The legacy admin sends the populated book; only its `_id` is checked.
+    const book = { _id: id(1), title: 'The Placeholder Atlas', price: 499 };
+    assert.ok(adminProductSetReferencesPayloadSchema.safeParse({ products: [{ product: book, priority: 1 }] }).success);
+    const badBook = { ...book, _id: 'nope' };
+    for (const products of [
+      [{ product: 'nope', priority: 1 }],
+      [{ product: badBook, priority: 1 }],
+      [{ product: { title: 'x' }, priority: 1 }],
+      [id(1)],
+      id(1),
+      null,
+    ]) {
+      assert.equal(adminProductSetReferencesPayloadSchema.safeParse({ products }).success, false, JSON.stringify(products));
+    }
   });
 
   void it('limit uploads to the known file modules', () => {

@@ -4,8 +4,11 @@ import { objectIdSchema, paginationQuerySchema } from '../../primitives.ts';
 
 // Shared pieces of the admin request payloads (apps/api routes guarded by `permissionValidator(USER_ROLES.ADMIN)`).
 //
-// Types first: the legacy API validates none of these payloads (no Joi validator on any admin route). The schemas
-// describe what the admin may send and give the api-client its input types; Phase 4 enforces them with `validate()`.
+// Types first: the full payload schemas describe what the admin may send and give the api-client its input types.
+// Since Phase 4 the API enforces, with `validate()`, only each write's references (the `…ReferencesPayloadSchema`,
+// `adminAuthorBooksPayloadSchema` and list-filter schemas): every reference is an id, so a bad one is refused before
+// anything is written. The rest is enforced once uploads answer image URLs (the legacy upload's bare key fails the
+// image fields). Unknown keys pass through those checks.
 // Objects strip unknown keys (not strict), so parsing a form value that still carries a server-only field
 // (`wholeSalePriceHistory`, `isDeleted`…) drops it.
 
@@ -20,5 +23,9 @@ export const adminSearchQuerySchema = z.object({
 });
 export type AdminSearchQuery = z.infer<typeof adminSearchQuerySchema>;
 
-// A list of references by ObjectId (related books, categories…).
+// A list of references by ObjectId (related books, categories…). A bad id answers INVALID_ID.
 export const adminIdListSchema = z.array(objectIdSchema);
+
+// Since Phase 4 a create or update may leave a reference list out: a create stores an empty list, an update keeps the
+// current one (Mongoose 8 drops undefined keys from `$set`, so an omitted field is never written as null).
+export const adminOptionalIdListSchema = adminIdListSchema.optional();

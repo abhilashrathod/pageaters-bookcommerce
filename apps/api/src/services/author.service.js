@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { generateRandomNumber } = require('../helpers/utils.helper');
+const { pageOptions } = require('../helpers/paging.helper');
 const { SEARCH_MAX_TIME_MS, SEARCH_RESULT_LIMIT, wordPrefixFilter } = require('../helpers/search-pattern.helper');
 
 // Authors: public list, detail and search; admin create/update/delete. An author's `books` list and each book's
@@ -13,43 +14,41 @@ const Books = mongoose.model(models.STORE_BOOK);
 
 const SORTABLE = ['name', 'createdAt', 'popularity', 'priority'];
 
-/**
- * One page of live authors (list fields).
- * Legacy: without `limit` the page has no documents; `sortOrder` is passed through as given.
- * @param {{ page?: string, limit?: string, sortBy?: string, sortOrder?: string }} options
- * @returns {Promise<object>} The mongoose-paginate-v2 result.
- * @throws {AppError} SORTING_NOT_ALLOWED (400) for a sort field outside the allowlist.
- */
-const listAuthors = ({ page, limit, sortBy, sortOrder }) => {
-  if (sortBy && !SORTABLE.includes(sortBy)) throw new AppError('SORTING_NOT_ALLOWED');
-
-  return Author.paginate(
-    { isDeleted: false },
-    { page, limit, select: `name books authorId popularity isDeleted deletedAt`, sort: { [sortBy]: sortOrder } },
-  );
+// Points the listed books (if any) at the author.
+const setAuthorOf = async (books, authorId) => {
+  if (books?.length) await Books.updateMany({ _id: mongoose.trusted({ $in: books }) }, { $set: { author: authorId } });
 };
 
 /**
- * Creates an author and sets it as the author of `books`.
- * Legacy: without `books` the author is created and then the call fails (500).
- * @param {{ name?: string, intro?: string, avatar?: string, books: string[] }} fields
+ * One page of live authors (list fields). Paging defaults: helpers/paging.helper.js.
+ * @param {{ page?: string, limit?: string, sortBy?: string, sortOrder?: string }} options
+ * @returns {Promise<object>} The mongoose-paginate-v2 result.
+ * @throws {AppError} SORTING_NOT_ALLOWED (400) for a sort field outside the allowlist, INVALID_PAGING (400).
+ */
+const listAuthors = (params) =>
+  Author.paginate(
+    { isDeleted: false },
+    { ...pageOptions(params, { sortable: SORTABLE }), select: `name books authorId popularity isDeleted deletedAt` },
+  );
+
+/**
+ * Creates an author and sets it as the author of `books` (none when left out; the route checks they are ids).
+ * @param {{ name?: string, intro?: string, avatar?: string, books?: string[] }} fields
  * @returns {Promise<object>} The new author document.
  */
 const createAuthor = async ({ name, intro, avatar, books }) => {
   const author = await Author.create({ authorId: `AU-${generateRandomNumber(10)}`, name, intro, avatar, books });
 
-  if (books.length > 0) {
-    await Books.updateMany({ _id: mongoose.trusted({ $in: books }) }, { $set: { author: author._id } }, { multi: true });
-  }
+  await setAuthorOf(books, author._id);
 
   return author;
 };
 
 /**
- * Updates a live author and sets it as the author of `books` (books dropped from the list keep it).
- * Legacy: without `books` the author is updated and then the call fails (500).
+ * Updates a live author and sets it as the author of `books` (books dropped from the list keep it). A field left
+ * out keeps its value (Mongoose drops undefined keys from `$set`), so without `books` the list is unchanged.
  * @param {string} id
- * @param {{ name?: string, intro?: string, avatar?: string, books: string[] }} fields
+ * @param {{ name?: string, intro?: string, avatar?: string, books?: string[] }} fields
  * @returns {Promise<object>} The updated author.
  * @throws {AppError} AUTHOR_NOT_EXIST (400).
  */
@@ -59,9 +58,7 @@ const updateAuthor = async (id, { name, intro, avatar, books }) => {
 
   const authorRes = await Author.findOneAndUpdate({ _id: id }, { $set: { name, intro, avatar, books } }, { new: true });
 
-  if (books.length > 0) {
-    await Books.updateMany({ _id: mongoose.trusted({ $in: books }) }, { $set: { author: author._id } }, { multi: true });
-  }
+  await setAuthorOf(books, author._id);
 
   return authorRes;
 };

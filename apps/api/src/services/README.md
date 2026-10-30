@@ -78,7 +78,9 @@ never the message). The central error handler (`middlewares/errorHandler.middlew
   pincode check lives in `address.service.js`.
 - **`helpers/` holds only pure, cross-cutting utilities** with no domain rules and no database or vendor calls:
   `appError`, `encryption`, `utils`, `image-url` (public image URLs, also used by `libs/`), the Mongo connection and
-  compat helpers. `environment` exposes the legacy production-only gate (`isProduction()`, read per call so
+  compat helpers, `paging` (list defaults: `Model.paginate(query, { ...pageOptions(params, { sortable }), select })`
+  gives page 1, limit 10 (max 1000), newest first with an `_id` tiebreak, and throws `INVALID_PAGING` /
+  `SORTING_NOT_ALLOWED`). `environment` exposes the legacy production-only gate (`isProduction()`, read per call so
   tests can switch it).
 - **`libs/` (sitemap, Google feed) must not import services**; code they share with services goes in a
   helper.

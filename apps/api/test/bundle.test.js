@@ -2,13 +2,13 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, ids, loadCatalog, paged, startTestApp } = require('./helpers');
+const { asCreated, asJson, assertBody, assertGuarded, catalogState, createUser, envelopes, ids, loadCatalog, paged, startTestApp } = require('./helpers');
 const { loadStore, storeIds } = require('./helpers/fixtures/store');
 
 // /api/v1/bundles over HTTP: public list, detail (with computed stock) and search; admin CRUD. Written against the
 // legacy controller before the service refactor.
 
-const { ok, okString, badRequest, serverError } = envelopes;
+const { ok, okString, badRequest } = envelopes;
 
 const Bundle = () => mongoose.model('bundle');
 const Book = () => mongoose.model('storeBook');
@@ -73,9 +73,10 @@ describe('GET /bundles', () => {
     assertBody(await api.request(`/bundles?page=1&limit=10&category=${ids.categoryFiction}`), 200, ok('BUNDLE_LIST_SUCCESS', firstPage(docs, 1)));
   });
 
-  test('refuses a sort field outside the allowlist; legacy: no page/limit answers no documents', async () => {
+  test('refuses a sort field outside the allowlist; without page/limit answers page 1 of 10, newest first', async () => {
     assertBody(await api.request('/bundles?page=1&limit=10&sortBy=weight'), 400, badRequest('SORTING_NOT_ALLOWED'));
-    assertBody(await api.request('/bundles'), 200, ok('BUNDLE_LIST_SUCCESS', paged([], { totalDocs: 2, limit: 0, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null })));
+    const docs = asJson(await Bundle().find({ isDeleted: false }).select(LIST_FIELDS).sort({ createdAt: -1, _id: -1 }));
+    assertBody(await api.request('/bundles'), 200, ok('BUNDLE_LIST_SUCCESS', firstPage(docs, 2)));
   });
 });
 
@@ -115,9 +116,11 @@ describe('POST /bundles', () => {
     assert.deepEqual((await Book().findById(ids.bookOne)).relatedBundles.map(String), [String(bundle._id)]);
   });
 
-  test('legacy: without bundledBooks it answers 500 after creating the bundle', async () => {
-    assertBody(await api.request('/bundles', { method: 'POST', body: { title: 'Test Bundle Bare' }, cookie: admin.cookie }), 500, serverError);
-    assert.equal(await Bundle().countDocuments({ title: 'Test Bundle Bare' }), 1);
+  test('without bundledBooks creates an empty bundle (the legacy answered 500 after creating it)', async () => {
+    const res = await api.request('/bundles', { method: 'POST', body: { title: 'Test Bundle Bare' }, cookie: admin.cookie });
+    const bundle = await Bundle().findOne({ title: 'Test Bundle Bare' });
+    assertBody(res, 200, ok('BUNDLE_CREATE_SUCCESS', asCreated(bundle)));
+    assert.deepEqual(bundle.bundledBooks, []);
   });
 });
 
@@ -136,9 +139,35 @@ describe('PUT /bundles/:id', () => {
     assertBody(await api.request(`/bundles/${storeIds.bundleDeleted}`, { method: 'PUT', body: { bundledBooks: [] }, cookie: admin.cookie }), 400, badRequest('BUNDLE_NOT_EXIST'));
   });
 
-  test('legacy: without bundledBooks it answers 500 after updating', async () => {
-    assertBody(await api.request(`/bundles/${storeIds.bundleTwo}`, { method: 'PUT', body: { title: 'Test Bundle Two C' }, cookie: admin.cookie }), 500, serverError);
-    assert.equal((await Bundle().findById(storeIds.bundleTwo)).title, 'Test Bundle Two C');
+  test('without bundledBooks keeps the books (the legacy answered 500 after updating)', async () => {
+    const before = (await Bundle().findById(storeIds.bundleTwo)).bundledBooks.map(String);
+    const res = await api.request(`/bundles/${storeIds.bundleTwo}`, { method: 'PUT', body: { title: 'Test Bundle Two C' }, cookie: admin.cookie });
+    const bundle = await Bundle().findById(storeIds.bundleTwo);
+    assertBody(res, 200, ok('BUNDLE_UPDATE_SUCCESS', asJson(bundle)));
+    assert.equal(bundle.title, 'Test Bundle Two C');
+    assert.deepEqual(bundle.bundledBooks.map(String), before);
+  });
+});
+
+describe('bundle reference checks', () => {
+  test('refuses a reference that is not an id (list or single) on create and update, before writing anything', async () => {
+    const before = await catalogState();
+    for (const [body, code] of [
+      [{ title: 'Test Bundle Bad', bundledBooks: String(ids.bookOne) }, 'INVALID_REQUEST'],
+      [{ title: 'Test Bundle Bad', bundledBooks: ['nope'] }, 'INVALID_ID'],
+      [{ title: 'Test Bundle Bad', categories: null }, 'INVALID_REQUEST'],
+      [{ title: 'Test Bundle Bad', relatedBundles: [{ $ne: null }] }, 'INVALID_REQUEST'],
+      [{ title: 'Test Bundle Bad', relatedCollections: ['nope'] }, 'INVALID_ID'],
+    ]) {
+      for (const [method, path] of [
+        ['POST', '/bundles'],
+        ['PUT', `/bundles/${storeIds.bundleTwo}`],
+      ]) {
+        const res = await api.request(path, { method, body, cookie: admin.cookie });
+        assertBody(res, 400, envelopes.badRequestObject(code));
+      }
+    }
+    assert.deepEqual(await catalogState(), before);
   });
 });
 

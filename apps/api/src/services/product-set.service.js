@@ -4,6 +4,7 @@ const { kebabCase, sortBy, isArray, map } = require('lodash');
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { generateRandomString, generateRandomNumber } = require('../helpers/utils.helper');
+const { pageOptions } = require('../helpers/paging.helper');
 
 // Product sets: an ordered list of store books (`products: [{ priority, product }]`) used by deals and CMS rows.
 // Public detail by setId or slug; admin list and create/update/deactivate.
@@ -35,16 +36,17 @@ const findActive = async (query, unwrap) => {
 };
 
 /**
- * One page of active product sets, optionally only those in any of `categories` (array or comma-separated).
- * Legacy: without `limit` the page has no documents.
+ * One page of active product sets, newest first, optionally only those in any of `categories` (array or
+ * comma-separated; the route checks they are ids). Paging defaults: helpers/paging.helper.js (no client sorting).
  * @param {{ page?, limit?, categories?: string | string[] }} options
  * @returns {Promise<object>} The mongoose-paginate-v2 result.
+ * @throws {AppError} INVALID_PAGING (400).
  */
 const listProductSets = ({ page, limit, categories }) => {
   const query = { isActive: true };
   if (categories) query.categories = mongoose.trusted({ $in: isArray(categories) ? categories : categories.split(',') });
 
-  return ProductSets.paginate(query, { page, limit });
+  return ProductSets.paginate(query, pageOptions({ page, limit }));
 };
 
 /**

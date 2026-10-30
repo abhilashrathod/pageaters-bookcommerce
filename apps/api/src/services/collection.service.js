@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { generateRandomNumber } = require('../helpers/utils.helper');
+const { pageOptions } = require('../helpers/paging.helper');
 const { SEARCH_MAX_TIME_MS, SEARCH_RESULT_LIMIT, wordPrefixFilter } = require('../helpers/search-pattern.helper');
 const { addBackLinks } = require('./catalog-links.service');
 
@@ -40,30 +41,25 @@ const findLive = async (query) => {
 };
 
 /**
- * One page of live collections with their books populated, optionally in one related category.
- * Legacy: without `limit` the page has no documents.
+ * One page of live collections with their books populated, optionally in one related category. Paging defaults:
+ * helpers/paging.helper.js.
  * @param {{ page?, limit?, sortBy?, sortOrder?, category? }} options
  * @returns {Promise<object>} The mongoose-paginate-v2 result.
- * @throws {AppError} SORTING_NOT_ALLOWED (400).
+ * @throws {AppError} SORTING_NOT_ALLOWED (400), INVALID_PAGING (400).
  */
-const listCollections = ({ page, limit, sortBy, sortOrder, category }) => {
+const listCollections = ({ category, ...params }) => {
   const query = { isDeleted: false };
   if (category) query.relatedCategories = category;
 
-  if (sortBy && !SORTABLE.includes(sortBy)) throw new AppError('SORTING_NOT_ALLOWED');
-
   return Collection.paginate(query, {
-    page,
-    limit,
-    sort: { [sortBy]: sortOrder },
+    ...pageOptions(params, { sortable: SORTABLE }),
     select: `title collectionId tags poster priority popularity books`,
     populate: LIST_POPULATE,
   });
 };
 
 /**
- * Creates a collection and links it from its books and related collections.
- * Legacy: without `books` or `relatedCollections` the collection is created and then the call fails (500).
+ * Creates a collection and links it from its books and related collections (a list left out is empty).
  * @param {object} fields title, description, tags, books, poster, relatedCollections, relatedCategories,
  *   featuredAuthors, priority, popularity.
  * @returns {Promise<object>} The new collection document.
@@ -92,8 +88,7 @@ const createCollection = async (fields) => {
 
 /**
  * Updates a live collection and adds any missing links from its books and related collections (links from records
- * removed from the lists stay).
- * Legacy: without `books` or `relatedCollections` the collection is updated and then the call fails (500).
+ * removed from the lists stay). A field left out keeps its value (Mongoose drops undefined keys from `$set`).
  * @param {string} id
  * @param {object} fields As for createCollection.
  * @returns {Promise<object>} The updated collection.

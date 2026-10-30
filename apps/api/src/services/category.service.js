@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { generateRandomNumber } = require('../helpers/utils.helper');
+const { pageOptions, parsePaging, sortOn } = require('../helpers/paging.helper');
 const { SEARCH_MAX_TIME_MS, SEARCH_RESULT_LIMIT, wordPrefixFilter } = require('../helpers/search-pattern.helper');
 
 // Categories: public list, detail, search and the category's books; admin create/update/delete.
@@ -24,21 +25,16 @@ const findLive = async (query) => {
 };
 
 /**
- * One page of live categories (list fields).
- * Legacy: `sortOrder` goes through `Number()`, so 'asc'/'desc' become NaN and sort ascending; without `limit` the
- * page has no documents.
+ * One page of live categories (list fields). Paging defaults: helpers/paging.helper.js.
  * @param {{ page?: string, limit?: string, sortBy?: string, sortOrder?: string }} options
  * @returns {Promise<object>} The mongoose-paginate-v2 result.
- * @throws {AppError} SORTING_NOT_ALLOWED (400).
+ * @throws {AppError} SORTING_NOT_ALLOWED (400), INVALID_PAGING (400).
  */
-const listCategories = ({ page, limit, sortBy, sortOrder }) => {
-  if (sortBy && !SORTABLE.includes(sortBy)) throw new AppError('SORTING_NOT_ALLOWED');
-
-  return Category.paginate(
+const listCategories = (params) =>
+  Category.paginate(
     { isDeleted: false },
-    { page, limit, select: `categoryId _id title numberOfBooks thumbnail`, sort: { [sortBy]: Number(sortOrder) } },
+    { ...pageOptions(params, { sortable: SORTABLE }), select: `categoryId _id title numberOfBooks thumbnail` },
   );
-};
 
 /**
  * Creates a category.
@@ -98,21 +94,24 @@ const getCategoryById = (id) => findLive({ _id: id });
 const getCategoryByCategoryId = (categoryId) => findLive({ categoryId });
 
 /**
- * The in-stock books of a category three ways (by popularity, publication year and discount), one page each.
- * Legacy: without `limit` all three lists are empty.
+ * The in-stock books of a category three ways (by popularity, publication year and discount), one page each, in
+ * `sortOrder` (default descending: most popular, newest, most discounted first). Paging defaults:
+ * helpers/paging.helper.js.
  * @param {string} id Category id.
  * @param {{ page?: string, limit?: string, sortOrder?: string }} options
  * @returns {Promise<{ trending: object[], newArrivals: object[], mostDiscounted: object[] }>}
+ * @throws {AppError} INVALID_PAGING (400).
  */
 const getOverview = async (id, { page, limit, sortOrder }) => {
   const query = { isDeleted: false, type: enums.PRODUCT_TYPES.BOOK, categories: id, inventory: mongoose.trusted({ $gt: 0 }) };
+  const paging = parsePaging({ page, limit, sortOrder });
   const options = {
-    page,
-    limit,
+    page: paging.page,
+    limit: paging.limit,
     select: `title bookId ISBN author poster price popularity editorsPick availability currentDiscount inventory newRelease preOrder bestSeller`,
     populate: PRODUCT_POPULATE,
   };
-  const pageSortedBy = async (field) => (await Book.paginate(query, { ...options, sort: { [field]: sortOrder } })).docs;
+  const pageSortedBy = async (field) => (await Book.paginate(query, { ...options, sort: sortOn(field, paging.sortOrder) })).docs;
 
   return {
     trending: await pageSortedBy('popularity'),
@@ -122,23 +121,18 @@ const getOverview = async (id, { page, limit, sortOrder }) => {
 };
 
 /**
- * One page of a category's books (soft-deleted ones excluded), sorted when both `sortBy` and `sortOrder` are given.
+ * One page of a category's books (soft-deleted ones excluded). Paging defaults: helpers/paging.helper.js.
  * @param {string} id Category id.
  * @param {{ page?: string, limit?: string, sortBy?: string, sortOrder?: string }} options
  * @returns {Promise<object>} The mongoose-paginate-v2 result.
- * @throws {AppError} SORTING_NOT_ALLOWED (400).
+ * @throws {AppError} SORTING_NOT_ALLOWED (400), INVALID_PAGING (400).
  */
-const listProducts = (id, { page, limit, sortBy, sortOrder }) => {
-  if (sortBy && !PRODUCTS_SORTABLE.includes(sortBy)) throw new AppError('SORTING_NOT_ALLOWED');
-
+const listProducts = (id, params) => {
   const options = {
-    page,
-    limit,
+    ...pageOptions(params, { sortable: PRODUCTS_SORTABLE }),
     select: `title bookId ISBN author poster price popularity availability editorsPick inventory currentDiscount inventory newRelease preOrder bestSeller`,
     populate: PRODUCT_POPULATE,
   };
-  if (sortBy && sortOrder) options.sort = { [sortBy]: [sortOrder] };
-
   return Book.paginate({ isDeleted: false, categories: id, type: enums.PRODUCT_TYPES.BOOK }, options);
 };
 
