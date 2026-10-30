@@ -385,7 +385,22 @@ This file is temporary: when every phase is done, archive the decision log into 
     across fields), at most 10 live records, most popular first (categories: most books), 1 s query time limit; a
     non-string `q` answers `[]` and control characters count as spaces. Catalogue writes are visible at once. Removed: `libs/indexing.js`, the indexing on connect, ADMIN
     `/re-index`, the `lunr` dependency, `api.reindex()` in the tests
-- [ ] Central error handler, pino logging, request IDs, `/health`
+- [x] Central error handler, pino logging, request IDs, `/health`
+  - Done 2026-10-30 (api-engineer, reviewed + audited, two fix rounds): pino 10.4.0 (morgan removed) with `LOG_LEVEL`
+    (silent in tests); redaction by key name at any depth (credentials, OTP, cookies, signatures, e-mail, phone,
+    address), Mongoose documents converted first, errors logged as type/code/status/stack only (never a message that
+    can carry data; `err` never carries arbitrary data), child bindings redacted. Request ID per request (a safe
+    incoming `x-request-id` reused), `X-Request-Id` on every response, one access line with the route pattern (never
+    the concrete path or query). One mapping for errors: unmatched routes, malformed JSON, oversized bodies, malformed
+    path encoding and a down database answer the JSON envelope (404/400/413/400/503) instead of Express's HTML pages;
+    anything else 500 `SOME_ERROR_OCCURRED`. `logRequest` and the `log_api` model removed; `no-console` is an error
+    in `src`. Unhandled rejections are logged and the process keeps serving; uncaught exceptions are logged and exit.
+    `GET /health`: unauthenticated, connects (≤ 2.5 s) and pings (≤ 1 s), answers only `{status}` 200/503. 885 API tests
+  - Follow-ups: drop the old `log_api` collection (request headers, cookies and plaintext passwords) from any database
+    that ran the old code — owner, one-off on the local dev DB; nothing is deployed yet. Await the remaining legacy
+    `void …save()`/unreturned creates (deal destroy, store-book, category and mystery-box create, upload `File.create`)
+    in the legacy-bugs step, so the rejection handler stays a safety net. Document `/health` and `LOG_LEVEL` in
+    `docs/deployment.md` (Phase 10)
   - Remove `logRequest` (`extendReq.middleware.js`): it `console.log`s full request headers (the `_PID` session
     cookie), `req.user` and `req.allParams()` (plaintext passwords on failed login, password change and reset) and
     upserts headers + params into `log_api` — drop the `log_api` model (or keep method, URL, status, request ID only);
