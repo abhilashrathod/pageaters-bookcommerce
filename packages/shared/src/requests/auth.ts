@@ -1,5 +1,14 @@
 import { z } from 'zod';
-import { emailFieldSchema, fullNameFieldSchema, otpFieldSchema, passwordFieldSchema, phoneFieldSchema } from './common.ts';
+import {
+  emailFieldSchema,
+  fullNameFieldSchema,
+  otpFieldSchema,
+  PASSWORD_RAW_MAX,
+  passwordFieldSchema,
+  phoneFieldSchema,
+  TOKEN_MAX,
+  tokenFieldSchema,
+} from './common.ts';
 
 // Auth payloads, ported from apps/api/src/validators/auth.validator.js. The API validates the merge of route
 // params, query and body, and Joi rejects keys a schema doesn't list, hence `z.strictObject`.
@@ -15,7 +24,7 @@ export type RegisterPayload = z.infer<typeof registerPayloadSchema>;
 
 export const verifyEmailPayloadSchema = z.strictObject({
   email: emailFieldSchema,
-  token: z.string({ error: 'INVALID_TOKEN' }).trim().min(1),
+  token: tokenFieldSchema('INVALID_TOKEN'),
 });
 export type VerifyEmailPayload = z.infer<typeof verifyEmailPayloadSchema>;
 
@@ -48,7 +57,7 @@ export const forgotPasswordPayloadSchema = z.strictObject({
 export type ForgotPasswordPayload = z.infer<typeof forgotPasswordPayloadSchema>;
 
 export const resetPasswordPayloadSchema = z.strictObject({
-  token: z.string({ error: 'INVALID_RESET_PASSWORD_TOKEN' }).trim().min(1),
+  token: tokenFieldSchema('INVALID_RESET_PASSWORD_TOKEN'),
   email: emailFieldSchema,
   newPassword: passwordFieldSchema,
   confirmPassword: passwordFieldSchema,
@@ -71,14 +80,15 @@ export const resendVerificationEmailPayloadSchema = z.strictObject({
 });
 export type ResendVerificationEmailPayload = z.infer<typeof resendVerificationEmailPayloadSchema>;
 
-// Logout. Joi `string().empty('')`: '' counts as absent. No error code in Joi, so zod's default message.
+// Logout. Joi `string().empty('')`: '' counts as absent. The API revokes the session cookie's token and ignores
+// this one; it is still bounded.
 export const revokeValidationPayloadSchema = z.strictObject({
-  token: z.preprocess((value) => (value === '' ? undefined : value), z.string().optional()),
+  token: z.preprocess((value) => (value === '' ? undefined : value), z.string({ error: 'INVALID_TOKEN' }).max(TOKEN_MAX).optional()),
 });
 export type RevokeValidationPayload = z.infer<typeof revokeValidationPayloadSchema>;
 
-// Account deletion: required, not trimmed, so '   ' passes (as in Joi).
+// Account deletion: required, not trimmed, so '   ' passes (as in Joi); capped like every password.
 export const deleteAccountPayloadSchema = z.strictObject({
-  password: z.string({ error: 'INVALID_PASSWORD' }).min(1),
+  password: z.string({ error: 'INVALID_PASSWORD' }).min(1).max(PASSWORD_RAW_MAX),
 });
 export type DeleteAccountPayload = z.infer<typeof deleteAccountPayloadSchema>;

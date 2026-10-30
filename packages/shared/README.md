@@ -15,15 +15,15 @@ first through `^build`.
 
 ## Layout
 
-| Path                | Holds                                                                                         |
-| ------------------- | --------------------------------------------------------------------------------------------- |
-| `src/index.ts`      | The public barrel                                                                             |
-| `src/primitives.ts` | ObjectId, ISO date, money, image URL, pagination query and page envelope, API wrapper         |
-| `src/enums.ts`      | Domain enums (roles, statuses, product, order and payment values) as the API stores them      |
-| `src/catalog/`      | Books, authors, categories, collections, bundles, product sets, deals, add-ons, mystery boxes |
-| `src/commerce/`     | Users (public shape), addresses, carts, favourites, orders, store credit, gift cards…         |
-| `src/requests/`     | Request payloads replacing the API's Joi validators, with the same error codes                |
-| `src/populated.ts`  | Cart, order and favourites as the shopper's endpoints send them, references populated         |
+| Path                | Holds                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| `src/index.ts`      | The public barrel                                                                              |
+| `src/primitives.ts` | ObjectId, ISO date, money, image URL, pagination query and page envelope, API wrapper          |
+| `src/enums.ts`      | Domain enums (roles, statuses, product, order and payment values) as the API stores them       |
+| `src/catalog/`      | Books, authors, categories, collections, bundles, product sets, deals, add-ons, mystery boxes  |
+| `src/commerce/`     | Users (public shape), addresses, carts, favourites, orders, store credit, gift cards…          |
+| `src/requests/`     | Request payloads the API validates with `validate()` (Joi's error codes, tightened in Phase 4) |
+| `src/populated.ts`  | Cart, order and favourites as the shopper's endpoints send them, references populated          |
 
 Catalog references are layered (`fooFieldsSchema` → `fooRefSchema`, an id or a projection → `fooSchema`) rather
 than recursive, so the emitted declarations keep full types; see `src/catalog/common.ts`. Commerce schemas hold

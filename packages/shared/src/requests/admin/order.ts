@@ -29,6 +29,14 @@ export const adminReturnShipmentPayloadSchema = z.object({
 });
 export type AdminReturnShipmentPayload = z.infer<typeof adminReturnShipmentPayloadSchema>;
 
+// What the API validates for that route: the body plus the path ids. The API merges path, query and body, so a body or
+// query value could replace a path id; checking the merged ids keeps an operator object (`?id[$ne]=x`) out of the query.
+export const adminReturnShipmentRequestSchema = adminReturnShipmentPayloadSchema.extend({
+  id: objectIdSchema,
+  requestId: objectIdSchema,
+});
+export type AdminReturnShipmentRequest = z.infer<typeof adminReturnShipmentRequestSchema>;
+
 // POST /orders/create-shipment/:orderId: books the parcel with the carrier (Delhivery today, the mock shipping
 // adapter from Phase 4) for a paid or confirmed order, which becomes shipped. Centimetres and grams.
 export const adminShipmentCreatePayloadSchema = z.object({
@@ -39,6 +47,12 @@ export const adminShipmentCreatePayloadSchema = z.object({
   }),
 });
 export type AdminShipmentCreatePayload = z.infer<typeof adminShipmentCreatePayloadSchema>;
+
+// What the API validates for that route: the body plus the path's `orderId` (see adminReturnShipmentRequestSchema).
+export const adminShipmentCreateRequestSchema = adminShipmentCreatePayloadSchema.extend({
+  orderId: objectIdSchema,
+});
+export type AdminShipmentCreateRequest = z.infer<typeof adminShipmentCreateRequestSchema>;
 
 // POST /orders/admin-cancel/:id. The legacy controller ignores the path and finds the order by `uniqueId` (its
 // `OD-…` id) and `userId` from the body, so the admin sends the `OD-…` id in both (Phase 4: read it from the path).

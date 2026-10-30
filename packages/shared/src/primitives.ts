@@ -12,7 +12,7 @@ export type IsoDate = z.infer<typeof isoDateSchema>;
 
 // Amounts in Indian rupees, as the API stores them: a plain `Number`, never negative. Most prices are whole
 // rupees, but derived prices (members' and rental prices) can carry paise, e.g. 599.25, so up to two decimals.
-const hasAtMostTwoDecimals = (value: number) => Math.abs(Math.round(value * 100) - value * 100) < 1e-6;
+export const hasAtMostTwoDecimals = (value: number) => Math.abs(Math.round(value * 100) - value * 100) < 1e-6;
 export const moneySchema = z.number().nonnegative().refine(hasAtMostTwoDecimals, 'INVALID_AMOUNT');
 export type Money = z.infer<typeof moneySchema>;
 

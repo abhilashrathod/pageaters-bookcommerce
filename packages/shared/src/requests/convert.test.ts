@@ -1,8 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { describe, it } from 'node:test';
-import { fileURLToPath } from 'node:url';
 import { joiBoolean, joiNumber } from './convert.ts';
 
 // Expected results probed from Joi 14.3.1 (`Joi.number()` / `Joi.boolean()` with the default `convert: true`).
@@ -51,48 +48,6 @@ void describe('joiNumber', () => {
       // Linear takes well under 1 ms; the quadratic regex took 15 s or more. The bound leaves room for a loaded CI box.
       assert.ok(elapsed < 1000, `${input.slice(0, 12)}… took ${elapsed.toFixed(1)} ms`);
       assert.equal(result, converted ?? input, input.slice(0, 12));
-    }
-  });
-});
-
-// Differential check against Joi 14's own number conversion while apps/api still installs Joi (until Phase 4).
-type JoiNumber = {
-  number: () => unknown;
-  validate: (value: unknown, schema: unknown) => { error: Error | null; value: unknown };
-};
-const apiDir = fileURLToPath(new URL('../../../../apps/api/', import.meta.url));
-const loadJoi = (): JoiNumber | undefined => {
-  if (!existsSync(`${apiDir}package.json`)) return undefined;
-  try {
-    return createRequire(`${apiDir}package.json`)('joi') as JoiNumber;
-  } catch {
-    return undefined;
-  }
-};
-const joi = loadJoi();
-
-void describe('joiNumber parity with Joi 14', { skip: !joi && 'joi is not resolvable from apps/api' }, () => {
-  void it('converts or rejects exactly what Joi.number() does', () => {
-    if (!joi) return;
-    const schema = joi.number();
-    const signs = ['', '+', '-'];
-    const integers = ['0', '00', '1', '01', '10', '100', '007', '9007199254740993'];
-    const fractions = ['', '.0', '.00', '.5', '.50', '.05', '.10', '.000001'];
-    const exponents = ['', 'e0', 'e1', 'e+1', 'e-1', 'e01', 'e-02', 'E1', 'e400', 'e-400'];
-    for (const sign of signs) {
-      for (const integer of integers) {
-        for (const fraction of fractions) {
-          for (const exponent of exponents) {
-            const input = ` ${sign}${integer}${fraction}${exponent} `;
-            const { error, value } = joi.validate(input, schema);
-            const ours = joiNumber(input);
-            if (!error) assert.equal(ours, value, input);
-            // Joi also rejects numbers beyond ±2^53; the zod `.int()` check rejects those after conversion.
-            else if (typeof ours === 'number') assert.ok(Math.abs(ours) > Number.MAX_SAFE_INTEGER, input);
-            else assert.equal(ours, input, input);
-          }
-        }
-      }
     }
   });
 });

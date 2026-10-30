@@ -1,8 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { describe, it } from 'node:test';
-import { fileURLToPath } from 'node:url';
 import type { z } from 'zod';
 import {
   addressCreatePayloadSchema,
@@ -32,8 +29,8 @@ import {
 //   { input, output } → accepted; the parsed value equals `output` (after JSON round-trip, so absent = undefined)
 //   { input, code }   → rejected; the first issue's message is the Joi error code
 //   { input, rejects: true } → rejected; Joi had no code for it (it sent its own English text)
-// The zod schemas are checked against the tables always; while apps/api still has its Joi validators (until
-// Phase 4), the same tables are run through Joi too, proving both agree.
+// Until the API dropped Joi (Phase 4), the same tables also ran through its Joi validators and both agreed; `file`
+// and `joiExport` name the validator each table was checked against.
 
 type Case = { input: Record<string, unknown> } & ({ output: unknown } | { code: string } | { rejects: true });
 type Table = { file: string; joiExport: string; schema: z.ZodType; cases: Case[] };
@@ -63,7 +60,7 @@ const tables: Table[] = [
       { input: { product: ID }, output: { product: ID, quantity: 1 } },
       { input: { product: ID, quantity: ' 3 ' }, output: { product: ID, quantity: 3 } },
       { input: { product: ID, quantity: '1e1' }, output: { product: ID, quantity: 10 } },
-      { input: {}, output: { quantity: 1 } },
+      { input: {}, code: 'INVALID_ID' },
       { input: { product: ID, quantity: 0 }, code: 'REQUIRED_QUANTITY' },
       { input: { product: ID, quantity: 1.5 }, code: 'REQUIRED_QUANTITY' },
       { input: { product: ID, quantity: null }, code: 'REQUIRED_QUANTITY' },
@@ -84,7 +81,7 @@ const tables: Table[] = [
     schema: favoritesRequestPayloadSchema,
     cases: [
       { input: { product: ID.toUpperCase() }, output: { product: ID.toUpperCase() } },
-      { input: {}, output: {} },
+      { input: {}, code: 'INVALID_ID' },
       { input: { product: '' }, code: 'INVALID_ID' },
       { input: { product: `${ID}0` }, code: 'INVALID_ID' },
       { input: { product: ID, _: '1' }, rejects: true },
@@ -97,7 +94,7 @@ const tables: Table[] = [
     cases: [
       { input: { email: EMAIL }, output: { email: EMAIL } },
       { input: { email: ` ${EMAIL}\t` }, output: { email: EMAIL } },
-      { input: { email: 'Owner@Example.COM' }, output: { email: 'Owner@Example.COM' } },
+      { input: { email: 'Owner@Example.COM' }, output: { email: 'owner@example.com' } },
       { input: { email: 'owner+books@example.com' }, output: { email: 'owner+books@example.com' } },
       { input: { email: 'owner@example' }, output: { email: 'owner@example' } },
       { input: { email: 'owner@example.co.in' }, output: { email: 'owner@example.co.in' } },
@@ -328,7 +325,7 @@ const tables: Table[] = [
     schema: addressGetPayloadSchema,
     cases: [
       { input: { id: ID }, output: { id: ID } },
-      { input: {}, output: {} },
+      { input: {}, code: 'INVALID_ID' },
       { input: { id: 'nope' }, code: 'INVALID_ID' },
     ],
   },
@@ -338,7 +335,7 @@ const tables: Table[] = [
     schema: addressPincodePayloadSchema,
     cases: [
       { input: { pincode: ' 560001 ' }, output: { pincode: '560001' } },
-      { input: { pincode: 'abc' }, output: { pincode: 'abc' } },
+      { input: { pincode: 'abc' }, code: 'INVALID_PINCODE' },
       { input: {}, code: 'INVALID_PINCODE' },
       { input: { pincode: '' }, code: 'INVALID_PINCODE' },
     ],
@@ -349,7 +346,7 @@ const tables: Table[] = [
     schema: orderAttemptPayloadSchema,
     cases: [
       { input: { address: ID }, output: { address: ID } },
-      { input: {}, output: {} },
+      { input: {}, code: 'INVALID_ID' },
       { input: { address: 'nope' }, code: 'INVALID_ID' },
       { input: { address: ID, coupon: 'X' }, rejects: true },
     ],
@@ -422,50 +419,4 @@ void describe('request payload schemas', () => {
   void it('checkoutMethodSchema accepts exactly cod and online', () => {
     assert.deepEqual(checkoutMethodSchema.options, ['cod', 'online']);
   });
-});
-
-// Parity with the legacy Joi validators the API still runs (removed in Phase 4, after which this is skipped).
-// apps/api's request middleware calls `Joi.validate(req.allParams(), schema)` with Joi's defaults (abortEarly,
-// convert, unknown keys not allowed) and sends `error.message` to the client; a field's `.error(new Error(CODE))`
-// makes that message the code. Joi's own errors (no code) are `isJoi` ValidationErrors.
-type JoiResult = { error: (Error & { isJoi?: boolean }) | null; value: unknown };
-type Joi = { validate: (value: unknown, schema: unknown) => JoiResult };
-
-const validatorsDir = fileURLToPath(new URL('../../../../apps/api/src/validators/', import.meta.url));
-const hasValidators = existsSync(`${validatorsDir}cart.validator.js`);
-// Resolve Joi from apps/api, where it is installed (this package doesn't depend on it).
-const requireFromApi = createRequire(`${validatorsDir}cart.validator.js`);
-const loadJoi = (): Joi | undefined => {
-  if (!hasValidators) return undefined;
-  try {
-    return requireFromApi('joi') as Joi;
-  } catch {
-    return undefined;
-  }
-};
-const joi = loadJoi();
-
-void describe('parity with the API Joi validators', { skip: !joi && 'apps/api validators or joi are gone' }, () => {
-  const loadValidator = (file: string) => requireFromApi(`./${file}.validator.js`) as Record<string, unknown>;
-
-  for (const table of tables) {
-    void it(`${table.file}.${table.joiExport}`, () => {
-      if (!joi) return;
-      const joiSchema = loadValidator(table.file)[table.joiExport];
-      assert.ok(joiSchema, `${table.file}.validator.js exports ${table.joiExport}`);
-      for (const testCase of table.cases) {
-        const name = caseName(table, testCase.input);
-        const { error, value } = joi.validate(testCase.input, joiSchema);
-        if ('output' in testCase) {
-          assert.equal(error, null, `${name}: Joi says ${error?.message ?? ''}`);
-          assert.deepEqual(jsonRoundTrip(value), testCase.output, name);
-        } else if ('code' in testCase) {
-          assert.equal(error?.isJoi, undefined, `${name}: Joi sent its own text: ${error?.message ?? ''}`);
-          assert.equal(error?.message, testCase.code, name);
-        } else {
-          assert.equal(error?.isJoi, true, `${name}: Joi ${error ? `sent code ${error.message}` : 'accepted it'}`);
-        }
-      }
-    });
-  }
 });
