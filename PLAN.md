@@ -429,7 +429,30 @@ This file is temporary: when every phase is done, archive the decision log into 
     - Phase 10: check after each deploy that `one_pending_order_per_user` and `one_refund_credit_per_order` exist
       (autoIndex fails silently; needs MongoDB ≥ 6.0; two pending orders for one user block the first)
     - Docs (`docs/order-lifecycle.md`): store-credit return states and the query that finds a return left
-      `pending`/`crediting`; the list paging contract; the stock-alert e-mail shows the price without the discount
+      `pending`/`crediting`; the list paging contract; the stock-alert e-mail shows the price without the discount; cancels return store credit too; deals list by priority by default; a product set's slug never changes
+    - Also for f (found in d and b): a deal whose product set was hard-deleted 500s in `sortSets`, and a deactivated
+      set still shows inside a deal; the deal admin detail's populate path `products.product.author` is invalid;
+      admin `:id` values that aren't ObjectIds 500 (CastError) on add-on, deal and mystery-box routes
+    - Also for f (from b's re-review): return/replace requests (`requestReturn`), `alignReturnShipment` and
+      `closeRequest` still write the stage unconditionally (a refund landing meanwhile is overwritten; a double
+      submit pushes two requests) — route them through `transitionOrder`; a cancel during a COD place's link window
+      can leave the credit spent (filter the cancel on the `storeCreditTransaction` it read); test an e-mail failure
+      together with a failed credit return; `transitionOrder` gives a pushed `requests` entry a new `_id` and leaves
+      `updatedAt` stale in memory; ship/deliver still 500 when their e-mail fails after the stage changed (cancel
+      only logs); the Delhivery adapter has no cancel call, so a waybill booked for an order that lost the race is
+      cancelled by hand
+    - Phase 8 (admin): ship/deliver/cancel errors show "[object Object]" (the snackbar gets the envelope); show the
+      message, e.g. for the new 409
+    - Phase 5 (Vercel Cron, with the weekly cleanup): a protected sweep that finishes store-credit returns left
+      `pending`/`crediting` on cancelled or refunded orders (a COD cancel cut short gets no refund event, and the
+      shopper can't re-cancel)
+    - Phase 7 (storefront): `FeaturedDeals` sends `offset: 1` (now ignored) — ask for `page: 1, limit: 4` and drop the
+      first, or delete the unmounted component
+    - Phase 8 (admin): show `storeCreditReturn` on the order view, next to "Send Store Credit"
+    - Owner decisions (added from b): an admin cancel of a shipped order returns the applied store credit; staff must
+      not re-issue credit by hand after a cancel either (it is automatic now)
+    - Owner, one-off: re-run the seed sanitise step so the local `seed/data/product-sets.json` drops the 14 inactive
+      sets (an already-seeded DB keeps them unless loaded with `sync`; harmless, never served)
     - Tooling: the seed tests create `seed/data/fonts`, which makes shared's `seed-data.test.ts` stop skipping and
       fail when both run together (skip on the missing files instead); `pnpm --filter api test` uses the built
       `packages/shared/dist`, so run `pnpm turbo run build --filter=@pageaters/shared` first or the suites fail in
@@ -452,13 +475,23 @@ This file is temporary: when every phase is done, archive the decision log into 
       return; create without `giftOptions` answers 200. `issueCredit` validation and floored line totals were
       already fixed. Shared: `RF-` credit ids, optional `refundIds`/`storeCreditReturn` on `orderSchema` (not
       shoppers'). Reviewed (three rounds) + audited
-  - [ ] b. Orders: details, analytics, checkout and notifications. `order.getByUniqueId` calls `orderPaymentInfo(null)`
+  - [x] b. Orders: details, analytics, checkout and notifications. `order.getByUniqueId` calls `orderPaymentInfo(null)`
         (500) for an order without payment; analytics: best-selling matches `status` not `orderStatus`, dates are
         compared as strings (always `[]`), and `startDate`/`endDate` must be parsed to dates (aggregations aren't
         sanitised); a return after 7 days answers 200 `ORDER_RETURN_PERIOD_LAPSED`; checkout select misspells
         `boxed`; checkout stores bundle lines unpopulated, so the confirmation e-mail's bundle line has no title or
         poster (pinned in 6a); `GIFT_PACKAGES` is duplicated in the API and the storefront — move it to
-        `packages/shared`
+        `packages/shared`; cancelling an order (shopper or admin) doesn't return its applied store credit (found in a)
+    - Done 2026-10-30: an order without payment answers `payment: null` (the storefront order page guards it);
+      analytics count fulfilled orders by `orderStatus` over real dates, the range validated strictly (ISO with
+      offset, start before end, else 400 `ORDER_ANALYTICS_INVALID_RANGE`); a return after 7 days answers 400; the
+      checkout reads `boxes`; the confirmation e-mail's bundle line has its title, poster and a `/bundles/` link;
+      `GIFT_PACKAGES` lives in `packages/shared` (subpath `@pageaters/shared/gift-packages` for the storefront's
+      TS 4.5); a cancel returns applied store credit once through a's durable return (a cancel and a refund never
+      both return it); ship, Delhivery booking, deliver and cancel are conditional on the stage they read
+      (`order-transition.service.js`; a lost race answers 409 `ORDER_CHANGED_CONFLICT`, a booked waybill is logged
+      for manual cancellation); a cancel restores stock and credit before e-mailing and logs a cut-short return.
+      Reviewed (two rounds) + audited
   - [x] c. Catalog admin: inputs, create/update and list paging. Validate product-set `categories` and author `books`
         as ObjectId arrays (7a); author/collection/bundle/book create and update crash when a list field is missing;
         list endpoints (e.g. `GET /categories`) return no documents without `page`/`limit`, answer `page: null`
@@ -471,7 +504,7 @@ This file is temporary: when every phase is done, archive the decision log into 
       legacy admin's populated book (only the id is stored); a missing list no longer 500s; an empty product-set
       `categories` filter means none; book category counts +1/−1, awaited, never below 0. Storefront lists that
       send no sort now show newest first. Reviewed (three rounds) + audited
-  - [ ] d. Catalog extras: add-ons, deals, mystery boxes, product sets. Add-on `update` (undefined `id`/`addOnId`,
+  - [x] d. Catalog extras: add-ons, deals, mystery boxes, product sets. Add-on `update` (undefined `id`/`addOnId`,
         ReferenceError) and `getById` (undefined `bundles`) always 500; `getByProductId` ignores `productId`; the
         grouped endpoint doesn't filter soft-deleted add-ons; `storeDeal.contoller` passes `offset: parseInt(undefined)`
         so the deals list returns `page`/`offset`/`pagingCounter` as null; deal `getById` uses author messages and
@@ -479,6 +512,14 @@ This file is temporary: when every phase is done, archive the decision log into 
         product set regenerates its slug (breaks links); seed loads 14 inactive product sets the API never serves;
         delete the dead `book.model.js`; use c's `paging.helper.js` for the deals list; the shared category, deal,
         add-on and mystery-box update schemas still say an omitted field is written as null (Mongoose 8 drops it)
+    - Done 2026-10-30: add-on update/detail work, the grouped list hides deleted add-ons and returns the public
+      fields only, `productId` must be a live store book (add-ons have no product link, so every book gets the same
+      list); add-on create/update validated (non-negative price, discount 0–100); deals, add-ons and mystery boxes
+      use the paging helper (no `offset`; deals default to priority ascending); deal detail uses `STORE_DEAL_*`, its
+      update is one atomic write, delete awaits the save, its product sets must exist and be active (the legacy
+      admin's populated sets accepted, only ids stored), `GET /deals?category=` validated; mystery-box delete
+      stamps `deletedAt`; a product set keeps its slug on rename; the seed drops inactive product sets;
+      `book.model.js` removed; the update-schema comments corrected. Reviewed + audited
   - [x] e. Auth, account, cart, addresses, stock alerts, uploads. Await `user.save()` in register, login and contact
         OTP send/resend (a failed save is an unhandled rejection and the resend limit can fail open); `updatePassword`
         saves the old `password` instead of `newPassword`; `PUT /auth/me` validates `contactNo` but ignores it;
