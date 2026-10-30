@@ -91,10 +91,6 @@ router.get('/', async function(req, res, next) {
     rootUrl.lastmod = today;
     rootUrl.changefreq = 'daily';
     rootUrl.priority = '1.0';
-    rootUrl['image:image'] = {
-      'image:loc': 'https://res.cloudinary.com/pageaters/image/upload/v1673173795/web-banner_ogzs01.png',
-      'image:caption': 'Pageaters. Our original book collection contains only the highest quality books, allowing you to have an exceptional reading experience.',
-    };
     collection.push(rootUrl);
 
     //add recipes urls

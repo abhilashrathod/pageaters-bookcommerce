@@ -11,7 +11,7 @@ const { addressFields, loadStore, storeIds } = require('./helpers/fixtures/store
 // refactor. Since 7d every user is sent as the shared `userSchema` fields only (no password hash, salt, OTP,
 // tokens or `razorPayCustId`) and search takes `q` as literal text; test/security-exposure.test.js pins the leaks.
 
-const { badRequest, ok } = envelopes;
+const { ok } = envelopes;
 
 const User = () => mongoose.model('user');
 // A user as the admin views send it: the `userSchema` fields, in that order.
@@ -42,7 +42,6 @@ describe('auth', () => {
     for (const route of [
       ['GET', '/users'],
       ['GET', '/users/search?q=test'],
-      ['PUT', `/users/${shopper.user._id}`, {}],
       ['GET', `/users/${shopper.user._id}`],
     ]) {
       await assertGuarded(api, route, { admin: true, userCookie: shopper.cookie });
@@ -76,24 +75,6 @@ describe('GET /users/search', () => {
   test('7d: q is literal text (".*" and "(" match nothing here)', async () => {
     assertBody(await api.request('/users/search?q=.*', { cookie: admin.cookie }), 200, ok('USER_LIST_SUCCESS', []));
     assertBody(await api.request('/users/search?q=(', { cookie: admin.cookie }), 200, ok('USER_LIST_SUCCESS', []));
-  });
-});
-
-describe('PUT /users/:id', () => {
-  test('7d: updates the addressed user\'s profile text only and answers it as userSchema fields', async () => {
-    const body = { fullName: 'Test Changed', gender: 'other', role: 'ADMIN', email: 'changed@example.com', storeCredit: 1000, password: 'x' };
-    const res = await api.request(`/users/${shopper.user._id}`, { method: 'PUT', body, cookie: admin.cookie });
-    const after = await User().findById(shopper.user._id);
-    assertBody(res, 200, ok('USER_UPDATE_SUCCESS', adminView(after)));
-    assert.deepEqual(
-      { fullName: after.fullName, gender: after.gender, role: after.role, email: after.email, storeCredit: after.storeCredit, password: after.password },
-      { fullName: 'Test Changed', gender: 'other', role: 'USER', email: shopper.user.email, storeCredit: shopper.user.storeCredit, password: shopper.user.password },
-    );
-    assert.equal((await User().findById(admin.user._id)).fullName, admin.user.fullName, 'no other account changes');
-  });
-
-  test('7d: an unknown id answers USER_NOT_FOUND', async () => {
-    assertBody(await api.request(`/users/${new mongoose.Types.ObjectId()}`, { method: 'PUT', body: { fullName: 'Test X' }, cookie: admin.cookie }), 400, badRequest('USER_NOT_FOUND'));
   });
 });
 

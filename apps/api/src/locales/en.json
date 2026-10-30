@@ -78,7 +78,6 @@
 	"BOOK_SEARCH_SUCCESS": "Book Search Successful",
 	"BOOK_DELETE_SUCCESS": "Book Deleted Successfully",
 	"USER_LIST_SUCCESS": "User list success",
-	"USER_UPDATE_SUCCESS": "User Information Updated",
 	"AUTHOR_LIST_SUCCESS": "Author list success",
 	"AUTHOR_NOT_EXIST": "Author doesn't exist",
 	"AUTHOR_CREATE_SUCCESS": "New Author Created",

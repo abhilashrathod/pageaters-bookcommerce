@@ -9,7 +9,6 @@ const controller = require('./../controllers/user.controller');
 
 router.get('/', permissionValidator(USER_ROLES.ADMIN), controller.getAll);
 router.get('/search', permissionValidator(USER_ROLES.ADMIN), controller.search);
-router.put('/:id', permissionValidator(USER_ROLES.ADMIN), controller.update);
 router.get('/:id', permissionValidator(USER_ROLES.ADMIN), controller.getAllDetails);
 
 module.exports = router;

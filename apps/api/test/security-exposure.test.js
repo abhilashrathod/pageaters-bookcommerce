@@ -110,22 +110,6 @@ describe('admin users answer userSchema fields only', () => {
     assert.equal(res.body.data.user.email, shopper.user.email);
     adminUserDetailsResponseSchema.shape.data.shape.user.parse(res.body.data.user);
   });
-
-  test('PUT /users/:id: updates only the addressed user, explicit fields only, answers userSchema fields', async () => {
-    const res = await asAdmin(`/users/${shopper.user._id}`, {
-      method: 'PUT',
-      body: { fullName: 'Test Renamed', role: 'ADMIN', contactOtp: '', razorPayCustId: '', status: 'INACTIVE' },
-    });
-    assert.equal(res.status, 200);
-    assertOnlyUserFields(res.body.data);
-    // contactOtp is select:false (7b), so select it to check the update left it alone.
-    const stored = await User().findById(shopper.user._id).select('+contactOtp').lean();
-    assert.deepEqual(
-      { fullName: stored.fullName, role: stored.role, contactOtp: stored.contactOtp, razorPayCustId: stored.razorPayCustId, status: stored.status },
-      { fullName: 'Test Renamed', role: 'USER', contactOtp: '123456', razorPayCustId: 'cust_test_7d', status: shopper.user.status },
-    );
-    assert.equal((await User().findById(admin.user._id)).fullName, admin.user.fullName);
-  });
 });
 
 describe('admin search takes q as literal text', () => {
@@ -285,17 +269,27 @@ describe('log_email keeps module, recipient, subject and time only', () => {
 describe('links use the storefront from config, never the reserved root domain', () => {
   const origin = () => api.baseUrl.replace(/\/api\/v1$/, '');
 
-  test('no file under src/ links to https://pageaters.com', () => {
+  // Files under src/ whose text matches `pattern`, relative to apps/api.
+  const srcFilesMatching = (pattern) => {
     const offenders = [];
     const walk = (dir) => {
       for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
         const file = path.join(dir, entry.name);
         if (entry.isDirectory()) walk(file);
-        else if (ROOT_DOMAIN.test(fs.readFileSync(file, 'utf8'))) offenders.push(path.relative(path.join(__dirname, '..'), file));
+        else if (pattern.test(fs.readFileSync(file, 'utf8'))) offenders.push(path.relative(path.join(__dirname, '..'), file));
       }
     };
     walk(path.join(__dirname, '..', 'src'));
-    assert.deepEqual(offenders, []);
+    return offenders;
+  };
+
+  test('no file under src/ links to https://pageaters.com', () => {
+    assert.deepEqual(srcFilesMatching(ROOT_DOMAIN), []);
+  });
+
+  // The e-mail logo and the sitemap banner lived on the old store's image account, which is closed.
+  test('no file under src/ loads an image from the closed image account', () => {
+    assert.deepEqual(srcFilesMatching(/res\.[a-z]+\.com\/pageaters\//), []);
   });
 
   test('sitemap.xml and googleproducts.xml link to the storefront', async () => {

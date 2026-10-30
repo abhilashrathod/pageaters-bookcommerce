@@ -12,8 +12,7 @@ import { defineEndpoint } from '../../core/endpoint.ts';
 // don't remove anything: the legacy API sends whole user documents (password hash, salt, OTP, tokens) until Phase 4.
 // Admin callers must pass `{ validate: true }` on every `users.*` call until then, so parsing strips those keys before
 // the data reaches state, logs or the DOM.
-// `PUT /users/:id` is excluded: the controller runs `findOneAndUpdate({})` with no update and answers with an
-// arbitrary user's full document.
+// The API has no admin route that edits a user (`PUT /users/:id` was removed in Phase 4).
 export const users = {
   // GET /users — customers (role USER), paged.
   list: defineEndpoint({ method: 'GET', path: '/users', query: adminPageQuerySchema, response: adminUserListResponseSchema.shape.data }),

@@ -3,7 +3,6 @@ const { pick } = require('lodash');
 const { userSchema } = require('@pageaters/shared');
 
 const { models, enums } = require('../constants');
-const { AppError } = require('../helpers/appError.helper');
 const { literalPattern } = require('../helpers/search-pattern.helper');
 
 // Admin views of customer accounts (/users). Not the shopper's own profile (auth services).
@@ -29,10 +28,6 @@ const CART_POPULATE = [
 // The fields of the shared user contract (packages/shared/src/commerce/user.ts), in its order.
 const USER_FIELDS = Object.keys(userSchema.shape);
 const USER_SELECT = USER_FIELDS.join(' ');
-
-// Fields an admin may change on a customer: profile text only. Email and phone need the owner's verification,
-// role/status are privileges and store credit has its own audited endpoint.
-const ADMIN_EDITABLE_FIELDS = ['fullName', 'dateOfBirth', 'gender'];
 
 /**
  * A user document (or plain object) as the admin views send it: the `userSchema` fields only.
@@ -61,25 +56,6 @@ const ORDER_POPULATE = [
 const listUsers = async ({ page, limit }) => {
   const result = await Users.paginate({ role: enums.USER_ROLES.USER }, { page, limit, select: USER_SELECT });
   return { ...result, docs: result.docs.map(toAdminUser) };
-};
-
-/**
- * Updates the addressed user's profile text (`fullName`, `dateOfBirth`, `gender`); any other field in `fields` is
- * ignored. Was `findOneAndUpdate({})`: no filter and no update, answering the first user in the collection with
- * its full document. No client calls this route (the api-client leaves `PUT /users/:id` out).
- * @param {string} id User id.
- * @param {object} fields Request fields; only the editable ones that are strings are applied.
- * @returns {Promise<object>} The updated user, `userSchema` fields only.
- * @throws {AppError} USER_NOT_FOUND (400) for an unknown id.
- */
-const updateUser = async (id, fields = {}) => {
-  const update = {};
-  for (const field of ADMIN_EDITABLE_FIELDS) {
-    if (typeof fields[field] === 'string') update[field] = fields[field];
-  }
-  const user = await Users.findOneAndUpdate({ _id: id }, { $set: update }, { new: true }).select(USER_SELECT);
-  if (!user) throw new AppError('USER_NOT_FOUND');
-  return toAdminUser(user);
 };
 
 /**
@@ -113,4 +89,4 @@ const searchUsers = async (q) => {
   return users.map(toAdminUser);
 };
 
-module.exports = { getUserDetails, listUsers, searchUsers, toAdminUser, updateUser };
+module.exports = { getUserDetails, listUsers, searchUsers, toAdminUser };

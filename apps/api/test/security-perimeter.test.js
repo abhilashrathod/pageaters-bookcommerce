@@ -241,6 +241,15 @@ describe('removed endpoints', () => {
     assert.equal((await api.request('/public/contactUs', { method: 'POST', body: { PRODUCTS: [], BUNDLES: [] } })).status, 404);
     assert.equal((await api.request('/store-books/bulk/export', { cookie: admin.cookie })).status, 404);
   });
+
+  // PUT /users/:id let an admin rewrite another account; no client called it (the api-client never exposed it).
+  test('PUT /users/:id answers 404 and leaves the account unchanged', async () => {
+    const admin = await createUser({ role: 'ADMIN' });
+    const shopper = await createUser();
+    const res = await api.request(`/users/${shopper.user._id}`, { method: 'PUT', body: { fullName: 'Test Renamed' }, cookie: admin.cookie });
+    assert.equal(res.status, 404);
+    assert.equal((await mongoose.model('user').findById(shopper.user._id)).fullName, shopper.user.fullName);
+  });
 });
 
 describe("mongoose sanitizeFilter (operators from a request can't reach a query)", () => {
