@@ -275,7 +275,7 @@ This file is temporary: when every phase is done, archive the decision log into 
     admin schemas expect https image URLs and every key on update, which the legacy admin doesn't send — apply them
     with the Phase 8 admin rebuild. The API now depends on `@pageaters/shared` (built first by turbo `test`, `dev`,
     `build`). API 631 tests, shared 157
-- [ ] Adapters: payments (Razorpay + mock), sms, email, shipping (Delhivery + mock), storage (Vercel Blob)
+- [x] Adapters: payments (Razorpay + mock), sms, email, shipping (Delhivery + mock), storage (Vercel Blob)
   - Split (2026-10-30): 6a first (sets the pattern), then 6b. Each adapter has a real and a `mock` implementation,
     chosen per adapter by env; vendor keys become required only for the adapter that uses them. Mocks keep what they
     would have sent in memory (Phase 5 turns that into the outbox collection)
@@ -293,21 +293,26 @@ This file is temporary: when every phase is done, archive the decision log into 
       `POST /public/contactUs` could run code on the server; now rendered with a fixed options object and the contact
       form passes only its template's keys. Stock alerts close per send. The production-only notifications are now
       tested (`environment.isProduction()` read per call). 670 API tests
-  - [ ] 6b. Payments (Razorpay: orders, webhook signature, refunds), shipping (Delhivery: pincode serviceability,
+  - [x] 6b. Payments (Razorpay: orders, webhook signature, refunds), shipping (Delhivery: pincode serviceability,
         shipment create, return pickup) and storage (Vercel Blob replaces S3; `aws-sdk` and `axios` removed if unused;
         the image-URL helper passes full Blob URLs through)
-  - Shipping adapter: send the Delhivery token as an `Authorization` header (today it travels in the
-    `check-pincode` query string), `encodeURIComponent` the pincode, and never log the raw axios error — the
-    order-shipment and `check-pincode` error paths print the token and the buyer's address and phone
-  - Storage adapter: await the `File` record write after the upload
-  - Cover the production-only notification paths left untested in 4b (order confirmation e-mail with CDN image
-    rewrite, gift and store-credit lines; Twilio order SMS; CANCEL_ORDER and CLOSE_ORDER e-mails): the tests can't set
-    `APP_ENV=production`, so make the environment injectable or test through the mock adapters
+    - Done 2026-10-30 (api-engineer, reviewed + audited; one fix round). `src/adapters/{payments,shipping,storage}/`
+      on the 6a pattern, selected by `PAYMENTS_ADAPTER`/`SHIPPING_ADAPTER`/`STORAGE_ADAPTER` (default `mock`). Payments:
+      Razorpay order create (payload unchanged) and webhook signatures checked by a shared constant-time HMAC helper —
+      with no `RAZORPAY_WEBHOOK_SECRET` nothing verifies, and the secret is required when `APP_ENV` is staging or
+      production (a first draft let a public test secret forge "payment captured"); mock order ids are salted per
+      process; the `rzp_live_` refusal still applies whenever a key is set. Shipping: Delhivery via `fetch` with a 10 s
+      timeout, token in the `Authorization` header, pincode encoded, create body built with `URLSearchParams` (an `&` in
+      an address or title broke it and allowed form-field injection), vendor errors logged by code only; `axios` removed.
+      Storage: Vercel Blob replaces S3 (`aws-sdk`, `S3_*` and `IMAGE_CDN_URL` removed), uploads land under `uploads/…`,
+      answer the public URL and await the `File` record. `imageUrl` passes https URLs through (normalised) and the
+      legacy CDN-key path is gone. 714 API tests
 - [ ] Security fixes, by area (each found while reading the legacy code or by the step audits; 4b–4d pin them in tests,
       so a fix flips the pinned test). `POST /admin/banavo` was removed early on 2026-10-28 (admins come from the seed)
   - [ ] 7a. Perimeter: single CORS allowlist (remove reflect-any-origin); mount the rate limiters on every public route,
         naming login, OTP/verification sends and the public `GET /addresses/check-pincode/:pincode` (anyone can spend
-        the Delhivery quota); per-route body limits (drop the global 100 MB and `multer().any()`); protect `/re-index`;
+        the Delhivery quota); per-route body limits (drop the global 100 MB and `multer().any()`; a per-route upload size limit, and check an
+        upload's magic bytes match its extension); protect `/re-index`;
         `mongoose.set('sanitizeFilter', true)` — route params aren't protected while `req.allParams()` lets the body and
         query replace them (e.g. `GET /orders/getByUniqueId/:uniqueId?uniqueId[$ne]=`, limited to the shopper's own
         orders); long term controllers read `req.validated` / `req.params` only; auth audit on every route, incl. `POST /orders/create-shipment/:orderId`
@@ -332,7 +337,8 @@ This file is temporary: when every phase is done, archive the decision log into 
         applied, so one balance can go to several pending orders and go negative — allow credit only on `attempted`
         orders, check the captured amount equals `total × 100` in the payment webhook, debit with a guarded `$gte`
         update; the payment webhook accepts any correctly signed event (check the event type and
-        `payment.entity.status === 'captured'`); gift-wrap cost comes from the request (use a server price list);
+        `payment.entity.status === 'captured'`) and signs over `JSON.stringify(req.body)` instead of the raw bytes (verify the
+        raw body via `express.json({ verify })`); gift-wrap cost comes from the request (use a server price list);
         `attemptOrder` finds the cart by id only (add the owner); HIGH — NoSQL operator injection through the `_CID`
         cart cookie (cookie-parser decodes `j:{"$in":[own, victim]}`; ownership is checked by `findUserCart`, but the
         writes filter on `{_id}` only) lets a shopper write to other users' carts — write with the found cart's `_id` +
@@ -357,7 +363,8 @@ This file is temporary: when every phase is done, archive the decision log into 
   - Process-level `unhandledRejection`/`uncaughtException` logging: several legacy writes aren't awaited and any of
     them can take the process down
   - The central handler must recognise the cart's `ProductMismatchError` (4c) and keep its legacy body
-  - `res.internalServerError` must not `console.log` raw errors (vendor messages can quote the recipient)
+  - `res.internalServerError` must not `console.log` raw errors (vendor messages can quote the recipient); the
+    `createShipmentForDelhivery` failure log prints code and status only, never `e.message`
 - [ ] Fix legacy bugs (checkout stores bundle lines unpopulated, so the order confirmation e-mail's bundle line has no
       title or poster — pinned in 6a; await `user.save()` in register, login and contact OTP send/resend — a failed save is an
       unhandled rejection and the resend limit can fail open) found in Phase 1 cleanup: `add-on.controller` `update` (undefined `id`/`addOnId`) and `getById` (returns undefined `bundles`), `getByProductId` ignores `productId`; `jobs/index.js` undefined `logError`; `STOCK_ALERT` email has only `en.html` but renderer loads `en.ejs`; `auth.controller` `updatePassword` saves the old `password` instead of `newPassword`; list endpoints (e.g. `GET /categories`) return no documents without `page`/`limit` and sort on `undefined` without `sortBy` — add defaults; `category.controller` sorts on `Number('asc')` (NaN); `storeDeal.contoller` passes `offset: parseInt(undefined)` so the deals list returns `page`/`offset`/`pagingCounter` as null; `order.getByUniqueId` calls `orderPaymentInfo(null)` (500) for an order without payment; `deleteAccount`/`recoverAccount` write `deletedAt`/`scheduledForDeletion`, which the user model lacks (recovery can never work) — remove both endpoints instead of fixing them (owner decision 2026-10-29: no real users, no account deletion); order line totals aren't floored while the cart subtotal is; `issueCredit` has no validator (negative credit); add-ons grouped endpoint doesn't filter soft-deleted add-ons; seed loads 14 inactive product sets the API never serves; delete the dead `book.model.js`. Found in step 2: add-on `update` (ReferenceError) and `getById` always 500; order analytics (best-selling matches `status` not `orderStatus`, dates compared as strings) always return `[]`; deal `getById` uses author messages and `destroy` doesn't await `save()`; mystery-box `destroy` writes `deactivatedAt` (not in the model); author/collection/bundle/book create and update crash when a list field is missing; `order.controller` defines `retrieve` twice; upload doesn't await `File.create` and returns a storage key, not a URL; renaming a product set regenerates its slug (breaks links); `recoverAccount` reads `scheduledForDeletion` from the JWT so it always answers `ACCOUNT_ALREADY_ACTIVE`; `PUT /addresses/:id` checks existence with an unfiltered `findOne()` and `$set`s every field; `check-pincode` returns the courier's raw record; `orders.create` 500s without `giftOptions`; a return after 7 days answers 200 `ORDER_RETURN_PERIOD_LAPSED`; checkout select misspells `boxed`; cart `add`/`addAddOn` return `true` or the cart; `/cart/empty` clears books only; `addAddOn` has no default quantity; unsubscribing a missing stock alert answers `STOCK_ALERT_EXISTS`; `PUT /auth/me` validates `contactNo` but ignores it; list endpoints without `page` return `page: null`
@@ -368,7 +375,9 @@ This file is temporary: when every phase is done, archive the decision log into 
 ## Phase 5 — Demo mode
 
 - [ ] `DEMO_MODE` flag; server-side write guards per AGENTS.md §6. The API refuses to boot when `DEMO_MODE=true` and
-      `EMAIL_ADAPTER`/`SMS_ADAPTER` isn't `mock` or SendGrid/Twilio keys are set (like the `rzp_live_` guard), with tests
+      `EMAIL_ADAPTER`/`SMS_ADAPTER` isn't `mock` or SendGrid/Twilio keys are set (like the `rzp_live_` guard), and refuses
+      `PAYMENTS_ADAPTER=mock` when `APP_ENV=production` (the demo uses Razorpay with test keys); the storefront checks at
+      build/runtime that its public Razorpay key starts with `rzp_test_`; with tests
 - [ ] Demo shopper one-click login (no signup/OTP); remove the email-OTP login too, which can sign into any account by email, the demo shopper included
 - [ ] Admin catalog read-only; order lifecycle via mock shipping allowed
 - [ ] Razorpay test-mode checkout (the `rzp_live_` boot guard is done: `env.js` refuses live keys in every environment)
@@ -415,6 +424,9 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Standalone components, new control flow; typed services via `packages/api-client` (pass `validate: true` on `client.admin.users.*` until the API stops sending credentials, and parse form values through the `admin…PayloadSchema` before sending so a loaded record can't send `wholeSalePriceHistory` back)
 - [ ] Demo-mode UX: read-only notices on catalog forms; outbox view
 - [ ] Validate the admin catalog create/update routes with the shared admin schemas (deferred from Phase 4 5b)
+- [ ] Image fields hold full Blob URLs and uploads answer the URL (Phase 4 6b), but the legacy admin prepends an S3 bucket
+      origin on load and saves only the file name — don't edit catalog records through the legacy admin until this phase
+      replaces it
 - [ ] Super-admin catalog editing: update any record (fix inconsistent or generated data) and upload covers/author photos
 - **Checkpoint:** every admin route renders against the new API
 
@@ -431,7 +443,9 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] GitHub Actions: lint, typecheck, test, build via Turbo (affected only), Vercel Remote Cache, gitleaks, CodeQL
 - [ ] Renovate
 - [ ] Vercel projects ×4 with root directories, `turbo-ignore`, preview deploys per PR
-- [ ] Environment variables per project (test-mode Razorpay, Atlas, Blob, CMS secret, `DEMO_MODE=true`)
+- [ ] Environment variables per project (test-mode Razorpay, Atlas, Blob, CMS secret, `DEMO_MODE=true`); the API
+      needs `PAYMENTS_ADAPTER=razorpay` (test keys + webhook secret) and `STORAGE_ADAPTER=blob` — the mock defaults would
+      store fake upload URLs; email, SMS and shipping stay `mock`
 - [ ] Vercel Cron: weekly demo cleanup
 - [ ] DNS for the four `*.demo.pageaters.com` hosts
 - [ ] Multi-stage Dockerfile for API (`turbo prune`) as alternate target
