@@ -412,17 +412,89 @@ This file is temporary: when every phase is done, archive the decision log into 
     Express's HTML page with a stack trace
   - `res.internalServerError` must not `console.log` raw errors (vendor messages can quote the recipient); the
     `createShipmentForDelhivery` failure log prints code and status only, never `e.message`
-- [ ] Fix legacy bugs (admin inputs found in the 7a audit: validate product-set `categories` and author `books` as
-      ObjectId arrays, parse the analytics `startDate`/`endDate` to dates (aggregations aren't sanitised); `placeOrder` and
-      `getPendingOrder` pick any pending order, so with a `created` order waiting for payment `/orders/create` re-places
-      the older one (found in 7c); refunds don't return applied store credit; from the 7c re-audit: enforce "one pending order per user" with a unique
-      partial index on `{ userId }` for attempted/created orders (two simultaneous attempts can still create two),
-      re-read the order before compensating a debit (a lost write acknowledgement can return credit for a paid
-      order), dedupe partial refunds by refund id, and refuse or cancel a COD place while a live Razorpay order exists
-      (a late payment of it is only logged and needs a manual refund); `GIFT_PACKAGES` is duplicated in the API and
-      the storefront — move it to `packages/shared`; checkout stores bundle lines unpopulated, so the order confirmation e-mail's bundle line has no
-      title or poster — pinned in 6a; await `user.save()` in register, login and contact OTP send/resend — a failed save is an
-      unhandled rejection and the resend limit can fail open) found in Phase 1 cleanup: `add-on.controller` `update` (undefined `id`/`addOnId`) and `getById` (returns undefined `bundles`), `getByProductId` ignores `productId`; `jobs/index.js` undefined `logError`; `STOCK_ALERT` email has only `en.html` but renderer loads `en.ejs`; `auth.controller` `updatePassword` saves the old `password` instead of `newPassword`; list endpoints (e.g. `GET /categories`) return no documents without `page`/`limit` and sort on `undefined` without `sortBy` — add defaults; `category.controller` sorts on `Number('asc')` (NaN); `storeDeal.contoller` passes `offset: parseInt(undefined)` so the deals list returns `page`/`offset`/`pagingCounter` as null; `order.getByUniqueId` calls `orderPaymentInfo(null)` (500) for an order without payment; `deleteAccount`/`recoverAccount` write `deletedAt`/`scheduledForDeletion`, which the user model lacks (recovery can never work) — remove both endpoints instead of fixing them (owner decision 2026-10-29: no real users, no account deletion); order line totals aren't floored while the cart subtotal is; `issueCredit` has no validator (negative credit); add-ons grouped endpoint doesn't filter soft-deleted add-ons; seed loads 14 inactive product sets the API never serves; delete the dead `book.model.js`. Found in step 2: add-on `update` (ReferenceError) and `getById` always 500; order analytics (best-selling matches `status` not `orderStatus`, dates compared as strings) always return `[]`; deal `getById` uses author messages and `destroy` doesn't await `save()`; mystery-box `destroy` writes `deactivatedAt` (not in the model); author/collection/bundle/book create and update crash when a list field is missing; `order.controller` defines `retrieve` twice; upload doesn't await `File.create` and returns a storage key, not a URL; renaming a product set regenerates its slug (breaks links); `recoverAccount` reads `scheduledForDeletion` from the JWT so it always answers `ACCOUNT_ALREADY_ACTIVE`; `PUT /addresses/:id` checks existence with an unfiltered `findOne()` and `$set`s every field; `check-pincode` returns the courier's raw record; `orders.create` 500s without `giftOptions`; a return after 7 days answers 200 `ORDER_RETURN_PERIOD_LAPSED`; checkout select misspells `boxed`; cart `add`/`addAddOn` return `true` or the cart; `/cart/empty` clears books only; `addAddOn` has no default quantity; unsubscribing a missing stock alert answers `STOCK_ALERT_EXISTS`; `PUT /auth/me` validates `contactNo` but ignores it; list endpoints without `page` return `page: null`
+- [ ] Fix legacy bugs. Split into five sub-steps by the files they touch (2026-10-30), so independent ones run in
+      parallel worktrees (at most three at once): wave 1 = a, c, e; wave 2 = b, d (b after a: both edit the order
+      code; d after c: both edit list paging). Items already fixed by earlier steps (`deleteAccount`/`recoverAccount`
+      removed, `jobs/` removed, the duplicate `retrieve`) are checked and left out.
+  - Follow-ups from a, c and e (2026-10-30), placed:
+    - Sub-step f below (small API robustness, found in review): register isn't atomic (a failed password save
+      leaves an account without a password that can't re-register); stock-alert routes 500 on a malformed product
+      id; `createAddress` clears the old default before the insert; book create with an unknown author 500s;
+      public `category`/`:id` values that aren't ObjectIds 500 (CastError) instead of 400; `page` has no upper
+      bound; two concurrent `PUT /store-books/:id` can count one category change twice
+    - Owner decisions (before Phase 5): a lower max `limit` for public lists (100?) with 1000 kept for admin and
+      sitemap callers; a full cash refund returns all applied store credit even for a partial return; staff must
+      no longer issue credit by hand after a full refund (it is automatic now); a shopper whose payment is
+      captured but not yet confirmed can switch to COD and is left with a payment to refund by hand
+    - Phase 10: check after each deploy that `one_pending_order_per_user` and `one_refund_credit_per_order` exist
+      (autoIndex fails silently; needs MongoDB ≥ 6.0; two pending orders for one user block the first)
+    - Docs (`docs/order-lifecycle.md`): store-credit return states and the query that finds a return left
+      `pending`/`crediting`; the list paging contract; the stock-alert e-mail shows the price without the discount
+    - Tooling: the seed tests create `seed/data/fonts`, which makes shared's `seed-data.test.ts` stop skipping and
+      fail when both run together (skip on the missing files instead); `pnpm --filter api test` uses the built
+      `packages/shared/dist`, so run `pnpm turbo run build --filter=@pageaters/shared` first or the suites fail in
+      their hooks and never exit
+  - [x] a. Orders: placement, payment and refunds (money). `placeOrder` and `getPendingOrder` pick any pending order,
+        so with a `created` order waiting for payment `/orders/create` re-places the older one (7c); enforce "one
+        pending order per user" with a unique partial index on `{ userId }` for attempted/created orders (two
+        simultaneous attempts can still create two); re-read the order before compensating a debit (a lost write
+        acknowledgement can return credit for a paid order); dedupe partial refunds by refund id; refuse or cancel a
+        COD place while a live Razorpay order exists (a late payment of it is only logged and needs a manual refund);
+        refunds don't return applied store credit; `issueCredit` has no validator (negative credit); order line totals
+        aren't floored while the cart subtotal is; `orders.create` 500s without `giftOptions`
+    - Done 2026-10-30: newest pending order wins; unique partial index `one_pending_order_per_user` (a lost race
+      answers 400 `ORDER_PENDING_CONFLICT`; the test harness waits for indexes); the payment webhook releases its
+      claim before giving credit back, and COD puts the order back (or cancels it when a newer checkout exists)
+      before giving credit back, every unresolved case logged; refunds deduped by refund id (`refundIds`); COD is
+      refused while a Razorpay order exists (400 `ORDER_ONLINE_PAYMENT_PENDING`); a full refund returns the applied
+      store credit once (`storeCreditReturn` pending → crediting → returned, one `RF-<order _id>` CREDIT row under a
+      unique partial index, the balance step keyed by `appliedCreditIds`), so a redelivery finishes an interrupted
+      return; create without `giftOptions` answers 200. `issueCredit` validation and floored line totals were
+      already fixed. Shared: `RF-` credit ids, optional `refundIds`/`storeCreditReturn` on `orderSchema` (not
+      shoppers'). Reviewed (three rounds) + audited
+  - [ ] b. Orders: details, analytics, checkout and notifications. `order.getByUniqueId` calls `orderPaymentInfo(null)`
+        (500) for an order without payment; analytics: best-selling matches `status` not `orderStatus`, dates are
+        compared as strings (always `[]`), and `startDate`/`endDate` must be parsed to dates (aggregations aren't
+        sanitised); a return after 7 days answers 200 `ORDER_RETURN_PERIOD_LAPSED`; checkout select misspells
+        `boxed`; checkout stores bundle lines unpopulated, so the confirmation e-mail's bundle line has no title or
+        poster (pinned in 6a); `GIFT_PACKAGES` is duplicated in the API and the storefront — move it to
+        `packages/shared`
+  - [x] c. Catalog admin: inputs, create/update and list paging. Validate product-set `categories` and author `books`
+        as ObjectId arrays (7a); author/collection/bundle/book create and update crash when a list field is missing;
+        list endpoints (e.g. `GET /categories`) return no documents without `page`/`limit`, answer `page: null`
+        without `page`, and sort on `undefined` without `sortBy` — add defaults; `category.controller` sorts on
+        `Number('asc')` (NaN); the book update's category count is a `void categoryRes.save()` — await it
+    - Done 2026-10-30: `helpers/paging.helper.js` (page 1, limit 10, max 1000, newest first with an `_id` tiebreak,
+      `asc`/`desc`/`1`/`-1`, 400 `INVALID_PAGING`) on every catalog list except deals/add-ons/mystery boxes;
+      reference checks (`validate()`, optional ObjectId arrays) on admin create/update of authors, books,
+      bundles, collections and product sets, refused before any write — product-set entries also accept the
+      legacy admin's populated book (only the id is stored); a missing list no longer 500s; an empty product-set
+      `categories` filter means none; book category counts +1/−1, awaited, never below 0. Storefront lists that
+      send no sort now show newest first. Reviewed (three rounds) + audited
+  - [ ] d. Catalog extras: add-ons, deals, mystery boxes, product sets. Add-on `update` (undefined `id`/`addOnId`,
+        ReferenceError) and `getById` (undefined `bundles`) always 500; `getByProductId` ignores `productId`; the
+        grouped endpoint doesn't filter soft-deleted add-ons; `storeDeal.contoller` passes `offset: parseInt(undefined)`
+        so the deals list returns `page`/`offset`/`pagingCounter` as null; deal `getById` uses author messages and
+        `destroy` doesn't await `save()`; mystery-box `destroy` writes `deactivatedAt` (not in the model); renaming a
+        product set regenerates its slug (breaks links); seed loads 14 inactive product sets the API never serves;
+        delete the dead `book.model.js`; use c's `paging.helper.js` for the deals list; the shared category, deal,
+        add-on and mystery-box update schemas still say an omitted field is written as null (Mongoose 8 drops it)
+  - [x] e. Auth, account, cart, addresses, stock alerts, uploads. Await `user.save()` in register, login and contact
+        OTP send/resend (a failed save is an unhandled rejection and the resend limit can fail open); `updatePassword`
+        saves the old `password` instead of `newPassword`; `PUT /auth/me` validates `contactNo` but ignores it;
+        `PUT /addresses/:id` checks existence with an unfiltered `findOne()` and `$set`s every field; `check-pincode`
+        returns the courier's raw record; cart `add`/`addAddOn` return `true` or the cart; `/cart/empty` clears books
+        only; `addAddOn` has no default quantity; unsubscribing a missing stock alert answers `STOCK_ALERT_EXISTS`;
+        the `STOCK_ALERT` e-mail has only `en.html` but the renderer loads `en.ejs`; upload doesn't await
+        `File.create` and returns a storage key, not a URL
+    - Done 2026-10-30: auth/OTP saves, `updatePassword` and upload were already fixed (tests added for failed
+      writes: no cookie, no text, the resend limit fails closed); `PUT /auth/me` refuses `contactNo` (a number
+      changes only through OTP); `PUT /addresses/:id` touches only the caller's live address and one field
+      allowlist, re-checks a changed pincode, clears other defaults only after the update; check-pincode answers
+      serviceability only; cart add/add-on answer `true` with quantity defaulting to 1 (add-on route validated);
+      `/cart/empty` clears every line; `STOCK_ALERT_NOT_EXIST`; the STOCK_ALERT e-mail renders (`en.ejs`, escaped,
+      control characters stripped from the subject). Reviewed + audited
+  - [ ] f. Review follow-ups from a, c and e (listed above under "Sub-step f"); after d
 - [ ] OpenAPI from zod at `/docs`
 - [ ] Remove `page.controller` / page & banner models (moved to CMS); move sitemap + Google product feed to storefront
 - **Checkpoint:** API runs locally, all routes reachable, lint and tests clean
