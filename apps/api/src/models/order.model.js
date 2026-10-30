@@ -89,9 +89,10 @@ const schema = new Schema({
     giftCard: { type: Schema.Types.ObjectId, ref: models.GIFT_CARD, default: null },
     discount: { type: Schema.Types.ObjectId, ref: models.DISCOUNT, default: null },
     storeCreditTransaction: { type: Schema.Types.ObjectId, ref: models.STORE_CREDIT_TRANSACTIONS, default: null },
-    // Giving the spent store credit back after a full refund (order-refunds.service.js): `pending` (to do),
-    // `crediting` (the CREDIT transaction is recorded; the balance step, idempotent, may still be due), `returned`.
-    // A redelivered refund event finishes `pending` and `crediting`. Absent when nothing is to be given back.
+    // Giving the spent store credit back after a cancel or a full refund, whichever comes first (once per order;
+    // order-fulfilment finishStoreCreditReturn): `pending` (to do), `crediting` (the CREDIT transaction is recorded;
+    // the balance step, idempotent, may still be due), `returned`. A repeated cancel or any refund event for the order
+    // finishes `pending` and `crediting`. Absent when nothing is (yet) to be given back.
     storeCreditReturn: { type: String, enum: ['pending', 'crediting', 'returned'], default: undefined },
 
     giftOptions: {

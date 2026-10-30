@@ -9,7 +9,7 @@ const t = require('../src/locales/en.json');
 // Order reads over HTTP: the shopper's order and order list, the admin list, lookup and search, and the analytics
 // endpoints. Written against the legacy controller first; projections are pinned by their key lists.
 
-const { badRequest, forbidden, ok, serverError } = envelopes;
+const { badRequest, badRequestObject, forbidden, ok, serverError } = envelopes;
 const unauthorized = envelopes.unauthorized('NO_AUTH_HEADER');
 
 const assertEnvelope = (res, status) => {
@@ -28,6 +28,8 @@ const CARD_PAYMENT = {
   contact: '+919000000001',
   card: { name: 'Test Card', last4: '1111', network: 'Visa', type: 'credit' },
 };
+
+const Order = () => mongoose.model('order');
 
 let api;
 let admin;
@@ -153,9 +155,13 @@ describe('GET /orders/getByUniqueId/:uniqueId', () => {
     assert.equal(Object.hasOwn(res.body.data, 'payment'), false);
   });
 
-  test('legacy: answers 500 for an order without a payment (orderPaymentInfo(null))', async () => {
+  // Phase 4 legacy bugs (b): legacy answered 500 (orderPaymentInfo(null)).
+  test('answers an order without a payment with payment: null', async () => {
     const order = await full({ payment: null });
-    assertBody(await get(`/orders/getByUniqueId/${order.orderId}`, shopper.cookie), 500, serverError);
+    const res = await get(`/orders/getByUniqueId/${order.orderId}`, shopper.cookie);
+    assertEnvelope(res, 'ORDER_LIST_SUCCESS');
+    assert.equal(res.body.data.orderId, order.orderId);
+    assert.equal(res.body.data.payment, null);
   });
 
   test("refuses another user's order and an unknown order", async () => {
@@ -333,19 +339,61 @@ describe('GET /orders/search (admin)', () => {
   });
 });
 
+// Phase 4 legacy bugs (b): legacy always answered [] (best-selling matched `status`; both compared the dates as
+// strings) and took any startDate/endDate into the aggregation unchecked.
 describe('analytics (admin)', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  const at = (days) => new Date(Date.UTC(2026, 9, 1) + days * DAY);
+  const range = (from, to) => `startDate=${encodeURIComponent(at(from).toISOString())}&endDate=${encodeURIComponent(at(to).toISOString())}`;
+  // createdAt is set by Mongoose's timestamps; backdate it directly.
+  const orderOn = async (days, overrides) => {
+    const order = await createOrder(shopper.user, { orderStatus: 'fulfilled', ...overrides });
+    await Order().collection.updateOne({ _id: order._id }, { $set: { createdAt: at(days) } });
+    return order;
+  };
+
   beforeEach(async () => {
-    await createOrder(shopper.user, { orderStatus: 'fulfilled', total: 499 });
-    await createOrder(shopper.user, { orderStatus: 'fulfilled', total: 1000, products: [{ quantity: 3, product: ids.bookTwo }] });
+    await orderOn(0, { total: 499 });
+    await orderOn(5, { total: 1000, products: [{ quantity: 3, product: ids.bookTwo }] });
+    await orderOn(9, { total: 2000, products: [{ quantity: 2, product: ids.bookOne }] });
+    // Not counted: another stage, or outside the range (the end is exclusive).
+    await orderOn(1, { orderStatus: 'shipped', total: 5000, products: [{ quantity: 50, product: ids.bookTwo }] });
+    await orderOn(10, { total: 7000, products: [{ quantity: 70, product: ids.bookTwo }] });
+    await orderOn(-1, { total: 9000, products: [{ quantity: 90, product: ids.bookTwo }] });
   });
 
-  test('legacy: best-selling always answers [] (matches `status`, compares dates as strings)', async () => {
-    assertBody(await get('/orders/analytics/best-selling?startDate=2000-01-01&endDate=2100-01-01'), 200, ok('ORDER_LIST_SUCCESS', []));
-    assertBody(await get('/orders/analytics/best-selling'), 200, ok('ORDER_LIST_SUCCESS', []));
+  test('best-selling ranks the books of fulfilled orders created in [startDate, endDate)', async () => {
+    const res = await get(`/orders/analytics/best-selling?${range(0, 10)}`);
+    assertEnvelope(res, 'ORDER_LIST_SUCCESS');
+    assert.deepEqual(res.body.data, [
+      { totalQuantity: 3, bookDetails: { _id: String(ids.bookOne), title: 'Test Book One', author: String(ids.authorA) } },
+      { totalQuantity: 3, bookDetails: { _id: String(ids.bookTwo), title: 'Test Book Two', author: String(ids.authorB) } },
+    ]);
   });
 
-  test('legacy: revenue always answers [] (dates compared as strings)', async () => {
-    assertBody(await get('/orders/analytics/revenue?startDate=2000-01-01&endDate=2100-01-01'), 200, ok('ORDER_LIST_SUCCESS', []));
-    assertBody(await get('/orders/analytics/revenue'), 200, ok('ORDER_LIST_SUCCESS', []));
+  test('revenue sums the totals of fulfilled orders created in [startDate, endDate)', async () => {
+    assertBody(await get(`/orders/analytics/revenue?${range(0, 10)}`), 200, ok('ORDER_LIST_SUCCESS', [{ totalRevenue: 3499 }]));
+    assertBody(await get(`/orders/analytics/revenue?${range(4, 6)}`), 200, ok('ORDER_LIST_SUCCESS', [{ totalRevenue: 1000 }]));
+    assertBody(await get(`/orders/analytics/revenue?${range(20, 30)}`), 200, ok('ORDER_LIST_SUCCESS', []));
+  });
+
+  test('refuses a missing, malformed, empty or reversed range, and operators', async () => {
+    const start = encodeURIComponent(at(0).toISOString());
+    const end = encodeURIComponent(at(10).toISOString());
+    for (const query of [
+      '',
+      `startDate=${start}`,
+      `startDate=2026-10-01&endDate=2026-10-11`,
+      `startDate=${start}&endDate=tomorrow`,
+      `startDate=${start}&endDate=${start}`,
+      range(10, 0),
+      `startDate=${start}&endDate[$gt]=`,
+      `startDate[$exists]=true&endDate=${end}`,
+    ]) {
+      for (const report of ['best-selling', 'revenue']) {
+        const res = await get(`/orders/analytics/${report}?${query}`);
+        assertBody(res, 400, badRequestObject('ORDER_ANALYTICS_INVALID_RANGE'));
+      }
+    }
   });
 });

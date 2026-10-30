@@ -5,8 +5,10 @@ const shipping = require('../adapters/shipping');
 const { models, enums } = require('../constants');
 const { ENVIRONMENT } = require('../appConfig');
 const { AppError } = require('../helpers/appError.helper');
+const { logger } = require('../helpers/logger.helper');
 const { getId } = require('../helpers/utils.helper');
 const { sendReturnShipmentEmail, sendShippedEmail } = require('./order-notifications.service');
+const { transitionOrder } = require('./order-transition.service');
 
 // Shipments: the forward shipment booked with the courier (the shipping adapter: Delhivery or its mock), and
 // recording the pickup/replacement shipment of a return or replacement request (an id the admin enters; no courier
@@ -72,8 +74,11 @@ const productsDescription = (order) =>
  * @param {string} orderId Order `_id`.
  * @param {{ width: number, height: number, weight: number }} dimensions
  * @returns {Promise<object>} The courier's answer.
+ * The order moves to `shipped` only if it is still in the stage it was read in: an order cancelled (or otherwise
+ * changed) while the courier was booking stays as it is, and the booked waybill is logged as an error for staff to
+ * cancel with the courier (the shipping adapter has no cancel call).
  * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such paid/confirmed order), SHIPMENT_CREATE_ERROR (the courier
- *   refused; the order is unchanged).
+ *   refused; the order is unchanged), ORDER_CHANGED_CONFLICT (409, the order changed during the booking; see above).
  */
 const createDelhiveryShipment = async (orderId, dimensions) => {
   const order = await Order.findOne({ _id: orderId, $or: [{ orderStatus: PAID }, { orderStatus: CONFIRMED }] }).populate(SHIPMENT_POPULATE);
@@ -109,14 +114,19 @@ const createDelhiveryShipment = async (orderId, dimensions) => {
   const response = await shipping.createShipment(payload);
   if (!response.success) throw new AppError('SHIPMENT_CREATE_ERROR');
 
-  order.orderStatus = SHIPPED;
-  order.shipmentTrackingId = shipping.trackingUrl(response.packages[0].waybill);
-  order.orderHistory.push({
-    title: SHIPPED,
-    description: 'Order hand over to shipment company. Your books are on their way',
-    time: new Date().toISOString(),
-  });
-  await order.save();
+  const { waybill } = response.packages[0];
+  try {
+    await transitionOrder(order, {
+      set: { orderStatus: SHIPPED, shipmentTrackingId: shipping.trackingUrl(waybill) },
+      history: { title: SHIPPED, description: 'Order hand over to shipment company. Your books are on their way', time: new Date().toISOString() },
+    });
+  } catch (e) {
+    logger.error(
+      { err: e, waybill },
+      `Order ${order.orderId} changed while its shipment was booked, so it is not shipped; cancel waybill ${waybill} with the courier`,
+    );
+    throw e;
+  }
 
   await sendShippedEmail(order);
   return response;

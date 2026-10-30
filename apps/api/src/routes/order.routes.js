@@ -5,6 +5,7 @@ const { USER_ROLES } = require('./../constants/enums');
 
 const controller = require('./../controllers/order.controller');
 const {
+  adminOrderAnalyticsQuerySchema,
   adminOrderCancelPayloadSchema,
   adminOrderShipPayloadSchema,
   adminReturnShipmentRequestSchema,
@@ -73,9 +74,19 @@ router.post('/refund/processed', controller.completeRefund);
  *  ANALYTICS
  *  ***************************************************************************************************/
 
-
-router.get('/analytics/best-selling', permissionValidator(USER_ROLES.ADMIN), controller.getAnalyticsBestSelling);
-router.get('/analytics/revenue', permissionValidator(USER_ROLES.ADMIN), controller.getAnalyticsRevenue);
+// The range goes into an aggregation (not sanitised like a query filter), so it is validated strictly first.
+router.get(
+  '/analytics/best-selling',
+  permissionValidator(USER_ROLES.ADMIN),
+  validate(adminOrderAnalyticsQuerySchema),
+  controller.getAnalyticsBestSelling,
+);
+router.get(
+  '/analytics/revenue',
+  permissionValidator(USER_ROLES.ADMIN),
+  validate(adminOrderAnalyticsQuerySchema),
+  controller.getAnalyticsRevenue,
+);
 
 module.exports = router;
 

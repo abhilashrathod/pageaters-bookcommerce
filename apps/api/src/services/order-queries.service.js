@@ -18,7 +18,8 @@ const NOT_PLACED = [enums.ORDER_STAGES.ATTEMPTED, enums.ORDER_STAGES.CREATED];
  * Accepts both shapes an order may hold: a full Razorpay payment entity (orders stored before the security step)
  * or an already-built summary (`name`, `last4`, `network`, `upi_id`…), which it returns unchanged — so mapping is
  * idempotent and nothing else (payer email/phone, card id/type, bank reference…) ever passes through.
- * Legacy: an unknown method gives `undefined`; a `null` payment throws a TypeError (→ 500 in `getUserOrder`).
+ * Legacy: an unknown method gives `undefined`. Callers map only a stored payment (an order without one keeps
+ * `payment: null`).
  * @param {object} payment The order's `payment` (Razorpay payment entity or summary).
  * @returns {object|undefined}
  */
@@ -114,8 +115,8 @@ const ADMIN_BOXES = { path: 'boxes.box', select: 'boxId title images currentDisc
 
 /**
  * One of the user's orders by its public id, with a payment summary (card/bank/UPI/wallet/EMI/COD) instead of the
- * Razorpay entity. Returned as a plain object, so without the `id` virtual.
- * Legacy (PLAN.md legacy-bugs step): an order without a payment makes `orderPaymentInfo(null)` throw (→ 500).
+ * Razorpay entity, or `payment: null` for an order without one (an unpaid or legacy order; legacy answered 500).
+ * Returned as a plain object, so without the `id` virtual.
  * @param {string} userId
  * @param {string} uniqueId Public order id (`OD-…`).
  * @returns {Promise<object>}
@@ -130,7 +131,7 @@ const getUserOrder = async (userId, uniqueId) => {
   if (!order) throw new AppError('ORDER_NOT_EXIST');
 
   const data = order.toObject();
-  data.payment = orderPaymentInfo(data.payment);
+  data.payment = data.payment ? orderPaymentInfo(data.payment) : null;
   return data;
 };
 

@@ -3,7 +3,7 @@ const moment = require('moment');
 
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
-const { restoreInventory } = require('./order-fulfilment.service');
+const { cancelOrder, finishCancelledReturn, unfinishedCancel } = require('./order-cancellation.service');
 const { sendCancelEmail, sendRequestEmail } = require('./order-notifications.service');
 
 // Shopper requests on a placed order: cancel before shipping, return or replace within 7 days of delivery.
@@ -18,23 +18,24 @@ const BUYER = { path: 'userId', select: 'fullName email contactNo' };
 
 /**
  * Shopper: asks to return or replace a delivered order within 7 days of delivery. The order moves to `returned` or
- * `replacement` and the buyer gets the request e-mail.
- * Legacy (PLAN.md legacy-bugs step): after the period it answers success with ORDER_RETURN_PERIOD_LAPSED (this
- * returns false). Any other `type` still saves an open request and an empty history entry, keeps the stage, then
- * throws a TypeError building the e-mail when `type` is missing (→ 500).
+ * `replacement` and the buyer gets the request e-mail. The route validates `type` (return or replace).
+ * The period runs from the order's `fulfilled` history entry; an order without one (or with an unreadable time) is
+ * treated as past it.
  * @param {string} userId
  * @param {string} uniqueId Public order id (`OD-…`).
- * @param {{ type?: string, reason?: string, comments?: string, books?: string[], bundles?: string[] }} request
- * @returns {Promise<boolean>} true when the request was recorded, false when the return period has lapsed.
- * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such `fulfilled` order of the user).
+ * @param {{ type: string, reason?: string, comments?: string, books?: string[], bundles?: string[] }} request
+ * @returns {Promise<void>}
+ * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such `fulfilled` order of the user), ORDER_RETURN_PERIOD_LAPSED
+ *   (400, more than 7 days after delivery; legacy answered it as a 200 success and changed nothing).
  */
 const requestReturn = async (userId, uniqueId, { type, comments, reason, books, bundles }) => {
   const order = await Order.findOne({ orderId: uniqueId, userId, orderStatus: FULFILLED }).populate([BUYER, { path: 'deliveryAddress' }]);
   if (!order) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
 
   const delivered = order.orderHistory.find((entry) => entry.title === FULFILLED);
-  const periodStart = moment().subtract(RETURN_PERIOD_DAYS, 'days').toDate().toISOString();
-  if (!(delivered.time >= periodStart)) return false;
+  const deliveredAt = delivered ? Date.parse(delivered.time) : NaN;
+  const periodStart = moment().subtract(RETURN_PERIOD_DAYS, 'days').valueOf();
+  if (!(deliveredAt >= periodStart)) throw new AppError('ORDER_RETURN_PERIOD_LAPSED');
 
   const log = {};
   if (type === RETURN) {
@@ -67,43 +68,48 @@ const requestReturn = async (userId, uniqueId, { type, comments, reason, books, 
   await order.save();
 
   await sendRequestEmail(order, type);
-  return true;
 };
 
 /**
- * Shopper: cancels a paid or confirmed order, records the cancel request, e-mails the buyer (production only) and
- * puts the stock back. No refund is started.
+ * Shopper: cancels a paid or confirmed order, records the cancel request, e-mails the buyer (production only), puts
+ * the stock back and gives back the store credit it spent (order-cancellation.service.js). No refund is started.
+ * On an order already cancelled whose store credit return was cut short, it only finishes that return (the storefront
+ * offers Cancel only for paid, confirmed or shipped orders, so in practice an admin cancel or a refund event does).
  * @param {string} userId
  * @param {string} uniqueId Public order id (`OD-…`).
  * @param {{ reason?: string, comments?: string }} request
- * @returns {Promise<void>}
+ * @returns {Promise<void>} Rejects when giving the store credit back failed (the order stays cancelled; logged).
  * @throws {AppError} ORDER_CANCEL_INVALID (already shipped), ORDER_INFO_ATTEMPT_FAILED (no such paid/confirmed order
- *   of the user).
+ *   of the user), ORDER_CHANGED_CONFLICT (409, it changed meanwhile).
  */
 const cancelByUser = async (userId, uniqueId, { reason, comments }) => {
-  if (await Order.findOne({ orderStatus: SHIPPED, orderId: uniqueId, userId }).populate([BUYER])) {
+  if (await Order.exists({ orderStatus: SHIPPED, orderId: uniqueId, userId })) {
     throw new AppError('ORDER_CANCEL_INVALID');
   }
 
-  const order = await Order.findOne({ $or: [{ orderStatus: PAID }, { orderStatus: CONFIRMED }], orderId: uniqueId, userId }).populate([
-    BUYER,
-  ]);
+  const order = await Order.findOne({
+    $or: [{ orderStatus: PAID }, { orderStatus: CONFIRMED }, unfinishedCancel()],
+    orderId: uniqueId,
+    userId,
+  }).populate([BUYER]);
   if (!order) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
+  if (order.orderStatus === CANCELLED) {
+    await finishCancelledReturn(order);
+    return;
+  }
 
-  order.orderStatus = CANCELLED;
-  order.orderHistory.push({ title: CANCELLED, description: 'Order cancelled by customer.', time: new Date().toISOString() });
-  order.requests.push({
-    type: CANCEL,
-    date: new Date().toISOString(),
-    info: { reason, comments },
-    status: enums.ORDER_REQUEST_STATUS.OPEN,
-    books: [],
-    bundles: [],
+  await cancelOrder(order, {
+    history: { title: CANCELLED, description: 'Order cancelled by customer.', time: new Date().toISOString() },
+    request: {
+      type: CANCEL,
+      date: new Date().toISOString(),
+      info: { reason, comments },
+      status: enums.ORDER_REQUEST_STATUS.OPEN,
+      books: [],
+      bundles: [],
+    },
+    notify: () => sendCancelEmail(order),
   });
-  await order.save();
-
-  await sendCancelEmail(order);
-  await restoreInventory(order);
 };
 
 module.exports = { cancelByUser, requestReturn };

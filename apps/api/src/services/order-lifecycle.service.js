@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { getId } = require('../helpers/utils.helper');
-const { restoreInventory } = require('./order-fulfilment.service');
+const { cancelOrder, finishCancelledReturn, unfinishedCancel } = require('./order-cancellation.service');
+const { transitionOrder } = require('./order-transition.service');
 const { adminOrderView } = require('./order-queries.service');
 const { sendAdminCancelEmail, sendDeliveredEmail, sendShippedEmail } = require('./order-notifications.service');
 
@@ -13,6 +14,7 @@ const { sendAdminCancelEmail, sendDeliveredEmail, sendShippedEmail } = require('
 //   attempted ─ create(cod) → confirmed ──────────────────────────┤
 //   paid | confirmed ─ ship / Delhivery shipment → shipped ─ complete → fulfilled
 //   paid | confirmed ─ shopper cancel → cancelled;  paid | confirmed | shipped ─ admin cancel → cancelled
+//     (a cancel gives back the store credit the order spent, once, also when the order is later refunded)
 //   fulfilled ─ return request → returned ─ align pickup → return in progress ─ close → returned
 //   fulfilled ─ replace request → replacement ─ align → replacement in progress ─ close → fulfilled
 //   any (with a Razorpay order) ─ refund webhook → refunded
@@ -32,16 +34,17 @@ const historyEntry = (title, description) => ({ title, description, time: new Da
  * @param {string} orderId Order `_id`.
  * @param {string} shipmentTrackingId
  * @returns {Promise<object>} The shipped order, buyer and address populated, `payment` as the summary (adminOrderView).
- * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such order in `paid`/`confirmed`).
+ * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such order in `paid`/`confirmed`), ORDER_CHANGED_CONFLICT (409, it
+ *   changed meanwhile, e.g. a cancel landed: nothing is shipped).
  */
 const shipOrder = async (orderId, shipmentTrackingId) => {
   const order = await Order.findOne({ _id: orderId, $or: [{ orderStatus: PAID }, { orderStatus: CONFIRMED }] }).populate(BUYER_AND_ADDRESS);
   if (!order) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
 
-  order.orderStatus = SHIPPED;
-  order.shipmentTrackingId = shipmentTrackingId;
-  order.orderHistory.push(historyEntry(SHIPPED, 'Order hand over to shipment company. Your books are on their way'));
-  await order.save();
+  await transitionOrder(order, {
+    set: { orderStatus: SHIPPED, shipmentTrackingId },
+    history: historyEntry(SHIPPED, 'Order hand over to shipment company. Your books are on their way'),
+  });
 
   await sendShippedEmail(order);
   return adminOrderView(order);
@@ -51,15 +54,14 @@ const shipOrder = async (orderId, shipmentTrackingId) => {
  * Admin: marks a shipped order delivered (`fulfilled`) and e-mails the buyer.
  * @param {string} id Order `_id`.
  * @returns {Promise<object>} The order, buyer and address populated, `payment` as the summary (adminOrderView).
- * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such order in `shipped`).
+ * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such order in `shipped`), ORDER_CHANGED_CONFLICT (409, it changed
+ *   meanwhile, e.g. an admin cancel landed).
  */
 const completeShipment = async (id) => {
   const order = await Order.findOne({ _id: id, orderStatus: SHIPPED }).populate(BUYER_AND_ADDRESS);
   if (!order) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
 
-  order.orderStatus = FULFILLED;
-  order.orderHistory.push(historyEntry(FULFILLED, 'Shipment delivered. Happy reading!'));
-  await order.save();
+  await transitionOrder(order, { set: { orderStatus: FULFILLED }, history: historyEntry(FULFILLED, 'Shipment delivered. Happy reading!') });
 
   await sendDeliveredEmail(order);
   return adminOrderView(order);
@@ -67,26 +69,27 @@ const completeShipment = async (id) => {
 
 /**
  * Admin: cancels a paid, confirmed or shipped order, logs the reason as its history, e-mails the buyer (production,
- * when `notify`) and puts the stock back. No refund is started.
+ * when `notify`), puts the stock back and gives back the store credit it spent (order-cancellation.service.js). No
+ * refund is started. On an order already cancelled whose store credit return was cut short, it only finishes that
+ * return: this is how staff finish one (the error log names the order).
  * Legacy: the order is found by `uniqueId` and `userId` from the body; the route's `:id` is ignored.
  * @param {{ uniqueId?: string, userId?: string, reason?: string, notify?: unknown }} request
- * @returns {Promise<void>}
- * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED
+ * @returns {Promise<void>} Rejects when giving the store credit back failed (the order stays cancelled; logged).
+ * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such order), ORDER_CHANGED_CONFLICT (409, it changed meanwhile)
  */
 const cancelByAdmin = async ({ uniqueId, userId, reason, notify }) => {
   const order = await Order.findOne({
-    $or: [{ orderStatus: PAID }, { orderStatus: CONFIRMED }, { orderStatus: SHIPPED }],
+    $or: [{ orderStatus: PAID }, { orderStatus: CONFIRMED }, { orderStatus: SHIPPED }, unfinishedCancel()],
     orderId: uniqueId,
     userId,
   }).populate([BUYER]);
   if (!order) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
+  if (order.orderStatus === CANCELLED) {
+    await finishCancelledReturn(order);
+    return;
+  }
 
-  order.orderStatus = CANCELLED;
-  order.orderHistory.push(historyEntry(CANCELLED, reason));
-  await order.save();
-
-  await sendAdminCancelEmail(order, reason, notify);
-  await restoreInventory(order);
+  await cancelOrder(order, { history: historyEntry(CANCELLED, reason), notify: () => sendAdminCancelEmail(order, reason, notify) });
 };
 
 // Closes one return/replacement request: the order moves to `nextStatus` and its tracking id is cleared. An unknown

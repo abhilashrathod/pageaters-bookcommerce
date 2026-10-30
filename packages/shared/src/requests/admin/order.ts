@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { orderSchema } from '../../commerce/order.ts';
 import { orderStatusSchema } from '../../enums.ts';
-import { isoDateSchema, objectIdSchema } from '../../primitives.ts';
+import { objectIdSchema } from '../../primitives.ts';
 import { adminPageQuerySchema } from './common.ts';
 
 // Order admin requests (order.controller.js, admin routes). Types first (see common.ts): no admin order route has a
@@ -65,9 +65,14 @@ export const adminOrderCancelPayloadSchema = z.object({
 });
 export type AdminOrderCancelPayload = z.infer<typeof adminOrderCancelPayloadSchema>;
 
-// GET /orders/analytics/best-selling and /orders/analytics/revenue: orders created in [startDate, endDate).
-export const adminOrderAnalyticsQuerySchema = z.object({
-  startDate: isoDateSchema,
-  endDate: isoDateSchema,
-});
+// GET /orders/analytics/best-selling and /orders/analytics/revenue: orders created in [startDate, endDate). Both are
+// required ISO date-times with an offset, startDate strictly before endDate (Phase 4: the API turns them into dates
+// for an aggregation, which nothing else sanitises, so anything else is refused with ORDER_ANALYTICS_INVALID_RANGE).
+const analyticsDateSchema = z.iso.datetime({ offset: true, error: 'ORDER_ANALYTICS_INVALID_RANGE' });
+export const adminOrderAnalyticsQuerySchema = z
+  .strictObject({
+    startDate: analyticsDateSchema,
+    endDate: analyticsDateSchema,
+  })
+  .refine(({ startDate, endDate }) => Date.parse(startDate) < Date.parse(endDate), { error: 'ORDER_ANALYTICS_INVALID_RANGE' });
 export type AdminOrderAnalyticsQuery = z.infer<typeof adminOrderAnalyticsQuerySchema>;

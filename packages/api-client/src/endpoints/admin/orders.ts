@@ -87,22 +87,23 @@ export const orders = {
     response: adminEmptyResponseSchema.shape.data,
   }),
   // POST /orders/admin-cancel/:id — here `id` is the order's `OD-…` id, and the legacy controller reads it from the
-  // body's `uniqueId`, so send it in both (Phase 4: read the path). Restores stock; issues no refund.
+  // body's `uniqueId`, so send it in both (Phase 4: read the path). Restores stock and gives
+  // back the store credit the order spent; issues no refund.
   cancel: defineEndpoint({
     method: 'POST',
     path: '/orders/admin-cancel/:id',
     body: adminOrderCancelPayloadSchema,
     response: adminEmptyResponseSchema.shape.data,
   }),
-  // GET /orders/analytics/best-selling — the legacy pipeline always answers [] (it matches a `status` field; Phase 4).
+  // GET /orders/analytics/best-selling — the ten books sold most in fulfilled orders created in [startDate, endDate).
+  // The API refuses a range that isn't two ISO date-times, start before end (400 ORDER_ANALYTICS_INVALID_RANGE).
   bestSelling: defineEndpoint({
     method: 'GET',
     path: '/orders/analytics/best-selling',
     query: adminOrderAnalyticsQuerySchema,
     response: adminBestSellingResponseSchema.shape.data,
   }),
-  // GET /orders/analytics/revenue — the legacy pipeline compares Date fields with the query strings, so it answers []
-  // (Phase 4).
+  // GET /orders/analytics/revenue — the sum of fulfilled orders' totals in [startDate, endDate) ([] when none).
   revenue: defineEndpoint({
     method: 'GET',
     path: '/orders/analytics/revenue',

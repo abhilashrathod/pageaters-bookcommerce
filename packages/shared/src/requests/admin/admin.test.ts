@@ -18,6 +18,7 @@ import {
   adminDealReferencesPayloadSchema,
   adminDealUpdatePayloadSchema,
   adminFileUploadFieldsSchema,
+  adminOrderAnalyticsQuerySchema,
   adminOrderCancelPayloadSchema,
   adminOptionalIdListSchema,
   adminOrderListQuerySchema,
@@ -161,6 +162,29 @@ void describe('other admin payloads', () => {
     const cancel = { uniqueId: 'OD-0000000001', userId: id(3), reason: 'Out of stock', notify: false };
     assert.ok(adminOrderCancelPayloadSchema.safeParse(cancel).success);
     assert.equal(adminOrderCancelPayloadSchema.safeParse({ ...cancel, uniqueId: id(4) }).success, false);
+  });
+
+  void it('take an analytics range of two ISO date-times, start strictly before end', () => {
+    const range = { startDate: '2026-10-01T00:00:00.000Z', endDate: '2026-11-01T00:00:00+05:30' };
+    assert.deepEqual(adminOrderAnalyticsQuerySchema.parse(range), range);
+    const refused = [
+      {},
+      { startDate: range.startDate },
+      { ...range, startDate: '2026-10-01' },
+      { ...range, endDate: 'tomorrow' },
+      { ...range, endDate: { $gt: '' } },
+      { ...range, endDate: range.startDate },
+      { startDate: range.endDate, endDate: range.startDate },
+      { ...range, extra: '1' },
+    ];
+    for (const query of refused) {
+      const result = adminOrderAnalyticsQuerySchema.safeParse(query);
+      assert.equal(result.success, false, JSON.stringify(query));
+    }
+    const missing = adminOrderAnalyticsQuerySchema.safeParse({ startDate: range.startDate });
+    assert.equal(missing.error?.issues[0]?.message, 'ORDER_ANALYTICS_INVALID_RANGE');
+    const reversed = adminOrderAnalyticsQuerySchema.safeParse({ startDate: range.endDate, endDate: range.startDate });
+    assert.equal(reversed.error?.issues[0]?.message, 'ORDER_ANALYTICS_INVALID_RANGE');
   });
 
   void it('coerce list queries and bound searches', () => {

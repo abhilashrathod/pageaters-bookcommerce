@@ -11,7 +11,7 @@ const { ORDER_STAGES } = require('../src/constants/enums');
 // replacement shipments, the Razorpay refund webhook and the Delhivery shipment. Each transition is tried from every
 // stage, so the allowed and refused source stages are pinned. Written against the legacy controller first.
 
-const { badRequest, badRequestObject, forbidden, ok, okString, serverError } = envelopes;
+const { badRequest, badRequestObject, forbidden, ok, serverError } = envelopes;
 const WEBHOOK_OK = { status: 'ok' };
 const STAGES = Object.values(ORDER_STAGES);
 
@@ -316,15 +316,27 @@ describe('POST /orders/return/:uniqueId (return and replace requests)', () => {
     assert.equal(mail.subject, `Replace Request is Raised for Order #${order.orderId} - Pageaters`);
   });
 
-  test('legacy: after 7 days answers 200 ORDER_RETURN_PERIOD_LAPSED and changes nothing', async () => {
+  // Phase 4 legacy bugs (b): legacy answered the refusal as a 200 success (`okString`).
+  test('after 7 days refuses with 400 ORDER_RETURN_PERIOD_LAPSED and changes nothing', async () => {
     const order = await orderFor({
       orderStatus: 'fulfilled',
       orderHistory: [{ title: 'fulfilled', description: 'Delivered', time: daysAgo(8) }],
     });
-    assertBody(await request(order), 200, okString('ORDER_RETURN_PERIOD_LAPSED'));
+    for (const type of ['return', 'replace']) {
+      assertBody(await request(order, type), 400, badRequest('ORDER_RETURN_PERIOD_LAPSED'));
+    }
     const unchanged = await Order().findById(order._id);
     assert.equal(unchanged.orderStatus, 'fulfilled');
     assert.equal(unchanged.requests.length, 0);
+    mailed(0);
+  });
+
+  test('a delivered order without a readable delivery time counts as past the period (legacy: 500)', async () => {
+    for (const orderHistory of [[], [{ title: 'fulfilled', description: 'Delivered', time: '' }]]) {
+      const order = await orderFor({ orderStatus: 'fulfilled', orderHistory });
+      assertBody(await request(order), 400, badRequest('ORDER_RETURN_PERIOD_LAPSED'));
+      assert.equal((await Order().findById(order._id)).orderStatus, 'fulfilled');
+    }
   });
 
   // Phase 4: the validator refuses a missing or unknown type (was: an open request and an empty history entry were

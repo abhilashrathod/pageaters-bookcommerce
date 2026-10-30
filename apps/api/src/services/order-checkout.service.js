@@ -35,7 +35,7 @@ const PENDING = [{ orderStatus: enums.ORDER_STAGES.ATTEMPTED }, { orderStatus: e
 const CONFIRMED_DESCRIPTION =
   'We have received your order. We shall start preparing your shipment. Once shipment is handover to shipment company, you will receive tracking information and estimated delivery date.';
 const PENDING_FIELDS =
-  'orderId userId subTotal orderDate storeCredit total shipping giftOptions deliveryInstructions orderHistory deliveryAddress boxed bundles products total';
+  'orderId userId subTotal orderDate storeCredit total shipping giftOptions deliveryInstructions orderHistory deliveryAddress boxes bundles products addOns';
 
 /** Razorpay's smallest payment is ₹1 (100 paise): a smaller total can't be paid online. */
 const MIN_ONLINE_TOTAL = 1;
@@ -228,8 +228,7 @@ const placeOrder = async (userId, cartId, { method, instructions, giftOptions: r
 };
 
 /**
- * The user's order in checkout (`attempted` or `created`), with the checkout projection. Legacy: the projection
- * names `boxed` (a typo that selects nothing); populated `addOns` and `boxes` join the projection anyway.
+ * The user's order in checkout (`attempted` or `created`), with the checkout projection (its lines populated).
  * @param {string} userId
  * @returns {Promise<object>}
  * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED when there is none.

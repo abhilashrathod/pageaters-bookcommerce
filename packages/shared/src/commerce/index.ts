@@ -2,6 +2,7 @@ export * from './address.ts';
 export * from './cart.ts';
 export * from './favorites.ts';
 export * from './gift-card.ts';
+export * from './gift-packages.ts';
 export * from './order.ts';
 export * from './stock-alert.ts';
 export * from './store-credit.ts';

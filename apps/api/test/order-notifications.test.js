@@ -95,12 +95,15 @@ describe('order confirmation (COD checkout)', () => {
     // 6b: book, bundle and box images are their stored public URLs, unchanged (was: CDN resizer URLs built from S3
     // keys).
     assert.ok(mail.html.includes(`src="${POSTER}"`), 'book poster URL');
-    // Legacy, pinned: checkout stores bundle lines unpopulated, so the bundle has no poster (now an empty src) and
-    // its title is empty (the webhook test below has the populated bundle).
-    assert.ok(mail.html.includes('src=""'), 'bundle line without its poster');
+    // Phase 4 legacy bugs (b): the bundle line has its title and poster (legacy stored it unpopulated: an empty src
+    // and no title).
+    assert.ok(mail.html.includes('src="https://images.example.com/test-bundle.png"'), 'bundle poster URL');
+    assert.equal(mail.html.includes('src=""'), false);
+    // Both bundle links (poster and title) go to the bundle page (the title linked to /books/ before).
+    assert.equal(mail.html.split('/bundles/test-bundle-one?').length - 1, 2);
+    assert.equal(mail.html.includes('/books/test-bundle-one'), false);
     assert.ok(mail.html.includes('src="https://images.example.com/test-box.png"'), 'box image URL');
-    assert.ok(mail.html.includes('Test Book One') && mail.html.includes('Test Mystery Box'));
-    assert.equal(mail.html.includes('Test Bundle One'), false);
+    assert.ok(mail.html.includes('Test Book One') && mail.html.includes('Test Mystery Box') && mail.html.includes('Test Bundle One'));
     assert.ok(mail.html.includes(shopper.user.fullName));
     assert.ok(mail.html.includes(address.addressLine1));
     // 2 × 449 + 639 + 949 = 2486 (free shipping), + 49 gift − 40 credit.

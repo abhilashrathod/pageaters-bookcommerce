@@ -21,7 +21,9 @@ import BundleItem from "../../components/cart-elements/cart-bundle-item";
 import AppButton, {ButtonSizes, ButtonVariants} from "../../components/form-controls/Button";
 import {InputWrapper} from "../../components/form-controls/AppTextInput";
 
-import {AUTH_COOKIE, BOOK_AVAILABILITY, GIFT_PACKAGES, LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
+import {GIFT_PACKAGES} from "@pageaters/shared/gift-packages";
+
+import {AUTH_COOKIE, BOOK_AVAILABILITY, LIGHTER_PRIMARY_COLOR, LIGHTEST_PRIMARY_COLOR, SM} from "../../core/_variables";
 
 import emptyCart from "../../public/illustrations/empty-cart.svg";
 import {completePurchase} from "../../core/_analytics";

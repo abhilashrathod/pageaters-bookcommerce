@@ -15,7 +15,8 @@ const orderShipping = require('../services/order-shipping.service');
 // Thin controller: read the request, call one service, answer with the res.* helpers (src/services/README.md).
 // The order services are split by responsibility: pricing, checkout (and its compensation), payment (Razorpay and
 // the payment webhook), refunds (the refund webhook), fulfilment (stock, cart, store credit), lifecycle (admin
-// transitions), returns (shopper requests), shipping (Delhivery), queries, analytics and notifications.
+// transitions), cancellation (shared by the shopper and admin cancels), returns (shopper requests), shipping
+// (Delhivery), queries, analytics and notifications.
 
 const userIdOf = (req) => get(req, 'user.userId', '');
 // Razorpay signs the raw body: verify over the exact bytes received (`req.rawBody`, kept by the JSON parser in
@@ -98,8 +99,7 @@ module.exports.getAllByUser = async (req, res) => {
 module.exports.returnRequest = async (req, res) => {
   try {
     const { uniqueId, type, comments, reason, books, bundles } = req.allParams();
-    const recorded = await orderReturns.requestReturn(userIdOf(req), uniqueId, { type, comments, reason, books, bundles });
-    if (!recorded) return res.ok('ORDER_RETURN_PERIOD_LAPSED');
+    await orderReturns.requestReturn(userIdOf(req), uniqueId, { type, comments, reason, books, bundles });
     return res.ok({ message: 'ORDER_RETURN_SUCCESS', data: {} });
   } catch (e) {
     return handleControllerError(res, e);
@@ -247,7 +247,7 @@ module.exports.completeRefund = async (req, res) => {
 
 module.exports.getAnalyticsBestSelling = async (req, res) => {
   try {
-    const { startDate, endDate } = req.allParams();
+    const { startDate, endDate } = req.validated;
     const data = await orderAnalytics.bestSellingBooks({ startDate, endDate });
     return res.ok({ message: 'ORDER_LIST_SUCCESS', data });
   } catch (e) {
@@ -257,7 +257,7 @@ module.exports.getAnalyticsBestSelling = async (req, res) => {
 
 module.exports.getAnalyticsRevenue = async (req, res) => {
   try {
-    const { startDate, endDate } = req.allParams();
+    const { startDate, endDate } = req.validated;
     const data = await orderAnalytics.revenue({ startDate, endDate });
     return res.ok({ message: 'ORDER_LIST_SUCCESS', data });
   } catch (e) {

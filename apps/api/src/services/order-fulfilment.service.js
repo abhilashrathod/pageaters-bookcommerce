@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { get } = require('lodash');
 
 const { models } = require('../constants');
 const { logger } = require('../helpers/logger.helper');
@@ -7,6 +8,7 @@ const { generateRandomNumber } = require('../helpers/utils.helper');
 // What placing, cancelling or refunding an order does outside the order document: book stock, the buyer's cart and
 // the store-credit ledger.
 
+const Order = mongoose.model(models.ORDER);
 const Book = mongoose.model(models.STORE_BOOK);
 const Bundle = mongoose.model(models.BUNDLE);
 const Cart = mongoose.model(models.CART);
@@ -167,12 +169,83 @@ const addToBalance = async (userId, creditId, amount) => {
   return (await User.exists({ _id: userId })) ? 'already-applied' : 'no-user';
 };
 
+// order.storeCreditReturn (order.model.js): giving back the store credit a cancelled or refunded order spent.
+const STORE_CREDIT_RETURN = Object.freeze({ PENDING: 'pending', CREDITING: 'crediting', RETURNED: 'returned' });
+
+/**
+ * Whether an order's store credit is still to be given back by a cancel or a full refund: it spent credit (a debit
+ * is linked) and no return was started. A return is started at most once per order, by whichever of the two comes
+ * first, with `storeCreditReturn: null` in the same conditional update that records it.
+ * @param {{ storeCredit?: number, storeCreditTransaction?: unknown, storeCreditReturn?: string }} order
+ * @returns {boolean}
+ */
+const givesStoreCreditBack = (order) => order.storeCredit > 0 && Boolean(order.storeCreditTransaction) && !order.storeCreditReturn;
+
+/**
+ * Whether an order's store credit return is started but unfinished (`pending` or `crediting`).
+ * @param {{ storeCreditReturn?: string }} order
+ * @returns {boolean}
+ */
+const returnUnfinished = (order) =>
+  order.storeCreditReturn === STORE_CREDIT_RETURN.PENDING || order.storeCreditReturn === STORE_CREDIT_RETURN.CREDITING;
+
+/**
+ * Gives back the store credit a cancelled or refunded order spent, from `storeCreditReturn` `pending` or `crediting`.
+ * Every step is idempotent, so a retry or a concurrent call finishes it without giving anything twice: record the
+ * CREDIT row (recordStoreCreditReturn), mark it `crediting`, add it to the balance once (addToBalance), mark it
+ * `returned`.
+ * @param {object} order The order (`_id`, `orderId`, `userId` as an id or the populated user, `storeCredit`).
+ * @param {{ label: string, retry: string }} context For the logs: what the order is (`Refunded order`) and what
+ *   retries the return (`a redelivered refund event`).
+ * @returns {Promise<void>} Rejects when a step failed (left `pending` or `crediting`, logged). A missing user is
+ *   logged and left `crediting`.
+ */
+const finishStoreCreditReturn = async (order, { label, retry }) => {
+  const userId = get(order, 'userId._id', order.userId);
+  const what = `${label} ${order.orderId}`;
+  const creditId = await recordStoreCreditReturn(order._id, userId, order.storeCredit);
+  try {
+    await Order.updateOne(
+      { _id: order._id, storeCreditReturn: STORE_CREDIT_RETURN.PENDING },
+      { $set: { storeCreditReturn: STORE_CREDIT_RETURN.CREDITING } },
+    );
+  } catch (e) {
+    logger.error({ err: e }, `${what}: CREDIT transaction ${creditId} is recorded, but marking the return crediting failed; ${retry} retries it`);
+    throw e;
+  }
+
+  let outcome;
+  try {
+    outcome = await addToBalance(userId, creditId, order.storeCredit);
+  } catch (e) {
+    logger.error({ err: e }, `${what}: adding CREDIT transaction ${creditId} (${order.storeCredit}) to the balance failed; ${retry} retries it`);
+    throw e;
+  }
+  if (outcome === 'no-user') {
+    logger.error(`${what}: its user no longer exists, so CREDIT transaction ${creditId} is on no balance`);
+    return;
+  }
+
+  // Server-built operator: trusted, so sanitizeFilter (Phase 4 7a) keeps it.
+  const unfinished = mongoose.trusted({ $in: [STORE_CREDIT_RETURN.PENDING, STORE_CREDIT_RETURN.CREDITING] });
+  try {
+    await Order.updateOne({ _id: order._id, storeCreditReturn: unfinished }, { $set: { storeCreditReturn: STORE_CREDIT_RETURN.RETURNED } });
+  } catch (e) {
+    logger.error({ err: e }, `${what}: store credit given back (${creditId}), but marking the return returned failed; ${retry} finishes it`);
+    throw e;
+  }
+};
+
 module.exports = {
+  STORE_CREDIT_RETURN,
   addToBalance,
   debitStoreCredit,
   deductInventory,
+  finishStoreCreditReturn,
+  givesStoreCreditBack,
   recordStoreCreditReturn,
   resetCart,
   restoreInventory,
+  returnUnfinished,
   undoStoreCreditDebit,
 };

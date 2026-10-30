@@ -15,4 +15,26 @@ void describe('built package', () => {
     });
     assert.equal(output.trim(), 'function');
   });
+
+  // The storefront loads the gift packages alone, without zod (its TypeScript can't read zod's declarations).
+  void it('serves the gift packages as their own entry point, the same list as the barrel', () => {
+    const packageDir = fileURLToPath(new URL('..', import.meta.url));
+    const script = [
+      "const { GIFT_PACKAGES } = await import('@pageaters/shared/gift-packages');",
+      "const barrel = await import('@pageaters/shared');",
+      'console.log(JSON.stringify([GIFT_PACKAGES === barrel.GIFT_PACKAGES, GIFT_PACKAGES.map((p) => [p.title, p.cost])]));',
+    ].join('\n');
+    const output = execFileSync(process.execPath, ['--no-experimental-strip-types', '--input-type=module', '-e', script], {
+      cwd: packageDir,
+      encoding: 'utf8',
+    });
+    assert.deepEqual(JSON.parse(output), [
+      true,
+      [
+        ['Basic', 49],
+        ['Standard', 79],
+        ['Premium', 99],
+      ],
+    ]);
+  });
 });

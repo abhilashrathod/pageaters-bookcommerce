@@ -16,7 +16,7 @@ const schema = new Schema(
   { timestamps: true },
 );
 
-// The credit a full refund gives back is one row per order (`RF-<order _id>`, order-fulfilment
+// The credit a cancel or a full refund gives back is one row per order (`RF-<order _id>`, order-fulfilment
 // recordStoreCreditReturn): unique among `RF-` ids only. `CR-`/`SC-` ids are random digits and are not covered, so
 // legacy data can't violate the index. Range bounds, because a partial filter can't use a regex ('.' follows '-').
 schema.index(

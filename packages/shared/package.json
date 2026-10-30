@@ -7,6 +7,17 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./gift-packages": {
+      "types": "./dist/commerce/gift-packages.d.ts",
+      "default": "./dist/commerce/gift-packages.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "gift-packages": [
+        "./dist/commerce/gift-packages.d.ts"
+      ]
     }
   },
   "scripts": {

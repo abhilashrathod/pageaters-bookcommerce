@@ -249,6 +249,9 @@ describe('POST /orders/create — pricing', () => {
     const [bundle] = order.bundles;
     assert.deepEqual([bundle.quantity, bundle.price, bundle.discount, bundle.total, bundle.weight], [1, 799, 20, 639, 700]);
     assert.equal(String(bundle.bundle), String(orderIds.bundleOne));
+    // Stored as references, though the placed order in memory holds the populated product and bundle (for the e-mail).
+    const stored = await mongoose.connection.collection('orders').findOne({ _id: order._id });
+    assert.ok(stored.bundles[0].bundle instanceof mongoose.Types.ObjectId && stored.products[0].product instanceof mongoose.Types.ObjectId);
     const [box] = order.boxes;
     assert.deepEqual([box.quantity, box.price, box.discount, box.total, box.weight], [1, 999, 5, 949, 900]);
     assert.equal(box.preferences.preferredGenres, 'Test genre');
@@ -499,7 +502,7 @@ describe('GET /orders/retrieve', () => {
     assert.equal(res.body.status, 'ORDER_LIST_SUCCESS');
     const { data } = res.body;
     assert.equal(data.orderId, attempted.orderId);
-    // Populated paths join the projection (addOns, boxes); `boxed` is a legacy typo that selects nothing.
+    // Phase 4 legacy bugs (b): `boxes` is selected (legacy misspelt it `boxed`; populated, it joined anyway).
     assert.deepEqual(Object.keys(data).sort(), [
       '_id',
       'addOns',

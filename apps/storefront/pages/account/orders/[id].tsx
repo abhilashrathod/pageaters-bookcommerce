@@ -742,12 +742,15 @@ const OrderDetails: React.FC<Props> = () => {
                         </DeliveryAddress>
                       </div>
                       <div className="col-xl-3 col-12">
-                        <PaymentSummary>
-                          <Title>Payment Info:</Title>
-                          <PaymentList>
-                            {returnPaymentBreakdown(order.payment)}
-                          </PaymentList>
-                        </PaymentSummary>
+                        {/* An order without a payment (the API answers `payment: null`) has no payment section. */}
+                        {order.payment && (
+                          <PaymentSummary>
+                            <Title>Payment Info:</Title>
+                            <PaymentList>
+                              {returnPaymentBreakdown(order.payment)}
+                            </PaymentList>
+                          </PaymentSummary>
+                        )}
                       </div>
                       <div className="col-xl-3 col-12">
                         <OrderBreakdown>

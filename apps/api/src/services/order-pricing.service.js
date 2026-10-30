@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { get, sumBy } = require('lodash');
+const { GIFT_PACKAGES } = require('@pageaters/shared');
 
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
@@ -23,11 +24,10 @@ const AddOn = mongoose.model(models.ADD_ON);
 const FREE_SHIPPING_ABOVE = 599;
 
 /**
- * Gift-wrap packages and their price in rupees, by the package name the storefront sends. The server's price list:
- * the cost a request sends is ignored. Prices from the legacy storefront's `GIFT_PACKAGES`
- * (`apps/storefront/core/_variables.ts`).
+ * Gift-wrap prices in rupees by package title, from the list the storefront shows (`GIFT_PACKAGES` in
+ * `@pageaters/shared`). The server's price list: the cost a request sends is ignored.
  */
-const GIFT_PACKAGES = Object.freeze({ Basic: 49, Standard: 79, Premium: 99 });
+const GIFT_PRICES = new Map(GIFT_PACKAGES.map(({ title, cost }) => [title, cost]));
 
 /** Populate options for a cart being priced (also applied, harmlessly, to orders in two legacy lookups). */
 const CART_POPULATE = [
@@ -105,7 +105,7 @@ const shippingFor = async (subTotal, hasMysteryBox) =>
   (await calculateShipping(subTotal > FREE_SHIPPING_ABOVE, hasMysteryBox)).deliveryAmount;
 
 /**
- * Gift wrapping: the price of the chosen package from the server's list (GIFT_PACKAGES) when `isGift`, else 0. The
+ * Gift wrapping: the price of the chosen package from the server's list (GIFT_PRICES) when `isGift`, else 0. The
  * `details.cost` a request sends is never used: the returned options carry the server's price, so the order stores
  * what was charged. No `giftOptions` (the field is optional in the request contract) means no gift (legacy threw a
  * TypeError, → 500).
@@ -116,8 +116,8 @@ const shippingFor = async (subTotal, hasMysteryBox) =>
 const giftChargesOf = (giftOptions = { isGift: false }) => {
   if (!giftOptions.isGift) return { giftCharges: 0, giftOptions };
   const name = get(giftOptions, 'details.package', '');
-  if (!Object.hasOwn(GIFT_PACKAGES, name)) throw new AppError('INVALID_REQUEST');
-  const giftCharges = GIFT_PACKAGES[name];
+  if (!GIFT_PRICES.has(name)) throw new AppError('INVALID_REQUEST');
+  const giftCharges = GIFT_PRICES.get(name);
   return { giftCharges, giftOptions: { ...giftOptions, details: { ...giftOptions.details, cost: giftCharges } } };
 };
 
@@ -175,7 +175,9 @@ const buildOrderLines = async (cart) => {
       price: bundle.price,
       discount: bundle.currentDiscount,
       total: item.quantity * discounted(bundle.price, bundle.currentDiscount),
-      bundle: item.bundle._id,
+      // The populated cart bundle, like `product` above: stored as its id, while the confirmation e-mail reads its
+      // title and poster from the placed order in memory (legacy stored the bare id, so that line was blank).
+      bundle: item.bundle,
       weight: bundle.weight * item.quantity,
     });
   }
@@ -223,7 +225,6 @@ const applyStoreCredit = async (userId, uniqueId, amount) => {
 
 module.exports = {
   CART_POPULATE,
-  GIFT_PACKAGES,
   applyStoreCredit,
   buildOrderLines,
   cartSubTotal,

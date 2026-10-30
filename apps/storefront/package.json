@@ -15,6 +15,7 @@
     "@mantine/hooks": "^5.2.3",
     "@mantine/next": "^5.2.3",
     "@mantine/notifications": "^5.2.3",
+    "@pageaters/shared": "workspace:*",
     "axios": "^0.26.0",
     "classnames": "^2.3.1",
     "framer-motion": "^6.2.8",

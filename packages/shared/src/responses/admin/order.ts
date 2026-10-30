@@ -89,7 +89,8 @@ export type AdminOrderWithCustomer = z.infer<typeof adminOrderWithCustomerSchema
 export const adminOrderWithCustomerResponseSchema = apiResponse(adminOrderWithCustomerSchema);
 
 // GET /orders/analytics/best-selling: the ten books sold most, by quantity. `bookDetails` is empty when the book no
-// longer exists. (The legacy pipeline matches a `status` field orders don't have, so it always answers [].)
+// longer exists. Fulfilled orders only (Phase 4: the legacy pipeline matched a missing `status` field and always
+// answered []).
 export const adminBestSellingItemSchema = z.object({
   totalQuantity: z.number().int().nonnegative(),
   bookDetails: z.object({
