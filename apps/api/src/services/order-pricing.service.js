@@ -107,12 +107,13 @@ const shippingFor = async (subTotal, hasMysteryBox) =>
 /**
  * Gift wrapping: the price of the chosen package from the server's list (GIFT_PACKAGES) when `isGift`, else 0. The
  * `details.cost` a request sends is never used: the returned options carry the server's price, so the order stores
- * what was charged. Legacy, kept: a missing `giftOptions` throws a TypeError (→ 500).
- * @param {{ isGift: boolean, details?: { package?: string, cost?: number } }} giftOptions
+ * what was charged. No `giftOptions` (the field is optional in the request contract) means no gift (legacy threw a
+ * TypeError, → 500).
+ * @param {{ isGift: boolean, details?: { package?: string, cost?: number } } | undefined} giftOptions
  * @returns {{ giftCharges: number, giftOptions: object }} The charge and the options to store.
  * @throws {AppError} INVALID_REQUEST when `isGift` names no known package (none, or one not in the list).
  */
-const giftChargesOf = (giftOptions) => {
+const giftChargesOf = (giftOptions = { isGift: false }) => {
   if (!giftOptions.isGift) return { giftCharges: 0, giftOptions };
   const name = get(giftOptions, 'details.package', '');
   if (!Object.hasOwn(GIFT_PACKAGES, name)) throw new AppError('INVALID_REQUEST');

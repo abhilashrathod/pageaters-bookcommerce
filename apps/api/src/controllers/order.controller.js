@@ -6,15 +6,16 @@ const orderAnalytics = require('../services/order-analytics.service');
 const orderCheckout = require('../services/order-checkout.service');
 const orderLifecycle = require('../services/order-lifecycle.service');
 const orderPayment = require('../services/order-payment.service');
+const orderRefunds = require('../services/order-refunds.service');
 const orderPricing = require('../services/order-pricing.service');
 const orderQueries = require('../services/order-queries.service');
 const orderReturns = require('../services/order-returns.service');
 const orderShipping = require('../services/order-shipping.service');
 
 // Thin controller: read the request, call one service, answer with the res.* helpers (src/services/README.md).
-// The order services are split by responsibility: pricing, checkout, payment (Razorpay + webhooks), fulfilment
-// (stock, cart, store credit), lifecycle (admin transitions), returns (shopper requests), shipping (Delhivery),
-// queries, analytics and notifications.
+// The order services are split by responsibility: pricing, checkout (and its compensation), payment (Razorpay and
+// the payment webhook), refunds (the refund webhook), fulfilment (stock, cart, store credit), lifecycle (admin
+// transitions), returns (shopper requests), shipping (Delhivery), queries, analytics and notifications.
 
 const userIdOf = (req) => get(req, 'user.userId', '');
 // Razorpay signs the raw body: verify over the exact bytes received (`req.rawBody`, kept by the JSON parser in
@@ -235,7 +236,7 @@ module.exports.verifyAndConfirm = async (req, res) => {
 
 module.exports.completeRefund = async (req, res) => {
   try {
-    await orderPayment.recordRefund(webhookEvent(req));
+    await orderRefunds.recordRefund(webhookEvent(req));
     return res.json({ status: 'ok' });
   } catch (e) {
     return handleControllerError(res, e);

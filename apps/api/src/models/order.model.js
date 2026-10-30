@@ -9,6 +9,9 @@ const schema = new Schema({
 
     razorOrderId: { type: String, default: '' },
     razorPaymentId: { type: String, default: '' },
+    // Razorpay refund ids (`rfnd_…`) the refund webhook has recorded, so a redelivered refund is recorded once.
+    // Absent until the first refund.
+    refundIds: { type: [String], default: undefined },
     orderDate: { type: String, default: '' },
 
     deliveryInstructions: { type: String, default: '' },
@@ -86,6 +89,10 @@ const schema = new Schema({
     giftCard: { type: Schema.Types.ObjectId, ref: models.GIFT_CARD, default: null },
     discount: { type: Schema.Types.ObjectId, ref: models.DISCOUNT, default: null },
     storeCreditTransaction: { type: Schema.Types.ObjectId, ref: models.STORE_CREDIT_TRANSACTIONS, default: null },
+    // Giving the spent store credit back after a full refund (order-refunds.service.js): `pending` (to do),
+    // `crediting` (the CREDIT transaction is recorded; the balance step, idempotent, may still be due), `returned`.
+    // A redelivered refund event finishes `pending` and `crediting`. Absent when nothing is to be given back.
+    storeCreditReturn: { type: String, enum: ['pending', 'crediting', 'returned'], default: undefined },
 
     giftOptions: {
       isGift: { type: Boolean, default: false },
@@ -108,6 +115,19 @@ const schema = new Schema({
     toJSON: {
       getters: true,
     },
+  },
+);
+
+// One pending order per user: at most one `attempted` or `created` order (order-checkout.service.js). Two concurrent
+// first attempts would otherwise both create one; the loser's insert fails with a duplicate key. `$in` in a partial
+// filter needs MongoDB 6.0+. Built by Mongoose's autoIndex; a database that already holds two pending orders for one
+// user refuses the index until one of them is removed.
+schema.index(
+  { userId: 1 },
+  {
+    name: 'one_pending_order_per_user',
+    unique: true,
+    partialFilterExpression: { orderStatus: { $in: [enums.ORDER_STAGES.ATTEMPTED, enums.ORDER_STAGES.CREATED] } },
   },
 );
 

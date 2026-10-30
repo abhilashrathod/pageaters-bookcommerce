@@ -6,15 +6,16 @@ const { models, enums } = require('../constants');
 const { logger } = require('../helpers/logger.helper');
 const { debitStoreCredit, deductInventory, resetCart, undoStoreCreditDebit } = require('./order-fulfilment.service');
 const { sendConfirmationEmail, sendConfirmationSms } = require('./order-notifications.service');
-const { CART_POPULATE } = require('./order-pricing.service');
 const { ORDER_POPULATE } = require('./order-queries.service');
 
 // Payments (the payments adapter: Razorpay or its mock): the payment order created at checkout, and the business
-// side of the two webhooks (payment captured, refund processed). The webhooks answer `{ status: 'ok' }` — the
-// controller does that — so Razorpay doesn't retry; these functions just do nothing when the signature is missing
-// or wrong, the event isn't the expected one, or no order matches. Everything is read from the signed raw body,
-// never from the parsed request, so nothing outside the signature can change what is acted on. A failed write after
-// the store credit was debited puts the credit back and rejects (→ 500), so Razorpay redelivers the event.
+// side of the payment-captured webhook (the refund webhook is order-refunds.service.js, on the helpers exported here).
+// The webhooks answer `{ status: 'ok' }` — the controller does that — so Razorpay doesn't retry; these functions just
+// do nothing when the signature is missing or wrong, the event isn't the expected one, or no order matches. Everything
+// is read from the signed raw body, never from the parsed request, so nothing outside the signature can change what is
+// acted on. A failed write after the store credit was debited is checked against a fresh read of the order (a lost
+// acknowledgement can hide a write that landed); only when it didn't land is the credit put back, and the webhook
+// rejects (→ 500), so Razorpay redelivers the event.
 //
 // Logged for an admin (ids and amounts only, never payer details): a captured payment that confirms nothing — no
 // order awaits it (e.g. the shopper restarted checkout), its amount or currency is wrong, another delivery claimed it,
@@ -25,11 +26,8 @@ const User = mongoose.model(models.USER);
 
 const PAID_DESCRIPTION =
   'We have received your order. We shall start preparing your shipment. Once shipment is handover to shipment company, you will receive tracking information and estimated delivery date. ';
-const REFUNDED_DESCRIPTION = 'Refund is successfully processed. It will be with you in 5-7 business days. Thank you.';
-const PARTIAL_REFUND_TITLE = 'Partial refund';
 
 const PAYMENT_CAPTURED = 'payment.captured';
-const REFUND_PROCESSED = 'refund.processed';
 
 // What an order keeps of a Razorpay payment entity: the identifiers, amounts and status, and the method details the
 // payment summary shows (order-queries orderPaymentInfo reads card last4/network, bank, vpa, wallet, emi). The UPI id
@@ -87,7 +85,12 @@ const paymentSummary = (entity) => {
   return summary;
 };
 
-// The signed event, or undefined when the signature doesn't verify or the body isn't JSON.
+/**
+ * The signed event, or undefined when the signature doesn't verify or the body isn't JSON.
+ * @param {string | Buffer} rawBody
+ * @param {string | undefined} signature
+ * @returns {object | undefined}
+ */
 const verifiedEvent = (rawBody, signature) => {
   if (!payments.verifyWebhookSignature(rawBody, signature)) return undefined;
   try {
@@ -97,6 +100,11 @@ const verifiedEvent = (rawBody, signature) => {
   }
 };
 
+/**
+ * A non-empty string (a Razorpay id read from an event).
+ * @param {unknown} value
+ * @returns {boolean}
+ */
 const isId = (value) => typeof value === 'string' && value !== '';
 
 /**
@@ -107,6 +115,57 @@ const isId = (value) => typeof value === 'string' && value !== '';
  *   and leaves the order `attempted`).
  */
 const createPaymentOrder = (orderId, total) => payments.createOrder({ amount: toPaise(total), currency: 'INR', receipt: `${orderId}-RCPTID` });
+
+/**
+ * After the write that marks an order paid failed: decides from fresh reads, since a lost write acknowledgement can
+ * hide a write that landed, or that lands later. Only that write moves an order holding this payment's claim out of
+ * `created`, so an order still claimed by `paymentId` and `paid` landed: nothing is undone (returns, and
+ * the payment completes). Otherwise the claim is released first; a released claim makes the paid write's filter
+ * unmatchable, so only then is the store credit given back, and it rejects with `error` so Razorpay redelivers. A
+ * release that matches nothing means the paid write landed meanwhile (read again: then it returns as paid). A read
+ * failing, or an order in neither state → nothing is undone (the order may be paid), logged for a follow-up; rejects.
+ * A failed credit return is logged (order-fulfilment undoStoreCreditDebit).
+ * @param {object} order The order as read.
+ * @param {string} paymentId
+ * @param {import('mongoose').Types.ObjectId | null} transaction The DEBIT, if credit was debited.
+ * @param {() => Promise<{ matchedCount: number }>} release
+ * @param {unknown} error The failed write's error.
+ * @returns {Promise<void>}
+ */
+const settleFailedPaidWrite = async (order, paymentId, transaction, release, error) => {
+  const readPaid = async () => {
+    const current = await Order.findById(order._id).select('orderStatus razorPaymentId');
+    return current.razorPaymentId === paymentId && current.orderStatus === enums.ORDER_STAGES.PAID;
+  };
+  const unresolved = (cause) => {
+    logger.error(
+      { err: cause },
+      `Payment ${paymentId}: order ${order.orderId} could not be settled after marking it paid failed; check the order and the balance`,
+    );
+    return error;
+  };
+
+  let paid;
+  try {
+    paid = await readPaid();
+  } catch (e) {
+    throw unresolved(e);
+  }
+  if (paid) return;
+
+  let released;
+  try {
+    released = await release();
+  } catch (e) {
+    released = { matchedCount: 0, error: e };
+  }
+  if (released.matchedCount === 1) {
+    if (transaction) await undoStoreCreditDebit(order, transaction, order.storeCredit);
+    throw error;
+  }
+  if (await readPaid().catch(() => false)) return;
+  throw unresolved(released.error ?? error);
+};
 
 /**
  * Payment-captured webhook. Acts only on a correctly signed `payment.captured` event whose payment is `captured`, in
@@ -170,9 +229,7 @@ const confirmPayment = async ({ rawBody, signature }) => {
     );
     if (paid.matchedCount !== 1) throw new Error(`Order ${order.orderId} changed while its payment was confirmed`);
   } catch (e) {
-    if (transaction) await undoStoreCreditDebit(transaction, order.userId, order.storeCredit);
-    await release();
-    throw e;
+    await settleFailedPaidWrite(order, entity.id, transaction, release, e);
   }
 
   order.orderHistory.push(history);
@@ -189,35 +246,4 @@ const confirmPayment = async ({ rawBody, signature }) => {
   await sendConfirmationEmail(user, order);
 };
 
-/**
- * Refund-processed webhook: acts on a correctly signed `refund.processed` event whose refund (`payload.refund.entity`)
- * is for the payment that paid the order with that Razorpay order id, unless the order is already refunded. A full
- * refund (the payment's `amount_refunded` reaches its `amount`) marks the order refunded; a partial one only adds a
- * history entry. Either way the order's payment becomes the refunded payment's summary (PAYMENT_SUMMARY_FIELDS).
- * Legacy, kept: a full refund applies to an order in any other stage.
- * @param {{ rawBody: string | Buffer, signature?: string }} event `rawBody` is the signed request body.
- * @returns {Promise<void>}
- */
-const recordRefund = async ({ rawBody, signature }) => {
-  const event = verifiedEvent(rawBody, signature);
-  if (get(event, 'event') !== REFUND_PROCESSED) return;
-  const entity = get(event, 'payload.payment.entity', {});
-  const refund = get(event, 'payload.refund.entity', {});
-  if (!isId(entity.order_id) || !isId(refund.payment_id)) return;
-
-  const order = await Order.findOne({ razorOrderId: entity.order_id }).populate(CART_POPULATE);
-  if (!order || order.orderStatus === enums.ORDER_STAGES.REFUNDED || refund.payment_id !== order.razorPaymentId) return;
-
-  const full = Number.isFinite(entity.amount) && Number.isFinite(entity.amount_refunded) && entity.amount_refunded >= entity.amount;
-  if (full) {
-    order.orderHistory.push({ title: enums.ORDER_STAGES.REFUNDED, description: REFUNDED_DESCRIPTION, time: new Date().toISOString() });
-    order.orderStatus = enums.ORDER_STAGES.REFUNDED;
-  } else {
-    const rupees = Number.isFinite(refund.amount) ? refund.amount / 100 : 0;
-    order.orderHistory.push({ title: PARTIAL_REFUND_TITLE, description: `A refund of INR ${rupees} is processed.`, time: new Date().toISOString() });
-  }
-  order.payment = paymentSummary(entity);
-  await order.save();
-};
-
-module.exports = { PAYMENT_SUMMARY_FIELDS, confirmPayment, createPaymentOrder, paymentSummary, recordRefund, unclaimedPayment };
+module.exports = { PAYMENT_SUMMARY_FIELDS, confirmPayment, createPaymentOrder, isId, paymentSummary, unclaimedPayment, verifiedEvent };

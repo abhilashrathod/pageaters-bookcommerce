@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 
 const { models } = require('../constants');
+const { logger } = require('../helpers/logger.helper');
 const { generateRandomNumber } = require('../helpers/utils.helper');
 
-// What placing or cancelling an order does outside the order document: book stock, the buyer's cart and the
-// store-credit ledger.
+// What placing, cancelling or refunding an order does outside the order document: book stock, the buyer's cart and
+// the store-credit ledger.
 
 const Book = mongoose.model(models.STORE_BOOK);
 const Bundle = mongoose.model(models.BUNDLE);
@@ -103,16 +104,75 @@ const debitStoreCredit = async (orderId, userId, amount) => {
 };
 
 /**
- * Undoes a debitStoreCredit whose order could not be completed: puts `amount` back on the balance and deletes the
- * DEBIT transaction. Compensation for a failed later write (there are no MongoDB transactions).
+ * Undoes a debitStoreCredit whose order could not be completed (compensation for a failed later write; there are no
+ * MongoDB transactions): puts `amount` back on the balance, then deletes the DEBIT transaction. Never rejects: what
+ * could not be done is logged with the order id, the transaction id and the amount, so a person can finish it.
+ * @param {{ orderId: string, userId: unknown }} order
  * @param {import('mongoose').Types.ObjectId} transactionId What debitStoreCredit returned.
- * @param {string} userId
  * @param {number} amount The amount debited.
  * @returns {Promise<void>}
  */
-const undoStoreCreditDebit = async (transactionId, userId, amount) => {
-  await User.updateOne({ _id: userId }, { $inc: { storeCredit: amount } });
-  await StoreCreditTransaction.deleteOne({ _id: transactionId });
+const undoStoreCreditDebit = async (order, transactionId, amount) => {
+  try {
+    await User.updateOne({ _id: order.userId }, { $inc: { storeCredit: amount } });
+  } catch (e) {
+    logger.error({ err: e }, `Order ${order.orderId}: store credit ${amount} of DEBIT transaction ${transactionId} may not have been given back; check the balance before crediting it by hand`);
+    return;
+  }
+  await StoreCreditTransaction.deleteOne({ _id: transactionId }).catch((e) => {
+    logger.error({ err: e }, `Order ${order.orderId}: store credit ${amount} given back, but DEBIT transaction ${transactionId} could not be deleted`);
+  });
 };
 
-module.exports = { debitStoreCredit, deductInventory, resetCart, restoreInventory, undoStoreCreditDebit };
+/** MongoDB's duplicate-key error code. */
+const DUPLICATE_KEY = 11000;
+
+/**
+ * Records the CREDIT transaction that gives back the store credit an order spent (a full refund). Idempotent, keyed by
+ * the order: its `creditId` is `RF-<order _id>`, unique among `RF-` ids (index `one_refund_credit_per_order`), so a
+ * retry or a concurrent call finds the one row instead of adding another. Of two concurrent upserts that both insert,
+ * the loser's duplicate key is retried once, and then finds the row. The balance is not touched (addToBalance).
+ * @param {import('mongoose').Types.ObjectId} orderId Order `_id`.
+ * @param {string} userId
+ * @param {number} amount More than 0.
+ * @returns {Promise<string>} The transaction's `creditId`.
+ */
+const recordStoreCreditReturn = async (orderId, userId, amount) => {
+  const creditId = `RF-${orderId}`;
+  const upsert = () =>
+    StoreCreditTransaction.findOneAndUpdate({ creditId }, { $setOnInsert: { orderId, userId, amount, action: 'CREDIT' } }, { upsert: true, new: true });
+  await upsert().catch((e) => {
+    if (e && e.code === DUPLICATE_KEY) return upsert();
+    throw e;
+  });
+  return creditId;
+};
+
+/**
+ * Adds a recorded credit to the user's balance, once per `creditId`: one conditional update on the user adds `amount`
+ * and records the id in `appliedCreditIds` together, so a retry (after a crash, a lost acknowledgement or a concurrent
+ * call) finds it applied and adds nothing.
+ * @param {string} userId
+ * @param {string} creditId The transaction's `creditId`.
+ * @param {number} amount
+ * @returns {Promise<'applied' | 'already-applied' | 'no-user'>} What happened; `no-user` when the user is missing.
+ */
+const addToBalance = async (userId, creditId, amount) => {
+  // Server-built operator: trusted, so sanitizeFilter (Phase 4 7a) keeps it.
+  const added = await User.updateOne(
+    { _id: userId, appliedCreditIds: mongoose.trusted({ $ne: creditId }) },
+    { $inc: { storeCredit: amount }, $push: { appliedCreditIds: creditId } },
+  );
+  if (added.matchedCount === 1) return 'applied';
+  return (await User.exists({ _id: userId })) ? 'already-applied' : 'no-user';
+};
+
+module.exports = {
+  addToBalance,
+  debitStoreCredit,
+  deductInventory,
+  recordStoreCreditReturn,
+  resetCart,
+  restoreInventory,
+  undoStoreCreditDebit,
+};

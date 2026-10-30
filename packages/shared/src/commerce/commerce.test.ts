@@ -128,6 +128,14 @@ void describe('storeCreditSchema', () => {
     assert.ok(storeCreditSchema.safeParse({ ...issued, creditId: 'CR-1234567890', action: StoreCreditAction.CREDIT }).success);
   });
 
+  void it('accepts the credit a full refund gives back, keyed by the order id', () => {
+    const returned = { ...debit, creditId: `RF-${debit.orderId}`, action: StoreCreditAction.CREDIT };
+    assert.ok(storeCreditSchema.safeParse(returned).success);
+    for (const creditId of ['RF-1234567890', 'RF-64D000000000000000000F02', `RF-${debit.orderId}0`, `XX-${debit.orderId}`]) {
+      assert.equal(storeCreditSchema.safeParse({ ...returned, creditId }).success, false, creditId);
+    }
+  });
+
   void it('rejects negative amounts, unknown actions and malformed credit IDs', () => {
     assert.equal(storeCreditSchema.safeParse({ ...debit, amount: -100 }).success, false);
     for (const action of ['credit', 'REFUND', '']) assert.equal(storeCreditSchema.safeParse({ ...debit, action }).success, false, action);

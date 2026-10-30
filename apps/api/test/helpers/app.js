@@ -38,6 +38,9 @@ const startTestApp = async () => {
   // them back on to test them).
   require('../../src/middlewares/rateLimit.middleware').settings.enabled = false;
   await require('../../src/helpers/connectToDb.helper')();
+  // Mongoose builds the models' indexes in the background (autoIndex); wait for them, so a unique index (the one
+  // pending order per user) is in force from the first test.
+  await Promise.all(mongoose.modelNames().map((name) => mongoose.model(name).init()));
 
   const server = await new Promise((resolve) => {
     const started = app.listen(0, '127.0.0.1', () => resolve(started));

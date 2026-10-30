@@ -344,7 +344,9 @@ describe('races: one winner, one debit, one stock deduction', () => {
     assert.equal(await stockOfBookOne(), stock - 1);
   });
 
-  test('payment webhook against a COD place of the same created order: exactly one wins', async () => {
+  // Phase 4 legacy bugs: a COD place of an order with a Razorpay order is refused (it could win over the payment, which
+  // then confirmed nothing and needed a manual refund), so the payment always wins.
+  test('payment webhook against a COD place of the same created order: the payment wins', async () => {
     for (let round = 0; round < 3; round += 1) {
       await setBalance(100);
       const attempted = await attemptBooks();
@@ -356,7 +358,8 @@ describe('races: one winner, one debit, one stock deduction', () => {
       const [, cod] = await Promise.all([webhook('/orders/confirm', captured(paymentOrder.id, 44900, { id: `pay_test_race_${round}` })), placeCod()]);
 
       const order = await Order().findById(attempted._id);
-      assert.equal(order.orderStatus, cod.status === 200 ? 'confirmed' : 'paid');
+      assert.equal(cod.status, 400);
+      assert.equal(order.orderStatus, 'paid');
       assert.equal(order.orderHistory.length, 1);
       assert.equal(await balance(), 50);
       assert.equal(await Transactions().countDocuments({ orderId: order._id }), 1);
@@ -496,10 +499,10 @@ describe('payment webhook: only a captured INR payment event counts', () => {
 });
 
 describe('refund webhook: a full refund.processed for the order\'s own payment, once', () => {
-  const refundEvent = ({ event = 'refund.processed', paymentId = 'pay_test_r', refunded = 49900, amount = 49900 } = {}) => ({
+  const refundEvent = ({ event = 'refund.processed', paymentId = 'pay_test_r', refunded = 49900, amount = 49900, refundId = 'rfnd_test_r' } = {}) => ({
     event,
     payload: {
-      refund: { entity: { id: 'rfnd_test_r', payment_id: paymentId, amount } },
+      refund: { entity: { id: refundId, payment_id: paymentId, amount } },
       payment: {
         entity: {
           id: paymentId,
@@ -561,7 +564,7 @@ describe('refund webhook: a full refund.processed for the order\'s own payment, 
 
   test('a partial refund is recorded in the history and leaves the order stage alone', async () => {
     const order = await paidOrder();
-    await webhook('/orders/refund/processed', refundEvent({ refunded: 20000, amount: 20000 }));
+    await webhook('/orders/refund/processed', refundEvent({ refunded: 20000, amount: 20000, refundId: 'rfnd_test_r1' }));
     const partial = await Order().findById(order._id);
     assert.equal(partial.orderStatus, 'returned');
     assert.deepEqual(
@@ -570,7 +573,7 @@ describe('refund webhook: a full refund.processed for the order\'s own payment, 
     );
     assert.equal(partial.payment.amount_refunded, 20000);
 
-    await webhook('/orders/refund/processed', refundEvent({ refunded: 49900, amount: 29900 }));
+    await webhook('/orders/refund/processed', refundEvent({ refunded: 49900, amount: 29900, refundId: 'rfnd_test_r2' }));
     assert.equal((await Order().findById(order._id)).orderStatus, 'refunded');
   });
 });

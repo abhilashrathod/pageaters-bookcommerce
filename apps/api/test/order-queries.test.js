@@ -170,8 +170,8 @@ describe('GET /orders/getByUniqueId/:uniqueId', () => {
 describe('GET /orders/list', () => {
   test("lists the shopper's placed orders, newest first, without attempted or created ones", async () => {
     const first = await createOrder(shopper.user, { orderStatus: 'confirmed' });
-    await createOrder(shopper.user, { orderStatus: 'attempted' });
-    await createOrder(shopper.user, { orderStatus: 'created' });
+    // One pending order per user (unique index): attempted here, created at the end.
+    const pending = await createOrder(shopper.user, { orderStatus: 'attempted' });
     const second = await createOrder(shopper.user, { orderStatus: 'cancelled', deliveryAddress: address._id });
     const other = await createUser();
     await createOrder(other.user, { orderStatus: 'paid' });
@@ -198,6 +198,12 @@ describe('GET /orders/list', () => {
       'total',
     ]);
     assert.equal(res.body.data[0].deliveryAddress.city, 'Test City');
+
+    await mongoose.model('order').updateOne({ _id: pending._id }, { $set: { orderStatus: 'created' } });
+    assert.deepEqual(
+      (await get('/orders/list', shopper.cookie)).body.data.map((order) => order.orderId),
+      [second.orderId, first.orderId],
+    );
   });
 
   test('answers an empty list', async () => {
@@ -210,7 +216,8 @@ describe('GET /orders (admin)', () => {
     const older = await createOrder(shopper.user, { orderStatus: 'paid', deliveryAddress: address._id });
     const newer = await createOrder(shopper.user, { orderStatus: 'shipped' });
     await createOrder(shopper.user, { orderStatus: 'attempted' });
-    await createOrder(shopper.user, { orderStatus: 'created' });
+    // One pending order per user (unique index): the created one belongs to another shopper.
+    await createOrder((await createUser()).user, { orderStatus: 'created' });
     await mongoose.model('order').updateOne({ _id: newer._id }, { $set: { total: 500 } });
 
     const res = await get('/orders?page=1&limit=10');

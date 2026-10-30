@@ -164,6 +164,8 @@
 	"ORDER_CANCEL_SUCCESS": "Order cancelled.",
 	"ORDER_RETURN_SUCCESS": "Return request raised successfully",
 	"ORDER_ADDRESS_SUCCESS": "Address Selection Success",
+	"ORDER_PENDING_CONFLICT": "Another checkout for your account started at the same time. Please try again.",
+	"ORDER_ONLINE_PAYMENT_PENDING": "This order is waiting for its online payment. To pay cash on delivery instead, please start checkout again.",
 	"INVALID_PAYMENT_METHOD": "Payment Method Invalid",
 	"SUBSCRIPTION_PLAN_ERROR": "Please select a plan",
 	"SUBSCRIPTION_LIST_SUCCESS": "Subscription list success",

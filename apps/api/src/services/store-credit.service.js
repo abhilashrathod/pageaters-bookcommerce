@@ -13,9 +13,9 @@ const CreditTransactions = mongoose.model(models.STORE_CREDIT_TRANSACTIONS);
 
 /**
  * Issues store credit to an active user: records a CREDIT transaction, adds `credit` to the balance and sends the
- * STORE_CREDIT_REWARD email.
- * Legacy (no validator, kept until the zod step): `credit` is not checked, so a negative or non-numeric amount is
- * recorded and applied as is; a malformed `userId` fails as a 500.
+ * STORE_CREDIT_REWARD email. The route validates the input (`adminStoreCreditIssuePayloadSchema` from
+ * `@pageaters/shared`: `userId` an id, `credit` a positive amount with at most two decimals), so neither a negative
+ * credit nor a malformed id reaches this.
  * @param {{ userId: string, credit: number, orderId?: string }} input
  * @returns {Promise<void>}
  * @throws {AppError} USER_NOT_FOUND (400) for an unknown or inactive user.

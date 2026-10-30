@@ -118,6 +118,15 @@ void describe('customerOrderSchema', () => {
     for (const key of ['razorOrderId', 'razorPaymentId', 'requests', 'userId']) assert.equal(key in parsed, false, key);
   });
 
+  void it('keeps the refund bookkeeping in the admin view only', () => {
+    const refunded = { ...order, refundIds: ['rfnd_placeholder'], storeCreditReturn: 'returned' };
+    assert.deepEqual(orderSchema.parse(refunded).refundIds, ['rfnd_placeholder']);
+    assert.equal(orderSchema.parse(refunded).storeCreditReturn, 'returned');
+    assert.equal(orderSchema.safeParse({ ...refunded, storeCreditReturn: 'done' }).success, false);
+    const parsed = customerOrderSchema.parse(refunded);
+    for (const key of ['refundIds', 'storeCreditReturn']) assert.equal(key in parsed, false, key);
+  });
+
   void it('accepts a missing payment and rejects a raw Razorpay entity, as orderSchema does', () => {
     const { payment: _payment, ...withoutPayment } = order;
     assert.ok(customerOrderSchema.safeParse(withoutPayment).success);

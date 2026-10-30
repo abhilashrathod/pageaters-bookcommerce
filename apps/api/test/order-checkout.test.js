@@ -417,9 +417,13 @@ describe('POST /orders/create — refusals', () => {
     assertBody(res, 400, badRequest('CART_NOT_EXIST'));
   });
 
-  test('legacy: answers 500 without giftOptions', async () => {
-    await attemptWith({ products: [{ product: ids.bookOne, quantity: 1 }] });
-    assertBody(await post('/orders/create', { method: 'cod' }), 500, serverError);
+  // Phase 4 legacy bugs: no giftOptions means no gift (legacy answered 500; the request contract makes it optional).
+  test('places the order without gift charges when giftOptions is missing', async () => {
+    const attempted = await attemptWith({ products: [{ product: ids.bookOne, quantity: 1 }] });
+    assertBody(await post('/orders/create', { method: 'cod' }), 200, ok('ORDER_CREATE_SUCCESS', { total: 449 + 50, orderId: attempted.orderId }));
+    const order = await Order().findById(attempted._id);
+    assert.equal(order.orderStatus, 'confirmed');
+    assert.equal(order.giftOptions.isGift, false);
   });
 
   test('legacy: answers 500 when the cart holds a book soft-deleted since', async () => {
@@ -475,6 +479,8 @@ describe('PATCH /orders/credit', () => {
 
   // Phase 4 7c: legacy applied credit to an order in any stage, even a delivered one.
   test('refuses an order that is no longer attempted', async () => {
+    // One pending order per user (unique index): the attempted one from beforeEach goes, so a created one can exist.
+    await Order().deleteOne({ _id: order._id });
     for (const orderStatus of ['created', 'confirmed', 'paid', 'fulfilled']) {
       const placed = await createOrder(shopper.user, { orderStatus, storeCredit: 5 });
       assertBody(await patch({ uniqueId: placed.orderId, amount: 10 }), 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
