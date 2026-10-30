@@ -5,6 +5,7 @@ const net = require('node:net');
 const path = require('node:path');
 
 const { TEST_ENV } = require('./helpers/env');
+const { captureLogs, messagesAt } = require('./helpers/logs');
 
 // Boot smoke tests: load the whole Express app (every route, model and SDK client) in this process with placeholder
 // config and an unreachable database, then hit it over HTTP. No real database and no network: port 1 on 127.0.0.1
@@ -40,9 +41,8 @@ const atImport = { ...calls, readyState: mongoose.connection.readyState };
 net.Server.prototype.listen = listen;
 mongoose.connect = connect;
 
-const logs = [];
-const { error: logError } = console;
-console.error = (...args) => logs.push(args.join(' '));
+const logs = captureLogs();
+const messages = require('../src/locales/en.json');
 
 let server;
 let BASE;
@@ -55,7 +55,6 @@ before(async () => {
 });
 
 after(async () => {
-  console.error = logError;
   await new Promise((resolve) => server.close(resolve));
   await mongoose.disconnect();
 });
@@ -92,21 +91,51 @@ test('OPTIONS preflight from an allowed origin is answered by cors()', async () 
   assert.equal(res.headers.get('access-control-allow-origin'), 'http://localhost:3000');
 });
 
-test('unknown routes outside the API answer 404', async () => {
+test('unknown routes outside the API answer 404 in the JSON envelope', async () => {
   const res = await fetch(`${BASE}/does-not-exist`);
   assert.equal(res.status, 404);
+  assert.equal(
+    JSON.stringify(await res.json()),
+    JSON.stringify({ statusCode: 404, status: 'NOT_FOUND', message: messages.NOT_FOUND, error: messages.NOT_FOUND, data: {} }),
+  );
+});
+
+test('GET /health tries to connect and answers 503 unavailable when MongoDB is unreachable, saying nothing why', async () => {
+  const before = logs.length;
+  const res = await fetch(`${BASE}/health`, { signal: AbortSignal.timeout(10_000) });
+  assert.equal(res.status, 503);
+  assert.equal(await res.text(), JSON.stringify({ status: 'unavailable' }));
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  // It made the shared connection attempt (logged without the URI), like a cold instance's first request.
+  const logged = messagesAt(logs.slice(before));
+  assert.equal(logged.length, 1);
+  assert.match(logged[0], /^MongoDB connection failed \(/);
+  assert.doesNotMatch(logged[0], /pageaters_test/);
 });
 
 test('database-backed routes answer 503 when MongoDB is unreachable, and retry on the next request', async () => {
+  const before = logs.length;
   for (const route of ['/api/v1/categories', '/api/v1/auth/me']) {
     const res = await fetch(`${BASE}${route}`, { signal: AbortSignal.timeout(10_000) });
     assert.equal(res.status, 503, route);
     const body = await res.text();
-    assert.match(body, /Database unavailable/);
+    assert.equal(
+      body,
+      JSON.stringify({
+        statusCode: 503,
+        status: 'DATABASE_UNAVAILABLE',
+        message: messages.DATABASE_UNAVAILABLE,
+        error: messages.DATABASE_UNAVAILABLE,
+        data: {},
+      }),
+    );
     assert.doesNotMatch(body, new RegExp(DB_HOST.replaceAll('.', '\\.')));
   }
   // Each request made its own attempt (the failed one was not cached), and no log line names the URI.
-  const output = logs.join('\n');
+  const output = logs
+    .slice(before)
+    .map((entry) => JSON.stringify(entry))
+    .join('\n');
   assert.equal(output.match(/MongoDB connection failed/g)?.length, 2);
   assert.doesNotMatch(output, /pageaters_test|serverSelectionTimeoutMS/);
 });
@@ -138,7 +167,7 @@ test('src/server.js exits 1 with a clear message on invalid env, without echoing
 test('src/server.js exits 1 without listening when MongoDB is unreachable', () => {
   const result = spawnSync(process.execPath, ['src/server.js'], {
     cwd: API_ROOT,
-    env: { ...STUB_ENV, PATH: process.env.PATH, PORT: '5999' },
+    env: { ...STUB_ENV, PATH: process.env.PATH, PORT: '5999', LOG_LEVEL: 'info' },
     encoding: 'utf8',
     timeout: 20_000,
   });
@@ -146,4 +175,38 @@ test('src/server.js exits 1 without listening when MongoDB is unreachable', () =
   assert.equal(result.status, 1);
   assert.match(output, /MongoDB connection failed/);
   assert.doesNotMatch(output, /Listening|pageaters_test/);
+});
+
+// Process-level logging (helpers/logger.helper.js logProcessErrors), installed by loading src/app.js.
+const runWithApp = (script) =>
+  spawnSync(process.execPath, ['-e', `require('./src/app'); ${script}`], {
+    cwd: API_ROOT,
+    env: { ...STUB_ENV, PATH: process.env.PATH, LOG_LEVEL: 'info' },
+    encoding: 'utf8',
+    timeout: 20_000,
+  });
+
+const logLines = (stdout) =>
+  stdout
+    .split('\n')
+    .filter((line) => line.startsWith('{'))
+    .map((line) => JSON.parse(line));
+
+test('an unhandled rejection is logged without its message, and the process keeps running', () => {
+  const result = runWithApp(
+    "Promise.reject(new Error('lost write for reader@example.com')); setTimeout(() => process.stdout.write('still running'), 50);",
+  );
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /still running/);
+  const lines = logLines(result.stdout);
+  const [entry] = lines.filter((line) => line.msg === 'Unhandled promise rejection');
+  assert.deepEqual([entry.level, entry.err.type], ['error', 'Error']);
+  assert.doesNotMatch(JSON.stringify(lines), /reader@example\.com/);
+});
+
+test('an uncaught exception is logged as fatal, then Node exits as it would without the logger', () => {
+  const result = runWithApp("setTimeout(() => { throw new TypeError('boom'); }, 0);");
+  assert.equal(result.status, 1);
+  const [entry] = logLines(result.stdout).filter((line) => line.msg === 'Uncaught exception');
+  assert.deepEqual([entry.level, entry.err.type, entry.err.message], ['fatal', 'TypeError', 'boom']);
 });

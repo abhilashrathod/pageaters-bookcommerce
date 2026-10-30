@@ -3,6 +3,7 @@ const { get, pick } = require('lodash');
 
 const payments = require('../adapters/payments');
 const { models, enums } = require('../constants');
+const { logger } = require('../helpers/logger.helper');
 const { debitStoreCredit, deductInventory, resetCart, undoStoreCreditDebit } = require('./order-fulfilment.service');
 const { sendConfirmationEmail, sendConfirmationSms } = require('./order-notifications.service');
 const { CART_POPULATE } = require('./order-pricing.service');
@@ -128,12 +129,12 @@ const confirmPayment = async ({ rawBody, signature }) => {
 
   const order = await Order.findOne({ orderStatus: enums.ORDER_STAGES.CREATED, razorOrderId: entity.order_id }).populate(ORDER_POPULATE);
   if (!order) {
-    console.error(`Captured ${ids} matches no order awaiting payment`);
+    logger.error(`Captured ${ids} matches no order awaiting payment`);
     return;
   }
 
   if (entity.currency !== 'INR' || entity.amount !== toPaise(order.total)) {
-    console.error(`Payment refused: ${ids} is ${entity.amount} ${entity.currency}, order ${order.orderId} total is ${toPaise(order.total)} INR (paise)`);
+    logger.error(`Payment refused: ${ids} is ${entity.amount} ${entity.currency}, order ${order.orderId} total is ${toPaise(order.total)} INR (paise)`);
     return;
   }
 
@@ -142,7 +143,7 @@ const confirmPayment = async ({ rawBody, signature }) => {
     { $set: { razorPaymentId: entity.id } },
   );
   if (claimed.modifiedCount !== 1) {
-    console.error(`Captured ${ids} lost the claim on order ${order.orderId}`);
+    logger.error(`Captured ${ids} lost the claim on order ${order.orderId}`);
     return;
   }
   const release = () => Order.updateOne({ _id: order._id, razorPaymentId: entity.id, orderStatus: enums.ORDER_STAGES.CREATED }, { $set: { razorPaymentId: '' } });
@@ -155,7 +156,7 @@ const confirmPayment = async ({ rawBody, signature }) => {
     });
     if (!transaction) {
       await release();
-      console.error(`Payment refused: ${ids}: store credit applied to order ${order.orderId} exceeds the balance`);
+      logger.error(`Payment refused: ${ids}: store credit applied to order ${order.orderId} exceeds the balance`);
       return;
     }
   }

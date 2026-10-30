@@ -16,8 +16,8 @@ const { clearVendorMocks } = require('./stubs');
 //   await api.reset();                     // in beforeEach(): empty collections, clear vendor mocks and the outbox
 //   await api.stop();                      // in after(): waits for unawaited writes, then closes
 //
-// Paths are relative to /api/v1. Console output from the legacy code (morgan is off under APP_ENV=test, but
-// res.error logs every request it rejects) is muted; set TEST_LOGS=1 to see it.
+// Paths are relative to /api/v1. The app logger is silent under APP_ENV=test; read its lines with captureLogs
+// (./logs), or run with LOG_LEVEL=debug to see them.
 
 /**
  * @returns {Promise<{
@@ -31,12 +31,6 @@ const { clearVendorMocks } = require('./stubs');
  */
 const startTestApp = async () => {
   await startMemoryDb({ port: DB_PORT, dbName: DB_NAME });
-
-  const { log, info } = console;
-  if (!process.env.TEST_LOGS) {
-    console.log = () => {};
-    console.info = () => {};
-  }
 
   trackDbOperations();
   const app = require('../../src/app');
@@ -79,14 +73,12 @@ const startTestApp = async () => {
       clearOutbox();
       await clearDb(mongoose.connection);
     },
-    // Waits for the writes the legacy code doesn't await (the request log of res.error and friends, unawaited
-    // saves) so none of them runs into a closed connection, then stops the server and the database.
+    // Waits for the writes the legacy code doesn't await (unawaited saves) so none of them runs into a closed connection, then stops the server and the database.
     stop: async () => {
       await settleDbOperations();
       await new Promise((resolve) => server.close(resolve));
       await mongoose.disconnect();
       await stopMemoryDb();
-      Object.assign(console, { log, info });
     },
   };
 };

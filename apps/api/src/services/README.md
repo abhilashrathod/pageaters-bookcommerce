@@ -66,8 +66,10 @@ router.post('/', validate(favoritesRequestPayloadSchema), permissionValidator(US
 
 `handleControllerError` maps an `AppError` to the legacy envelope: 401 → `res.unauthorized(code)`, 403 →
 `res.forbidden()`, 400 without `data` → `res.error(code)`, other 4xx (or `data` given) →
-`res.error({ statusCode, message: code, data })`; 5xx and non-`AppError`s → `res.internalServerError(e)`. The
-central error handler (Phase 4 step 9) replaces it.
+`res.error({ statusCode, message: code, data })` (503 too); `ProductMismatchError` → the legacy
+`PRODUCT_ITEM_MISMATCH` body; other 5xx and non-`AppError`s → `res.internalServerError(e)` (logged as a summary,
+never the message). The central error handler (`middlewares/errorHandler.middleware.js`) answers errors passed to
+`next()` through the same function.
 
 ## Where shared code goes
 
@@ -105,7 +107,7 @@ steps, except the frozen list, which applies only while parallel branches are op
   with the same options as today.
 - **Message keys:** every `AppError` code must already exist in `src/locales/en.json` (`test/messageKeys.test.js`
   checks literal codes). Don't edit `en.json`.
-- **No new env vars, no `console.log` in new service code.** Legacy bugs go in the JSDoc, not fixed.
+- **No new env vars, no `console` in service code** (log with `helpers/logger.helper.js`). Legacy bugs go in the JSDoc, not fixed.
 
 ## Tests
 
@@ -116,8 +118,8 @@ Integration tests run the real app over HTTP on an in-memory MongoDB with fake f
   mock), stubs the Razorpay, Twilio, SendGrid and Vercel Blob SDKs as a second line, and blocks every non-local
   connection (Delhivery's `fetch` included).
 - One `startTestApp()` per file (`before`), `api.reset()` in `beforeEach` (empties collections, clears vendor
-  mocks, the outbox and every mock adapter's list), `api.stop()` in `after` (it first waits for in-flight database writes the legacy code doesn't await, such
-  as res.error's request log, so no fixed delay is needed). `api.request(path, { method, body, cookie })` calls
+  mocks, the outbox and every mock adapter's list), `api.stop()` in `after` (it first waits for in-flight database writes the legacy code doesn't await, so no
+  fixed delay is needed). `api.request(path, { method, body, cookie })` calls
   `/api/v1/<path>`.
 - Generic assertions come from `./helpers` (`test/helpers/assert.js`, `outbox.js`): `envelopes` (legacy `res.*` bodies
   key by key), `assertBody` (JSON-text compare), `assertGuarded`, `paged`, `asJson`/`asCreated`, `eventually`, and
@@ -126,7 +128,8 @@ Integration tests run the real app over HTTP on an in-memory MongoDB with fake f
   (payment orders), `…/shipping` (pincode checks and shipments), `…/storage` (uploads). Switch the production-only
   notifications on for one test with `t.mock.method(environment, 'isProduction', () => true)` and make an adapter
   fail or answer differently with `t.mock.method(sms, 'send', …)` / `t.mock.method(shipping, 'createShipment', …)`.
-  Sign a payment webhook with `razorpaySignature(rawBody)` (`fixtures/orders.js`). Domain fixtures stay in
+  Sign a payment webhook with `razorpaySignature(rawBody)` (`fixtures/orders.js`). Read what the app logs with
+  `captureLogs(t)` / `messagesAt(logs)` (`logs.js`; the logger is silent otherwise). Domain fixtures stay in
   `test/helpers/fixtures/<domain>.js`.
 - Accounts: `createUser({ role })` returns `{ user, cookie }`, made with the app's own hashing and token code.
 - Search: the catalogue search queries MongoDB on each request (no index to rebuild), so fixtures and admin writes

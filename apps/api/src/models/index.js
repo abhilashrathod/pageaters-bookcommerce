@@ -3,7 +3,6 @@ require('../helpers/mongooseCompat.helper');
 require('./addOn.model');
 require('./token.model');
 require('./file.model');
-require('./log_api.model');
 require('./log_email.model');
 require('./user.model');
 require('./book.model');

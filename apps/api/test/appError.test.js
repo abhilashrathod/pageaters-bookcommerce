@@ -1,7 +1,7 @@
 const { describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { AppError, handleControllerError } = require('../src/helpers/appError.helper');
+const { AppError, ProductMismatchError, handleControllerError } = require('../src/helpers/appError.helper');
 
 // handleControllerError must pick the same res.* helper (and arguments) the legacy controllers call, so the
 // envelopes stay byte for byte; the helpers themselves are exercised over HTTP in favorites.test.js.
@@ -61,6 +61,11 @@ describe('handleControllerError', () => {
     ],
     ['401 → res.unauthorized(code)', new AppError('INVALID_TOKEN', { status: 401 }), ['unauthorized', 'INVALID_TOKEN']],
     ['403 → res.forbidden()', new AppError('FORBIDDEN', { status: 403 }), ['forbidden']],
+    [
+      '503 → object form with that status',
+      new AppError('DATABASE_UNAVAILABLE', { status: 503 }),
+      ['error', { statusCode: 503, message: 'DATABASE_UNAVAILABLE', data: undefined }, undefined],
+    ],
   ];
 
   for (const [name, error, expected] of cases) {
@@ -71,11 +76,25 @@ describe('handleControllerError', () => {
     });
   }
 
-  test('5xx AppErrors and any other error → res.internalServerError(error)', () => {
-    for (const error of [new AppError('SOME_ERROR_OCCURRED', { status: 503 }), new Error('boom'), 'thrown string']) {
+  test('other 5xx AppErrors and any other error → res.internalServerError(error)', () => {
+    for (const error of [new AppError('SOME_ERROR_OCCURRED', { status: 500 }), new AppError('X', { status: 502 }), new Error('boom'), 'thrown string']) {
       const { calls, res } = recorder();
       handleControllerError(res, error);
       assert.deepEqual(calls, [['internalServerError', error]]);
     }
+  });
+
+  test('ProductMismatchError → the legacy 400 PRODUCT_ITEM_MISMATCH body with its text', () => {
+    const sent = [];
+    const res = {
+      status: (code) => {
+        sent.push(code);
+        return res;
+      },
+      send: (body) => sent.push(body),
+    };
+    handleControllerError(res, new ProductMismatchError('Please place separate order for this.'));
+    const text = 'Please place separate order for this.';
+    assert.equal(JSON.stringify(sent), JSON.stringify([400, { statusCode: 400, status: 'PRODUCT_ITEM_MISMATCH', error: text, message: text, data: {} }]));
   });
 });

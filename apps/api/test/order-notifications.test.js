@@ -2,7 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { createUser, ids, loadCatalog, sentEmails, sentTexts, startTestApp } = require('./helpers');
+const { captureLogs, createUser, ids, loadCatalog, messagesAt, sentEmails, sentTexts, startTestApp } = require('./helpers');
 
 const { createAddress, createOrder, fillCart, loadOrderCatalog, orderIds, razorpaySignature } = require('./helpers/fixtures/orders');
 const email = require('../src/adapters/email');
@@ -158,13 +158,12 @@ describe('order confirmation (COD checkout)', () => {
     t.mock.method(email, 'send', async (message) => {
       throw new Error(`Mail down for ${message.to}`);
     });
-    const errors = t.mock.method(console, 'error', () => {});
+    const logs = captureLogs(t);
 
     const order = await checkoutCod({ giftOptions: GIFT });
     assert.equal((await Order().findById(order._id)).orderStatus, 'confirmed');
     assert.equal(await EmailLog().countDocuments(), 0);
-    const logged = errors.mock.calls.map((c) => c.arguments.join(' '));
-    assert.deepEqual(logged, ['Email ORDER_CONFIRMATION not sent (Error)']);
+    assert.deepEqual(messagesAt(logs), ['Email ORDER_CONFIRMATION not sent (Error)']);
   });
 });
 

@@ -2,7 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { sentEmails, startTestApp } = require('./helpers');
+const { captureLogs, messagesAt, sentEmails, startTestApp } = require('./helpers');
 const email = require('../src/adapters/email');
 
 // services/mail.service.js: render → send through the email adapter → log_email, never throwing; and template data
@@ -67,12 +67,9 @@ describe('sendTemplateMail', () => {
     t.mock.method(email, 'send', async () => {
       throw Object.assign(new Error('Email send failed'), { code: 401 });
     });
-    const errors = t.mock.method(console, 'error', () => {});
+    const logs = captureLogs(t);
     await cancelMail();
-    assert.deepEqual(
-      errors.mock.calls.map((call) => call.arguments.join(' ')),
-      ['Email CANCEL_ORDER not sent (Error 401)'],
-    );
+    assert.deepEqual(messagesAt(logs), ['Email CANCEL_ORDER not sent (Error 401)']);
     assert.equal(await EmailLog().countDocuments(), 0);
   });
 
@@ -80,12 +77,9 @@ describe('sendTemplateMail', () => {
     t.mock.method(EmailLog(), 'create', async () => {
       throw Object.assign(new Error('write failed for reader@example.com'), { name: 'MongoServerError', code: 11000 });
     });
-    const errors = t.mock.method(console, 'error', () => {});
+    const logs = captureLogs(t);
     await cancelMail();
     assert.equal(sentEmails().length, 1);
-    assert.deepEqual(
-      errors.mock.calls.map((call) => call.arguments.join(' ')),
-      ['Email CANCEL_ORDER sent, not logged (MongoServerError 11000)'],
-    );
+    assert.deepEqual(messagesAt(logs), ['Email CANCEL_ORDER sent, not logged (MongoServerError 11000)']);
   });
 });

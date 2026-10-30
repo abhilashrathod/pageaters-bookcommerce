@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 
 const { PROJECT_ROOT, DEFAULT_LANGUAGE, NO_REPLY_EMAIL, HOST } = require('../appConfig');
 const { models } = require('../constants');
+const { logger } = require('../helpers/logger.helper');
 const email = require('../adapters/email');
 
 // Template e-mails: renders src/templates/email/<module>/<language>.ejs, sends it through the email adapter
@@ -29,7 +30,6 @@ const describe = (error) => [error?.name ?? 'Error', error?.code].filter(Boolean
  * origin from config, `HOST`) for its links; a `data` key of that name can't replace it. Never rejects: like the
  * legacy queue, a failure never fails the request. A render or send failure is logged as "not sent", a failed log write as "sent, not logged"; both
  * with the template name and the error's name/code only, never the recipient or the body.
- * Logging is console.error until the pino step (Phase 4 step 9).
  * @param {{ emailModule: string, to: string, subject?: string, data?: object, language?: string }} mail
  * @returns {Promise<void>}
  */
@@ -41,13 +41,13 @@ const sendTemplateMail = async ({ emailModule, to, subject, data = {}, language 
     message = { from: NO_REPLY_EMAIL, to, subject, html };
     await email.send(message);
   } catch (error) {
-    console.error(`Email ${emailModule} not sent (${describe(error)})`);
+    logger.error(`Email ${emailModule} not sent (${describe(error)})`);
     return;
   }
   try {
     await Email.create({ emailModule, to, subject });
   } catch (error) {
-    console.error(`Email ${emailModule} sent, not logged (${describe(error)})`);
+    logger.error(`Email ${emailModule} sent, not logged (${describe(error)})`);
   }
 };
 

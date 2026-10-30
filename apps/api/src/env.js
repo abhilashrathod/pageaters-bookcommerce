@@ -6,6 +6,12 @@ const { z } = require('zod');
 
 const DEFAULT_ALLOWED_ORIGINS = ['http://localhost:3000', 'http://localhost:4200'];
 
+const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'];
+
+// LOG_LEVEL when unset: debug locally, info when deployed, nothing under test (tests read logs through
+// test/helpers/logs.js, which raises the level itself).
+const LOG_LEVEL_DEFAULTS = { development: 'debug', staging: 'info', production: 'info', test: 'silent' };
+
 const required = (schema) => schema.optional().refine((value) => value !== undefined, 'is required');
 
 const httpUrl = (message) => z.url({ protocol: /^https?$/, error: message });
@@ -32,6 +38,8 @@ const schema = z.object({
     .transform(Number)
     .refine((port) => port >= 1 && port <= 65535, 'must be a whole number between 1 and 65535')
     .default(5005),
+  // pino level (src/helpers/logger.helper.js). Unset → LOG_LEVEL_DEFAULTS for APP_ENV (silent in tests).
+  LOG_LEVEL: z.enum(LOG_LEVELS, { error: `must be one of ${LOG_LEVELS.join(', ')}` }).optional(),
   // Set by Vercel itself (`1`) in its builds and functions; unset locally. Read for `trust proxy` (app.js) and to refuse
   // APP_ENV=test on Vercel (TEST_MODE_ON_VERCEL below).
   VERCEL: z.string().optional(),
@@ -63,6 +71,7 @@ const schema = z.object({
   // Required: the database and auth.
   // A raw `@` in the password makes the driver read part of the password as a host name (and log it), so the
   // credentials may hold only the one `@` that ends them.
+  // prettier-ignore
   MONGODB_URI: required(
     z
       .string()
@@ -180,7 +189,7 @@ const parseEnv = (source) => {
   }
   if (problems.length > 0) throw new EnvError(problems);
 
-  const env = result.data;
+  const env = { ...result.data, LOG_LEVEL: result.data.LOG_LEVEL ?? LOG_LEVEL_DEFAULTS[result.data.APP_ENV] };
   Object.freeze(env.ALLOWED_ORIGINS);
   return Object.freeze(env);
 };

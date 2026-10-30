@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const { models } = require('../constants');
 const { BOOK_AVAILABILITY } = require('../constants/enums');
-const { AppError } = require('../helpers/appError.helper');
+const { AppError, ProductMismatchError } = require('../helpers/appError.helper');
 const { getId } = require('../helpers/utils.helper');
 const { findUserCart, ownCart } = require('./cart-read.service');
 
@@ -19,17 +19,6 @@ const ADD_POPULATE = [
   { path: 'bundles.bundle', select: 'bundledBooks' },
   { path: 'products.product', select: 'bookId title poster author availability currentDiscount price' },
 ];
-
-/**
- * A book that can't share the cart with what is already there. Not an AppError: the controller answers it with the
- * legacy PRODUCT_ITEM_MISMATCH body, whose message is this human-readable text (no message key).
- */
-class ProductMismatchError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'ProductMismatchError';
-  }
-}
 
 // Whether a book matches the availability of the books already in the cart (the first one sets it).
 const matchesCartAvailability = (book, products) =>
@@ -135,4 +124,4 @@ const emptyCart = async ({ cartId, userId }) => {
   await Cart.findOneAndUpdate(ownCart(userCart), { $set: { products: [] } }, { new: true });
 };
 
-module.exports = { ProductMismatchError, addBook, emptyCart, removeBook, setBookQuantity };
+module.exports = { addBook, emptyCart, removeBook, setBookQuantity };

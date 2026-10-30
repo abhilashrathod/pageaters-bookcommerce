@@ -68,11 +68,29 @@ src/models/       Mongoose models
 src/middlewares/  auth, validation, response helpers
 src/adapters/     third-party services behind real + mock implementations (email, sms, payments, shipping, storage)
 src/services/     business logic (src/services/README.md)
-src/helpers/      pure cross-cutting utilities (errors, encryption, image URLs)
+src/helpers/      pure cross-cutting utilities (errors, logger, encryption, image URLs)
 src/libs/         sitemap, Google product feed
 src/templates/    email templates (EJS)
 src/notes/        domain notes on orders, payments and refunds
 ```
+
+## Logging, errors and health
+
+- Logs are pino JSON lines on stdout (`src/helpers/logger.helper.js`); `LOG_LEVEL` sets the level (default debug
+  locally, info deployed, silent in tests). Passwords, one-time codes, tokens, secrets, cookies, Authorization
+  headers, signatures, sessions and contact details (e-mail, phone, address) are redacted at any depth, Mongoose
+  documents included; errors are logged by name, code, status and stack frames, not their message.
+- Every request gets an ID (`req.id`, the `X-Request-Id` response header; a safe incoming `X-Request-Id` is reused), a
+  child logger `req.log` and one access line (method, route pattern such as `/api/v1/bundles/search/:q` or `null`
+  when no route handled it, status, duration; never the URL itself, the body or cookies).
+- One error handler (`src/middlewares/errorHandler.middleware.js`) answers whatever reaches `next(error)` in the
+  envelope below, through the same mapping as the controllers' `handleControllerError`: unmatched routes 404
+  `NOT_FOUND`, malformed JSON 400 `INVALID_JSON`, a body over 100 kb 413 `REQUEST_TOO_LARGE`, any other client error
+  (e.g. malformed percent-encoding in the path) its 4xx `INVALID_REQUEST`, the database unreachable 503
+  `DATABASE_UNAVAILABLE`, anything unexpected 500 `SOME_ERROR_OCCURRED`.
+- `GET /health` (public, rate-limited like everything else) waits up to 2.5 s for the shared MongoDB connection (a
+  cold instance connects, as its first database-backed request would) and pings it within 1 s: `{ "status": "ok" }`
+  when both succeed, else 503 `{ "status": "unavailable" }`, never the reason.
 
 ## Response format
 

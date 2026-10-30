@@ -17,9 +17,9 @@ const MIDDLEWARE = '../src/middlewares/requireDb.middleware';
 let calls;
 let outcomes;
 let readyState;
-const logs = [];
-console.log = (line) => logs.push(line);
-console.error = (line) => logs.push(line);
+const { captureLogs } = require('./helpers/logs');
+
+const logs = captureLogs();
 
 Object.defineProperty(mongoose.connection, 'readyState', { get: () => readyState, configurable: true });
 mongoose.connect = (uri) => {
@@ -99,16 +99,17 @@ describe('connectToDb', () => {
 });
 
 describe('requireDb middleware', () => {
-  test('passes a 503 error to next() when the connection fails, keeping the cause off the message', async () => {
+  test('passes a 503 DATABASE_UNAVAILABLE AppError to next() when the connection fails, the cause kept off the message', async () => {
     const { requireDb } = load();
     outcomes = [refused()];
 
     const error = await new Promise((resolve) => requireDb({}, {}, resolve));
+    assert.equal(error.name, 'AppError');
     assert.equal(error.status, 503);
-    assert.equal(error.message, 'Database unavailable');
+    assert.equal(error.message, 'DATABASE_UNAVAILABLE');
     assert.match(error.cause.message, /ECONNREFUSED/);
-    assert.ok(logs.some((line) => /MongoDB connection failed/.test(line)));
-    assert.ok(logs.every((line) => !line.includes('SECRETPASS')));
+    assert.ok(logs.some((entry) => /MongoDB connection failed/.test(entry.msg)));
+    assert.doesNotMatch(JSON.stringify(logs), /SECRETPASS/);
   });
 
   test('connects once on the first request, then calls next() with no error', async () => {

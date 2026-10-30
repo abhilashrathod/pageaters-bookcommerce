@@ -2,7 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { asJson, assertBody, assertGuarded, createUser, envelopes, ids, loadCatalog, sentEmails, startTestApp } = require('./helpers');
+const { asJson, assertBody, assertGuarded, captureLogs, createUser, envelopes, ids, loadCatalog, messagesAt, sentEmails, startTestApp } = require('./helpers');
 
 // /api/v1/stock-alerts over HTTP: shoppers subscribe/unsubscribe to back-in-stock alerts, admins list them and
 // send the alerts. Written against the legacy controller before the service refactor.
@@ -134,7 +134,7 @@ describe('admin', () => {
   });
 
   test('POST /stock-alerts/:product/users closes the alerts; legacy: the STOCK_ALERT email never renders', async (t) => {
-    const errors = t.mock.method(console, 'error', () => {});
+    const logs = captureLogs(t);
     const other = await createUser();
     await subscribe(ids.bookOne);
     await subscribe(ids.bookOne, other.cookie);
@@ -151,7 +151,7 @@ describe('admin', () => {
     // The template ships only en.html; mail.service renders en.ejs, so nothing is sent. Each failure is logged by
     // template name, never with the recipient.
     assert.deepEqual(sentEmails(), []);
-    const logged = errors.mock.calls.map((call) => call.arguments.join(' '));
+    const logged = messagesAt(logs);
     assert.equal(logged.length, 2);
     for (const line of logged) {
       assert.match(line, /^Email STOCK_ALERT not sent \(/);
@@ -160,7 +160,6 @@ describe('admin', () => {
   });
 
   test('closes each alert right after its send, so a failure part-way leaves the handled ones closed', async (t) => {
-    t.mock.method(console, 'error', () => {});
     const other = await createUser();
     await subscribe(ids.bookOne);
     await subscribe(ids.bookOne, other.cookie);

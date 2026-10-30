@@ -5,22 +5,27 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const i18n = require('i18n');
 const helmet = require('helmet');
-const morgan = require('morgan');
 
 const { PROJECT_ROOT, DEFAULT_LANGUAGE, AVAILABLE_LOCALES, PROJECT_NAME, ALLOWED_ORIGINS, ENVIRONMENT, ON_VERCEL } = require('./appConfig');
+const { logProcessErrors } = require('./helpers/logger.helper');
 const requireDb = require('./middlewares/requireDb.middleware');
+const requestContext = require('./middlewares/requestContext.middleware');
+const { errorHandler, notFound } = require('./middlewares/errorHandler.middleware');
 const { limiters } = require('./middlewares/rateLimit.middleware');
+const health = require('./routes/health.route');
 
 // Builds the Express app only: no listen, no database connect, no queries, and no timers beyond the rate-limit
 // stores' unref'd expiry timers. src/server.js runs it locally; a serverless handler can import it as-is, because
 // requireDb connects on the first database-backed request.
 const app = express();
 
+// Unhandled rejections and uncaught exceptions are logged, here and in src/server.js (which loads this module).
+logProcessErrors();
+
 require('./models');
 
-if (ENVIRONMENT !== 'test') {
-  app.use(morgan(':method :url :status - :response-time ms'));
-}
+// Request ID, per-request logger and the access log line: first, so every response carries X-Request-Id.
+app.use(requestContext);
 
 // Helmet
 app.use(helmet());
@@ -63,6 +68,10 @@ app.use(require('./middlewares/extendReq.middleware'));
 // Rate limits (middlewares/rateLimit.middleware.js): a general limit on every request, slowed down before it; the
 // stricter named limits sit on their routes.
 app.use(limiters.slowDown, limiters.general);
+
+// Health check (routes/health.route.js): before the body parsers and requireDb, so it does no other work and
+// answers 503 itself, within its own time limits, while the database is down.
+app.get('/health', health);
 
 // Bodies: JSON only, 100 kb at most (a larger one answers 413). No client sends urlencoded bodies, and a form post is
 // the cross-site (CSRF) path, so they are not parsed. Multipart is parsed only on the upload route
@@ -112,5 +121,9 @@ app.use('/googleproducts.xml', requireDb, writeGoogleData);
 app.get('/', (req, res) => {
   return res.render('index', { PROJECT_NAME });
 });
+
+// Last: a JSON 404 for anything unmatched, then the one error handler.
+app.use(notFound);
+app.use(errorHandler);
 
 module.exports = app;

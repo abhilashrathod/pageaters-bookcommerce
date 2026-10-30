@@ -2,7 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { assertBody, createUser, envelopes, eventually, ids, loadCatalog, sentEmails, startTestApp } = require('./helpers');
+const { assertBody, captureLogs, createUser, envelopes, eventually, ids, loadCatalog, sentEmails, startTestApp } = require('./helpers');
 const { createAddress, createOrder, loadOrderCatalog, orderIds, razorpaySignature } = require('./helpers/fixtures/orders');
 const shipping = require('../src/adapters/shipping');
 const { ORDER_STAGES } = require('../src/constants/enums');
@@ -616,10 +616,16 @@ describe('POST /orders/create-shipment/:orderId (mock shipping adapter)', () => 
     t.mock.method(shipping, 'createShipment', async () => {
       throw Object.assign(new Error('Shipping request failed'), { code: 'ECONNRESET' });
     });
-    const errors = t.mock.method(console, 'error', () => {});
+    const logs = captureLogs(t);
     assertBody(await call('POST', `/orders/create-shipment/${order._id}`, { dimensions: DIMENSIONS }), 500, serverError);
     assert.equal((await Order().findById(order._id)).orderStatus, 'paid');
-    assert.ok(errors.mock.calls.some((c) => c.arguments.join(' ') === 'Shipment failed: Shipping request failed ECONNRESET '));
+    // Name, code and stack frames only: never the message (a vendor's can quote the address or phone).
+    const failures = logs.filter((entry) => entry.level === 'error');
+    assert.deepEqual(
+      failures.map(({ msg, err }) => [msg, err.type, err.code, err.message]),
+      [['request failed', 'Error', 'ECONNRESET', undefined]],
+    );
+    assert.doesNotMatch(JSON.stringify(logs), /Shipping request failed/);
   });
 
   // Phase 4: validated with the shared contract (was: missing dimensions threw a TypeError, 500).

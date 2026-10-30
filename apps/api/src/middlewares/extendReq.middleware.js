@@ -1,41 +1,11 @@
 const _ = require('lodash');
-const mongoose = require('mongoose');
 
 const { ENVIRONMENT } = require('./../appConfig');
-const { models } = require('./../constants');
 
-const ApiLogs = mongoose.model(models.LOG_API);
-
-async function logRequest(req, message = '', resPayload = '') {
-  const { headers, hostname, ip, method, originalUrl, user, token } = req;
-
-  console.log(
-    JSON.stringify(
-      {
-        message,
-        headers: req.headers,
-        params: req.allParams(),
-        hostname: req.hostname,
-        ip: req.ip,
-        method: req.method,
-        originalUrl: req.originalUrl,
-        user: req.user,
-        token,
-        resPayload,
-      },
-      null,
-      2,
-    ),
-  );
-
-  if (method === 'POST' || method === 'DELETE' || method === 'PUT') {
-    await ApiLogs.findOneAndUpdate(
-      { hostname, ip, method, originalUrl, message },
-      { hostname, ip, method, originalUrl, headers, user, params: req.allParams(), message },
-      { upsert: true },
-    );
-  }
-}
+// The legacy response helpers (res.ok, res.error…) and req.allParams(). Nothing here logs the request: the access
+// line comes from requestContext.middleware.js, and an unexpected error is logged by res.internalServerError as its
+// summary only (the logger's `err` serializer, helpers/logger.helper.js errorSummary), never its message, params or
+// headers.
 
 module.exports = (req, res, next) => {
   req.allParams = () => _.merge(req.params, req.query, req.body);
@@ -70,7 +40,8 @@ module.exports = (req, res, next) => {
   };
 
   res.error = (resPayload, debugMessage) => {
-    logRequest(req, debugMessage, resPayload);
+    // Why the request was refused when the code alone doesn't say (e.g. INVALID_PASSWORD behind INVALID_LOGIN_ATTEMPT).
+    if (debugMessage) req.log.debug({ debugMessage }, 'request refused');
 
     if (typeof resPayload === 'string') {
       return res.status(400).send({
@@ -93,9 +64,8 @@ module.exports = (req, res, next) => {
     });
   };
 
-  res.internalServerError = e => {
-    console.log(e);
-    logRequest(req, e);
+  res.internalServerError = (e) => {
+    req.log.error({ err: e }, 'request failed');
 
     return res.status(500).send({
       statusCode: 500,
@@ -107,9 +77,6 @@ module.exports = (req, res, next) => {
   };
 
   res.unauthorized = (message = '') => {
-    console.log(message);
-    logRequest(req);
-
     return res.status(401).send({
       statusCode: 401,
       status: 'UNAUTHORIZED',

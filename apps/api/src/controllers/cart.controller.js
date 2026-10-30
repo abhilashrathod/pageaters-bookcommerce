@@ -42,9 +42,6 @@ module.exports.add = async (req, res) => {
     const data = await cartBooks.addBook({ ...cartOf(req), product, quantity });
     return res.ok({ message: 'CART_UPDATE_SUCCESS', data });
   } catch (e) {
-    if (e instanceof cartBooks.ProductMismatchError) {
-      return res.status(400).send({ statusCode: 400, status: 'PRODUCT_ITEM_MISMATCH', error: e.message, message: e.message, data: {} });
-    }
     return handleControllerError(res, e);
   }
 };

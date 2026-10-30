@@ -1,6 +1,5 @@
 module.exports = {
   USER: 'user',
-  LOG_API: 'log_api',
   LOG_EMAIL: 'log_email',
   STOCK_ALERT: 'stock_alert',
   FILE: 'file',

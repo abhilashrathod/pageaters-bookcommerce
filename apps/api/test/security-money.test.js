@@ -2,7 +2,7 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { assertBody, createUser, envelopes, ids, loadCatalog, startTestApp } = require('./helpers');
+const { assertBody, captureLogs, createUser, envelopes, ids, loadCatalog, messagesAt, startTestApp } = require('./helpers');
 const { createAddress, createOrder, fillCart, loadOrderCatalog, orderIds, razorpaySignature } = require('./helpers/fixtures/orders');
 const payments = require('../src/adapters/payments');
 
@@ -61,8 +61,6 @@ const attemptBooks = async (quantity = 1) => {
 const setBalance = (storeCredit) => User().updateOne({ _id: shopper.user._id }, { storeCredit });
 const balance = async () => (await User().findById(shopper.user._id)).storeCredit;
 const stockOfBookOne = async () => (await Book().findById(ids.bookOne)).inventory;
-const muteErrors = (t) => t.mock.method(console, 'error', () => {});
-const logged = (errors) => errors.mock.calls.map((c) => c.arguments[0]);
 
 // Makes Model.updateOne (or another static) reject when `matches(filter, update)`; other calls go through.
 const failWhen = (t, model, method, matches) => {
@@ -121,7 +119,7 @@ describe('the pay-less attack (credit applied, online order created, credit remo
   });
 
   test('a captured amount or currency other than the order total leaves the order unpaid and moves nothing', async (t) => {
-    const errors = muteErrors(t);
+    const logs = captureLogs(t);
     await setBalance(100);
     const attempted = await attemptBooks();
     await patchCredit(attempted.orderId, 40);
@@ -143,9 +141,9 @@ describe('the pay-less attack (credit applied, online order created, credit remo
     assert.equal(await Transactions().countDocuments(), 0);
     assert.equal(await stockOfBookOne(), stock);
     assert.equal((await Cart().findOne({ user: shopper.user._id })).products.length, 1);
-    assert.equal(errors.mock.callCount(), 7);
+    assert.equal(messagesAt(logs).length, 7);
     assert.equal(
-      logged(errors)[0],
+      messagesAt(logs)[0],
       `Payment refused: payment pay_test_7c (Razorpay order ${paymentOrder.id}) is 35900 INR, order ${order.orderId} total is 45900 INR (paise)`,
     );
 
@@ -186,7 +184,7 @@ describe('one pending order per user', () => {
   });
 
   test('a payment for the Razorpay order a re-attempt dropped confirms nothing and is logged by id', async (t) => {
-    const errors = muteErrors(t);
+    const logs = captureLogs(t);
     await setBalance(100);
     const first = await attemptBooks();
     await patchCredit(first.orderId, 100);
@@ -203,7 +201,7 @@ describe('one pending order per user', () => {
     assert.equal((await Order().findById(first._id)).orderStatus, 'confirmed');
     assert.equal(await balance(), 0);
     assert.equal(await Transactions().countDocuments(), 1);
-    assert.deepEqual(logged(errors), [`Captured payment pay_test_7c (Razorpay order ${abandoned.id}) matches no order awaiting payment`]);
+    assert.deepEqual(messagesAt(logs), [`Captured payment pay_test_7c (Razorpay order ${abandoned.id}) matches no order awaiting payment`]);
   });
 
   test('refuses to place or re-attempt an order whose payment is being claimed', async () => {
@@ -278,7 +276,7 @@ describe('store credit can be spent only once, and never beyond what the order c
   });
 
   test('the payment webhook refuses an order whose credit the balance no longer covers', async (t) => {
-    const errors = muteErrors(t);
+    const logs = captureLogs(t);
     await setBalance(30);
     const order = await createOrder(shopper.user, { orderStatus: 'created', razorOrderId: 'order_test_7c', storeCredit: 100, total: 399 });
 
@@ -291,7 +289,7 @@ describe('store credit can be spent only once, and never beyond what the order c
     );
     assert.equal(await balance(), 30);
     assert.equal(await Transactions().countDocuments(), 0);
-    assert.deepEqual(logged(errors), [
+    assert.deepEqual(messagesAt(logs), [
       `Payment refused: payment pay_test_7c (Razorpay order order_test_7c): store credit applied to order ${order.orderId} exceeds the balance`,
     ]);
 
@@ -304,8 +302,7 @@ describe('store credit can be spent only once, and never beyond what the order c
 });
 
 describe('races: one winner, one debit, one stock deduction', () => {
-  test('two concurrent deliveries of the same payment debit once and record one history entry', async (t) => {
-    muteErrors(t);
+  test('two concurrent deliveries of the same payment debit once and record one history entry', async () => {
     await setBalance(100);
     const attempted = await attemptBooks();
     await patchCredit(attempted.orderId, 50);
@@ -347,8 +344,7 @@ describe('races: one winner, one debit, one stock deduction', () => {
     assert.equal(await stockOfBookOne(), stock - 1);
   });
 
-  test('payment webhook against a COD place of the same created order: exactly one wins', async (t) => {
-    muteErrors(t);
+  test('payment webhook against a COD place of the same created order: exactly one wins', async () => {
     for (let round = 0; round < 3; round += 1) {
       await setBalance(100);
       const attempted = await attemptBooks();

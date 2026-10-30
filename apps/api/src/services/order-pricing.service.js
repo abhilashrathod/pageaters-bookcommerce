@@ -1,9 +1,9 @@
-const { styleText } = require('node:util');
 const mongoose = require('mongoose');
 const { get, sumBy } = require('lodash');
 
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
+const { logger } = require('../helpers/logger.helper');
 const { calculateTotal } = require('./cart-pricing.service');
 
 // Order money: the cart subtotal, shipping, gift charges, store credit and the priced order lines.
@@ -63,7 +63,7 @@ const calculateTotalWeight = async (products, bundles, mysteryBoxes) => {
     const finalBoxWeight = sumBy(mysteryBoxes, (obj) => obj.box.weight * obj.quantity);
     return Number(finalProductsWeight) + Number(finalBundleWeight) + Number(finalBoxWeight);
   } catch (e) {
-    console.log(styleText('red', 'ERROR'), JSON.stringify(e));
+    logger.error({ err: e }, 'Cart weight could not be computed');
     return 0;
   }
 };

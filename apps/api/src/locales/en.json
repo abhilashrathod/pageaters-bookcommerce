@@ -227,5 +227,9 @@
 	"INVALID_AMOUNT": "Invalid amount",
 	"INVALID_REQUEST": "Invalid request",
 	"TOO_MANY_REQUESTS": "Too many requests. Please try again later.",
-	"FILE_TOO_LARGE": "File is too large. The maximum size is 4 MB."
+	"FILE_TOO_LARGE": "File is too large. The maximum size is 4 MB.",
+	"NOT_FOUND": "Not found",
+	"REQUEST_TOO_LARGE": "The request is too large",
+	"INVALID_JSON": "The request body is not valid JSON",
+	"DATABASE_UNAVAILABLE": "Database unavailable. Please try again shortly."
 }

@@ -1,14 +1,13 @@
 const mongoose = require('mongoose');
 
 // Tracks the database operations in flight, so a test file can wait for the writes the legacy code doesn't await
-// before it closes the connection: res.error / res.unauthorized / res.internalServerError start their request-log
-// write (log_api) and answer without waiting for it, and a few services save without awaiting.
+// before it closes the connection: a few services save without awaiting.
 //
 // Every query, aggregate and document save goes through Query#exec, Aggregate#exec, Model#save or Model#$save
 // (`Model.create` and `insertOne` call `$save`, which Mongoose copies from `save` at load, so patching `save` alone
 // misses them; the two never call each other, so nothing is counted twice), and the legacy
 // code starts those calls synchronously before it answers, so by the time a test has its response the operation is
-// already counted here. Counting operations (not log_api rows) also covers upserts that change no row count.
+// already counted here. Counting operations (not rows) also covers upserts that change no row count.
 
 let inFlight = 0;
 let installed = false;

@@ -15,7 +15,9 @@ export default defineConfig(
     },
   },
   {
-    // The API still logs with console; pino replaces it in Phase 4.
+    // The API logs with pino (src/helpers/logger.helper.js; no-console stays an error there); tests may read or mute
+    // the console.
+    files: ['test/**/*.js'],
     rules: { 'no-console': 'off' },
   },
   {

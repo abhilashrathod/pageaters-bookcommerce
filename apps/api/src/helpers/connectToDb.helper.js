@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const { MONGODB_URL } = require('../appConfig');
+const { logger } = require('./logger.helper');
 
 // Every query filter is sanitised: a value that is an object with `$` keys (e.g. `{ $ne: null }` from a query string
 // or JSON body merged by req.allParams()) is matched as a literal (`$eq`), never run as an operator. Server code that
@@ -31,12 +32,12 @@ const connectToDb = () => {
   if (!connecting) {
     const attempt = mongoose.connect(MONGODB_URL).then(
       (instance) => {
-        console.log('Connected to MongoDB');
+        logger.info('Connected to MongoDB');
         return instance;
       },
       (error) => {
         if (connecting === attempt) connecting = undefined;
-        console.error(`MongoDB connection failed (${describe(error)})`);
+        logger.error(`MongoDB connection failed (${describe(error)})`);
         throw error;
       },
     );
