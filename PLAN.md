@@ -245,13 +245,36 @@ This file is temporary: when every phase is done, archive the decision log into 
       imports services). The mail-queue helpers stay until the mail step. Generic test utilities shared in
       `test/helpers/` (`assert.js`, `mail.js`, `settle.js`); `api.stop()` waits for in-flight database writes instead
       of fixed delays. 593 tests, lint warnings 24 → 16
-- [ ] Replace Joi with shared zod schemas + `validate()` middleware
-  - Tighten the request contracts while replacing Joi (deferred until now because they break Joi parity): max lengths
-    on tokens, address and gift fields; pin code `^\d{6}$`; a raw password length cap; store-credit `amount` ≥ 0
-    (`PATCH /orders/credit`, admin `issueCredit`); the `_CID` cart cookie must be a 24-hex id (`cartValidator`;
-    blocks the cookie operator injection in 7c); upload `fileModule` must be a known module, checked before the S3
-    upload (400) — today an unknown one answers 200, then the unawaited `File.create` rejects and the unhandled
-    rejection exits the process, leaving an orphaned S3 object
+- [x] Replace Joi with shared zod schemas + `validate()` middleware
+  - Split (2026-10-29): one engineer, two commits, one review. 5a first, then 5b on top
+  - [x] 5a. Swap with no behaviour change: `validate(schema)` middleware on the `@pageaters/shared` request schemas
+        (built in Phase 3 with Joi's error codes and conversions), same 400 envelopes, every Joi validator and the
+        `joi` dependency removed; the existing tests pass unchanged
+  - [x] 5b. Tighten the contracts (deliberate changes, each pinned by a test):
+    - validator bugs (moved here from the legacy-bugs step): `objectId` never required (`cart/add`, `favorites`,
+      `address/:id`, `order/attempt` accept a missing id); any extra query key (a cache-buster) answers 400 — ignore
+      unknown query keys; no validator on `PUT /address/:id`, `order/create-shipment`, `order/return`, `order/cancel`;
+      email not lower-cased
+    - the contracts deferred until now because they break Joi parity: max lengths
+      on tokens, address and gift fields; pin code `^\d{6}$`; a raw password length cap; store-credit `amount` ≥ 0 on
+      `PATCH /orders/credit` and > 0 on admin `issueCredit` (a zero credit would record an empty transaction and
+      e-mail the customer); the `_CID` cart cookie must be a 24-hex id (`cartValidator`;
+      blocks the cookie operator injection in 7c); upload `fileModule` must be a known module, checked before the S3
+      upload (400) — today an unknown one answers 200, then the unawaited `File.create` rejects and the unhandled
+      rejection exits the process, leaving an orphaned S3 object
+  - Done 2026-10-29 (api-engineer, reviewed + audited; two fix rounds). 5a: `middlewares/validate.middleware.js` runs
+    the `@pageaters/shared` request schemas over `req.allParams()` where the Joi validators ran (same position, same 400
+    envelope); `src/validators/`, `requestValidator` and `joi` removed; the 593 existing tests passed unchanged. 5b:
+    ids required; unknown query keys ignored (unknown body keys still refused); validators added on address update,
+    order credit/return/cancel and the admin shipment routes (path ids validated, so `?orderId[$ne]=` is refused);
+    emails trimmed + lower-cased via `req.validated` (passwords never trimmed); length caps; 6-digit pincode; store
+    credit ≥ 0 shopper / > 0 admin, paise precision, ≤ 100,000; cart quantity ≤ 100 and gift cost ≤ 1000; the `_CID`
+    cookie must be an id (`helpers/cart-cookie.helper.js`, cart routes and checkout); upload `fileModule` checked
+    before S3. A validation error with no message key answers the fixed `INVALID_REQUEST`, so a 400 never echoes input
+    (new keys `INVALID_AMOUNT`, `INVALID_REQUEST`). Admin catalog create/update are not validated yet: the shared
+    admin schemas expect https image URLs and every key on update, which the legacy admin doesn't send — apply them
+    with the Phase 8 admin rebuild. The API now depends on `@pageaters/shared` (built first by turbo `test`, `dev`,
+    `build`). API 631 tests, shared 157
 - [ ] Adapters: payments (Razorpay + mock), sms, email, shipping (Delhivery + mock), storage (Vercel Blob)
   - Shipping adapter: send the Delhivery token as an `Authorization` header (today it travels in the
     `check-pincode` query string), `encodeURIComponent` the pincode, and never log the raw axios error — the
@@ -265,7 +288,9 @@ This file is temporary: when every phase is done, archive the decision log into 
   - [ ] 7a. Perimeter: single CORS allowlist (remove reflect-any-origin); mount the rate limiters on every public route,
         naming login, OTP/verification sends and the public `GET /addresses/check-pincode/:pincode` (anyone can spend
         the Delhivery quota); per-route body limits (drop the global 100 MB and `multer().any()`); protect `/re-index`;
-        `mongoose.set('sanitizeFilter', true)`; auth audit on every route, incl. `POST /orders/create-shipment/:orderId`
+        `mongoose.set('sanitizeFilter', true)` — route params aren't protected while `req.allParams()` lets the body and
+        query replace them (e.g. `GET /orders/getByUniqueId/:uniqueId?uniqueId[$ne]=`, limited to the shopper's own
+        orders); long term controllers read `req.validated` / `req.params` only; auth audit on every route, incl. `POST /orders/create-shipment/:orderId`
         (guarded only as USER with no owner filter — any shopper can ship any paid order; guard as ADMIN); remove
         `POST /public/contactUs` (unauthenticated mail trigger) and `GET /store-books/bulk/export` (unauthenticated,
         writes to local disk, and two simultaneous exports share one file path, so the second `unlinkSync` throws
@@ -311,7 +336,7 @@ This file is temporary: when every phase is done, archive the decision log into 
     them can take the process down
   - The central handler must recognise the cart's `ProductMismatchError` (4c) and keep its legacy body
 - [ ] Fix legacy bugs (await `user.save()` in register, login and contact OTP send/resend — a failed save is an
-      unhandled rejection and the resend limit can fail open) found in Phase 1 cleanup: `add-on.controller` `update` (undefined `id`/`addOnId`) and `getById` (returns undefined `bundles`), `getByProductId` ignores `productId`; `jobs/index.js` undefined `logError`; `STOCK_ALERT` email has only `en.html` but renderer loads `en.ejs`; `auth.controller` `updatePassword` saves the old `password` instead of `newPassword`; list endpoints (e.g. `GET /categories`) return no documents without `page`/`limit` and sort on `undefined` without `sortBy` — add defaults; `category.controller` sorts on `Number('asc')` (NaN); `storeDeal.contoller` passes `offset: parseInt(undefined)` so the deals list returns `page`/`offset`/`pagingCounter` as null; `order.getByUniqueId` calls `orderPaymentInfo(null)` (500) for an order without payment; `deleteAccount`/`recoverAccount` write `deletedAt`/`scheduledForDeletion`, which the user model lacks (recovery can never work) — remove both endpoints instead of fixing them (owner decision 2026-10-29: no real users, no account deletion); order line totals aren't floored while the cart subtotal is; `issueCredit` has no validator (negative credit); validators: `objectId` never required (`cart/add`, `favorites`, `address/:id`, `order/attempt` accept a missing id), any extra query key (cache-buster) 400s, no validator on `PUT /address/:id`, `order/create-shipment`, `order/return`, `order/cancel`, pincode not 6 digits, email not lower-cased; add-ons grouped endpoint doesn't filter soft-deleted add-ons; seed loads 14 inactive product sets the API never serves; delete the dead `book.model.js`. Found in step 2: add-on `update` (ReferenceError) and `getById` always 500; order analytics (best-selling matches `status` not `orderStatus`, dates compared as strings) always return `[]`; deal `getById` uses author messages and `destroy` doesn't await `save()`; mystery-box `destroy` writes `deactivatedAt` (not in the model); author/collection/bundle/book create and update crash when a list field is missing; `order.controller` defines `retrieve` twice; upload doesn't await `File.create` and returns a storage key, not a URL; renaming a product set regenerates its slug (breaks links); `recoverAccount` reads `scheduledForDeletion` from the JWT so it always answers `ACCOUNT_ALREADY_ACTIVE`; `PUT /addresses/:id` checks existence with an unfiltered `findOne()` and `$set`s every field; `check-pincode` returns the courier's raw record; `orders.create` 500s without `giftOptions`; a return after 7 days answers 200 `ORDER_RETURN_PERIOD_LAPSED`; checkout select misspells `boxed`; cart `add`/`addAddOn` return `true` or the cart; `/cart/empty` clears books only; `addAddOn` has no default quantity; unsubscribing a missing stock alert answers `STOCK_ALERT_EXISTS`; `PUT /auth/me` validates `contactNo` but ignores it; list endpoints without `page` return `page: null`
+      unhandled rejection and the resend limit can fail open) found in Phase 1 cleanup: `add-on.controller` `update` (undefined `id`/`addOnId`) and `getById` (returns undefined `bundles`), `getByProductId` ignores `productId`; `jobs/index.js` undefined `logError`; `STOCK_ALERT` email has only `en.html` but renderer loads `en.ejs`; `auth.controller` `updatePassword` saves the old `password` instead of `newPassword`; list endpoints (e.g. `GET /categories`) return no documents without `page`/`limit` and sort on `undefined` without `sortBy` — add defaults; `category.controller` sorts on `Number('asc')` (NaN); `storeDeal.contoller` passes `offset: parseInt(undefined)` so the deals list returns `page`/`offset`/`pagingCounter` as null; `order.getByUniqueId` calls `orderPaymentInfo(null)` (500) for an order without payment; `deleteAccount`/`recoverAccount` write `deletedAt`/`scheduledForDeletion`, which the user model lacks (recovery can never work) — remove both endpoints instead of fixing them (owner decision 2026-10-29: no real users, no account deletion); order line totals aren't floored while the cart subtotal is; `issueCredit` has no validator (negative credit); add-ons grouped endpoint doesn't filter soft-deleted add-ons; seed loads 14 inactive product sets the API never serves; delete the dead `book.model.js`. Found in step 2: add-on `update` (ReferenceError) and `getById` always 500; order analytics (best-selling matches `status` not `orderStatus`, dates compared as strings) always return `[]`; deal `getById` uses author messages and `destroy` doesn't await `save()`; mystery-box `destroy` writes `deactivatedAt` (not in the model); author/collection/bundle/book create and update crash when a list field is missing; `order.controller` defines `retrieve` twice; upload doesn't await `File.create` and returns a storage key, not a URL; renaming a product set regenerates its slug (breaks links); `recoverAccount` reads `scheduledForDeletion` from the JWT so it always answers `ACCOUNT_ALREADY_ACTIVE`; `PUT /addresses/:id` checks existence with an unfiltered `findOne()` and `$set`s every field; `check-pincode` returns the courier's raw record; `orders.create` 500s without `giftOptions`; a return after 7 days answers 200 `ORDER_RETURN_PERIOD_LAPSED`; checkout select misspells `boxed`; cart `add`/`addAddOn` return `true` or the cart; `/cart/empty` clears books only; `addAddOn` has no default quantity; unsubscribing a missing stock alert answers `STOCK_ALERT_EXISTS`; `PUT /auth/me` validates `contactNo` but ignores it; list endpoints without `page` return `page: null`
 - [ ] OpenAPI from zod at `/docs`
 - [ ] Remove `page.controller` / page & banner models (moved to CMS); move sitemap + Google product feed to storefront
 - **Checkpoint:** API runs locally, all routes reachable, lint and tests clean
@@ -321,10 +346,10 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] `DEMO_MODE` flag; server-side write guards per AGENTS.md §6
 - [ ] Demo shopper one-click login (no signup/OTP); remove the email-OTP login too, which can sign into any account by email, the demo shopper included
 - [ ] Admin catalog read-only; order lifecycle via mock shipping allowed
-- [ ] `rzp_live_` boot guard; Razorpay test-mode checkout
+- [ ] Razorpay test-mode checkout (the `rzp_live_` boot guard is done: `env.js` refuses live keys in every environment)
 - [ ] Mock email/SMS → outbox collection + outbox view
 - [ ] Super-admin role exempt from catalog read-only and upload guards (server-side role checks, rate-limited login)
-- [ ] Uploads for super-admin only (Vercel Blob); rate limits on public endpoints
+- [ ] Uploads for super-admin only (Vercel Blob); demo-specific rate limits (the general limiters are mounted in Phase 4 7a)
 - [ ] Sample-order generator: random orders across the lifecycle through the order services (realistic pricing, discounts, stock deduction)
 - [ ] Weekly cleanup endpoint (protected, `DEMO_MODE` only): wipe visitor carts/addresses/favourites/orders/outbox, restore their stock, regenerate sample orders
 - [ ] Tests for every guard
@@ -361,12 +386,14 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Fix devkit/CLI mismatch; TSLint → angular-eslint; remove Protractor; Karma → Jest/Vitest (today `ng test` runs Karma in watch mode and never exits, which hangs root `pnpm test`)
 - [ ] Standalone components, new control flow; typed services via `packages/api-client` (pass `validate: true` on `client.admin.users.*` until the API stops sending credentials, and parse form values through the `admin…PayloadSchema` before sending so a loaded record can't send `wholeSalePriceHistory` back)
 - [ ] Demo-mode UX: read-only notices on catalog forms; outbox view
+- [ ] Validate the admin catalog create/update routes with the shared admin schemas (deferred from Phase 4 5b)
 - [ ] Super-admin catalog editing: update any record (fix inconsistent or generated data) and upload covers/author photos
 - **Checkpoint:** every admin route renders against the new API
 
 ## Phase 9 — Tests
 
-- [ ] API: Vitest + supertest + mongodb-memory-server — cart totals, discounts, order pricing, order lifecycle, auth, demo guards
+- [ ] API: close the remaining gaps in the existing suite (`node:test` + in-memory MongoDB harness, 593 tests after Phase 4
+      layering): demo guards, flows still uncovered, a coverage report
 - [ ] Storefront: component tests for cart and block renderer
 - [ ] Admin: service + key component tests
 - [ ] Playwright E2E: browse → add to cart → checkout (Razorpay test) → order visible in admin → ship → delivered
