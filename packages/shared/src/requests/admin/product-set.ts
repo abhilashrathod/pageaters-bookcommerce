@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { productSetSchema } from '../../catalog/product-set.ts';
 import { objectIdSchema } from '../../primitives.ts';
-import { adminIdListSchema, adminOptionalIdListSchema, adminPageQuerySchema } from './common.ts';
+import { adminIdListSchema, adminLegacyRefSchema, adminOptionalIdListSchema, adminPageQuerySchema } from './common.ts';
 
 // Product-set admin requests (productSets.controller.js). Types first (see common.ts), except the `categories`
 // filter and the `categories` and `products` references, which the API enforces since Phase 4.
@@ -36,25 +36,21 @@ const productSetPayloadFields = productSetSchema.pick({ title: true, description
   categories: adminOptionalIdListSchema,
 });
 
-// POST /product-sets. `setId` and `slug` are generated (slug from the title).
+// POST /product-sets. `setId` and `slug` are generated (slug from the title, plus a random suffix).
 export const adminProductSetCreatePayloadSchema = productSetPayloadFields.partial().extend({
   title: productSetSchema.shape.title,
 });
 export type AdminProductSetCreatePayload = z.infer<typeof adminProductSetCreatePayloadSchema>;
 
-// PUT /product-sets/:id: every field but `categories`, which may be left out (common.ts). A new title regenerates the
-// slug, which breaks links that used the old one.
+// PUT /product-sets/:id: every field but `categories`, which may be left out (common.ts). The slug never changes
+// after create (since Phase 4), so a renamed set keeps its links.
 export const adminProductSetUpdatePayloadSchema = productSetPayloadFields.required().extend({ categories: adminOptionalIdListSchema });
 export type AdminProductSetUpdatePayload = z.infer<typeof adminProductSetUpdatePayloadSchema>;
-
-// The legacy admin (rebuilt in Phase 8) sends each entry's `product` as the whole populated book, not its id. The API
-// accepts that form too: Mongoose casts the object to its `_id`, so only the id is stored.
-const legacyProductRefSchema = z.union([objectIdSchema, z.looseObject({ _id: objectIdSchema })], { error: 'INVALID_ID' });
 
 // What the API enforces on POST and PUT (see common.ts): `categories` is a list of ids and `products` a list of
 // { product, priority: number } entries, `product` an id or (legacy admin) a book with a valid `_id`.
 export const adminProductSetReferencesPayloadSchema = z.object({
   categories: adminOptionalIdListSchema,
-  products: z.array(z.object({ product: legacyProductRefSchema, priority: z.number() })).optional(),
+  products: z.array(z.object({ product: adminLegacyRefSchema, priority: z.number() })).optional(),
 });
 export type AdminProductSetReferencesPayload = z.infer<typeof adminProductSetReferencesPayloadSchema>;

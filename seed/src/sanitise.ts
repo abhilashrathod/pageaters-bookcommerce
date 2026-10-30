@@ -53,7 +53,7 @@ export function sanitise(dump: Dump): { data: Dump; report: Report } {
   for (const spec of specs) {
     const docs = dump[spec.dumpName];
     if (!docs) throw new Error(`dump is missing pageaters.${spec.dumpName}.json`);
-    const kept = spec.softDelete ? docs.filter((doc) => doc.isDeleted !== true) : docs;
+    const kept = docs.filter((doc) => !(spec.softDelete && doc.isDeleted === true) && !(spec.deactivates && doc.isActive === false));
     liveIds.set(spec.dumpName, new Set(kept.map((doc) => requireId(doc, spec))));
     live.set(spec, kept);
   }
@@ -75,6 +75,7 @@ export function sanitise(dump: Dump): { data: Dump; report: Report } {
       for (const [field, target] of Object.entries(spec.refs)) doc[field] = keepLive(target, doc[field]);
       // A kept document is live: a stray deletion date (an old admin mistake) is cleared.
       if (spec.softDelete) doc.deletedAt = '';
+      if (spec.deactivates) doc.deactivatedAt = '';
       return doc;
     });
   }

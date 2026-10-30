@@ -4,7 +4,7 @@ import { defineEndpoint } from '../../core/endpoint.ts';
 
 // Public mystery-box reads (`apps/api/src/routes/mysteryBox.routes.js`). The admin routes are 2c's.
 export const mysteryBoxes = {
-  // GET /mystery-boxes — always sorted by number of books, ascending; no sort parameters.
+  // GET /mystery-boxes — always sorted by number of books, ascending (then by id); no sort parameters.
   list: defineEndpoint({
     method: 'GET',
     path: '/mystery-boxes',

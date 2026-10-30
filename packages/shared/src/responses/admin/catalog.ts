@@ -7,7 +7,7 @@ import { apiResponse } from '../../primitives.ts';
 // projections on the admin `GET /:id`). Those documents still carry the soft-delete flags and, for store books,
 // `wholeSalePriceHistory`; the schemas strip them on parse and the API is fixed in Phase 4.
 
-// GET /add-ons/:id, POST /add-ons, PUT /add-ons/:id: the whole document. (The legacy GET and PUT always answer 500.)
+// GET /add-ons/:id, POST /add-ons, PUT /add-ons/:id: the whole document.
 export const adminAddOnResponseSchema = apiResponse(addOnSchema);
 
 // GET /product-sets/:id (entries kept, sorted by priority, books populated with their author), POST and PUT (entries

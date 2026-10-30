@@ -23,12 +23,12 @@ export const addOnSchema = z.object({
 });
 export type AddOn = z.infer<typeof addOnSchema>;
 
-// GET /add-ons (admin only): whole documents. GET /add-ons/:id is broken in the legacy API (it answers with an
-// undefined variable), so it has no response schema until Phase 4 fixes it.
+// GET /add-ons (admin only): whole documents. (GET /add-ons/:id answers one: `adminAddOnResponseSchema`.)
 export const addOnListResponseSchema = apiResponse(paginated(addOnSchema));
 
-// GET /add-ons/produtct/:productId (sic; the storefront's endpoint): every add-on grouped by `category`, from an
-// aggregation, so `_id` is the category text. The legacy pipeline ignores the product and soft deletes (Phase 4).
+// GET /add-ons/produtct/:productId (sic; the storefront's endpoint): every live add-on grouped by `category`, from an
+// aggregation, so `_id` is the category text. Groups are sorted by category, add-ons in a group by priority then name.
+// Add-ons aren't linked to products, so the list is the same for every live store book (`addOnGroupsParamsSchema`).
 export const addOnGroupSchema = z.object({
   _id: z.string(),
   addOns: z.array(addOnSchema),

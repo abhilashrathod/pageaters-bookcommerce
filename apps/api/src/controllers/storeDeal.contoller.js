@@ -10,8 +10,8 @@ const dealFields = (params) => {
 
 module.exports.getAll = async (req, res) => {
   try {
-    const { page, limit, sortBy, sortOrder, offset, category } = req.allParams();
-    const data = await storeDealService.listDeals({ page, limit, sortBy, sortOrder, offset, category });
+    const { page, limit, sortBy, sortOrder, category } = req.allParams();
+    const data = await storeDealService.listDeals({ page, limit, sortBy, sortOrder, category });
     return res.ok({ message: 'STORE_DEAL_LIST_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);
@@ -41,7 +41,7 @@ module.exports.getById = async (req, res) => {
   try {
     const { id } = req.allParams();
     const data = await storeDealService.getDealById(id);
-    return res.ok({ message: 'AUTHOR_LIST_SUCCESS', data });
+    return res.ok({ message: 'STORE_DEAL_LIST_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);
   }

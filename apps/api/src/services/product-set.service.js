@@ -65,20 +65,17 @@ const createProductSet = ({ products, title, description, categories }) =>
   });
 
 /**
- * Updates an active product set. Legacy: a title different from the current one (a missing title included)
- * regenerates the slug, which breaks links to the old one.
+ * Updates an active product set. The slug made at create never changes, so a renamed set keeps its links; a field
+ * left out keeps its value (Mongoose drops undefined keys from `$set`).
  * @param {string} id
  * @param {{ products?, title?, description?, categories? }} fields
  * @returns {Promise<object>} The updated set.
  * @throws {AppError} PRODUCT_SET_NOT_EXIST (400).
  */
 const updateProductSet = async (id, { products, title, description, categories }) => {
-  const current = await ProductSets.findOne({ _id: id, isActive: true });
-  if (!current) throw new AppError('PRODUCT_SET_NOT_EXIST');
-
-  const slug = title !== current.title ? newSlug(title) : current.slug;
-
-  return ProductSets.findOneAndUpdate({ _id: id }, { $set: { title, description, products, categories, slug } }, { new: true });
+  const updated = await ProductSets.findOneAndUpdate({ _id: id, isActive: true }, { $set: { title, description, products, categories } }, { new: true });
+  if (!updated) throw new AppError('PRODUCT_SET_NOT_EXIST');
+  return updated;
 };
 
 /**

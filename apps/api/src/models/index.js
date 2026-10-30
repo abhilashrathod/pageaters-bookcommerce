@@ -5,7 +5,6 @@ require('./token.model');
 require('./file.model');
 require('./log_email.model');
 require('./user.model');
-require('./book.model');
 require('./storeBook.model');
 require('./mysteryBox.model');
 require('./productSet.model');

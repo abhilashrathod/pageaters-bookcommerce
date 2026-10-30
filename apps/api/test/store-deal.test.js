@@ -2,13 +2,13 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, eventually, ids, loadCatalog, startTestApp } = require('./helpers');
+const { asCreated, asJson, assertBody, assertGuarded, catalogState, createUser, envelopes, ids, loadCatalog, paged, startTestApp } = require('./helpers');
 const { loadStore, storeIds } = require('./helpers/fixtures/store');
 
 // /api/v1/deals over HTTP: public list and detail (product sets with their books' prices and discounts); admin
 // CRUD. Written against the legacy controller (storeDeal.contoller.js) before the service refactor.
 
-const { ok, okString, badRequest, serverError } = envelopes;
+const { ok, okString, badRequest, badRequestObject, serverError } = envelopes;
 
 const Deal = () => mongoose.model('store_deals');
 
@@ -48,42 +48,57 @@ describe('auth', () => {
 });
 
 describe('GET /deals', () => {
-  test('legacy: lists active deals sorted, but with page, offset and pagingCounter null', async () => {
+  const firstPage = (docs, limit = 10) =>
+    paged(docs, { totalDocs: docs.length, limit, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null });
+
+  test('lists active deals with the page set (the legacy answered page, offset and pagingCounter null)', async () => {
     const docs = asJson(await Deal().find({ isActive: true }).select(LIST_FIELDS).sort({ priority: 1 }));
-    const res = await api.request('/deals?page=1&limit=10&sortBy=priority&sortOrder=asc');
-    assertBody(
-      res,
-      200,
-      ok('STORE_DEAL_LIST_SUCCESS', {
-        docs,
-        totalDocs: 2,
-        offset: null,
-        limit: 10,
-        totalPages: 1,
-        page: null,
-        pagingCounter: null,
-        hasPrevPage: false,
-        hasNextPage: false,
-        prevPage: null,
-        nextPage: null,
-      }),
-    );
+    assertBody(await api.request('/deals?page=1&limit=10&sortBy=priority&sortOrder=asc'), 200, ok('STORE_DEAL_LIST_SUCCESS', firstPage(docs)));
   });
 
-  test('filters by category and honours an explicit offset', async () => {
+  test('without page/limit/sort answers page 1 of 10 by priority, lowest first (the legacy answered no documents)', async () => {
+    const docs = asJson(await Deal().find({ isActive: true }).select(LIST_FIELDS).sort({ priority: 1, _id: 1 }));
+    assert.deepEqual(docs.map((d) => d._id), [String(storeIds.dealTwo), String(storeIds.dealOne)]);
+    assertBody(await api.request('/deals'), 200, ok('STORE_DEAL_LIST_SUCCESS', firstPage(docs)));
+    const byTitle = await api.request('/deals?sortBy=title&sortOrder=desc');
+    assert.deepEqual(byTitle.body.data.docs.map((d) => d.title), ['Test Deal Two', 'Test Deal One']);
+  });
+
+  test('filters by category; pages by page number and ignores an offset', async () => {
     const res = await api.request(`/deals?page=1&limit=10&category=${ids.categoryFiction}`);
     assert.deepEqual(res.body.data.docs.map((d) => d._id), [String(storeIds.dealOne)]);
 
-    const offsetRes = await api.request('/deals?limit=1&offset=1&sortBy=priority&sortOrder=asc');
-    assert.deepEqual(offsetRes.body.data.docs.map((d) => d._id), [String(storeIds.dealOne)]);
+    const second = await api.request('/deals?page=2&limit=1&offset=5');
+    assert.equal(second.status, 200);
+    assert.deepEqual(second.body.data.docs.map((d) => d._id), [String(storeIds.dealOne)]);
+    assert.equal(second.body.data.page, 2);
+    assert.equal(second.body.data.pagingCounter, 2);
+    assert.equal('offset' in second.body.data, false);
   });
 
-  test('refuses a sort field outside the allowlist; legacy: no limit answers no documents', async () => {
+  test('refuses a sort field outside the allowlist and a bad page or limit', async () => {
     assertBody(await api.request('/deals?sortBy=ctaText'), 400, badRequest('SORTING_NOT_ALLOWED'));
-    const res = await api.request('/deals');
-    assert.equal(res.status, 200);
-    assert.deepEqual(res.body.data.docs, []);
-    assert.equal(res.body.data.limit, 0);
+    for (const query of ['page=0', 'limit=1001', 'limit=x', 'sortOrder=up']) {
+      assertBody(await api.request(`/deals?${query}`), 400, badRequest('INVALID_PAGING'));
+    }
+  });
+
+  test('another sort field without an order sorts newest first, like every other list', async () => {
+    // createdAt is immutable through Mongoose, so set it on the collection.
+    await Deal().collection.updateOne({ _id: storeIds.dealOne }, { $set: { createdAt: new Date('2030-01-01') } });
+    const res = await api.request('/deals?sortBy=createdAt');
+    assert.deepEqual(res.body.data.docs.map((d) => d._id), [String(storeIds.dealOne), String(storeIds.dealTwo)]);
+    const oldest = await api.request('/deals?sortBy=createdAt&sortOrder=asc');
+    assert.deepEqual(oldest.body.data.docs.map((d) => d._id), [String(storeIds.dealTwo), String(storeIds.dealOne)]);
+  });
+
+  test('refuses a category that is not an id (was a CastError 500); empty means no filter', async () => {
+    for (const query of ['category=nope', `category=${ids.categoryFiction}0`, `category=${ids.categoryFiction}&category=${ids.categoryFiction}`]) {
+      assertBody(await api.request(`/deals?${query}`), 400, badRequestObject('INVALID_ID'));
+    }
+    const all = await api.request('/deals?category=');
+    assert.equal(all.status, 200);
+    assert.equal(all.body.data.totalDocs, 2);
   });
 });
 
@@ -119,11 +134,11 @@ describe('detail', () => {
     assertBody(await api.request('/deals/unique/DE-test-inactive'), 400, badRequest('STORE_DEAL_NOT_EXIST'));
   });
 
-  test('legacy: admin detail answers with the author message keys', async () => {
+  test('admin detail answers with the deal message keys (the legacy used the author ones)', async () => {
     const res = await api.request(`/deals/${storeIds.dealOne}`, { cookie: admin.cookie });
     const publicRes = await api.request('/deals/unique/DE-test-one');
-    assertBody(res, 200, ok('AUTHOR_LIST_SUCCESS', publicRes.body.data));
-    assertBody(await api.request(`/deals/${storeIds.dealInactive}`, { cookie: admin.cookie }), 400, badRequest('AUTHOR_NOT_EXIST'));
+    assertBody(res, 200, ok('STORE_DEAL_LIST_SUCCESS', publicRes.body.data));
+    assertBody(await api.request(`/deals/${storeIds.dealInactive}`, { cookie: admin.cookie }), 400, badRequest('STORE_DEAL_NOT_EXIST'));
   });
 
   test('legacy: a deal whose product set is gone answers 500', async () => {
@@ -148,14 +163,117 @@ describe('admin writes', () => {
     assertBody(await api.request(`/deals/${storeIds.dealInactive}`, { method: 'PUT', body: {}, cookie: admin.cookie }), 400, badRequest('STORE_DEAL_NOT_EXIST'));
   });
 
-  test('DELETE deactivates an active deal (legacy: the save is not awaited)', async () => {
+  test('DELETE deactivates an active deal, written before the answer', async () => {
     assertBody(await api.request(`/deals/${storeIds.dealTwo}`, { method: 'DELETE', cookie: admin.cookie }), 200, okString('STORE_DEAL_DELETE_SUCCESS'));
-    const deal = await eventually(async () => {
-      const found = await Deal().findById(storeIds.dealTwo);
-      return found.isActive ? null : found;
-    });
+    const deal = await Deal().findById(storeIds.dealTwo);
     assert.equal(deal.isActive, false);
     assert.ok(deal.deactivatedAt);
     assertBody(await api.request(`/deals/${storeIds.dealTwo}`, { method: 'DELETE', cookie: admin.cookie }), 400, badRequest('STORE_DEAL_NOT_EXIST'));
+  });
+});
+
+describe('deal writes: failures and references', () => {
+  test('refuses a product set that is missing or inactive on create and update, before writing anything', async () => {
+    const before = await catalogState();
+    for (const set of [storeIds.setInactive, new mongoose.Types.ObjectId(), { _id: String(storeIds.setInactive), title: 'Test Set Inactive' }]) {
+      const productSets = [
+        { set: String(storeIds.setOne), priority: 1 },
+        { set, priority: 2 },
+      ];
+      for (const [method, path] of [
+        ['POST', '/deals'],
+        ['PUT', `/deals/${storeIds.dealOne}`],
+      ]) {
+        assertBody(await api.request(path, { method, body: { title: 'Test Deal Bad', productSets }, cookie: admin.cookie }), 400, badRequest('PRODUCT_SET_NOT_EXIST'));
+      }
+    }
+    assert.deepEqual(await catalogState(), before);
+    // The same set twice is one set, and it is active.
+    const twice = [String(storeIds.setOne), String(storeIds.setOne)].map((set, index) => ({ set, priority: index + 1 }));
+    assert.equal((await api.request(`/deals/${storeIds.dealTwo}`, { method: 'PUT', body: { productSets: twice }, cookie: admin.cookie })).status, 200);
+  });
+
+  test('PUT on an inactive deal writes nothing', async () => {
+    const before = await catalogState();
+    assertBody(await api.request(`/deals/${storeIds.dealInactive}`, { method: 'PUT', body: { title: 'Changed' }, cookie: admin.cookie }), 400, badRequest('STORE_DEAL_NOT_EXIST'));
+    assert.deepEqual(await catalogState(), before);
+  });
+
+  test('DELETE answers 500 when the deactivation write fails (the legacy answered 200 and lost the error)', async (t) => {
+    t.mock.method(Deal().prototype, 'save', async () => {
+      throw new Error('write failed');
+    });
+    assertBody(await api.request(`/deals/${storeIds.dealTwo}`, { method: 'DELETE', cookie: admin.cookie }), 500, serverError);
+    t.mock.restoreAll();
+    assert.equal((await Deal().findById(storeIds.dealTwo)).isActive, true);
+  });
+
+  test('PUT keeps a field left out (Mongoose drops undefined keys; nothing is written as null)', async () => {
+    await api.request(`/deals/${storeIds.dealOne}`, { method: 'PUT', body: { title: 'Test Deal One B' }, cookie: admin.cookie });
+    const deal = await Deal().findById(storeIds.dealOne).lean();
+    assert.equal(deal.title, 'Test Deal One B');
+    assert.equal(deal.description, 'A fictional deal.');
+    assert.deepEqual(deal.categories.map(String), [String(ids.categoryFiction)]);
+    assert.equal(deal.productSets.length, 2);
+  });
+
+  test('refuses a reference that is not an id on create and update, before writing anything', async () => {
+    const before = await catalogState();
+    for (const [body, code] of [
+      [{ title: 'Test Deal Bad', categories: String(ids.categoryFiction) }, 'INVALID_REQUEST'],
+      [{ title: 'Test Deal Bad', categories: ['nope'] }, 'INVALID_ID'],
+      [{ title: 'Test Deal Bad', categories: [{ $gt: '' }] }, 'INVALID_REQUEST'],
+      [{ title: 'Test Deal Bad', productSets: [{ set: 'nope', priority: 1 }] }, 'INVALID_ID'],
+      [{ title: 'Test Deal Bad', productSets: [{ set: { _id: 'nope', title: 'Test Set One' }, priority: 1 }] }, 'INVALID_ID'],
+      [{ title: 'Test Deal Bad', productSets: [{ set: { title: 'Test Set One' }, priority: 1 }] }, 'INVALID_ID'],
+      [{ title: 'Test Deal Bad', productSets: [String(storeIds.setOne)] }, 'INVALID_REQUEST'],
+      [{ title: 'Test Deal Bad', productSets: null }, 'INVALID_REQUEST'],
+    ]) {
+      for (const [method, path] of [
+        ['POST', '/deals'],
+        ['PUT', `/deals/${storeIds.dealOne}`],
+      ]) {
+        assertBody(await api.request(path, { method, body, cookie: admin.cookie }), 400, badRequestObject(code));
+      }
+    }
+    assert.deepEqual(await catalogState(), before);
+  });
+
+  test('the legacy admin sends each set as the populated set (from the detail or the list): only its _id is stored', async () => {
+    // As update-deal.component.ts builds it: the detail's populated sets, categories mapped to ids, plus its `code`.
+    const detail = (await api.request(`/deals/${storeIds.dealOne}`, { cookie: admin.cookie })).body.data;
+    const listed = (await api.request('/product-sets?page=1&limit=1000', { cookie: admin.cookie })).body.data.docs;
+    const twoSet = listed.find((set) => set._id === String(storeIds.setTwo));
+    const sets = [detail.productSets[0].set, twoSet];
+    const body = {
+      title: 'Test Deal One B',
+      description: detail.description,
+      code: '',
+      poster: detail.poster,
+      ctaText: detail.ctaText,
+      ctaLink: detail.ctaLink,
+      priority: 4,
+      categories: detail.categories.map((category) => category._id),
+      productSets: sets.map((set, index) => ({ set, priority: index + 1 })),
+    };
+    const res = await api.request(`/deals/${storeIds.dealOne}`, { method: 'PUT', body, cookie: admin.cookie });
+    assertBody(res, 200, ok('STORE_DEAL_UPDATE_SUCCESS', asJson(await Deal().findById(storeIds.dealOne))));
+    const stored = (await Deal().findById(storeIds.dealOne).lean()).productSets;
+    assert.deepEqual(
+      stored.map(({ set, priority }) => [set, priority]),
+      [
+        [new mongoose.Types.ObjectId(String(storeIds.setOne)), 1],
+        [new mongoose.Types.ObjectId(String(storeIds.setTwo)), 2],
+      ],
+    );
+    assert.deepEqual(Object.keys(stored[0]).sort(), ['_id', 'priority', 'set']);
+
+    const created = await api.request('/deals', { method: 'POST', body: { ...body, title: 'Test Deal Legacy' }, cookie: admin.cookie });
+    assert.equal(created.status, 200);
+    const deal = await Deal().findOne({ title: 'Test Deal Legacy' }).lean();
+    assert.deepEqual(
+      deal.productSets.map(({ set }) => String(set)),
+      [String(storeIds.setOne), String(storeIds.setTwo)],
+    );
   });
 });

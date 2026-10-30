@@ -13,7 +13,9 @@ export const adminCategoryCreatePayloadSchema = categoryFieldsSchema
   .partial({ description: true, meta: true });
 export type AdminCategoryCreatePayload = z.infer<typeof adminCategoryCreatePayloadSchema>;
 
-// The update `$set`s every field it reads; an omitted one is written as null, so all are required.
+// The update `$set`s the fields it reads. Mongoose 8 drops undefined keys from `$set`, so an omitted field keeps its
+// current value (it is never written as null); the contract still asks for every field, as for the other catalog
+// updates.
 export const adminCategoryUpdatePayloadSchema = categoryFieldsSchema
   .pick({
     title: true,

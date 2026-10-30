@@ -52,7 +52,16 @@ function fixture(): Dump {
       { _id: oid(200), title: 'Fiction', numberOfBooks: 99, meta: { title: 't', url: 'https://old.example/fiction' }, isDeleted: false },
     ],
     collections: [{ _id: oid(300), title: 'Picks', books: [oid(1), oid(2), oid(999)], featuredAuthors: [oid(101)], isDeleted: false }],
-    product_sets: [{ _id: oid(400), title: 'Set', isActive: false, products: [{ product: oid(1) }, { product: oid(2) }] }],
+    product_sets: [
+      {
+        _id: oid(400),
+        title: 'Set',
+        isActive: true,
+        deactivatedAt: 'Tue May 03 2022',
+        products: [{ product: oid(1) }, { product: oid(2) }],
+      },
+      { _id: oid(401), title: 'Old set', isActive: false, deactivatedAt: 'Tue May 03 2022', products: [{ product: oid(1) }] },
+    ],
     storebooks: [book(1, { relatedBooks: [oid(2)], ISBN: '\u200e 978-0-7475-3274-3 ' }), book(2, { isDeleted: true }), book(3)],
   };
 }
@@ -61,13 +70,16 @@ void describe('sanitise', () => {
   const { data, report } = sanitise(fixture());
   const books = data['store-books'] ?? [];
 
-  void it('drops soft-deleted documents but keeps inactive product sets', () => {
+  void it('drops soft-deleted documents and inactive product sets', () => {
     assert.deepEqual(
       books.map((b) => b.bookId),
       ['B1', 'B3'],
     );
     assert.equal(data.authors?.length, 1);
-    assert.equal(data['product-sets']?.length, 1);
+    assert.deepEqual(
+      data['product-sets']?.map((set) => set.title),
+      ['Set'],
+    );
   });
 
   void it('never copies wholesale prices, real inventory or internal fields', () => {
@@ -104,6 +116,7 @@ void describe('sanitise', () => {
 
   void it('clears stray deletion dates on kept documents', () => {
     assert.equal(data.authors?.[0]?.deletedAt, '');
+    assert.equal(data['product-sets']?.[0]?.deactivatedAt, '');
   });
 
   void it('normalises language codes and ISBNs', () => {

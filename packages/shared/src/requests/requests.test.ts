@@ -2,12 +2,14 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { z } from 'zod';
 import {
+  addOnGroupsParamsSchema,
   addressCreatePayloadSchema,
   addressGetPayloadSchema,
   addressPincodePayloadSchema,
   cartAddOnAddPayloadSchema,
   cartItemAddPayloadSchema,
   checkoutMethodSchema,
+  dealListFilterSchema,
   favoritesRequestPayloadSchema,
   forgotPasswordPayloadSchema,
   loginPayloadSchema,
@@ -419,5 +421,21 @@ void describe('request payload schemas', () => {
 
   void it('checkoutMethodSchema accepts exactly cod and online', () => {
     assert.deepEqual(checkoutMethodSchema.options, ['cod', 'online']);
+  });
+
+  void it('dealListFilterSchema takes a category id, or none', () => {
+    assert.deepEqual(dealListFilterSchema.parse({ category: ID }), { category: ID });
+    assert.deepEqual(dealListFilterSchema.parse({}), {});
+    assert.equal(dealListFilterSchema.parse({ category: '' }).category, undefined);
+    for (const category of ['nope', [ID, ID], { $ne: null }]) {
+      assert.equal(dealListFilterSchema.safeParse({ category }).error?.issues[0]?.message, 'INVALID_ID', JSON.stringify(category));
+    }
+  });
+
+  void it('addOnGroupsParamsSchema takes a product id only', () => {
+    assert.deepEqual(addOnGroupsParamsSchema.parse({ productId: ID }), { productId: ID });
+    for (const productId of [undefined, '', 'nope', `${ID}0`, { $ne: null }]) {
+      assert.equal(addOnGroupsParamsSchema.safeParse({ productId }).error?.issues[0]?.message, 'INVALID_ID', JSON.stringify(productId));
+    }
   });
 });

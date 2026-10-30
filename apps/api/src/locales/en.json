@@ -119,6 +119,7 @@
 	"ADD_ON_DEACTIVATION_SUCCESS": "Add-on Deactivated Successfully",
 	"ADD_ON_ADD_SUCCESS": "Add-on Added Successfully to Cart",
 	"ADD_ON_ADD_QUANTITY_LIMIT": "A Reader can only checkout maximum 5 quantity per add-on",
+	"INVALID_DISCOUNT": "Discount must be a percentage from 0 to 100",
 	"CART_LIST_SUCCESS": "Cart info fetched",
 	"CART_NOT_EXIST": "Cart doesn't exist",
 	"CART_CREATE_SUCCESS": "Cart Created",

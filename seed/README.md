@@ -22,7 +22,8 @@ What the pipeline does:
 - Copies only allowlisted fields per collection, nested keys included (`src/collections.ts`). Fields not on the list are dropped and
   reported, and the run exits 1 without writing until someone reviews them.
 - Never copies `wholeSalePriceHistory` (supplier prices), `inventory` (real stock) or `__v`.
-- Drops soft-deleted documents and prunes every reference to them, checked against the target collection. Inactive product sets are kept.
+- Drops soft-deleted documents and inactive product sets (the API never serves them), and prunes every reference to
+  them, checked against the target collection.
 - Generates stock from each document ID (`src/stock.ts`): about 5% of books out of stock, the rest 1–1000. The
   demo is seeded once and never reset, so stock must outlast the occasional demo order.
 - Recounts `numberOfBooks` per category, clears legacy canonical URLs, normalises `EN` to `English` and cleans

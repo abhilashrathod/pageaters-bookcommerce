@@ -166,14 +166,22 @@ describe('admin writes', () => {
     assert.match(set.slug, /^test-set-new-[A-Za-z0-9]{6}$/);
   });
 
-  test('PUT keeps the slug for the same title; legacy: a new title regenerates it', async () => {
+  test('PUT never changes the slug: a renamed set keeps its links', async () => {
     const same = await api.request(`/product-sets/${storeIds.setOne}`, { method: 'PUT', body: { title: 'Test Set One', description: 'Changed.' }, cookie: admin.cookie });
     assertBody(same, 200, ok('PRODUCT_SET_UPDATE_SUCCESS', asJson(await ProductSet().findById(storeIds.setOne))));
     assert.equal((await ProductSet().findById(storeIds.setOne)).slug, 'test-set-one');
 
-    await api.request(`/product-sets/${storeIds.setOne}`, { method: 'PUT', body: { title: 'Test Set Renamed' }, cookie: admin.cookie });
-    assert.match((await ProductSet().findById(storeIds.setOne)).slug, /^test-set-renamed-[A-Za-z0-9]{6}$/);
-    assertBody(await api.request('/product-sets/slug/test-set-one'), 400, badRequest('PRODUCT_SET_NOT_EXIST'));
+    const renamed = await api.request(`/product-sets/${storeIds.setOne}`, { method: 'PUT', body: { title: 'Test Set Renamed' }, cookie: admin.cookie });
+    assertBody(renamed, 200, ok('PRODUCT_SET_UPDATE_SUCCESS', asJson(await ProductSet().findById(storeIds.setOne))));
+    const set = await ProductSet().findById(storeIds.setOne);
+    assert.equal(set.title, 'Test Set Renamed');
+    assert.equal(set.slug, 'test-set-one');
+    // A field left out keeps its value (Mongoose drops undefined keys from `$set`; nothing is written as null).
+    assert.equal(set.description, 'Changed.');
+    assert.equal(set.products.length, 2);
+    const detail = await api.request('/product-sets/slug/test-set-one');
+    assert.equal(detail.status, 200);
+    assert.equal(detail.body.data.title, 'Test Set Renamed');
 
     assertBody(await api.request(`/product-sets/${storeIds.setInactive}`, { method: 'PUT', body: {}, cookie: admin.cookie }), 400, badRequest('PRODUCT_SET_NOT_EXIST'));
   });

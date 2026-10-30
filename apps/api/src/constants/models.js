@@ -4,7 +4,6 @@ module.exports = {
   STOCK_ALERT: 'stock_alert',
   FILE: 'file',
   ADDRESS: 'address',
-  BOOK: 'book',
   CART: 'cart',
   CATEGORY: 'category',
   COLLECTION: 'collection',

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { models } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { generateRandomNumber } = require('../helpers/utils.helper');
+const { pageOptions } = require('../helpers/paging.helper');
 
 // Mystery boxes (a number of surprise books): public list and detail; admin create/update/delete.
 
@@ -15,11 +16,12 @@ const findLive = async (query) => {
 };
 
 /**
- * One page of live boxes, fewest books first. Legacy: without `limit` the page has no documents.
- * @param {{ page?, limit? }} paging
+ * One page of live boxes, fewest books first (no client sorting). Paging defaults: helpers/paging.helper.js.
+ * @param {{ page?, limit? }} paging As sent.
  * @returns {Promise<object>} The mongoose-paginate-v2 result.
+ * @throws {AppError} INVALID_PAGING (400).
  */
-const listBoxes = ({ page, limit }) => MysteryBox.paginate({ isDeleted: false }, { page, limit, sort: { books: 'asc' } });
+const listBoxes = ({ page, limit }) => MysteryBox.paginate({ isDeleted: false }, pageOptions({ page, limit }, { sortBy: 'books', sortOrder: 1 }));
 
 /**
  * Creates a box. Legacy: its `boxId` uses the product-set prefix `SET-`.
@@ -62,7 +64,7 @@ const getBoxById = (id) => findLive({ _id: id });
 const getBoxByBoxId = (boxId) => findLive({ boxId });
 
 /**
- * Soft-deletes a live box. Legacy: writes `deactivatedAt`, which the model doesn't have, so `deletedAt` stays ''.
+ * Soft-deletes a live box, stamping `deletedAt`.
  * @param {string} id
  * @returns {Promise<void>}
  * @throws {AppError} MYSTERY_BOX_NOT_EXIST (400).
@@ -70,7 +72,7 @@ const getBoxByBoxId = (boxId) => findLive({ boxId });
 const deleteBox = async (id) => {
   const box = await findLive({ _id: id });
   box.isDeleted = true;
-  box.deactivatedAt = new Date();
+  box.deletedAt = new Date();
   await box.save();
 };
 

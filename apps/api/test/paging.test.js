@@ -40,6 +40,14 @@ describe('pageOptions', () => {
   test('takes per-endpoint defaults', () => {
     assert.deepEqual(pageOptions({}, { sortBy: 'priority', sortOrder: 1 }), { page: 1, limit: 10, sort: { priority: 1, _id: 1 } });
     assert.deepEqual(pageOptions({ sortOrder: 'desc' }, { sortBy: 'priority', sortOrder: 1 }), { page: 1, limit: 10, sort: { priority: -1, _id: -1 } });
+    assert.deepEqual(pageOptions({ sortBy: 'priority', sortOrder: '' }, { sortBy: 'priority', sortOrder: 1 }).sort, { priority: 1, _id: 1 });
+  });
+
+  test('applies the default order only to the default field; another field without an order sorts newest first', () => {
+    const options = { sortable: ['createdAt', 'title'], sortBy: 'priority', sortOrder: 1 };
+    assert.deepEqual(pageOptions({ sortBy: 'createdAt' }, options).sort, { createdAt: -1, _id: -1 });
+    assert.deepEqual(pageOptions({ sortBy: 'title', sortOrder: '' }, options).sort, { title: -1, _id: -1 });
+    assert.deepEqual(pageOptions({ sortBy: 'title', sortOrder: 'asc' }, options).sort, { title: 1, _id: 1 });
   });
 
   test('allows only the listed sort fields (and the default)', () => {

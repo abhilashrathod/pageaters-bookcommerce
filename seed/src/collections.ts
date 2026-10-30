@@ -10,6 +10,9 @@ export interface CollectionSpec {
   seedName: string;
   // Collections with soft delete keep only `isDeleted: false` documents.
   softDelete: boolean;
+  // Collections deactivated with `isActive: false` (product sets) keep only active documents: the API never serves
+  // an inactive one, and nothing in the seed references them.
+  deactivates?: true;
   fields: readonly string[];
   // Allowed keys of object fields (or of each entry of an array of objects).
   nested?: Record<string, readonly string[]>;
@@ -100,6 +103,7 @@ export const productSets: CollectionSpec = {
   dumpName: 'product_sets',
   seedName: 'product-sets',
   softDelete: false,
+  deactivates: true,
   fields: [...timestamps, 'setId', 'products', 'categories', 'slug', 'title', 'description', 'isActive', 'deactivatedAt'],
   nested: { products: ['_id', 'product', 'priority'] },
   // `products[].product` points at store books; pruned separately.

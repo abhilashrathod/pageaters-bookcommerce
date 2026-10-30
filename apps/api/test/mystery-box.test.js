@@ -46,12 +46,15 @@ describe('mystery boxes', () => {
     }
   });
 
-  test('GET /mystery-boxes pages live boxes by number of books', async () => {
+  test('GET /mystery-boxes pages live boxes by number of books, page 1 of 10 by default', async () => {
     const docs = asJson(await Box().find({ isDeleted: false }).sort({ books: 1 }));
     assertBody(await api.request('/mystery-boxes?page=1&limit=10'), 200, ok('MYSTERY_BOX_LIST_SUCCESS', firstPage(docs, 2)));
     assert.deepEqual(docs.map((box) => box.books), [1, 3]);
-    const noPage = await api.request('/mystery-boxes');
-    assert.deepEqual(noPage.body.data.docs, []);
+    // The legacy answered no documents without page/limit.
+    assertBody(await api.request('/mystery-boxes'), 200, ok('MYSTERY_BOX_LIST_SUCCESS', firstPage(docs, 2)));
+    // No client sorting: sortBy/sortOrder are not read.
+    assertBody(await api.request('/mystery-boxes?sortBy=price&sortOrder=desc'), 200, ok('MYSTERY_BOX_LIST_SUCCESS', firstPage(docs, 2)));
+    assertBody(await api.request('/mystery-boxes?limit=0'), 400, badRequest('INVALID_PAGING'));
   });
 
   test('detail by boxId (public) and by id (admin)', async () => {
@@ -76,11 +79,18 @@ describe('mystery boxes', () => {
     assertBody(await api.request(`/mystery-boxes/${storeIds.boxDeleted}`, { method: 'PUT', body: {}, cookie: admin.cookie }), 400, badRequest('MYSTERY_BOX_NOT_EXIST'));
   });
 
-  test('DELETE soft-deletes a live box (legacy: deletedAt is never set)', async () => {
+  test('PUT keeps a field left out (Mongoose drops undefined keys; nothing is written as null)', async () => {
+    await api.request(`/mystery-boxes/${storeIds.boxOne}`, { method: 'PUT', body: { price: 950 }, cookie: admin.cookie });
+    const box = await Box().findById(storeIds.boxOne).lean();
+    assert.deepEqual([box.title, box.books, box.weight, box.price, box.tags], ['Test Box Three', 3, 900, 950, ['test']]);
+  });
+
+  test('DELETE soft-deletes a live box and stamps deletedAt (the legacy wrote a deactivatedAt the model lacks)', async () => {
     assertBody(await api.request(`/mystery-boxes/${storeIds.boxTwo}`, { method: 'DELETE', cookie: admin.cookie }), 200, okString('MYSTERY_BOX_DELETE_SUCCESS'));
-    const box = await Box().findById(storeIds.boxTwo);
+    const box = await Box().findById(storeIds.boxTwo).lean();
     assert.equal(box.isDeleted, true);
-    assert.equal(box.deletedAt, '');
+    assert.ok(box.deletedAt);
+    assert.equal('deactivatedAt' in box, false);
     assertBody(await api.request(`/mystery-boxes/${storeIds.boxTwo}`, { method: 'DELETE', cookie: admin.cookie }), 400, badRequest('MYSTERY_BOX_NOT_EXIST'));
   });
 });

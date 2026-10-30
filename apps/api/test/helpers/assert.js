@@ -81,12 +81,12 @@ const paged = (docs, fields) => ({
   nextPage: fields.nextPage,
 });
 
-// Every catalog document (books, authors, categories, collections, bundles, product sets), to check that a refused
-// write changed nothing: compare the value before and after.
+// Every catalog document (books, authors, categories, collections, bundles, product sets, deals, add-ons, mystery
+// boxes), to check that a refused write changed nothing: compare the value before and after.
 const catalogState = async () => {
   const mongoose = require('mongoose');
   const state = {};
-  for (const name of ['storeBook', 'author', 'category', 'collection', 'bundle', 'product_sets']) {
+  for (const name of ['storeBook', 'author', 'category', 'collection', 'bundle', 'product_sets', 'store_deals', 'add_on', 'mystery_box']) {
     state[name] = asJson(await mongoose.model(name).find().sort({ _id: 1 }).lean());
   }
   return state;

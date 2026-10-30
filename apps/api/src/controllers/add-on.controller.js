@@ -3,6 +3,13 @@ const addOnService = require('../services/add-on.service');
 
 // Thin controller: read the request, call one service, answer with the res.* helpers (src/services/README.md).
 
+// The fields an add-on stores. The legacy admin form also sends `productPrefrerence` and `products`, which the
+// model doesn't have; they are not read.
+const addOnFields = (params) => {
+  const { name, description, poster, category, priority, price, currentDiscount, inventory } = params;
+  return { name, description, poster, category, priority, price, currentDiscount, inventory };
+};
+
 module.exports.getAll = async (req, res) => {
   try {
     const { page, limit, sortBy, sortOrder } = req.allParams();
@@ -15,25 +22,23 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.create = async (req, res) => {
   try {
-    const { name, description, poster, category, priority, price, currentDiscount, inventory, productPrefrerence, products } = req.allParams();
-    const data = await addOnService.createAddOn({ name, description, poster, category, priority, price, currentDiscount, inventory, productPrefrerence, products });
+    const data = await addOnService.createAddOn(addOnFields(req.allParams()));
     return res.ok({ message: 'ADD_ON_CREATE_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);
   }
 };
 
-// Legacy: always 500 (see addOnService.updateAddOn).
 module.exports.update = async (req, res) => {
   try {
-    const data = await addOnService.updateAddOn();
+    const params = req.allParams();
+    const data = await addOnService.updateAddOn(params.id, addOnFields(params));
     return res.ok({ message: 'ADD_ON_UPDATE_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);
   }
 };
 
-// Legacy: 500 for a live add-on (see addOnService.getAddOnById).
 module.exports.getById = async (req, res) => {
   try {
     const { id } = req.allParams();
@@ -46,7 +51,7 @@ module.exports.getById = async (req, res) => {
 
 module.exports.getByProductId = async (req, res) => {
   try {
-    const data = await addOnService.groupAddOnsByCategory();
+    const data = await addOnService.groupAddOnsByCategory(req.validated.productId);
     return res.ok({ message: 'ADD_ON_LIST_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);

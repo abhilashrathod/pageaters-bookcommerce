@@ -29,3 +29,8 @@ export const adminIdListSchema = z.array(objectIdSchema);
 // Since Phase 4 a create or update may leave a reference list out: a create stores an empty list, an update keeps the
 // current one (Mongoose 8 drops undefined keys from `$set`, so an omitted field is never written as null).
 export const adminOptionalIdListSchema = adminIdListSchema.optional();
+
+// One reference inside an entry list (a product-set entry's `product`, a deal entry's `set`) as the API accepts it:
+// an id, or the whole populated document the legacy admin (rebuilt in Phase 8) sends back from its detail view.
+// Mongoose casts that object to its `_id`, so only the id is stored; the `_id` is checked.
+export const adminLegacyRefSchema = z.union([objectIdSchema, z.looseObject({ _id: objectIdSchema })], { error: 'INVALID_ID' });

@@ -36,7 +36,8 @@ const parsePaging = ({ page, limit, sortBy, sortOrder } = {}, { sortable = [], s
   const field = parsed.data.sortBy;
   if (field !== defaultSortBy && !sortable.includes(field)) throw new AppError('SORTING_NOT_ALLOWED');
 
-  const order = missing(sortOrder) && defaultSortOrder ? defaultSortOrder : parsed.data.sortOrder;
+  // The endpoint's default order goes with its default field only; another field without an order sorts -1.
+  const order = missing(sortOrder) && defaultSortOrder && field === defaultSortBy ? defaultSortOrder : parsed.data.sortOrder;
   return { page: parsed.data.page, limit: parsed.data.limit, sortBy: field, sortOrder: order };
 };
 

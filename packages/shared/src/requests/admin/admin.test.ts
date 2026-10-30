@@ -4,6 +4,7 @@ import type { z } from 'zod';
 
 import * as admin from './index.ts';
 import {
+  adminAddOnFieldsPayloadSchema,
   adminAddOnListQuerySchema,
   adminAuthorBooksPayloadSchema,
   adminAuthorUpdatePayloadSchema,
@@ -14,6 +15,8 @@ import {
   adminBundleUpdatePayloadSchema,
   adminCategoryCreatePayloadSchema,
   adminCollectionReferencesPayloadSchema,
+  adminDealReferencesPayloadSchema,
+  adminDealUpdatePayloadSchema,
   adminFileUploadFieldsSchema,
   adminOrderCancelPayloadSchema,
   adminOptionalIdListSchema,
@@ -116,8 +119,8 @@ void describe('admin book payloads', () => {
 });
 
 void describe('admin update payloads', () => {
-  // The updates `$set` every field they read, so each scalar field is required; a reference list may be left out
-  // (the update keeps it).
+  // The contract asks for every scalar field on update (the admin form sends the whole record; the API keeps a field
+  // left out, as Mongoose drops undefined keys from `$set`); a reference list may be left out.
   const updates = Object.entries(admin).filter(([name]) => name.endsWith('UpdatePayloadSchema'));
 
   void it('are all found', () => {
@@ -200,6 +203,7 @@ void describe('other admin payloads', () => {
       [adminBundleReferencesPayloadSchema, 'categories'],
       [adminBundleReferencesPayloadSchema, 'relatedBundles'],
       [adminBundleReferencesPayloadSchema, 'relatedCollections'],
+      [adminDealReferencesPayloadSchema, 'categories'],
     ] as const) {
       assert.deepEqual(schema.parse({ [key]: [id(2)], title: 'kept out' }), { [key]: [id(2)] });
       assert.deepEqual(schema.parse({}), {});
@@ -227,6 +231,57 @@ void describe('other admin payloads', () => {
       null,
     ]) {
       assert.equal(adminProductSetReferencesPayloadSchema.safeParse({ products }).success, false, JSON.stringify(products));
+    }
+  });
+
+  void it('check the deal references, sets as ids or (legacy admin) populated sets', () => {
+    assert.deepEqual(adminDealReferencesPayloadSchema.parse({ title: 'kept out', categories: [id(2)] }), { categories: [id(2)] });
+    assert.deepEqual(adminDealReferencesPayloadSchema.parse({}), {});
+    assert.ok(adminDealReferencesPayloadSchema.safeParse({ productSets: [{ set: id(4), priority: 1 }] }).success);
+    const set = { _id: id(4), title: 'Placeholder picks', products: [{ _id: id(5), priority: 1, product: { _id: id(1) } }] };
+    assert.ok(adminDealReferencesPayloadSchema.safeParse({ productSets: [{ set, priority: 1 }] }).success);
+    for (const body of [
+      { categories: id(2) },
+      { categories: [id(2), 'nope'] },
+      { productSets: [{ set: 'nope', priority: 1 }] },
+      { productSets: [{ set: { ...set, _id: 'nope' }, priority: 1 }] },
+      { productSets: [{ set: { title: 'x' }, priority: 1 }] },
+      { productSets: [{ set: id(4) }] },
+      { productSets: [id(4)] },
+      { productSets: null },
+    ]) {
+      assert.equal(adminDealReferencesPayloadSchema.safeParse(body).success, false, JSON.stringify(body));
+    }
+    // The update may leave `categories` out (the API keeps them); every other field is still asked for.
+    const update = { poster: '', ctaLink: '', ctaText: 'Go', title: 'Deal', description: '', priority: 1, productSets: [] };
+    assert.ok(adminDealUpdatePayloadSchema.safeParse(update).success);
+  });
+
+  void it('check the add-on fields the API stores, with a code for price and discount', () => {
+    assert.ok(adminAddOnFieldsPayloadSchema.safeParse({}).success);
+    const full = {
+      name: 'Bookmark',
+      description: '',
+      poster: 'bookmark.png',
+      category: 'bookmark',
+      priority: 1,
+      price: 49.5,
+      currentDiscount: 0,
+      inventory: 3,
+    };
+    assert.deepEqual(adminAddOnFieldsPayloadSchema.parse({ ...full, products: [], id: id(1) }), full);
+    for (const [body, code] of [
+      [{ price: -1 }, 'INVALID_AMOUNT'],
+      [{ price: 1.005 }, 'INVALID_AMOUNT'],
+      [{ price: '49' }, 'INVALID_AMOUNT'],
+      [{ currentDiscount: 101 }, 'INVALID_DISCOUNT'],
+      [{ currentDiscount: -1 }, 'INVALID_DISCOUNT'],
+      [{ inventory: -1 }, undefined],
+      [{ name: 5 }, undefined],
+    ] as const) {
+      const result = adminAddOnFieldsPayloadSchema.safeParse(body);
+      assert.equal(result.success, false, JSON.stringify(body));
+      if (code) assert.equal(result.error?.issues[0]?.message, code, JSON.stringify(body));
     }
   });
 

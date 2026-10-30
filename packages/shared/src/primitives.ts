@@ -57,8 +57,8 @@ export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 export type PaginationQueryInput = z.input<typeof paginationQuerySchema>;
 
 // mongoose-paginate-v2 (1.7.x) page envelope, without custom labels. paginate-v2 also sends `offset` when a
-// request asked for one or for no page at all. The legacy deals list sends `page`/`offset` as null (Phase 4 bug);
-// this schema is the target contract and rejects that.
+// request asked for one or for no page at all. Since Phase 4 every list asks for a page (never an offset), so `page`
+// is always set.
 const count = z.number().int().nonnegative();
 export const paginationMetaSchema = z.object({
   totalDocs: count,
