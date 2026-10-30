@@ -307,9 +307,9 @@ This file is temporary: when every phase is done, archive the decision log into 
       Storage: Vercel Blob replaces S3 (`aws-sdk`, `S3_*` and `IMAGE_CDN_URL` removed), uploads land under `uploads/…`,
       answer the public URL and await the `File` record. `imageUrl` passes https URLs through (normalised) and the
       legacy CDN-key path is gone. 714 API tests
-- [ ] Security fixes, by area (each found while reading the legacy code or by the step audits; 4b–4d pin them in tests,
+- [x] Security fixes, by area (each found while reading the legacy code or by the step audits; 4b–4d pin them in tests,
       so a fix flips the pinned test). `POST /admin/banavo` was removed early on 2026-10-28 (admins come from the seed)
-  - [ ] 7a. Perimeter: single CORS allowlist (remove reflect-any-origin); mount the rate limiters on every public route,
+  - [x] 7a. Perimeter: single CORS allowlist (remove reflect-any-origin); mount the rate limiters on every public route,
         naming login, OTP/verification sends and the public `GET /addresses/check-pincode/:pincode` (anyone can spend
         the Delhivery quota); per-route body limits (drop the global 100 MB and `multer().any()`; a per-route upload size limit, and check an
         upload's magic bytes match its extension); protect `/re-index`;
@@ -320,7 +320,7 @@ This file is temporary: when every phase is done, archive the decision log into 
         `POST /public/contactUs` (unauthenticated mail trigger) and `GET /store-books/bulk/export` (unauthenticated,
         writes to local disk, and two simultaneous exports share one file path, so the second `unlinkSync` throws
         outside any `try` and crashes the process)
-  - [ ] 7b. Sessions and passwords: HIGH — a revoked token still opens a session (`permissionVerification` never checks
+  - [x] 7b. Sessions and passwords: HIGH — a revoked token still opens a session (`permissionVerification` never checks
         `access_tokens.revoked`; logout, password change and reset end no sessions) — require an unrevoked token and
         revoke all of a user's tokens on password change/reset; move password hashing from HMAC-SHA512 to scrypt/argon2
         (rehash on next login) and compare with `crypto.timingSafeEqual` (`isPasswordValid` uses `===`);
@@ -331,7 +331,7 @@ This file is temporary: when every phase is done, archive the decision log into 
         verify-email resend limit reads the misspelt `lastverifyEmailSentOn`, so it never applies;
         `permissionVerification`'s `req.user` select leaks `contactOtp` and rate-limit stamps. Phase 5 replaces signup
         and OTP with the one-click demo login, so fix only what survives it (sessions, passwords, admin login)
-  - [ ] 7c. Order money and cart integrity: HIGH — a shopper can pay less: apply store credit, `POST /orders/create`
+  - [x] 7c. Order money and cart integrity: HIGH — a shopper can pay less: apply store credit, `POST /orders/create`
         (online; the Razorpay order is made for the reduced total), then `PATCH /orders/credit` to 0 (allowed in any
         stage), pay the reduced amount, and the webhook debits 0 credit; the balance is checked only when credit is
         applied, so one balance can go to several pending orders and go negative — allow credit only on `attempted`
@@ -343,7 +343,7 @@ This file is temporary: when every phase is done, archive the decision log into 
         cart cookie (cookie-parser decodes `j:{"$in":[own, victim]}`; ownership is checked by `findUserCart`, but the
         writes filter on `{_id}` only) lets a shopper write to other users' carts — write with the found cart's `_id` +
         `user` (the cookie format check is in the zod step)
-  - [ ] 7d. Data exposure: admin users `getAll`/`getAllDetails`/`search` return full user documents (hash, salt, OTP,
+  - [x] 7d. Data exposure: admin users `getAll`/`getAllDetails`/`search` return full user documents (hash, salt, OTP,
         tokens, `razorPayCustId`) — respond through `userSchema`; admin `users.search` and `orders.search` put raw `q`
         into `$regex` (ReDoS/regex injection: `.*` matches everyone, `(` → 500) — escape it; admin users `update` runs
         `findOneAndUpdate({})`; admin `order.getById` returns the raw Razorpay payment entity (payer contact,
@@ -354,6 +354,26 @@ This file is temporary: when every phase is done, archive the decision log into 
         it once the Phase 5 outbox exists; links to the reserved root domain in `stockAlert.controller.js`
         (`https://pageaters.com/book/…`), `libs/sitemap.js`, `libs/googledata.js` and the email templates → the demo
         domain from config
+  - Done 2026-10-30 in four parallel worktrees (api-engineer ×4, each reviewed + audited, one fix round each; merged
+    by hand: `mongoose.trusted` wraps reconciled, webhook fixtures and cookie pins updated). 7a: one CORS allowlist,
+    rate limiters on by default (general + login, message sends, code checks, pincode; trust proxy only on Vercel,
+    `APP_ENV=test` refused on Vercel), 100 kb JSON limit, urlencoded parsing dropped, uploads as a single ≤ 4 MB
+    file after the ADMIN guard with magic bytes and server-side content type, `/re-index` ADMIN, create-shipment
+    ADMIN, `sanitizeFilter` on, contactUs and the bulk export removed, webhooks verified over the raw bytes. 7b:
+    unrevoked hashed session tokens with a per-user `sessionVersion` (logout, password change and reset end every
+    session; a racing login can't survive or write the old password back), scrypt with legacy HMAC upgraded on login,
+    HKDF JWT key, hashed one-time reset/verify tokens with expiry, OTP expiry/attempt cap/atomic send allowance,
+    `SameSite=Lax`/`Secure` cookies, `deleteAccount`/`recoverAccount` removed (also from `packages/shared` and the
+    api-client). 7c: one pending order per user, credit only before payment and never above the order value,
+    captured amount/currency/event checks, claim-then-debit with a guarded `$gte` and compensation, atomic place,
+    stored payment summary (no card name, masked VPA), server gift prices, owner filters on every cart write. 7d:
+    admin users answer `userSchema` fields only, escaped search, payment summary in every admin order response,
+    `wholeSalePriceHistory` hidden and never accepted, `log_email` slimmed with a 30-day TTL, every root-domain link
+    built from `STOREFRONT_URL`, the old business's social links removed from e-mails. 840 API tests
+  - Follow-ups: the seed still hashes with HMAC (upgraded on first login) — switch `seed/src/accounts.ts` to the API's
+    scrypt format and fix its comment; the storefront should log the shopper out after a password change (Phase 7);
+    owner decisions pending on `PUT /users/:id` (unused: remove, or restrict to USER accounts) and the 19 e-mail,
+    sitemap and storefront images on the closed old Cloudinary account (copy to Blob, or remove)
 - [ ] Replace lunr in-memory index with MongoDB text index / Atlas Search (the mail queue moved to adapters 6a)
 - [ ] Central error handler, pino logging, request IDs, `/health`
   - Remove `logRequest` (`extendReq.middleware.js`): it `console.log`s full request headers (the `_PID` session
@@ -363,9 +383,19 @@ This file is temporary: when every phase is done, archive the decision log into 
   - Process-level `unhandledRejection`/`uncaughtException` logging: several legacy writes aren't awaited and any of
     them can take the process down
   - The central handler must recognise the cart's `ProductMismatchError` (4c) and keep its legacy body
+  - Body-parser errors (too large, malformed JSON, too many params) answer the JSON envelope (413/400), never
+    Express's HTML page with a stack trace
   - `res.internalServerError` must not `console.log` raw errors (vendor messages can quote the recipient); the
     `createShipmentForDelhivery` failure log prints code and status only, never `e.message`
-- [ ] Fix legacy bugs (checkout stores bundle lines unpopulated, so the order confirmation e-mail's bundle line has no
+- [ ] Fix legacy bugs (admin inputs found in the 7a audit: validate product-set `categories` and author `books` as
+      ObjectId arrays, parse the analytics `startDate`/`endDate` to dates (aggregations aren't sanitised); `placeOrder` and
+      `getPendingOrder` pick any pending order, so with a `created` order waiting for payment `/orders/create` re-places
+      the older one (found in 7c); refunds don't return applied store credit; from the 7c re-audit: enforce "one pending order per user" with a unique
+      partial index on `{ userId }` for attempted/created orders (two simultaneous attempts can still create two),
+      re-read the order before compensating a debit (a lost write acknowledgement can return credit for a paid
+      order), dedupe partial refunds by refund id, and refuse or cancel a COD place while a live Razorpay order exists
+      (a late payment of it is only logged and needs a manual refund); `GIFT_PACKAGES` is duplicated in the API and
+      the storefront — move it to `packages/shared`; checkout stores bundle lines unpopulated, so the order confirmation e-mail's bundle line has no
       title or poster — pinned in 6a; await `user.save()` in register, login and contact OTP send/resend — a failed save is an
       unhandled rejection and the resend limit can fail open) found in Phase 1 cleanup: `add-on.controller` `update` (undefined `id`/`addOnId`) and `getById` (returns undefined `bundles`), `getByProductId` ignores `productId`; `jobs/index.js` undefined `logError`; `STOCK_ALERT` email has only `en.html` but renderer loads `en.ejs`; `auth.controller` `updatePassword` saves the old `password` instead of `newPassword`; list endpoints (e.g. `GET /categories`) return no documents without `page`/`limit` and sort on `undefined` without `sortBy` — add defaults; `category.controller` sorts on `Number('asc')` (NaN); `storeDeal.contoller` passes `offset: parseInt(undefined)` so the deals list returns `page`/`offset`/`pagingCounter` as null; `order.getByUniqueId` calls `orderPaymentInfo(null)` (500) for an order without payment; `deleteAccount`/`recoverAccount` write `deletedAt`/`scheduledForDeletion`, which the user model lacks (recovery can never work) — remove both endpoints instead of fixing them (owner decision 2026-10-29: no real users, no account deletion); order line totals aren't floored while the cart subtotal is; `issueCredit` has no validator (negative credit); add-ons grouped endpoint doesn't filter soft-deleted add-ons; seed loads 14 inactive product sets the API never serves; delete the dead `book.model.js`. Found in step 2: add-on `update` (ReferenceError) and `getById` always 500; order analytics (best-selling matches `status` not `orderStatus`, dates compared as strings) always return `[]`; deal `getById` uses author messages and `destroy` doesn't await `save()`; mystery-box `destroy` writes `deactivatedAt` (not in the model); author/collection/bundle/book create and update crash when a list field is missing; `order.controller` defines `retrieve` twice; upload doesn't await `File.create` and returns a storage key, not a URL; renaming a product set regenerates its slug (breaks links); `recoverAccount` reads `scheduledForDeletion` from the JWT so it always answers `ACCOUNT_ALREADY_ACTIVE`; `PUT /addresses/:id` checks existence with an unfiltered `findOne()` and `$set`s every field; `check-pincode` returns the courier's raw record; `orders.create` 500s without `giftOptions`; a return after 7 days answers 200 `ORDER_RETURN_PERIOD_LAPSED`; checkout select misspells `boxed`; cart `add`/`addAddOn` return `true` or the cart; `/cart/empty` clears books only; `addAddOn` has no default quantity; unsubscribing a missing stock alert answers `STOCK_ALERT_EXISTS`; `PUT /auth/me` validates `contactNo` but ignores it; list endpoints without `page` return `page: null`
 - [ ] OpenAPI from zod at `/docs`
@@ -447,6 +477,12 @@ This file is temporary: when every phase is done, archive the decision log into 
       needs `PAYMENTS_ADAPTER=razorpay` (test keys + webhook secret) and `STORAGE_ADAPTER=blob` — the mock defaults would
       store fake upload URLs; email, SMS and shipping stay `mock`
 - [ ] Vercel Cron: weekly demo cleanup
+- [ ] Rate limits before the public deploy: a shared store (Upstash Redis or a Mongo TTL store — today each Vercel
+      instance counts on its own, so the login and code-check limits don't cap brute force); a bypass or separate
+      bucket for the storefront's server-side requests (they all arrive from the storefront function's IP); drop
+      slow-down on serverless (it holds a billed invocation open)
+- [ ] Uploads: re-encode images (a PNG header followed by HTML passes the magic-byte check) and confirm Blob serves
+      `X-Content-Type-Options: nosniff`
 - [ ] DNS for the four `*.demo.pageaters.com` hosts
 - [ ] Multi-stage Dockerfile for API (`turbo prune`) as alternate target
 - **Checkpoint:** all four apps live, E2E passing against production demo
