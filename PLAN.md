@@ -276,6 +276,26 @@ This file is temporary: when every phase is done, archive the decision log into 
     with the Phase 8 admin rebuild. The API now depends on `@pageaters/shared` (built first by turbo `test`, `dev`,
     `build`). API 631 tests, shared 157
 - [ ] Adapters: payments (Razorpay + mock), sms, email, shipping (Delhivery + mock), storage (Vercel Blob)
+  - Split (2026-10-30): 6a first (sets the pattern), then 6b. Each adapter has a real and a `mock` implementation,
+    chosen per adapter by env; vendor keys become required only for the adapter that uses them. Mocks keep what they
+    would have sent in memory (Phase 5 turns that into the outbox collection)
+  - [x] 6a. Pattern + email + SMS: `src/adapters/<kind>/` with an interface (JSDoc), real and mock implementations and
+        a selector; email (SendGrid) replaces the in-memory `better-queue` mail queue with direct awaited sends
+        (serverless-safe; moved here from the lunr/mail step); SMS (Twilio) for the order SMS and contact OTP. Tests
+        run on the mock adapters and finally cover the production-only notification paths
+    - Done 2026-10-30 (api-engineer, reviewed + audited; one fix round). `src/adapters/{email,sms}/` with
+      `types.js` (JSDoc contract), `sendgrid.js`/`twilio.js` (`create(config)`, SDK required inside, 10 s timeout,
+      vendor errors rethrown as `Email/SMS send failed` with code/status only) and `mock.js` (newest 50 messages via
+      `adapters/recorder.js`); `EMAIL_ADAPTER`/`SMS_ADAPTER` default to `mock`, and SendGrid/Twilio keys are required
+      only when that adapter is selected. The `better-queue` mail queue is gone: `services/mail.service.js` renders and
+      awaits every send (a failure never fails the request; the contact OTP SMS still answers 500). Found and fixed:
+      `ejs.renderFile` without an options argument let template data set ejs options — the unauthenticated
+      `POST /public/contactUs` could run code on the server; now rendered with a fixed options object and the contact
+      form passes only its template's keys. Stock alerts close per send. The production-only notifications are now
+      tested (`environment.isProduction()` read per call). 670 API tests
+  - [ ] 6b. Payments (Razorpay: orders, webhook signature, refunds), shipping (Delhivery: pincode serviceability,
+        shipment create, return pickup) and storage (Vercel Blob replaces S3; `aws-sdk` and `axios` removed if unused;
+        the image-URL helper passes full Blob URLs through)
   - Shipping adapter: send the Delhivery token as an `Authorization` header (today it travels in the
     `check-pincode` query string), `encodeURIComponent` the pincode, and never log the raw axios error — the
     order-shipment and `check-pincode` error paths print the token and the buyer's address and phone
@@ -323,10 +343,12 @@ This file is temporary: when every phase is done, archive the decision log into 
         `findOneAndUpdate({})`; admin `order.getById` returns the raw Razorpay payment entity (payer contact,
         card/bank/VPA) — map through `orderPaymentInfo` and store only the summary; public `GET /store-books/unique/:id`
         and admin `/store-books/get/:id` send `wholeSalePriceHistory`, and create/update accept and store it (project
-        it out, `select: false`, stop reading it); links to the reserved root domain in `stockAlert.controller.js`
+        it out, `select: false`, stop reading it); `log_email` stores the full rendered html (reset and verify links with their
+        tokens, buyer names, addresses, order totals) — store module, recipient, subject and time only with a TTL, or drop
+        it once the Phase 5 outbox exists; links to the reserved root domain in `stockAlert.controller.js`
         (`https://pageaters.com/book/…`), `libs/sitemap.js`, `libs/googledata.js` and the email templates → the demo
         domain from config
-- [ ] Replace lunr in-memory index with MongoDB text index / Atlas Search; replace sqlite mail queue with direct sends via adapter
+- [ ] Replace lunr in-memory index with MongoDB text index / Atlas Search (the mail queue moved to adapters 6a)
 - [ ] Central error handler, pino logging, request IDs, `/health`
   - Remove `logRequest` (`extendReq.middleware.js`): it `console.log`s full request headers (the `_PID` session
     cookie), `req.user` and `req.allParams()` (plaintext passwords on failed login, password change and reset) and
@@ -335,7 +357,9 @@ This file is temporary: when every phase is done, archive the decision log into 
   - Process-level `unhandledRejection`/`uncaughtException` logging: several legacy writes aren't awaited and any of
     them can take the process down
   - The central handler must recognise the cart's `ProductMismatchError` (4c) and keep its legacy body
-- [ ] Fix legacy bugs (await `user.save()` in register, login and contact OTP send/resend — a failed save is an
+  - `res.internalServerError` must not `console.log` raw errors (vendor messages can quote the recipient)
+- [ ] Fix legacy bugs (checkout stores bundle lines unpopulated, so the order confirmation e-mail's bundle line has no
+      title or poster — pinned in 6a; await `user.save()` in register, login and contact OTP send/resend — a failed save is an
       unhandled rejection and the resend limit can fail open) found in Phase 1 cleanup: `add-on.controller` `update` (undefined `id`/`addOnId`) and `getById` (returns undefined `bundles`), `getByProductId` ignores `productId`; `jobs/index.js` undefined `logError`; `STOCK_ALERT` email has only `en.html` but renderer loads `en.ejs`; `auth.controller` `updatePassword` saves the old `password` instead of `newPassword`; list endpoints (e.g. `GET /categories`) return no documents without `page`/`limit` and sort on `undefined` without `sortBy` — add defaults; `category.controller` sorts on `Number('asc')` (NaN); `storeDeal.contoller` passes `offset: parseInt(undefined)` so the deals list returns `page`/`offset`/`pagingCounter` as null; `order.getByUniqueId` calls `orderPaymentInfo(null)` (500) for an order without payment; `deleteAccount`/`recoverAccount` write `deletedAt`/`scheduledForDeletion`, which the user model lacks (recovery can never work) — remove both endpoints instead of fixing them (owner decision 2026-10-29: no real users, no account deletion); order line totals aren't floored while the cart subtotal is; `issueCredit` has no validator (negative credit); add-ons grouped endpoint doesn't filter soft-deleted add-ons; seed loads 14 inactive product sets the API never serves; delete the dead `book.model.js`. Found in step 2: add-on `update` (ReferenceError) and `getById` always 500; order analytics (best-selling matches `status` not `orderStatus`, dates compared as strings) always return `[]`; deal `getById` uses author messages and `destroy` doesn't await `save()`; mystery-box `destroy` writes `deactivatedAt` (not in the model); author/collection/bundle/book create and update crash when a list field is missing; `order.controller` defines `retrieve` twice; upload doesn't await `File.create` and returns a storage key, not a URL; renaming a product set regenerates its slug (breaks links); `recoverAccount` reads `scheduledForDeletion` from the JWT so it always answers `ACCOUNT_ALREADY_ACTIVE`; `PUT /addresses/:id` checks existence with an unfiltered `findOne()` and `$set`s every field; `check-pincode` returns the courier's raw record; `orders.create` 500s without `giftOptions`; a return after 7 days answers 200 `ORDER_RETURN_PERIOD_LAPSED`; checkout select misspells `boxed`; cart `add`/`addAddOn` return `true` or the cart; `/cart/empty` clears books only; `addAddOn` has no default quantity; unsubscribing a missing stock alert answers `STOCK_ALERT_EXISTS`; `PUT /auth/me` validates `contactNo` but ignores it; list endpoints without `page` return `page: null`
 - [ ] OpenAPI from zod at `/docs`
 - [ ] Remove `page.controller` / page & banner models (moved to CMS); move sitemap + Google product feed to storefront
@@ -343,11 +367,15 @@ This file is temporary: when every phase is done, archive the decision log into 
 
 ## Phase 5 — Demo mode
 
-- [ ] `DEMO_MODE` flag; server-side write guards per AGENTS.md §6
+- [ ] `DEMO_MODE` flag; server-side write guards per AGENTS.md §6. The API refuses to boot when `DEMO_MODE=true` and
+      `EMAIL_ADAPTER`/`SMS_ADAPTER` isn't `mock` or SendGrid/Twilio keys are set (like the `rzp_live_` guard), with tests
 - [ ] Demo shopper one-click login (no signup/OTP); remove the email-OTP login too, which can sign into any account by email, the demo shopper included
 - [ ] Admin catalog read-only; order lifecycle via mock shipping allowed
 - [ ] Razorpay test-mode checkout (the `rzp_live_` boot guard is done: `env.js` refuses live keys in every environment)
-- [ ] Mock email/SMS → outbox collection + outbox view
+- [ ] Mock email/SMS → outbox collection + outbox view: capped/TTL'd and swept by the weekly cleanup; an entry is
+      visible only to its addressee (super-admin sees all) or its links and tokens are redacted; forgot-password and
+      verify-email are disabled in `DEMO_MODE`, so nobody can read the demo admin's reset link in the outbox and take
+      the account over
 - [ ] Super-admin role exempt from catalog read-only and upload guards (server-side role checks, rate-limited login)
 - [ ] Uploads for super-admin only (Vercel Blob); demo-specific rate limits (the general limiters are mounted in Phase 4 7a)
 - [ ] Sample-order generator: random orders across the lifecycle through the order services (realistic pricing, discounts, stock deduction)
