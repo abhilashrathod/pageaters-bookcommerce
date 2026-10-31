@@ -185,6 +185,11 @@ describe('POST /auth/login', () => {
   });
 });
 
+test('POST /auth/demo-login is an unknown route without DEMO_MODE (test/demo-mode.test.js covers it on)', async () => {
+  const res = await api.request('/auth/demo-login', { method: 'POST' });
+  assert.equal(res.status, 404);
+});
+
 describe('POST /auth/login: a failed write', () => {
   test('answers 500 and starts no session (the login stamp is awaited)', async (t) => {
     const { user } = await createUser();

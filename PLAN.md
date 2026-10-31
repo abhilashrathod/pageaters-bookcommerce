@@ -552,11 +552,16 @@ This file is temporary: when every phase is done, archive the decision log into 
 Trimmed 2026-10-31 (scope trim, below). Work runs in batches whose code nothing later in the phase touches; each
 batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
 
-- [ ] Batch A — access and config
-  - [ ] `DEMO_MODE` flag. With `DEMO_MODE=true` the API refuses to boot unless `EMAIL_ADAPTER` and `SMS_ADAPTER` are
+- [x] Batch A — access and config
+  - [x] `DEMO_MODE` flag. With `DEMO_MODE=true` the API refuses to boot unless `EMAIL_ADAPTER` and `SMS_ADAPTER` are
         `mock` and no SendGrid/Twilio keys are set (the `rzp_live_` guard is already done in `env.js`)
-  - [ ] Demo shopper one-click login; signup and OTP login off in `DEMO_MODE`; remove the email-OTP login, which can
+  - [x] Demo shopper one-click login; signup and OTP login off in `DEMO_MODE`; remove the email-OTP login, which can
         sign into any account by email
+  - Done 2026-10-31 (inline, reviewed + audited): `DEMO_MODE` (env.js) refuses non-mock e-mail/SMS adapters and any
+    SendGrid/Twilio key. `POST /auth/demo-login` (404 outside demo mode, own `demoLogin` limiter 20/15 min) signs into
+    the seeded demo shopper; register and the `/auth/contact/*` OTP routes answer 400 `OFF_IN_DEMO_MODE`
+    (`middlewares/demoMode.middleware.js`); password login stays for admins. The email-OTP login was already gone
+    (Phase 4). api-client `auth.demoLogin`, OpenAPI entry, tests. The storefront button comes with Phase 7
 - [ ] Batch B — demo write guard
   - [ ] One server-side guard: in `DEMO_MODE` the demo admin's catalog writes, uploads and store-credit issuing are
         rejected with a clear demo message; order lifecycle actions (mock shipping) stay allowed; the super-admin is

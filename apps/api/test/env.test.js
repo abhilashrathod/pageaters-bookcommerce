@@ -249,6 +249,31 @@ describe('parseEnv adapters', () => {
   });
 });
 
+describe('parseEnv DEMO_MODE', () => {
+  test('is off by default and on only for true', () => {
+    assert.equal(parseEnv(MINIMAL).DEMO_MODE, false);
+    assert.equal(parseEnv({ ...MINIMAL, DEMO_MODE: 'false' }).DEMO_MODE, false);
+    assert.equal(parseEnv({ ...MINIMAL, DEMO_MODE: 'true' }).DEMO_MODE, true);
+    assert.deepEqual(failure({ ...MINIMAL, DEMO_MODE: 'yes' }).variables, ['DEMO_MODE']);
+  });
+
+  test('refuses a real e-mail or SMS adapter and any SendGrid/Twilio key', () => {
+    const error = failure({ ...MINIMAL, ...SENDGRID, ...TWILIO, DEMO_MODE: 'true' });
+    assert.deepEqual(
+      [...error.variables].sort(),
+      ['EMAIL_ADAPTER', 'SENDGRID_API_KEY', 'SMS_ADAPTER', 'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN'],
+    );
+    assert.match(error.message, /EMAIL_ADAPTER: must be mock when DEMO_MODE=true/);
+    assert.match(error.message, /TWILIO_AUTH_TOKEN: must be unset when DEMO_MODE=true/);
+    assert.doesNotMatch(error.message, /fake-twilio-token|SG\.fake-key/);
+  });
+
+  test('refuses vendor keys left set with the mock adapters', () => {
+    const error = failure({ ...MINIMAL, ...SENDGRID, ...TWILIO, EMAIL_ADAPTER: 'mock', SMS_ADAPTER: 'mock', DEMO_MODE: 'true' });
+    assert.deepEqual([...error.variables].sort(), ['SENDGRID_API_KEY', 'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN']);
+  });
+});
+
 describe('parseEnv payments adapter', () => {
   const RAZORPAY = Object.freeze({
     PAYMENTS_ADAPTER: 'razorpay',

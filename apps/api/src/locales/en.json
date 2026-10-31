@@ -238,5 +238,7 @@
 	"NOT_FOUND": "Not found",
 	"REQUEST_TOO_LARGE": "The request is too large",
 	"INVALID_JSON": "The request body is not valid JSON",
-	"DATABASE_UNAVAILABLE": "Database unavailable. Please try again shortly."
+	"DATABASE_UNAVAILABLE": "Database unavailable. Please try again shortly.",
+	"DEMO_SHOPPER_MISSING": "The demo shopper account is missing. Load the seed data first.",
+	"OFF_IN_DEMO_MODE": "This is turned off on the demo store. Use the demo shopper login instead."
 }

@@ -336,7 +336,7 @@ describe('rate limits', () => {
   };
 
   test('the named limits and the general one', () => {
-    assert.deepEqual(defaults, { general: 150, slowDownAfter: 125, login: 10, messageSend: 5, codeCheck: 10, pincodeCheck: 30 });
+    assert.deepEqual(defaults, { general: 150, slowDownAfter: 125, login: 10, demoLogin: 20, messageSend: 5, codeCheck: 10, pincodeCheck: 30 });
   });
 
   test('the general limit covers every request and answers the 429 envelope with RateLimit headers', async () => {

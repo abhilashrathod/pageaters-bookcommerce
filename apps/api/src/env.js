@@ -43,6 +43,12 @@ const schema = z.object({
   // Set by Vercel itself (`1`) in its builds and functions; unset locally. Read for `trust proxy` (app.js) and to refuse
   // APP_ENV=test on Vercel (TEST_MODE_ON_VERCEL below).
   VERCEL: z.string().optional(),
+  // The public demo (PLAN.md Phase 5): one-click demo shopper login, no signup or phone OTP. Boot refuses it unless
+  // e-mail and SMS are the mocks with no SendGrid/Twilio keys set (demoModeProblems below).
+  DEMO_MODE: z
+    .enum(['true', 'false'], { error: 'must be true or false' })
+    .transform((value) => value === 'true')
+    .default(false),
   STOREFRONT_URL: httpUrl('must be an http(s) URL').default('http://localhost:3000'),
   ALLOWED_ORIGINS: z
     .string()
@@ -130,6 +136,20 @@ const ENVIRONMENT_KEYS = {
   production: ['RAZORPAY_WEBHOOK_SECRET'],
 };
 
+// With DEMO_MODE=true nothing may reach a visitor's real inbox or phone: the e-mail and SMS adapters must be the
+// mocks and no SendGrid/Twilio credentials may be set at all.
+const demoModeProblems = (input) =>
+  input.DEMO_MODE !== 'true'
+    ? []
+    : [
+        ...['EMAIL_ADAPTER', 'SMS_ADAPTER']
+          .filter((name) => (input[name] ?? 'mock') !== 'mock')
+          .map((name) => ({ name, reason: 'must be mock when DEMO_MODE=true' })),
+        ...['SENDGRID_API_KEY', 'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN']
+          .filter((name) => input[name] !== undefined)
+          .map((name) => ({ name, reason: 'must be unset when DEMO_MODE=true' })),
+      ];
+
 // `<KEY>: is required when <SELECTOR>=<adapter>` for each key the selected real adapters miss. Reads the raw input:
 // the selector values are fixed names (an invalid one is reported by the schema), so the message never echoes input.
 const missingAdapterKeys = (input) => {
@@ -184,7 +204,7 @@ const parseEnv = (source) => {
   if (input.APP_ENV === 'test' && input.VERCEL !== undefined && !problems.some(({ name }) => name === 'APP_ENV')) {
     problems.push({ name: 'APP_ENV', reason: 'must not be test on Vercel (VERCEL is set)' });
   }
-  for (const problem of missingAdapterKeys(input)) {
+  for (const problem of [...missingAdapterKeys(input), ...demoModeProblems(input)]) {
     if (!problems.some(({ name }) => name === problem.name)) problems.push(problem);
   }
   if (problems.length > 0) throw new EnvError(problems);

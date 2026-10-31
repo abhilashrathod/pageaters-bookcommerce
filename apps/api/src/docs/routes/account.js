@@ -10,7 +10,7 @@ const profile = s.shopperProfileResponseSchema;
 module.exports = [
   auth('POST', '/auth/register', 'Register', {
     auth: 'public',
-    description: 'Creates a shopper account and sends the verification e-mail.',
+    description: 'Creates a shopper account and sends the verification e-mail. Off in DEMO_MODE.',
     limiter: 'messageSend',
     request: s.registerPayloadSchema,
     response: empty,
@@ -20,6 +20,12 @@ module.exports = [
     description: 'Sets the session cookie and answers the profile. Only failed attempts count towards the limit.',
     limiter: 'login',
     request: s.loginPayloadSchema,
+    response: profile,
+  }),
+  auth('POST', '/auth/demo-login', 'Log in as the demo shopper', {
+    auth: 'public',
+    description: 'DEMO_MODE only (404 otherwise): signs into the seeded demo shopper, sets the session cookie and answers the profile.',
+    limiter: 'demoLogin',
     response: profile,
   }),
   auth('POST', '/auth/logout', 'Log out', {
@@ -70,6 +76,7 @@ module.exports = [
 
   auth('POST', '/auth/contact/send', 'Send a phone code', {
     auth: 'user',
+    description: 'Off in DEMO_MODE (as are resend and verify).',
     limiter: 'messageSend',
     request: s.sendVerifyContactPayloadSchema,
     response: empty,

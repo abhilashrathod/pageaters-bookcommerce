@@ -63,6 +63,16 @@ module.exports.login = async (req, res) => {
   }
 };
 
+module.exports.demoLogin = async (req, res) => {
+  try {
+    const { profile, ...session } = await authSession.demoLogin({ ipAddress: req.ip });
+    setSessionCookies(res, session);
+    return res.ok({ message: 'LOGIN_SUCCESS', data: profile });
+  } catch (e) {
+    return handleControllerError(res, e);
+  }
+};
+
 module.exports.revokeToken = async (req, res) => {
   try {
     const token = req.cookies[enums.TOKEN_ID.ACCESS_TOKEN_COOKIE];

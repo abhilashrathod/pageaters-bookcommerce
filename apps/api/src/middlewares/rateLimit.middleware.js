@@ -24,6 +24,8 @@ const settings = {
     slowDownAfter: 125,
     // Failed logins only (a successful login doesn't count).
     login: 10,
+    // Demo shopper logins (each one stores a session).
+    demoLogin: 20,
     // E-mail/SMS sends: register, verification and reset e-mail (re)sends, contact OTP (re)sends.
     messageSend: 5,
     // Failed one-time-code checks: verify e-mail, reset password, contact OTP verify.
@@ -37,6 +39,7 @@ const WINDOWS = {
   general: MINUTE,
   login: 15 * MINUTE,
   messageSend: 15 * MINUTE,
+  demoLogin: 15 * MINUTE,
   codeCheck: 15 * MINUTE,
   pincodeCheck: 15 * MINUTE,
 };
@@ -75,7 +78,7 @@ stores.slowDown = new MemoryStore();
 
 /**
  * Named limiters. `general` is mounted on the whole app (app.js); the others on their routes.
- * @type {Record<'general' | 'slowDown' | 'login' | 'messageSend' | 'codeCheck' | 'pincodeCheck', import('express').RequestHandler>}
+ * @type {Record<'general' | 'slowDown' | 'login' | 'demoLogin' | 'messageSend' | 'codeCheck' | 'pincodeCheck', import('express').RequestHandler>}
  */
 const limiters = {
   general: limiter('general'),
@@ -88,6 +91,7 @@ const limiters = {
     skip,
   }),
   login: limiter('login', { onlyFailures: true }),
+  demoLogin: limiter('demoLogin'),
   messageSend: limiter('messageSend'),
   codeCheck: limiter('codeCheck', { onlyFailures: true }),
   pincodeCheck: limiter('pincodeCheck'),

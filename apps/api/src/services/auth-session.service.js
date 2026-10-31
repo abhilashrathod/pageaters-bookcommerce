@@ -12,6 +12,9 @@ const { generateJwtToken, hashPassword, hashSessionToken } = require('../helpers
 // while that record is not revoked and its `sessionVersion` claim is the account's: logout revokes one; a password
 // change or reset revokes all of the user's and raises the version, which also ends a JWT a racing login signed.
 
+// The seeded demo shopper (seed/src/accounts.ts DEMO_SHOPPER_EMAIL), signed in by demoLogin.
+const DEMO_SHOPPER_EMAIL = 'shopper@demo.pageaters.com';
+
 const User = mongoose.model(models.USER);
 const AccessTokens = mongoose.model(models.ACCESS_TOKEN);
 const Cart = mongoose.model(models.CART);
@@ -87,6 +90,25 @@ const login = async ({ email, password, ipAddress }) => {
 };
 
 /**
+ * Signs into the seeded demo shopper without a password (DEMO_MODE only; the route is hidden otherwise).
+ * @param {{ ipAddress: string }} input
+ * @returns {Promise<{ token: string, cartId: import('mongoose').Types.ObjectId | '', profile: object }>} As login.
+ * @throws {AppError} DEMO_SHOPPER_MISSING (503) when the seed hasn't been loaded.
+ */
+const demoLogin = async ({ ipAddress }) => {
+  const user = await User.findOne({ email: DEMO_SHOPPER_EMAIL, status: enums.USER_STATUS.ACTIVE, isDeleted: false }).select('+sessionVersion');
+  if (!user) throw new AppError('DEMO_SHOPPER_MISSING', { status: 503 });
+
+  await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date().toISOString() } });
+  const token = await startSession(user, ipAddress);
+
+  const profile = await User.getProfile(user._id);
+  const cart = await Cart.findOne({ user: profile._id });
+
+  return { token, cartId: cart ? cart._id : '', profile };
+};
+
+/**
  * Revokes the user's own session token (stamps `revoked` and `revokedByIp`).
  * @param {{ token?: string, userId: string, ipAddress: string }} input `token` from the session cookie.
  * @returns {Promise<void>}
@@ -122,4 +144,4 @@ const revokeAllSessions = async ({ userId, ipAddress = '' }) => {
  */
 const getProfile = (userId) => User.getProfile(userId);
 
-module.exports = { getProfile, login, register, revokeAllSessions, revokeToken };
+module.exports = { demoLogin, getProfile, login, register, revokeAllSessions, revokeToken };

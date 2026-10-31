@@ -27,6 +27,8 @@ export const auth = {
   register: defineEndpoint({ method: 'POST', path: '/auth/register', body: registerPayloadSchema, response: empty }),
   // POST /auth/login — also succeeds, with status `EMAIL_VERIFICATION_PENDING`, before the email is verified.
   login: defineEndpoint({ method: 'POST', path: '/auth/login', body: loginPayloadSchema, response: profile }),
+  // POST /auth/demo-login — DEMO_MODE only: signs into the seeded demo shopper, no credentials.
+  demoLogin: defineEndpoint({ method: 'POST', path: '/auth/demo-login', response: profile }),
   // POST /auth/verify-email — `email` and `token` come from the verification link.
   verifyEmail: defineEndpoint({ method: 'POST', path: '/auth/verify-email', body: verifyEmailPayloadSchema, response: empty }),
   // POST /auth/verify-email/resend
