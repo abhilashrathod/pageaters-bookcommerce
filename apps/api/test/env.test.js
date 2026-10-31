@@ -250,15 +250,24 @@ describe('parseEnv adapters', () => {
 });
 
 describe('parseEnv DEMO_MODE', () => {
+  const DEMO = { DEMO_MODE: 'true', CRON_SECRET: 'fake-cron-secret-0123456789' };
+
+  test('requires a CRON_SECRET of at least 16 characters, never echoed', () => {
+    assert.deepEqual(failure({ ...MINIMAL, DEMO_MODE: 'true' }).variables, ['CRON_SECRET']);
+    const error = failure({ ...MINIMAL, ...DEMO, CRON_SECRET: 'shortqq9' });
+    assert.match(error.message, /CRON_SECRET: must be at least 16 characters/);
+    assert.doesNotMatch(error.message, /qq9/);
+  });
+
   test('is off by default and on only for true', () => {
     assert.equal(parseEnv(MINIMAL).DEMO_MODE, false);
     assert.equal(parseEnv({ ...MINIMAL, DEMO_MODE: 'false' }).DEMO_MODE, false);
-    assert.equal(parseEnv({ ...MINIMAL, DEMO_MODE: 'true' }).DEMO_MODE, true);
+    assert.equal(parseEnv({ ...MINIMAL, ...DEMO }).DEMO_MODE, true);
     assert.deepEqual(failure({ ...MINIMAL, DEMO_MODE: 'yes' }).variables, ['DEMO_MODE']);
   });
 
   test('refuses a real e-mail or SMS adapter and any SendGrid/Twilio key', () => {
-    const error = failure({ ...MINIMAL, ...SENDGRID, ...TWILIO, DEMO_MODE: 'true' });
+    const error = failure({ ...MINIMAL, ...SENDGRID, ...TWILIO, ...DEMO });
     assert.deepEqual(
       [...error.variables].sort(),
       ['EMAIL_ADAPTER', 'SENDGRID_API_KEY', 'SMS_ADAPTER', 'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN'],
@@ -269,7 +278,7 @@ describe('parseEnv DEMO_MODE', () => {
   });
 
   test('refuses vendor keys left set with the mock adapters', () => {
-    const error = failure({ ...MINIMAL, ...SENDGRID, ...TWILIO, EMAIL_ADAPTER: 'mock', SMS_ADAPTER: 'mock', DEMO_MODE: 'true' });
+    const error = failure({ ...MINIMAL, ...SENDGRID, ...TWILIO, EMAIL_ADAPTER: 'mock', SMS_ADAPTER: 'mock', ...DEMO });
     assert.deepEqual([...error.variables].sort(), ['SENDGRID_API_KEY', 'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN']);
   });
 });

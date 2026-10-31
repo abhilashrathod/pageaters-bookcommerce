@@ -197,6 +197,10 @@ test('without DEMO_MODE the outbox stores nothing and GET /outbox is an unknown 
   assert.equal((await api.request('/outbox', { cookie })).status, 404);
 });
 
+test('GET /demo/cleanup is an unknown route without DEMO_MODE', async () => {
+  assert.equal((await api.request('/demo/cleanup')).status, 404);
+});
+
 describe('POST /auth/login: a failed write', () => {
   test('answers 500 and starts no session (the login stamp is awaited)', async (t) => {
     const { user } = await createUser();

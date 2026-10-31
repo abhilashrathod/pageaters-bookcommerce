@@ -1,15 +1,17 @@
 // DEMO_MODE is read once, on the first access to src/env.js: switch it on before the harness loads the app.
 process.env.DEMO_MODE = 'true';
+process.env.CRON_SECRET = 'c'.repeat(32); // fake, test only
 
 const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
+const { createAddress, createOrder } = require('./helpers/fixtures/orders');
 const { assertBody, createUser, envelopes, ids, loadCatalog, sentEmails, sentTexts, startTestApp } = require('./helpers');
 
 // PLAN.md Phase 5 Batches A–C: with DEMO_MODE=true the demo shopper and demo admin sign in with one click; signup, the
 // phone OTP, verify-email and the password reset are off; the demo admin is read-only on the catalog, uploads and store
-// credit; the mock e-mail and SMS adapters save to the outbox (GET /outbox). test/auth-session.test.js covers the same routes with DEMO_MODE off (demo login is a 404 there).
+// credit; the mock e-mail and SMS adapters save to the outbox (GET /outbox); Batch D: the weekly cleanup. test/auth-session.test.js covers the same routes with DEMO_MODE off (demo login is a 404 there).
 
 const { badRequest, ok } = envelopes;
 const DEMO_SHOPPER_EMAIL = 'shopper@demo.pageaters.com';
@@ -186,5 +188,67 @@ describe('GET /outbox', () => {
 
   test('needs a session', async () => {
     assert.equal((await api.request('/outbox')).status, 401);
+  });
+});
+
+describe('GET /demo/cleanup', () => {
+  const ADDRESS_ID = '64d000000000000000000b01';
+  const bearer = (secret) => ({ headers: { authorization: `Bearer ${secret}` } });
+  const cleanup = (secret = process.env.CRON_SECRET) =>
+    fetch(`${api.baseUrl}/demo/cleanup`, bearer(secret)).then(async (res) => ({ status: res.status, body: await res.json() }));
+  const totalStock = async () =>
+    (await mongoose.model('storeBook').find({ isDeleted: false }).lean()).reduce((sum, book) => sum + book.inventory, 0);
+
+  test('refuses a missing or wrong secret', async () => {
+    assert.equal((await fetch(`${api.baseUrl}/demo/cleanup`)).status, 401);
+    assert.equal((await cleanup('wrong-secret-0123456789xx')).status, 401);
+  });
+
+  test('wipes visitor data, puts stock back and places one sample order per stage', async () => {
+    await loadCatalog();
+    // Two more in-stock books, so there is one per sample stage.
+    const one = await mongoose.model('storeBook').findById(ids.bookOne).lean();
+    for (const n of [4, 5]) {
+      const { _id, ...rest } = one;
+      await mongoose.model('storeBook').create({ ...rest, bookId: `test-book-${n}`, ISBN: `999000000000${n}` });
+    }
+    const { user: shopper } = await seedDemoShopper();
+    await mongoose.model('user').create({ email: DEMO_ADMIN_EMAIL, fullName: 'Renamed', role: 'ADMIN', emailVerified: true });
+    await createAddress(shopper, { _id: ADDRESS_ID, isDeleted: true, contactNo: '9000000042' });
+    await mongoose.model('subscriber').create({ email: 'stranger@example.com' });
+    await createAddress(shopper);
+    await mongoose.model('favorites').create({ userId: shopper._id, wishlist: [ids.bookTwo] });
+    await mongoose.model('cart').create({});
+    await mongoose.model('user').updateOne({ _id: shopper._id }, { $set: { fullName: 'Visitor was here' } });
+    await createOrder(shopper, { orderStatus: 'paid' });
+    await createOrder(shopper, { orderStatus: 'cancelled' });
+    await require('../src/adapters/email').send({ from: 'a@example.com', to: DEMO_SHOPPER_EMAIL, subject: 's', html: 'h' });
+    const stockBefore = await totalStock();
+
+    const res = await cleanup();
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.data.ordersRemoved, 2);
+    const stages = (await mongoose.model('order').find({}).lean()).map((order) => order.orderStatus).sort();
+    assert.deepEqual(stages, ['cancelled', 'confirmed', 'fulfilled', 'shipped']);
+    assert.ok(stages.every(Boolean));
+    // +1 from the visitor's paid order; −1 for each sample order that wasn't cancelled.
+    assert.equal(await totalStock(), stockBefore + 1 - 3);
+    const addresses = await mongoose.model('address').find({}).lean();
+    assert.deepEqual(
+      addresses.map((a) => [String(a._id), a.isDeleted, a.contactNo, a.addressLine1]),
+      [[ADDRESS_ID, false, '9000000000', '42 Demo Lane']],
+    );
+    assert.equal(await mongoose.model('subscriber').countDocuments(), 0);
+    assert.equal(await mongoose.model('cart').countDocuments(), 1);
+    assert.deepEqual((await mongoose.model('favorites').findOne({ userId: shopper._id }).lean()).wishlist, []);
+    // The visitor's message is gone; the sample orders' own e-mails (shipped, delivered, cancelled) are the outbox now.
+    assert.equal(await mongoose.model('outbox').countDocuments({ subject: 's' }), 0);
+    assert.equal((await mongoose.model('user').findById(shopper._id).lean()).fullName, 'Demo Shopper');
+    assert.equal((await mongoose.model('user').findOne({ email: DEMO_ADMIN_EMAIL }).lean()).fullName, 'Demo Admin');
+  });
+
+  test('answers 503 when the seed has not been loaded', async () => {
+    assert.equal((await cleanup()).status, 503);
   });
 });

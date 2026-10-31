@@ -242,5 +242,6 @@
 	"DEMO_ACCOUNT_MISSING": "The demo account is missing. Load the seed data first.",
 	"DEMO_ADMIN_READ_ONLY": "The demo admin can't change the catalog, upload files or issue store credit. Order actions are open: try shipping an order.",
 	"OUTBOX_SUCCESS": "Outbox",
+	"DEMO_CLEANUP_SUCCESS": "Demo data reset",
 	"OFF_IN_DEMO_MODE": "This is turned off on the demo store. Use the demo shopper login instead."
 }

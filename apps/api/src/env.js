@@ -49,6 +49,9 @@ const schema = z.object({
     .enum(['true', 'false'], { error: 'must be true or false' })
     .transform((value) => value === 'true')
     .default(false),
+  // The bearer token of the weekly demo cleanup (GET /demo/cleanup; Vercel Cron sends `Authorization: Bearer
+  // <CRON_SECRET>`). Required with DEMO_MODE=true.
+  CRON_SECRET: z.string().min(16, 'must be at least 16 characters').optional(),
   STOREFRONT_URL: httpUrl('must be an http(s) URL').default('http://localhost:3000'),
   ALLOWED_ORIGINS: z
     .string()
@@ -137,7 +140,7 @@ const ENVIRONMENT_KEYS = {
 };
 
 // With DEMO_MODE=true nothing may reach a visitor's real inbox or phone: the e-mail and SMS adapters must be the
-// mocks and no SendGrid/Twilio credentials may be set at all.
+// mocks and no SendGrid/Twilio credentials may be set at all. The weekly cleanup needs its CRON_SECRET.
 const demoModeProblems = (input) =>
   input.DEMO_MODE !== 'true'
     ? []
@@ -148,6 +151,7 @@ const demoModeProblems = (input) =>
         ...['SENDGRID_API_KEY', 'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN']
           .filter((name) => input[name] !== undefined)
           .map((name) => ({ name, reason: 'must be unset when DEMO_MODE=true' })),
+        ...(input.CRON_SECRET === undefined ? [{ name: 'CRON_SECRET', reason: 'is required when DEMO_MODE=true' }] : []),
       ];
 
 // `<KEY>: is required when <SELECTOR>=<adapter>` for each key the selected real adapters miss. Reads the raw input:

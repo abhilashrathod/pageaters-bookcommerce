@@ -583,10 +583,17 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     first; an admin other than the demo admin sees all. Verify-email, its resend, forgot-password, its resend and
     reset-password answer `OFF_IN_DEMO_MODE`. Shared `shopperOutboxResponseSchema`, api-client `outbox.list`, OpenAPI
     `Outbox` tag, tests
-- [ ] Batch D — demo data upkeep (after A–C are committed)
-  - [ ] Weekly cleanup endpoint (protected by a cron secret, `DEMO_MODE` only): wipe visitor carts, addresses,
+- [x] Batch D — demo data upkeep (after A–C are committed)
+  - [x] Weekly cleanup endpoint (protected by a cron secret, `DEMO_MODE` only): wipe visitor carts, addresses,
         favourites, orders and outbox, put back the stock those orders took, then create a small set of sample orders
         across the lifecycle through the order services
+  - Done 2026-10-31 (inline, reviewed + audited): `GET /demo/cleanup` (DEMO_MODE only, 404 otherwise;
+    `Authorization: Bearer <CRON_SECRET>`, compared in constant time; `CRON_SECRET` required with `DEMO_MODE=true`),
+    `services/demo-cleanup.service.js`: puts back the stock of every order past checkout that wasn't cancelled,
+    deletes all orders, carts other than the demo shopper's (emptied), addresses other than its seeded one (put back
+    as seeded), favourites, newsletter sign-ups, stock alerts and the outbox, resets the demo accounts' names, then places four COD sample orders through the
+    order services: confirmed, shipped, fulfilled, cancelled (their e-mails fill the outbox). The Vercel Cron entry
+    (weekly) is set up with the deployment in Phase 10
 - **Checkpoint:** demo shopper can browse and order; demo admin can run the order lifecycle but not edit the catalog
 
 ## Phase 5½ — Scope trim

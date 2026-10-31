@@ -52,6 +52,13 @@ const routes = [
     content: { 'application/json': ref('WebhookAck') },
   }),
 
+  platform('GET', '/api/v1/demo/cleanup', 'Demo', 'Weekly demo cleanup', {
+    description:
+      'DEMO_MODE only (404 otherwise); called by Vercel Cron. Wipes visitor orders (putting their stock back), carts, addresses, favourites and the outbox, then places four sample orders (confirmed, shipped, fulfilled, cancelled). 401 without the cron secret.',
+    headers: { Authorization: '`Bearer <CRON_SECRET>`.' },
+    content: { 'application/json': ref('ApiResponse') },
+  }),
+
   platform('GET', '/openapi.json', 'Docs', 'OpenAPI document', {
     description: 'This document, generated from the shared zod schemas.',
     content: { 'application/json': { type: 'object' } },

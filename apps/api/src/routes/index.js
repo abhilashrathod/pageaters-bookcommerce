@@ -34,5 +34,6 @@ router.use('/store-credit', require('./storeCredit.routes'));
 router.use('/deals', require('./storeDeal.routes'));
 router.use('/product-sets', require('./productSet.routes'));
 router.use('/outbox', require('./outbox.routes'));
+router.use('/demo', require('./demo.routes'));
 
 module.exports = router;

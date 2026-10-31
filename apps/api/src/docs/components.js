@@ -65,7 +65,7 @@ const TAG_GROUPS = [
     ],
   },
   { name: 'Admin', tags: ['Admin: Catalog', 'Admin: Orders', 'Admin: Customers', 'Admin: Files'] },
-  { name: 'Platform', tags: ['Health', 'Webhooks', 'Docs'] },
+  { name: 'Platform', tags: ['Health', 'Webhooks', 'Demo', 'Docs'] },
 ];
 
 const TAG_DESCRIPTIONS = {
@@ -80,6 +80,7 @@ const TAG_DESCRIPTIONS = {
   'Admin: Orders': 'The order lifecycle: shipments, returns, replacements, cancellations and analytics.',
   'Admin: Customers': 'Customers, carts, subscribers, store credit and stock alerts.',
   Webhooks: 'Called by Razorpay; each verifies `X-Razorpay-Signature` over the raw body. No session.',
+  Demo: 'Upkeep of the public demo (DEMO_MODE).',
   Docs: 'This reference and the OpenAPI document it renders.',
 };
 
