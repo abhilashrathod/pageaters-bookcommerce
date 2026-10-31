@@ -5,10 +5,11 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { assertBody, createUser, envelopes, ids, loadCatalog, sentTexts, startTestApp } = require('./helpers');
+const { assertBody, createUser, envelopes, ids, loadCatalog, sentEmails, sentTexts, startTestApp } = require('./helpers');
 
-// PLAN.md Phase 5 Batches A and B: with DEMO_MODE=true the demo shopper and demo admin sign in with one click; signup
-// and the phone OTP are off; the demo admin is read-only on the catalog, uploads and store credit. test/auth-session.test.js covers the same routes with DEMO_MODE off (demo login is a 404 there).
+// PLAN.md Phase 5 Batches A–C: with DEMO_MODE=true the demo shopper and demo admin sign in with one click; signup, the
+// phone OTP, verify-email and the password reset are off; the demo admin is read-only on the catalog, uploads and store
+// credit; the mock e-mail and SMS adapters save to the outbox (GET /outbox). test/auth-session.test.js covers the same routes with DEMO_MODE off (demo login is a 404 there).
 
 const { badRequest, ok } = envelopes;
 const DEMO_SHOPPER_EMAIL = 'shopper@demo.pageaters.com';
@@ -76,6 +77,22 @@ describe('routes off in DEMO_MODE', () => {
     assert.equal(sentTexts().length, 0);
   });
 
+  test('verify-email and the password reset are refused and mail nothing', async () => {
+    const { user } = await createUser();
+    const requests = [
+      ['/auth/verify-email', { email: user.email, token: 'x'.repeat(64) }],
+      ['/auth/verify-email/resend', { email: user.email }],
+      ['/auth/forgot-password', { email: user.email }],
+      ['/auth/forgot-password/resend', { email: user.email }],
+      ['/auth/reset-password', { email: user.email, token: 'x'.repeat(64), newPassword: 'secret-123', confirmPassword: 'secret-123' }],
+    ];
+    for (const [path, body] of requests) {
+      const res = await api.request(path, { method: 'POST', body });
+      assertBody(res, 400, badRequest('OFF_IN_DEMO_MODE'));
+    }
+    assert.equal(sentEmails().length, 0);
+  });
+
   test('password login still works (admins sign in with it)', async () => {
     const { user, password } = await createUser({ role: 'ADMIN' });
     const res = await api.request('/auth/login', { method: 'POST', body: { email: user.email, password } });
@@ -128,5 +145,46 @@ describe('the demo admin', () => {
     const { cookie } = await createUser({ role: 'ADMIN' });
     const res = await api.request(`/authors/${ids.authorA}`, { method: 'DELETE', cookie });
     assert.equal(res.status, 200);
+  });
+});
+
+describe('GET /outbox', () => {
+  const send = async () => {
+    const email = require('../src/adapters/email');
+    const sms = require('../src/adapters/sms');
+    const shopper = await createUser();
+    const other = await createUser();
+    await email.send({ from: 'no-reply@demo.pageaters.com', to: shopper.user.email, subject: 'Your order', html: '<p>Shipped</p>' });
+    await sms.send({ to: `+91${shopper.user.contactNo}`, body: 'Order shipped' });
+    await email.send({ from: 'no-reply@demo.pageaters.com', to: other.user.email, subject: 'Not yours', html: '<p>x</p>' });
+    return { shopper, other };
+  };
+
+  test('lists the caller’s own e-mails and texts, newest first', async () => {
+    const { shopper } = await send();
+    const res = await api.request('/outbox', { cookie: shopper.cookie });
+    assert.equal(res.status, 200);
+    assert.deepEqual(
+      res.body.data.map(({ channel, to, subject, body }) => ({ channel, to, subject, body })),
+      [
+        { channel: 'sms', to: `+91${shopper.user.contactNo}`, subject: undefined, body: 'Order shipped' },
+        { channel: 'email', to: shopper.user.email, subject: 'Your order', body: '<p>Shipped</p>' },
+      ],
+    );
+  });
+
+  test('the super-admin sees everyone’s; the demo admin only its own', async () => {
+    await send();
+    const superAdmin = await createUser({ role: 'ADMIN' });
+    assert.equal((await api.request('/outbox', { cookie: superAdmin.cookie })).body.data.length, 3);
+
+    await mongoose.model('user').create({ email: DEMO_ADMIN_EMAIL, fullName: 'Demo Admin', role: 'ADMIN', emailVerified: true });
+    const login = await api.request('/auth/demo-login/admin', { method: 'POST' });
+    const cookie = login.headers.getSetCookie().find((c) => c.startsWith('_PID=')).split(';')[0];
+    assert.deepEqual((await api.request('/outbox', { cookie })).body.data, []);
+  });
+
+  test('needs a session', async () => {
+    assert.equal((await api.request('/outbox')).status, 401);
   });
 });

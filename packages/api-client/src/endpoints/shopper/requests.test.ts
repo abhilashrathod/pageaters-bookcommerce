@@ -110,6 +110,7 @@ const rows: Row[] = [
   ],
   ['auth.demoLogin', (c) => c.auth.demoLogin(), 'POST', '/auth/demo-login'],
   ['auth.demoAdminLogin', (c) => c.auth.demoAdminLogin(), 'POST', '/auth/demo-login/admin'],
+  ['outbox.list', (c) => c.outbox.list(), 'GET', '/outbox'],
   [
     'auth.verifyEmail',
     (c) => c.auth.verifyEmail({ email: 'shopper@demo.pageaters.com', token: 'tok' }),

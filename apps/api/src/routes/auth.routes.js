@@ -16,12 +16,12 @@ router.post('/login', limiters.login, validate(loginPayloadSchema), controller.l
 router.post('/demo-login', demoOnly, limiters.demoLogin, controller.demoLogin('shopper'));
 router.post('/demo-login/admin', demoOnly, limiters.demoLogin, controller.demoLogin('admin'));
 
-router.post('/verify-email', limiters.codeCheck, validate(verifyEmailPayloadSchema), controller.verifyEmail);
-router.post('/verify-email/resend', limiters.messageSend, validate(resendVerificationEmailPayloadSchema), controller.resendVerificationEmail);
+router.post('/verify-email', offInDemo, limiters.codeCheck, validate(verifyEmailPayloadSchema), controller.verifyEmail);
+router.post('/verify-email/resend', offInDemo, limiters.messageSend, validate(resendVerificationEmailPayloadSchema), controller.resendVerificationEmail);
 
-router.post('/forgot-password', limiters.messageSend, validate(forgotPasswordPayloadSchema), controller.forgotPassword);
-router.post('/forgot-password/resend', limiters.messageSend, validate(resendVerificationEmailPayloadSchema), controller.resendForgetPasswordEmail);
-router.post('/reset-password', limiters.codeCheck, validate(resetPasswordPayloadSchema), controller.resetPassword);
+router.post('/forgot-password', offInDemo, limiters.messageSend, validate(forgotPasswordPayloadSchema), controller.forgotPassword);
+router.post('/forgot-password/resend', offInDemo, limiters.messageSend, validate(resendVerificationEmailPayloadSchema), controller.resendForgetPasswordEmail);
+router.post('/reset-password', offInDemo, limiters.codeCheck, validate(resetPasswordPayloadSchema), controller.resetPassword);
 
 router.post('/contact/send', offInDemo, limiters.messageSend, validate(sendVerifyContactPayloadSchema), permissionValidator(USER_ROLES.USER), controller.sendContactVerification);
 router.post('/contact/resend', offInDemo, limiters.messageSend, permissionValidator(USER_ROLES.USER), controller.resendContactVerification);

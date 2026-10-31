@@ -573,9 +573,16 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     `POST /file/upload` (before the multipart parser) and `POST /store-credit`: the demo admin (by its seeded email,
     `constants/demo.js`) gets 400 `DEMO_ADMIN_READ_ONLY`; order actions and reads stay open; any other admin is
     unaffected. api-client `auth.demoAdminLogin`, OpenAPI notes, tests
-- [ ] Batch C — outbox
-  - [ ] Mock email/SMS write to an outbox collection; `GET` lists the caller's own messages (super-admin: all);
+- [x] Batch C — outbox
+  - [x] Mock email/SMS write to an outbox collection; `GET` lists the caller's own messages (super-admin: all);
         forgot-password and verify-email are off in `DEMO_MODE`, so the demo admin's account can't be taken over
+  - Done 2026-10-31 (inline, reviewed + audited): in `DEMO_MODE` only (outside it the mails' reset/verify tokens must
+    never be stored, and `GET /outbox` is a 404), the mock adapters also save each message to `outbox`
+    (`services/outbox.service.js`; skipped without a DB connection, a failed write only logged; the in-memory lists stay
+    for tests). `GET /outbox` (any session): the newest 50 sent to the caller's e-mail or `+91<contactNo>`, newest
+    first; an admin other than the demo admin sees all. Verify-email, its resend, forgot-password, its resend and
+    reset-password answer `OFF_IN_DEMO_MODE`. Shared `shopperOutboxResponseSchema`, api-client `outbox.list`, OpenAPI
+    `Outbox` tag, tests
 - [ ] Batch D — demo data upkeep (after A–C are committed)
   - [ ] Weekly cleanup endpoint (protected by a cron secret, `DEMO_MODE` only): wipe visitor carts, addresses,
         favourites, orders and outbox, put back the stock those orders took, then create a small set of sample orders

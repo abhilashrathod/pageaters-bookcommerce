@@ -33,5 +33,6 @@ router.use('/orders', require('./order.routes'));
 router.use('/store-credit', require('./storeCredit.routes'));
 router.use('/deals', require('./storeDeal.routes'));
 router.use('/product-sets', require('./productSet.routes'));
+router.use('/outbox', require('./outbox.routes'));
 
 module.exports = router;

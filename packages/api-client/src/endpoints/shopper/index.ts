@@ -13,6 +13,7 @@ import { mysteryBoxes } from './mystery-boxes.ts';
 import { orders } from './orders.ts';
 import { productSets } from './product-sets.ts';
 import { stockAlerts } from './stock-alerts.ts';
+import { outbox } from './outbox.ts';
 import { storeCredit } from './store-credit.ts';
 import { subscribers } from './subscribers.ts';
 
@@ -43,6 +44,7 @@ export const shopperEndpoints = {
   favorites,
   addresses,
   orders,
+  outbox,
   storeCredit,
   stockAlerts,
   subscribers,

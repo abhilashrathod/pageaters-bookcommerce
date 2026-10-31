@@ -8,5 +8,6 @@ export * from './categories.ts';
 export * from './collections.ts';
 export * from './common.ts';
 export * from './orders.ts';
+export * from './outbox.ts';
 export * from './stock-alerts.ts';
 export * from './store-credit.ts';

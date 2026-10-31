@@ -21,5 +21,6 @@ require('./cart.model');
 require('./giftCard.model');
 require('./favorites.model');
 require('./order.model');
+require('./outbox.model');
 
 

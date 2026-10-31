@@ -21,4 +21,5 @@ module.exports = {
   PRODUCT_SETS: 'product_sets',
   STORE_CREDIT_TRANSACTIONS: 'store_credit_transactions',
   FAVORITES: 'favorites',
+  OUTBOX: 'outbox',
 };

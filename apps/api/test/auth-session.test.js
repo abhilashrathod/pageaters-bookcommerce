@@ -190,6 +190,13 @@ test('POST /auth/demo-login is an unknown route without DEMO_MODE (test/demo-mod
   assert.equal(res.status, 404);
 });
 
+test('without DEMO_MODE the outbox stores nothing and GET /outbox is an unknown route', async () => {
+  const { cookie, user } = await createUser();
+  await require('../src/adapters/email').send({ from: 'no-reply@demo.pageaters.com', to: user.email, subject: 'Reset', html: '<p>token</p>' });
+  assert.equal(await mongoose.model('outbox').countDocuments(), 0);
+  assert.equal((await api.request('/outbox', { cookie })).status, 404);
+});
+
 describe('POST /auth/login: a failed write', () => {
   test('answers 500 and starts no session (the login stamp is awaited)', async (t) => {
     const { user } = await createUser();

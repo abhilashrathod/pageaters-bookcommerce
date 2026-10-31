@@ -11,6 +11,7 @@ const addresses = user('Addresses');
 const favourites = user('Favourites');
 const credit = user('Store credit');
 const alerts = user('Stock alerts');
+const outbox = user('Outbox');
 
 const write = s.shopperCartWriteResponseSchema;
 const empty = s.shopperEmptyResponseSchema;
@@ -101,6 +102,12 @@ module.exports = [
   favourites('POST', '/favorites', 'Add a favourite', { request: s.favoritesRequestPayloadSchema, response: empty }),
   favourites('DELETE', '/favorites/:product', 'Remove a favourite', { request: s.favoritesRequestPayloadSchema, response: empty }),
 
+  outbox('GET', '/outbox', 'My outbox', {
+    auth: 'session',
+    description:
+      'DEMO_MODE only (404 otherwise). The demo’s in-app outbox: the newest 50 messages the mock e-mail and SMS adapters sent to the caller, newest first. An admin other than the demo admin sees everyone’s.',
+    response: s.shopperOutboxResponseSchema,
+  }),
   credit('GET', '/store-credit', 'My store credit balance', { response: s.shopperStoreCreditBalanceResponseSchema }),
   credit('GET', '/store-credit/history', 'My store credit history', {
     paged: 'page',

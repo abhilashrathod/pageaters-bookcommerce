@@ -52,30 +52,35 @@ module.exports = [
 
   auth('POST', '/auth/verify-email', 'Verify e-mail', {
     auth: 'public',
+    description: 'Off in DEMO_MODE.',
     limiter: 'codeCheck',
     request: s.verifyEmailPayloadSchema,
     response: empty,
   }),
   auth('POST', '/auth/verify-email/resend', 'Resend the e-mail code', {
     auth: 'public',
+    description: 'Off in DEMO_MODE.',
     limiter: 'messageSend',
     request: s.resendVerificationEmailPayloadSchema,
     response: empty,
   }),
   auth('POST', '/auth/forgot-password', 'Request a password reset', {
     auth: 'public',
+    description: 'Off in DEMO_MODE.',
     limiter: 'messageSend',
     request: s.forgotPasswordPayloadSchema,
     response: empty,
   }),
   auth('POST', '/auth/forgot-password/resend', 'Resend the reset code', {
     auth: 'public',
+    description: 'Off in DEMO_MODE.',
     limiter: 'messageSend',
     request: s.resendVerificationEmailPayloadSchema,
     response: empty,
   }),
   auth('POST', '/auth/reset-password', 'Reset the password', {
     auth: 'public',
+    description: 'Off in DEMO_MODE.',
     limiter: 'codeCheck',
     request: s.resetPasswordPayloadSchema,
     response: empty,
