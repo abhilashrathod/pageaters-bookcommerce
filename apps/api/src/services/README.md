@@ -77,14 +77,12 @@ never the message). The central error handler (`middlewares/errorHandler.middlew
   dependency direction below. Checkout prices carts with `calculateTotal` from `cart-pricing.service.js`; the
   pincode check lives in `address.service.js`.
 - **`helpers/` holds only pure, cross-cutting utilities** with no domain rules and no database or vendor calls:
-  `appError`, `encryption`, `utils`, `image-url` (public image URLs, also used by `libs/`), the Mongo connection and
+  `appError`, `encryption`, `utils`, `image-url` (public image URLs), the Mongo connection and
   compat helpers, `paging` (list defaults: `Model.paginate(query, { ...pageOptions(params, { sortable }), select })`
   gives page 1, limit 10 (max 1000), newest first with an `_id` tiebreak, and throws `INVALID_PAGING` /
   `SORTING_NOT_ALLOWED`; a public list route also mounts `middlewares/pageLimit.middleware.js`, which caps `limit` at
   50 unless the caller is an authenticated ADMIN). `environment` exposes the legacy production-only gate (`isProduction()`, read per call so
   tests can switch it).
-- **`libs/` (sitemap, Google feed) must not import services**; code they share with services goes in a
-  helper.
 - **Store credit is spent once applied**, like a coupon: an order that places keeps it, and neither a cancel nor a
   refund gives it back (a refund returns only the money paid). Only the debit of an order that never placed is undone
   (`undoStoreCreditDebit` in `order-fulfilment.service.js`).
@@ -101,7 +99,7 @@ steps, except the frozen list, which applies only while parallel branches are op
   `test/<domain>*.test.js`. No generic `payments`, `sms`, `email` or `notifications` services: those names belong to
   the adapters step.
 - **Frozen during the split:** `src/app.js`, `middlewares/`, `helpers/` (including `appError.helper.js`), `models/`,
-  `libs/`, `src/locales/en.json`, `package.json` (no new dependencies), and `test/helpers/*` except your own
+  `src/locales/en.json`, `package.json` (no new dependencies), and `test/helpers/*` except your own
   `test/helpers/fixtures/<domain>.js`. Use only your id range from `fixtures/ids.js`.
 - **No transactions.** The test MongoDB is a standalone server and the legacy code uses none.
 - **Keep the exact `res.*` call form.** `res.error('KEY')` and `res.error({ message: 'KEY', … })` serialise their

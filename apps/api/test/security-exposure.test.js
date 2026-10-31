@@ -292,12 +292,10 @@ describe('links use the storefront from config, never the reserved root domain',
     assert.deepEqual(srcFilesMatching(/res\.[a-z]+\.com\/pageaters\//), []);
   });
 
-  test('sitemap.xml and googleproducts.xml link to the storefront', async () => {
-    await loadStore();
+  // The sitemap will move to the storefront (app/sitemap.ts, Phase 7); the Google Merchant feed is dropped.
+  test('the API serves no sitemap.xml or googleproducts.xml', async () => {
     for (const file of ['/sitemap.xml', '/googleproducts.xml']) {
-      const xml = await (await fetch(`${origin()}${file}`)).text();
-      assert.doesNotMatch(xml, ROOT_DOMAIN, file);
-      assert.ok(xml.includes(`${STOREFRONT}/books/test-book-one`), file);
+      assert.equal((await fetch(`${origin()}${file}`)).status, 404, file);
     }
   });
 

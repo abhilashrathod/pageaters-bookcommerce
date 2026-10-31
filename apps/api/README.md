@@ -69,7 +69,6 @@ src/middlewares/  auth, validation, response helpers
 src/adapters/     third-party services behind real + mock implementations (email, sms, payments, shipping, storage)
 src/services/     business logic (src/services/README.md)
 src/helpers/      pure cross-cutting utilities (errors, logger, encryption, image URLs)
-src/libs/         sitemap, Google product feed
 src/templates/    email templates (EJS)
 src/notes/        domain notes on orders, payments and refunds
 ```

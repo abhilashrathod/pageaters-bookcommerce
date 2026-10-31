@@ -1,7 +1,7 @@
-// Image URLs for e-mails, the sitemap, the Google Merchant feed and the catalog export. Catalog image fields hold
-// full public URLs: the seed points every one at Vercel Blob (seed/src/upload.ts, checked by its loader) and admin
-// uploads answer the file's public URL (services/file.service.js). The legacy CloudFront image-resizer URLs built
-// from S3 keys are gone with S3. A pure function, shared by services and libs/ (which must not import services).
+// Image URLs for e-mails. Catalog image fields hold full public URLs: the seed points every one at Vercel Blob
+// (seed/src/upload.ts, checked by its loader) and admin uploads answer the file's public URL
+// (services/file.service.js). The legacy CloudFront image-resizer URLs built from S3 keys are gone with S3. A pure
+// function.
 
 /**
  * The public URL of a stored image: an absolute https URL passes through, normalised by the URL parser (`href`, so

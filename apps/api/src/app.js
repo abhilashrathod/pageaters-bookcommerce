@@ -8,7 +8,6 @@ const helmet = require('helmet');
 
 const { PROJECT_ROOT, DEFAULT_LANGUAGE, AVAILABLE_LOCALES, PROJECT_NAME, ALLOWED_ORIGINS, ENVIRONMENT, ON_VERCEL } = require('./appConfig');
 const { logProcessErrors } = require('./helpers/logger.helper');
-const requireDb = require('./middlewares/requireDb.middleware');
 const requestContext = require('./middlewares/requestContext.middleware');
 const { errorHandler, notFound } = require('./middlewares/errorHandler.middleware');
 const { limiters } = require('./middlewares/rateLimit.middleware');
@@ -108,14 +107,6 @@ app.use('/', express.static(path.join(PROJECT_ROOT, 'public')));
 
 // static files middleware
 app.use('/public', express.static(path.join(PROJECT_ROOT, 'public')));
-
-// sitemap
-const siteMap = require('./libs/sitemap');
-app.use('/sitemap.xml', requireDb, siteMap);
-
-// google products
-const writeGoogleData = require('./libs/googledata');
-app.use('/googleproducts.xml', requireDb, writeGoogleData);
 
 // It works route
 app.get('/', (req, res) => {

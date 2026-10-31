@@ -346,7 +346,7 @@ describe('rate limits', () => {
     const res = await api.request('/');
     assertBody(res, 429, tooManyRequests);
     assert.ok(res.headers.get('ratelimit-policy'));
-    assert.equal((await send(`${root}/sitemap.xml`)).status, 429);
+    assert.equal((await send(`${root}/public/`)).status, 429);
   });
 
   test('login: 10 failed attempts per 15 minutes; successful logins do not count', async () => {

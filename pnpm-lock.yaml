@@ -353,9 +353,6 @@ importers:
       i18n:
         specifier: ^0.8.6
         version: 0.8.6(supports-color@7.2.0)
-      js2xmlparser:
-        specifier: ^5.0.0
-        version: 5.0.0
       jsonwebtoken:
         specifier: 9.0.3
         version: 9.0.3
@@ -386,9 +383,6 @@ importers:
       twilio:
         specifier: 6.2.0
         version: 6.2.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
-      xml-js:
-        specifier: ^1.6.11
-        version: 1.6.11
       zod:
         specifier: 4.6.7
         version: 4.6.7
@@ -5488,9 +5482,6 @@ packages:
     resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
     hasBin: true
 
-  js2xmlparser@5.0.0:
-    resolution: {integrity: sha512-ckXs0Fzd6icWurbeAXuqo+3Mhq2m8pOPygsQjTPh8K5UWgKaUgDSHrdDxAfexmT11xvBKOQ6sgYwPkYc5RW/bg==}
-
   jsbn@0.1.1:
     resolution: {integrity: sha512-UVU9dibq2JcFWxQPA6KCqj5O42VOmAY3zQUfEKxU0KpTGXwNoCjkX1e13eHNvw/xPynt6pU0rZ1htjWTNTSXsg==}
 
@@ -8522,10 +8513,6 @@ packages:
     resolution: {integrity: sha512-sqMMuL1rc0FmMBOzCpd0yuy9trqF2yTTVe+E9ogwCSWQCdDEtQUwrZPT6AxqtsFGRNxycgncbP/xmOOSPw5ZUw==}
     engines: {node: '>= 6.0'}
 
-  xml-js@1.6.11:
-    resolution: {integrity: sha512-7rVi2KMfwfWFl+GpPg6m80IVMWXLRjO+PxTq7V2CDhoGak0wzYzFgUY2m4XJ47OGdXd8eLE8EmwfAmdjw7lC1g==}
-    hasBin: true
-
   xml2js@0.4.23:
     resolution: {integrity: sha512-ySPiMjM0+pLDftHgXY4By0uswI3SPKLDw/i3UXbnO8M/p28zqexCUoPmQFrYD+/1BzhGJSs2i1ERWKJAtiLrug==}
     engines: {node: '>=4.0.0'}
@@ -8537,9 +8524,6 @@ packages:
   xmlbuilder@13.0.2:
     resolution: {integrity: sha512-Eux0i2QdDYKbdbA6AM6xE4m6ZTZr4G4xF9kahI2ukSEMCzwce2eX9WlTI5J3s+NU7hpasFsr8hWIONae7LluAQ==}
     engines: {node: '>=6.0'}
-
-  xmlcreate@2.0.4:
-    resolution: {integrity: sha512-nquOebG4sngPmGPICTS5EnxqhKbCmz5Ox5hsszI2T6U5qdrJizBc+0ilYSEjTSzU0yZcmvppztXe/5Al5fUwdg==}
 
   xmlhttprequest-ssl@1.6.3:
     resolution: {integrity: sha512-3XfeQE/wNkvrIktn2Kf0869fC0BN6UpydVasGIeSm2B1Llihf7/0UfZM+eCkOw3P7bP4+qPgqhm7ZoxuJtFU0Q==}
@@ -14827,10 +14811,6 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  js2xmlparser@5.0.0:
-    dependencies:
-      xmlcreate: 2.0.4
-
   jsbn@0.1.1: {}
 
   jsesc@2.5.2: {}
@@ -18385,10 +18365,6 @@ snapshots:
     dependencies:
       os-paths: 4.4.0
 
-  xml-js@1.6.11:
-    dependencies:
-      sax: 1.6.1
-
   xml2js@0.4.23:
     dependencies:
       sax: 1.6.1
@@ -18397,8 +18373,6 @@ snapshots:
   xmlbuilder@11.0.1: {}
 
   xmlbuilder@13.0.2: {}
-
-  xmlcreate@2.0.4: {}
 
   xmlhttprequest-ssl@1.6.3: {}
 
