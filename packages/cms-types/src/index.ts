@@ -32,3 +32,10 @@ export const CMS_BLOCK_TYPES = [
 type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 const _allBlockTypesListed: Same<CmsBlockType, (typeof CMS_BLOCK_TYPES)[number]> = true;
 void _allBlockTypesListed;
+
+/**
+ * The one rule for every storefront href in CMS content: a site path (`/…`, never `//host` or a backslash) or an
+ * https URL. The CMS validates links with it; the storefront checks again before rendering (defence in depth).
+ */
+export const isSafeHref = (value: string | null | undefined): boolean =>
+  /^\/(?![/\\])[^\s\\]*$/.test(value ?? '') || /^https:\/\/[^\s/\\]+\.[^\s\\]+$/.test(value ?? '');

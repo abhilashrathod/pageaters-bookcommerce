@@ -87,12 +87,14 @@ const updateProductSet = async (id, { products, title, description, categories }
 const getProductSetById = (id) => findActive({ _id: id }, false);
 
 /**
- * An active set by its public `setId`, populated, `products` as the books in priority order.
+ * An active set by its public `setId` or its ObjectId (what the CMS stores), populated, `products` as the books in
+ * priority order.
  * @param {string} setId
  * @returns {Promise<object>}
  * @throws {AppError} PRODUCT_SET_NOT_EXIST (400).
  */
-const getProductSetBySetId = (setId) => findActive({ setId }, true);
+const getProductSetBySetId = (setId) =>
+  findActive(/^[0-9a-f]{24}$/i.test(setId) ? { _id: setId } : { setId: String(setId) }, true);
 
 /**
  * An active set by slug, as getProductSetBySetId.

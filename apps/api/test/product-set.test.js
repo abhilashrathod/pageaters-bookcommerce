@@ -99,11 +99,12 @@ describe('GET /product-sets', () => {
 });
 
 describe('detail', () => {
-  test('public detail by setId or slug answers the books in priority order', async () => {
+  test('public detail by setId, ObjectId or slug answers the books in priority order', async () => {
     const set = await populatedSet(storeIds.setOne);
     const expected = asJson({ ...set, products: byPriority(set.products).map((item) => item.product) });
     assertBody(await api.request('/product-sets/unique/SET-test-one'), 200, ok('PRODUCT_SET_LIST_SUCCESS', expected));
     assertBody(await api.request('/product-sets/slug/test-set-one'), 200, ok('PRODUCT_SET_LIST_SUCCESS', expected));
+    assertBody(await api.request(`/product-sets/unique/${storeIds.setOne}`), 200, ok('PRODUCT_SET_LIST_SUCCESS', expected));
     assert.deepEqual(expected.products.map((p) => p.bookId), ['test-book-one', 'test-book-two']);
   });
 
@@ -114,6 +115,7 @@ describe('detail', () => {
 
   test('an inactive or unknown set is not found', async () => {
     assertBody(await api.request('/product-sets/unique/SET-test-inactive'), 400, badRequest('PRODUCT_SET_NOT_EXIST'));
+    assertBody(await api.request(`/product-sets/unique/${storeIds.setInactive}`), 400, badRequest('PRODUCT_SET_NOT_EXIST'));
     assertBody(await api.request('/product-sets/slug/test-set-inactive'), 400, badRequest('PRODUCT_SET_NOT_EXIST'));
     assertBody(await api.request(`/product-sets/${storeIds.setInactive}`, { cookie: admin.cookie }), 400, badRequest('PRODUCT_SET_NOT_EXIST'));
   });

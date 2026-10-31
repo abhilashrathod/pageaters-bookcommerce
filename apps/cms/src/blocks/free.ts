@@ -1,8 +1,9 @@
+import { isSafeHref } from '@pageaters/cms-types';
 import { LinkFeature, lexicalEditor } from '@payloadcms/richtext-lexical';
 import type { Block, Field, TextFieldSingleValidation } from 'payload';
 
 import { commerceId } from '../fields/commerce.ts';
-import { isSafeHref, linkFields } from '../fields/link.ts';
+import { linkFields } from '../fields/link.ts';
 
 // The blocks an editor may place anywhere (pages, templates, overrides). Each needs a storefront component in the
 // block registry (AGENTS.md "apps/cms"); its `slug` is the block type the storefront switches on.

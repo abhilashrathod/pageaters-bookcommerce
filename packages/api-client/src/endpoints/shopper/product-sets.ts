@@ -12,7 +12,7 @@ export const productSets = {
     query: adminProductSetListQuerySchema,
     response: productSetListResponseSchema.shape.data,
   }),
-  // GET /product-sets/unique/:id — `id` is the public `setId`.
+  // GET /product-sets/unique/:id — `id` is the public `setId` or the set's ObjectId (what CMS blocks store).
   detail: defineEndpoint({
     method: 'GET',
     path: '/product-sets/unique/:id',

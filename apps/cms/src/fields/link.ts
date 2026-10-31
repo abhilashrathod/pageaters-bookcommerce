@@ -1,10 +1,9 @@
+import { isSafeHref } from '@pageaters/cms-types';
 import type { Field, TextFieldSingleValidation } from 'payload';
 
 // A storefront link: a site path (`/collections/…`) or an https URL. Anything else (`javascript:`, `http:`, `//host`,
 // and any `\`, which browsers read as `/`, so `/\host` would leave the site) is refused, since the storefront renders
-// it as an `href`.
-export const isSafeHref = (value: string | null | undefined): boolean =>
-  /^\/(?![/\\])[^\s\\]*$/.test(value ?? '') || /^https:\/\/[^\s/\\]+\.[^\s\\]+$/.test(value ?? '');
+// it as an `href`. The rule itself (`isSafeHref`) lives in @pageaters/cms-types, shared with the storefront.
 
 // An optional link's label: required as soon as the link has an href (a link without text is unusable).
 const labelForHref: TextFieldSingleValidation = (value, { siblingData }) =>

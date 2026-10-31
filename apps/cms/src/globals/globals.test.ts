@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { isSafeHref } from '../fields/link.ts';
+import { isSafeHref } from '@pageaters/cms-types';
 import { COLOR_TOKENS, RADIUS_DEFAULT, isHexColor, isRem } from './theme-tokens.ts';
 
 void test('theme defaults match the shared theme.css', () => {

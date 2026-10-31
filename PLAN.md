@@ -715,7 +715,7 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     (`components.json`, `cn`, Button with an `accent` variant). `src/env.ts` (zod): `CMS_URL`, `SITE_URL`. Image
     `remotePatterns`: `*.public.blob.vercel-storage.com`, `covers.openlibrary.org`. Placeholder home page until the
     Routes step. 5 tests (env, theme)
-- [ ] Components for the kept blocks, close to the original look (not pixel-matched); block registry + safe renderer + per-block Suspense
+- [x] Components for the kept blocks, close to the original look (not pixel-matched); block registry + safe renderer + per-block Suspense
       (split 2026-10-31 with the owner; the core blocks — product info, listing header, listing grid — move to Routes,
       which has the page's item; (b) and (c) are one review batch)
   - [x] (a) API: `GET /store-books?list=bestSeller|editorsPick|newRelease|preOrder` (shared schema, API, api-client)
@@ -731,7 +731,15 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
       only to an on-site CTA: no deal page); `imageSrc` keeps next/image to the allowed hosts; prices use the API's
       discount rule. Placeholder home shows a best-seller and a category row. Fixed a hydration break in the layout
       when the CMS is down. Checked in the browser against the local API; 12 tests
-  - [ ] (c) Free blocks: banner (5 layouts), product set row, featured books, carousel, rich text (safe links only)
+  - [x] (c) Free blocks: banner (5 layouts), product set row, featured books, carousel, rich text (safe links only)
+    - Done 2026-10-31 (inline; (b)+(c) reviewed + audited, both clear): the five blocks in `blocks/` and the
+      registry; banner sizes from the legacy banners (promo on theme tokens, not the legacy purple); featured books
+      by popularity; rich text through a small Lexical renderer (no raw HTML; links re-checked, internal links to
+      CMS pages only). `isSafeHref` moved to `@pageaters/cms-types` (CMS and storefront share it). API:
+      `GET /product-sets/unique/:id` also takes the ObjectId the CMS stores. CMS media allowed in
+      `images.remotePatterns` (`/api/media/file/**`; localhost only in development). Checked in the browser with a
+      sample layout; image banners untested until a banner has an image. The DB has no active deals, so a deals
+      carousel (and the seeded Deals page) is empty. 14 storefront tests
 - [ ] Routes: `/` and `[...slug]` (CMS pages), `/books/[id]`, `/collections/[id]`, `/categories/[id]`,
       `/bundles/[id]`, `/book-boxes` (templates + overrides)
 - [ ] Code-owned: demo login, cart, checkout with Razorpay test mode (end to end), orders list and detail, address

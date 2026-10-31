@@ -1,10 +1,11 @@
+import { isSafeHref } from '@pageaters/cms-types';
 import type { DealListItem } from '@pageaters/shared';
 import Link from 'next/link';
 
 import { CoverImage } from './cover-image.tsx';
 
 // The legacy DealsCardLarge: square poster and title. The storefront has no deal page, so the card follows the
-// deal's own CTA link when it is a site path (`/…`, never `//host`), and is a plain card otherwise.
+// deal's own CTA link when it is a safe site path (`/…`), and is a plain card otherwise.
 export function DealCard({ deal }: { deal: Pick<DealListItem, 'title' | 'poster' | 'ctaLink'> }) {
   const body = (
     <>
@@ -13,7 +14,7 @@ export function DealCard({ deal }: { deal: Pick<DealListItem, 'title' | 'poster'
     </>
   );
   const href = deal.ctaLink;
-  return href && /^\/(?!\/)/.test(href) ? (
+  return href?.startsWith('/') && isSafeHref(href) ? (
     <Link href={href} className="block">
       {body}
     </Link>

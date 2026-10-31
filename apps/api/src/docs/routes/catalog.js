@@ -62,7 +62,7 @@ module.exports = [
     response: s.productSetListResponseSchema,
   }),
   catalog('GET', '/product-sets/unique/:id', 'Get a product set', {
-    params: publicId('setId'),
+    params: { id: 'The public `setId`, or the ObjectId (what CMS blocks store).' },
     response: s.productSetDetailResponseSchema,
   }),
   catalog('GET', '/product-sets/slug/:slug', 'Get a product set by slug', { response: s.productSetDetailResponseSchema }),

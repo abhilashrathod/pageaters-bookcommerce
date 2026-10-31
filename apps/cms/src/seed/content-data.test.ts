@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { CORE_BY_TYPE, validateCoreBlocks } from '../blocks/core.ts';
-import { isSafeHref } from '../fields/link.ts';
+import { isSafeHref } from '@pageaters/cms-types';
 import { PAGE_TYPES } from '../collections/page-types.ts';
 import { globals, homePage, pages, templates } from './content-data.ts';
 
