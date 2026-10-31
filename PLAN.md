@@ -674,8 +674,20 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     built to `dist/` like `@pageaters/shared`; the CMS depends on it, so Turbo builds it first. Regenerate with
     `pnpm cms:types` (Turbo task `generate:types`, uncached). A CI drift check (regenerate, `git diff --exit-code`)
     belongs to Phase 10
-- [ ] Seed CMS content: the homepage, one template per page type, header, footer and theme (created published:
+- [x] Seed CMS content: the homepage, one template per page type, header, footer and theme (created published:
       visitors only see documents with `_status: published`)
+  - Done 2026-10-31 (inline, reviewed + audited): `pnpm --filter cms seed:content` (`src/seed/content.ts`, data in
+    `content-data.ts`, typed with `@pageaters/cms-types`). Creates only what is missing (page by slug, template by
+    type, a global never saved), so a rerun never overwrites the owner's edits. Homepage: promo banner, best sellers,
+    product set rows for the API's first two sets (skipped with a warning when the API is unreachable), collections
+    and bundles carousels, new releases. Templates: product/bundle/book-box → product info + a related row;
+    collection/category → listing header + grid + a carousel. Globals: header/footer from the legacy menu and
+    footer pages, announcement bar, theme and SEO defaults. Pages for every header/footer link (Phase 7 serves any CMS
+    page at its slug): Collections, Categories, Bundles, Deals (a carousel each) and Contact, Shipping, Cancellation,
+    Privacy policy, Terms (short rich text, each with the demo note). Tests check every template against the core-block lock
+    and every seeded href against `isSafeHref`, and that every internal link leads to a seeded page or a planned
+    route. Ran on an in-memory DB: 20 documents created, a rerun changed nothing,
+    visitors read all of it; with a (fake) API the homepage got two product set rows
 - **Checkpoint:** owner edits the homepage in the CMS and sees it locally
 
 ## Phase 7 — Storefront rebuild (App Router + Tailwind/shadcn)

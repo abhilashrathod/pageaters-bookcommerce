@@ -19,6 +19,9 @@ pnpm build && pnpm start    # production build, same port
 pnpm lint                   # ESLint (flat config on @pageaters/config/eslint/next)
 pnpm typecheck
 pnpm test                   # node --test (env validation)
+pnpm seed:users             # owner admin (SUPER_ADMIN_EMAIL) + read-only demo login
+pnpm seed:content           # pages, templates, globals, published; creates only what is missing
+                            # (with REVALIDATE_SECRET set and no storefront running, each create waits 3 s)
 pnpm generate:importmap     # after adding admin components (writes src/app/(payload)/admin/importMap.js)
 pnpm generate:types         # after changing collections/globals/blocks (writes packages/cms-types; commit it)
 ```

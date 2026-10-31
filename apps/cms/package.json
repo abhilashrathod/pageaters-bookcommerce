@@ -13,7 +13,8 @@
     "payload": "NODE_OPTIONS=--no-deprecation payload",
     "generate:importmap": "NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "NODE_OPTIONS=--no-deprecation payload generate:types",
-    "seed:users": "NODE_OPTIONS=--no-deprecation payload run src/seed/users.ts"
+    "seed:users": "NODE_OPTIONS=--no-deprecation payload run src/seed/users.ts",
+    "seed:content": "NODE_OPTIONS=--no-deprecation payload run src/seed/content.ts"
   },
   "dependencies": {
     "@pageaters/api-client": "workspace:*",
