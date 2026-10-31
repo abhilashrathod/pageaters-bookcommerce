@@ -17,3 +17,14 @@
     @apply bg-background font-sans text-foreground antialiased;
   }
 }
+
+/* The legacy `.custom-container`: full width up to 1600px, 12px gutters, 40px from 744px up. */
+@utility page-container {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  padding-inline: 12px;
+  @media (width >= 744px) {
+    padding-inline: 40px;
+  }
+}

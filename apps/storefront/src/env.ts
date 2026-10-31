@@ -8,6 +8,8 @@ const origin = (example: string) =>
     .refine((url) => !url.endsWith('/'), 'must not end with /');
 
 const schema = z.object({
+  // The API root, version prefix included; read on the server only (catalog data for the blocks).
+  API_URL: origin('http://localhost:5005/api/v1').default('http://localhost:5005/api/v1'),
   CMS_URL: origin('http://localhost:3001').default('http://localhost:3001'),
   SITE_URL: origin('http://localhost:3000').default('http://localhost:3000'),
 });

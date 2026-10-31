@@ -722,8 +722,15 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     - Done 2026-10-31 (inline): `BookListFlag` / `bookListFlagSchema` in shared `enums.ts`; `listBooks` adds
       `{ [list]: true }` only for one of the four flags, anything else (another field, an array) is 400
       `INVALID_REQUEST`; OpenAPI filter documented; `client.books.list({ list })`. 1 new API test (18 in the file)
-  - [ ] (b) Storefront base: api-client wiring, block registry + safe renderer + per-block Suspense, section heading,
+  - [x] (b) Storefront base: api-client wiring, block registry + safe renderer + per-block Suspense, section heading,
         cards and a carousel close to the legacy look
+    - Done 2026-10-31 (inline): `API_URL` + `catalogApi` (anonymous, cached, tag `api:catalog`, hourly expiry since the
+      API never revalidates); `blocks/` registry (empty until (c)), `renderBlock` (unknown/failing block → nothing +
+      warning) and `RenderBlocks` (a Suspense + skeleton per block); `SectionHeading`; an embla `Carousel` with the
+      legacy slides-per-view; book, collection, category, bundle and deal cards from the legacy ones (deal cards link
+      only to an on-site CTA: no deal page); `imageSrc` keeps next/image to the allowed hosts; prices use the API's
+      discount rule. Placeholder home shows a best-seller and a category row. Fixed a hydration break in the layout
+      when the CMS is down. Checked in the browser against the local API; 12 tests
   - [ ] (c) Free blocks: banner (5 layouts), product set row, featured books, carousel, rich text (safe links only)
 - [ ] Routes: `/` and `[...slug]` (CMS pages), `/books/[id]`, `/collections/[id]`, `/categories/[id]`,
       `/bundles/[id]`, `/book-boxes` (templates + overrides)

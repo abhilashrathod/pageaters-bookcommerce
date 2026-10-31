@@ -19,7 +19,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const css = themeCss(theme);
   return (
     <html lang="en">
-      <head>{css && <style dangerouslySetInnerHTML={{ __html: css }} />}</head>
+      {/* A ternary, not `css &&`: an empty string would render a stray text node in <head> and break hydration. */}
+      <head>{css ? <style dangerouslySetInnerHTML={{ __html: css }} /> : null}</head>
       <body>{children}</body>
     </html>
   );

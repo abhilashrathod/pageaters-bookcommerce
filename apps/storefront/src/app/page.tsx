@@ -1,16 +1,23 @@
-import { Button } from '@/components/ui/button.tsx';
+import { BookCard } from '@/components/cards/book-card.tsx';
+import { CategoryCard } from '@/components/cards/category-card.tsx';
+import { Carousel } from '@/components/carousel.tsx';
+import { catalogApi } from '@/lib/api.ts';
 
-// Placeholder until the CMS page routes land (Phase 7 "Routes"); shows the theme tokens are wired.
-export default function HomePage() {
+// Placeholder until the CMS page routes land (Phase 7 "Routes"): one row of books and one of categories, to check the
+// cards and carousel against the legacy look.
+export default async function HomePage() {
+  const [books, categories] = await Promise.all([
+    catalogApi.books.list({ list: 'bestSeller', limit: 12 }).catch(() => null),
+    catalogApi.categories.list({ limit: 12 }).catch(() => null),
+  ]);
   return (
-    <main className="mx-auto flex max-w-3xl flex-col items-start gap-4 px-4 py-16">
-      <h1 className="text-3xl font-semibold">Pageaters</h1>
-      <p className="text-muted-foreground">The storefront is being rebuilt on the App Router.</p>
-      <div className="flex gap-2">
-        <Button>Primary</Button>
-        <Button variant="accent">Accent</Button>
-        <Button variant="outline">Outline</Button>
-      </div>
+    <main className="py-8">
+      <Carousel title="Best sellers" size="book">
+        {books?.docs.map((book) => <BookCard key={book._id} book={book} />)}
+      </Carousel>
+      <Carousel title="Categories" size="portrait">
+        {categories?.docs.map((category) => <CategoryCard key={category._id} category={category} />)}
+      </Carousel>
     </main>
   );
 }

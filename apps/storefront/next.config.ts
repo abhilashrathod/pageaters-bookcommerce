@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  // `next dev` would otherwise write an apps/storefront/AGENTS.md; the repo's rules live in the root AGENTS.md only.
+  agentRules: false,
   // Images come only from Vercel Blob (seed covers, CMS media) and Open Library; the legacy S3/CloudFront hosts are gone.
   images: {
     remotePatterns: [
