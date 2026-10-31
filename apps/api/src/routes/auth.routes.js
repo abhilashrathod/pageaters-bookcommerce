@@ -13,7 +13,8 @@ const { forgotPasswordPayloadSchema, loginPayloadSchema, registerPayloadSchema, 
 
 router.post('/register', offInDemo, limiters.messageSend, validate(registerPayloadSchema), controller.register);
 router.post('/login', limiters.login, validate(loginPayloadSchema), controller.login);
-router.post('/demo-login', demoOnly, limiters.demoLogin, controller.demoLogin);
+router.post('/demo-login', demoOnly, limiters.demoLogin, controller.demoLogin('shopper'));
+router.post('/demo-login/admin', demoOnly, limiters.demoLogin, controller.demoLogin('admin'));
 
 router.post('/verify-email', limiters.codeCheck, validate(verifyEmailPayloadSchema), controller.verifyEmail);
 router.post('/verify-email/resend', limiters.messageSend, validate(resendVerificationEmailPayloadSchema), controller.resendVerificationEmail);

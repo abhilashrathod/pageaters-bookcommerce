@@ -6,6 +6,7 @@ const { USER_ROLES } = require('./../constants/enums');
 
 const controller = require('./../controllers/productSets.controller');
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
+const { demoAdminReadOnly } = require('../middlewares/demoMode.middleware');
 const validate = require('./../middlewares/validate.middleware');
 
 router.get('/', permissionValidator(USER_ROLES.ADMIN), validate(adminProductSetListFilterSchema), controller.getAll);
@@ -14,9 +15,9 @@ router.get('/slug/:slug', controller.getBySlug);
 
 // ADMIN
 router.get('/:id', permissionValidator(USER_ROLES.ADMIN), controller.getById);
-router.post('/', permissionValidator(USER_ROLES.ADMIN), validate(adminProductSetReferencesPayloadSchema), controller.create);
-router.put('/:id', permissionValidator(USER_ROLES.ADMIN), validate(adminProductSetReferencesPayloadSchema), controller.update);
-router.delete('/:id', permissionValidator(USER_ROLES.ADMIN), controller.destroy);
+router.post('/', permissionValidator(USER_ROLES.ADMIN), demoAdminReadOnly, validate(adminProductSetReferencesPayloadSchema), controller.create);
+router.put('/:id', permissionValidator(USER_ROLES.ADMIN), demoAdminReadOnly, validate(adminProductSetReferencesPayloadSchema), controller.update);
+router.delete('/:id', permissionValidator(USER_ROLES.ADMIN), demoAdminReadOnly, controller.destroy);
 
 /* FOR STORE */
 

@@ -76,6 +76,7 @@ module.exports = [
   customers('GET', '/cart/:id', 'Get a cart', { params: { id: 'The cart’s ObjectId.' }, response: s.adminCartResponseSchema }),
   customers('GET', '/subscribers', 'List newsletter subscribers', { paged: 'page', response: s.adminSubscriberListResponseSchema }),
   customers('POST', '/store-credit', 'Issue store credit', {
+    description: 'Refused for the demo admin in DEMO_MODE (400 DEMO_ADMIN_READ_ONLY).',
     status: 201,
     request: s.adminStoreCreditIssuePayloadSchema,
     response: s.adminEmptyResponseSchema,

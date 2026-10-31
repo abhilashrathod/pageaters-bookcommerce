@@ -562,10 +562,17 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     the seeded demo shopper; register and the `/auth/contact/*` OTP routes answer 400 `OFF_IN_DEMO_MODE`
     (`middlewares/demoMode.middleware.js`); password login stays for admins. The email-OTP login was already gone
     (Phase 4). api-client `auth.demoLogin`, OpenAPI entry, tests. The storefront button comes with Phase 7
-- [ ] Batch B — demo write guard
-  - [ ] One server-side guard: in `DEMO_MODE` the demo admin's catalog writes, uploads and store-credit issuing are
+- [x] Batch B — demo write guard
+  - [x] One server-side guard: in `DEMO_MODE` the demo admin's catalog writes, uploads and store-credit issuing are
         rejected with a clear demo message; order lifecycle actions (mock shipping) stay allowed; the super-admin is
         exempt from all of it
+  - [x] Demo admin one-click login (added 2026-10-31 with the owner: the demo admin's password is random, so without
+        it no visitor could reach the admin and the checkpoint couldn't pass)
+  - Done 2026-10-31 (inline, reviewed + audited): `POST /auth/demo-login/admin` (DEMO_MODE only, `demoLogin` limiter).
+    `demoAdminReadOnly` (`middlewares/demoMode.middleware.js`) runs after the ADMIN check on the 27 catalog writes,
+    `POST /file/upload` (before the multipart parser) and `POST /store-credit`: the demo admin (by its seeded email,
+    `constants/demo.js`) gets 400 `DEMO_ADMIN_READ_ONLY`; order actions and reads stay open; any other admin is
+    unaffected. api-client `auth.demoAdminLogin`, OpenAPI notes, tests
 - [ ] Batch C — outbox
   - [ ] Mock email/SMS write to an outbox collection; `GET` lists the caller's own messages (super-admin: all);
         forgot-password and verify-email are off in `DEMO_MODE`, so the demo admin's account can't be taken over

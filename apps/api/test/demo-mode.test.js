@@ -5,13 +5,14 @@ const { after, before, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { assertBody, createUser, envelopes, sentTexts, startTestApp } = require('./helpers');
+const { assertBody, createUser, envelopes, ids, loadCatalog, sentTexts, startTestApp } = require('./helpers');
 
-// PLAN.md Phase 5 Batch A: with DEMO_MODE=true the demo shopper signs in with one click; signup and the phone OTP are
-// off. test/auth-session.test.js covers the same routes with DEMO_MODE off (demo login is a 404 there).
+// PLAN.md Phase 5 Batches A and B: with DEMO_MODE=true the demo shopper and demo admin sign in with one click; signup
+// and the phone OTP are off; the demo admin is read-only on the catalog, uploads and store credit. test/auth-session.test.js covers the same routes with DEMO_MODE off (demo login is a 404 there).
 
 const { badRequest, ok } = envelopes;
 const DEMO_SHOPPER_EMAIL = 'shopper@demo.pageaters.com';
+const DEMO_ADMIN_EMAIL = 'admin@demo.pageaters.com';
 
 let api;
 
@@ -55,7 +56,7 @@ describe('POST /auth/demo-login', () => {
   test('answers 503 when the seed has not been loaded', async () => {
     const res = await api.request('/auth/demo-login', { method: 'POST' });
     assert.equal(res.status, 503);
-    assert.equal(res.body.status, 'DEMO_SHOPPER_MISSING');
+    assert.equal(res.body.status, 'DEMO_ACCOUNT_MISSING');
   });
 });
 
@@ -79,5 +80,53 @@ describe('routes off in DEMO_MODE', () => {
     const { user, password } = await createUser({ role: 'ADMIN' });
     const res = await api.request('/auth/login', { method: 'POST', body: { email: user.email, password } });
     assertBody(res, 200, ok('LOGIN_SUCCESS', res.body.data));
+  });
+});
+
+describe('the demo admin', () => {
+  const demoAdminCookie = async () => {
+    await mongoose.model('user').create({ email: DEMO_ADMIN_EMAIL, fullName: 'Demo Admin', role: 'ADMIN', emailVerified: true });
+    const res = await api.request('/auth/demo-login/admin', { method: 'POST' });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.data.email, DEMO_ADMIN_EMAIL);
+    return res.headers.getSetCookie().find((cookie) => cookie.startsWith('_PID=')).split(';')[0];
+  };
+
+  test('signs in with one click and can still read the catalog', async () => {
+    await loadCatalog();
+    const cookie = await demoAdminCookie();
+    const res = await api.request(`/authors/${ids.authorA}`, { cookie });
+    assert.equal(res.status, 200);
+  });
+
+  test('is refused catalog writes, uploads and store-credit issuing', async () => {
+    await loadCatalog();
+    const cookie = await demoAdminCookie();
+    const writes = [
+      ['DELETE', `/authors/${ids.authorA}`],
+      ['PUT', `/categories/${ids.categoryFiction}`, {}],
+      ['POST', '/store-books', {}],
+      ['POST', '/file/upload'],
+      ['POST', '/store-credit', {}],
+    ];
+    for (const [method, path, body] of writes) {
+      const res = await api.request(path, { method, cookie, body });
+      assertBody(res, 400, badRequest('DEMO_ADMIN_READ_ONLY'));
+    }
+    assert.equal(await mongoose.model('author').countDocuments({ _id: ids.authorA, isDeleted: true }), 0);
+  });
+
+  test('can reach the order lifecycle actions', async () => {
+    const cookie = await demoAdminCookie();
+    const res = await api.request('/orders/ship', { method: 'POST', cookie, body: {} });
+    assert.equal(res.status, 400);
+    assert.notEqual(res.body.status, 'DEMO_ADMIN_READ_ONLY');
+  });
+
+  test('any other admin (the super-admin) can still write', async () => {
+    await loadCatalog();
+    const { cookie } = await createUser({ role: 'ADMIN' });
+    const res = await api.request(`/authors/${ids.authorA}`, { method: 'DELETE', cookie });
+    assert.equal(res.status, 200);
   });
 });

@@ -109,6 +109,7 @@ const rows: Row[] = [
     { email: 'shopper@demo.pageaters.com', password: 'secret-1' },
   ],
   ['auth.demoLogin', (c) => c.auth.demoLogin(), 'POST', '/auth/demo-login'],
+  ['auth.demoAdminLogin', (c) => c.auth.demoAdminLogin(), 'POST', '/auth/demo-login/admin'],
   [
     'auth.verifyEmail',
     (c) => c.auth.verifyEmail({ email: 'shopper@demo.pageaters.com', token: 'tok' }),

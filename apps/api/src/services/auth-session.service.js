@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const { models, enums } = require('../constants');
+const { demo, models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { generateJwtToken, hashPassword, hashSessionToken } = require('../helpers/encryption.helper');
 
@@ -11,9 +11,6 @@ const { generateJwtToken, hashPassword, hashSessionToken } = require('../helpers
 // helpers/encryption.helper.js) whose SHA-256 is stored in access_tokens. The permission middleware accepts it only
 // while that record is not revoked and its `sessionVersion` claim is the account's: logout revokes one; a password
 // change or reset revokes all of the user's and raises the version, which also ends a JWT a racing login signed.
-
-// The seeded demo shopper (seed/src/accounts.ts DEMO_SHOPPER_EMAIL), signed in by demoLogin.
-const DEMO_SHOPPER_EMAIL = 'shopper@demo.pageaters.com';
 
 const User = mongoose.model(models.USER);
 const AccessTokens = mongoose.model(models.ACCESS_TOKEN);
@@ -90,14 +87,16 @@ const login = async ({ email, password, ipAddress }) => {
 };
 
 /**
- * Signs into the seeded demo shopper without a password (DEMO_MODE only; the route is hidden otherwise).
- * @param {{ ipAddress: string }} input
- * @returns {Promise<{ token: string, cartId: import('mongoose').Types.ObjectId | '', profile: object }>} As login.
- * @throws {AppError} DEMO_SHOPPER_MISSING (503) when the seed hasn't been loaded.
+ * Signs into a seeded demo account without a password (DEMO_MODE only; the routes are hidden otherwise).
+ * @param {{ account: 'shopper' | 'admin', ipAddress: string }} input
+ * @returns {Promise<{ token: string, cartId: import('mongoose').Types.ObjectId | '', profile: object }>} As login
+ *   (the demo admin has no cart: `cartId` '').
+ * @throws {AppError} DEMO_ACCOUNT_MISSING (503) when the seed hasn't been loaded.
  */
-const demoLogin = async ({ ipAddress }) => {
-  const user = await User.findOne({ email: DEMO_SHOPPER_EMAIL, status: enums.USER_STATUS.ACTIVE, isDeleted: false }).select('+sessionVersion');
-  if (!user) throw new AppError('DEMO_SHOPPER_MISSING', { status: 503 });
+const demoLogin = async ({ account, ipAddress }) => {
+  const email = account === 'admin' ? demo.DEMO_ADMIN_EMAIL : demo.DEMO_SHOPPER_EMAIL;
+  const user = await User.findOne({ email, status: enums.USER_STATUS.ACTIVE, isDeleted: false }).select('+sessionVersion');
+  if (!user) throw new AppError('DEMO_ACCOUNT_MISSING', { status: 503 });
 
   await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date().toISOString() } });
   const token = await startSession(user, ipAddress);

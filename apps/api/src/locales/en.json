@@ -239,6 +239,7 @@
 	"REQUEST_TOO_LARGE": "The request is too large",
 	"INVALID_JSON": "The request body is not valid JSON",
 	"DATABASE_UNAVAILABLE": "Database unavailable. Please try again shortly.",
-	"DEMO_SHOPPER_MISSING": "The demo shopper account is missing. Load the seed data first.",
+	"DEMO_ACCOUNT_MISSING": "The demo account is missing. Load the seed data first.",
+	"DEMO_ADMIN_READ_ONLY": "The demo admin can't change the catalog, upload files or issue store credit. Order actions are open: try shipping an order.",
 	"OFF_IN_DEMO_MODE": "This is turned off on the demo store. Use the demo shopper login instead."
 }

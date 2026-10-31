@@ -3,11 +3,12 @@ const router = new Router();
 const { enums } = require('../constants');
 
 const permissionVerification = require('../middlewares/permissionVerification.middleware');
+const { demoAdminReadOnly } = require('../middlewares/demoMode.middleware');
 const { singleImageUpload } = require('../middlewares/upload.middleware');
 
 const controller = require('./../controllers/file.controller');
 
 // The guard runs before the multipart parser, so nobody without an ADMIN session can make the API buffer a file.
-router.post('/upload', permissionVerification(enums.USER_ROLES.ADMIN), singleImageUpload, controller.uploadBucket);
+router.post('/upload', permissionVerification(enums.USER_ROLES.ADMIN), demoAdminReadOnly, singleImageUpload, controller.uploadBucket);
 
 module.exports = router;

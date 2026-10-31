@@ -63,9 +63,10 @@ module.exports.login = async (req, res) => {
   }
 };
 
-module.exports.demoLogin = async (req, res) => {
+// POST /auth/demo-login (demoLogin('shopper')) and /auth/demo-login/admin (demoLogin('admin'), the read-only demo admin).
+module.exports.demoLogin = (account) => async (req, res) => {
   try {
-    const { profile, ...session } = await authSession.demoLogin({ ipAddress: req.ip });
+    const { profile, ...session } = await authSession.demoLogin({ account, ipAddress: req.ip });
     setSessionCookies(res, session);
     return res.ok({ message: 'LOGIN_SUCCESS', data: profile });
   } catch (e) {

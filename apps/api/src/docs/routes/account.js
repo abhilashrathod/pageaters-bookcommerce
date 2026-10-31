@@ -28,6 +28,13 @@ module.exports = [
     limiter: 'demoLogin',
     response: profile,
   }),
+  auth('POST', '/auth/demo-login/admin', 'Log in as the demo admin', {
+    auth: 'public',
+    description:
+      'DEMO_MODE only (404 otherwise): signs into the seeded demo admin, which can run the order lifecycle but not change the catalog, upload files or issue store credit.',
+    limiter: 'demoLogin',
+    response: profile,
+  }),
   auth('POST', '/auth/logout', 'Log out', {
     auth: 'session',
     description: 'Revokes the session and clears its cookie.',
