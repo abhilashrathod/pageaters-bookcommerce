@@ -414,7 +414,7 @@ This file is temporary: when every phase is done, archive the decision log into 
     Express's HTML page with a stack trace
   - `res.internalServerError` must not `console.log` raw errors (vendor messages can quote the recipient); the
     `createShipmentForDelhivery` failure log prints code and status only, never `e.message`
-- [ ] Fix legacy bugs. Split into five sub-steps by the files they touch (2026-10-30), so independent ones run in
+- [x] Fix legacy bugs. Split into five sub-steps by the files they touch (2026-10-30), so independent ones run in
       parallel worktrees (at most three at once): wave 1 = a, c, e; wave 2 = b, d (b after a: both edit the order
       code; d after c: both edit list paging). Items already fixed by earlier steps (`deleteAccount`/`recoverAccount`
       removed, `jobs/` removed, the duplicate `retrieve`) are checked and left out.
@@ -528,10 +528,24 @@ This file is temporary: when every phase is done, archive the decision log into 
       serviceability only; cart add/add-on answer `true` with quantity defaulting to 1 (add-on route validated);
       `/cart/empty` clears every line; `STOCK_ALERT_NOT_EXIST`; the STOCK_ALERT e-mail renders (`en.ejs`, escaped,
       control characters stripped from the subject). Reviewed + audited
-  - [ ] f. Minor fixes listed above under "Sub-step f"
-- [ ] OpenAPI from zod at `/docs`
-- [ ] Remove `page.controller` / page & banner models (moved to CMS); move sitemap + Google product feed to storefront
+  - [x] f. Minor fixes listed above under "Sub-step f"
+    - Done 2026-10-31: a malformed ObjectId string in a request answers 400 `INVALID_ID` on every route (one mapping
+      in `handleControllerError`; other casts stay 500); book create with an unknown author answers 400
+      `AUTHOR_NOT_EXIST` before writing; deal detail skips deleted or deactivated product sets; the deal admin detail
+      carries author names. Reviewed (one light round)
+- [x] OpenAPI from zod at `/docs`
+  - Done 2026-10-31: OpenAPI 3.1 built from the shared zod schemas with zod 4's `z.toJSONSchema` (no generator
+    library), on first request and memoised; `/openapi.json` plus a Scalar reference at `/docs` (pinned CDN bundle
+    with SRI, CSP scoped to that route). 144 operations, 156 schemas; a test checks every mounted route is documented
+    and the document validates as OpenAPI 3.1. `docs/api.md` explains it. Reviewed + audited (one light round)
+- [x] Remove `page.controller` / page & banner models (moved to CMS); move sitemap + Google product feed to storefront
+  - Done 2026-10-31: `page.controller` and the page/banner models were already gone; `libs/sitemap.js` and
+    `libs/googledata.js`, their routes and `js2xmlparser`/`xml-js` are removed. Demo scope: the Google Merchant feed is
+    dropped; the sitemap is rebuilt as `app/sitemap.ts` in the Phase 7 storefront
 - **Checkpoint:** API runs locally, all routes reachable, lint and tests clean
+  - Passed 2026-10-31: API started locally on :5005; `/health`, `/`, `/api/v1`, `/openapi.json`, `/docs` and all 14
+    public GET routes without path params answer 200, a session route answers 401, `limit=51` on a public list answers
+    400; API 985/985, shared 173, api-client 264, seed 88 tests pass; lint and typecheck clean; gitleaks clean
 
 ## Phase 5 — Demo mode
 
@@ -581,7 +595,7 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Code-owned: cart, checkout (Razorpay test), account/orders, address select, demo login
 - [ ] Header/nav/footer/announcement from CMS globals; footer credits "Cover images via Open Library" (their covers guidance)
 - [ ] Caching with tags + revalidation route; draft mode for CMS preview
-- [ ] SEO: metadata API, sitemap, robots (noindex for demo), product feed
+- [ ] SEO: metadata API, `app/sitemap.ts`, robots (noindex for demo); no product feed (dropped for the demo)
 - [ ] Drop every image host of the closed AWS account (audit 2026-10-30): `next.config.js` `images.domains` still
       allows the `storebooks` S3 bucket and the `d2jesamohckae0` CloudFront host, `core/_variables.ts` `BUCKETS_ORIGINS`
       names six `pageaters-*` buckets, and six listing pages hard-code `pageaters-assets` hero images. Deleted bucket
