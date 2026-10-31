@@ -12,7 +12,8 @@
     "test": "node --test 'src/**/*.test.ts'",
     "payload": "NODE_OPTIONS=--no-deprecation payload",
     "generate:importmap": "NODE_OPTIONS=--no-deprecation payload generate:importmap",
-    "generate:types": "NODE_OPTIONS=--no-deprecation payload generate:types"
+    "generate:types": "NODE_OPTIONS=--no-deprecation payload generate:types",
+    "seed:users": "NODE_OPTIONS=--no-deprecation payload run src/seed/users.ts"
   },
   "dependencies": {
     "@payloadcms/db-mongodb": "3.91.0",

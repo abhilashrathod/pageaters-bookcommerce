@@ -7,7 +7,11 @@ import { buildConfig } from 'payload';
 import sharp from 'sharp';
 
 import { Media } from './collections/Media.ts';
+import { Overrides } from './collections/Overrides.ts';
+import { Pages } from './collections/Pages.ts';
+import { Templates } from './collections/Templates.ts';
 import { Users } from './collections/Users.ts';
+import { DEMO_EDITOR } from './demo.ts';
 import { parseEnv } from './env.ts';
 
 // Payload CMS (AGENTS.md "apps/cms"): content only, in its own database; commerce data stays in the API.
@@ -19,8 +23,9 @@ export default buildConfig({
   admin: {
     user: Users.slug,
     importMap: { baseDir: path.resolve(dirname) },
+    ...(env.DEMO_MODE && { autoLogin: { ...DEMO_EDITOR, prefillOnly: true } }),
   },
-  collections: [Users, Media],
+  collections: [Pages, Templates, Overrides, Media, Users],
   editor: lexicalEditor(),
   secret: env.PAYLOAD_SECRET,
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },

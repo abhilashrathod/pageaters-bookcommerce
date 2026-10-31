@@ -17,6 +17,11 @@ const schema = z.object({
     .regex(/^mongodb(\+srv)?:\/\/\S+$/, 'must start with mongodb:// or mongodb+srv://')
     .refine((uri) => databaseName(uri) !== '', 'must name its database, e.g. …/pageaters_cms')
     .refine((uri) => databaseName(uri) !== 'pageaters_api', 'must not be the API database (pageaters_api)'),
+  // The public demo: the login form is prefilled with the read-only demo login (demo.ts).
+  DEMO_MODE: z
+    .enum(['true', 'false'], { error: 'must be true or false' })
+    .transform((value) => value === 'true')
+    .default(false),
   PAYLOAD_SECRET: z.string({ error: 'is required' }).min(32, 'must be at least 32 characters'),
   // Media go to Vercel Blob when set; without it they are written to local disk (development only).
   BLOB_READ_WRITE_TOKEN: z.string().optional(),

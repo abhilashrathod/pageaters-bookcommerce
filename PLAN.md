@@ -613,9 +613,19 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     placeholders for the next step. Generated `importMap.js`, `payload-types.ts` and the `app/(payload)` route files
     are lint/prettier-ignored. `esbuild` install script denied (prebuilt binary). Smoke-tested `next start` against an
     in-memory MongoDB: `/admin`, create-first-user and the REST API answer 200
-- [ ] Collections: Pages, Templates (one `type` per page: Product, Collection, Category, Bundle, Book Box), Overrides,
+- [x] Collections: Pages, Templates (one `type` per page: Product, Collection, Category, Bundle, Book Box), Overrides,
       Media, Users (roles: admin, demo-readonly); seed the CMS read-only demo user and the owner's admin account (from
       the local `.env`), so `/admin/create-first-user` is never open on a deployment
+  - Done 2026-10-31 (inline, reviewed + audited): `src/access.ts` — writes (Pages, Templates, Overrides, Media
+    uploads, Users) admin only; content and media public to read; accounts: admin all, others only their own. `role`
+    (`admin` | `demo-readonly`, default read-only, in the JWT) settable by admins only. Pages: title, unique slug
+    (`home`); Templates: unique `type`; Overrides: `type` + 24-hex `itemId`, unique together; each with an empty
+    `layout` blocks field for the blocks step. `pnpm seed:users` (`payload run`): SUPER_ADMIN_EMAIL → admin (created
+    with SUPER_ADMIN_PASSWORD only when missing) and the demo login `editor@demo.pageaters.com` (public password;
+    `DEMO_MODE=true` prefills the login form). Smoke-tested over REST on an in-memory DB: demo 403 on writes, its own
+    password and role; owner 201; duplicate override 400; first-register 403 after the seed. Unlock is admin only
+    (Payload's default let any user lift the owner's lockout). Known limit: anyone can lock the public demo login for
+    10 minutes with 5 wrong passwords
 - [ ] Globals: Header (with navigation), Footer, Announcement Bar, Theme tokens, SEO defaults
 - [ ] Blocks: Banner (one block with a layout option, replacing the five legacy banner variants), Product Set row,
       Featured Books, Carousel (collections, categories, bundles or deals), Rich text; template core blocks (product
