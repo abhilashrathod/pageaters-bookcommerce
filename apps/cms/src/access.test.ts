@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { adminOnly, adminOrSelf, isAdminUser } from './access.ts';
+import { adminOnly, adminOrSelf, isAdminUser, publishedOrSignedIn } from './access.ts';
 
 // The access rules on their own (the collection configs import Payload, which these tests don't load).
 const asUser = (user: object | null) => ({ req: { user } }) as unknown as Parameters<typeof adminOnly>[0];
@@ -18,4 +18,9 @@ void test('accounts: an admin sees all, anyone else only their own, a visitor no
   assert.equal(adminOrSelf(asUser({ id: 'a', role: 'admin' })), true);
   assert.deepEqual(adminOrSelf(asUser({ id: 'd', role: 'demo-readonly' })), { id: { equals: 'd' } });
   assert.equal(adminOrSelf(asUser(null)), false);
+});
+
+void test('drafted content: visitors read published versions only', () => {
+  assert.deepEqual(publishedOrSignedIn(asUser(null)), { _status: { equals: 'published' } });
+  assert.equal(publishedOrSignedIn(asUser({ id: 'd', role: 'demo-readonly' })), true);
 });

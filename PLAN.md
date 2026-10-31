@@ -655,17 +655,32 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     (search-as-you-type, stores the id) on the Product Set row's set and the override's item (kind from its page
     type). API: `GET /product-sets` is public now (active sets, ≤50 a page unless admin), with api-client
     `productSets.list`. Smoke-tested: admin forms render, endpoint 401 for visitors, 502 with the API down
-- [ ] Drafts, versions and live preview; `afterChange` hook → storefront revalidation webhook. Draft saves skip
+- [x] Drafts, versions and live preview; `afterChange` hook → storefront revalidation webhook. Draft saves skip
       validation: keep the template core-block lock on publish (`validateCoreBlocks`)
+  - Done 2026-10-31 (inline, reviewed + audited): Pages, Templates, Overrides have drafts and up to 25 versions;
+    visitors read published versions only, signed-in CMS users drafts too (`publishedOrSignedIn`). Publishing
+    validates (a template without its core blocks: 400), a draft save doesn't. Live preview (when `PREVIEW_SECRET`
+    is set): `${STOREFRONT_URL}/api/draft?secret=&path=` with path `/` or `/<slug>` for pages,
+    `/preview/templates/<type>`, `/preview/overrides/<type>/<itemId>`; mobile/tablet/desktop breakpoints.
+    Revalidation (when `REVALIDATE_SECRET` is set): after a publish, unpublish, change to a published document,
+    delete or global save, `POST ${STOREFRONT_URL}/api/revalidate` with `x-revalidate-secret` and `{ tags }`
+    (`cms:pages`, `cms:page:<slug>`, `cms:template:<type>`, `cms:override:<type>:<itemId>`, `cms:global:<slug>`;
+    a published previous version's tags too), 3 s timeout, never fails the save. Smoke-tested with a fake storefront
 - [ ] `packages/cms-types` generation wired into Turbo
-- [ ] Seed CMS content: the homepage, one template per page type, header, footer and theme
+- [ ] Seed CMS content: the homepage, one template per page type, header, footer and theme (created published:
+      visitors only see documents with `_status: published`)
 - **Checkpoint:** owner edits the homepage in the CMS and sees it locally
 
 ## Phase 7 — Storefront rebuild (App Router + Tailwind/shadcn)
 
 - Notes from Phase 6: the Featured Books block picks a book flag (`bestSeller`, `editorsPick`, `newRelease`,
   `preOrder`), so `GET /store-books` needs a filter by flag; render rich text links only when they pass the CMS's
-  `isSafeHref` (defence in depth) and the footer `contact` as plain text
+  `isSafeHref` (defence in depth) and the footer `contact` as plain text. CMS contract (Phase 6 drafts step):
+  `GET /api/draft?secret=&path=` (check `PREVIEW_SECRET`, accept only a path starting with one `/`, enable draft
+  mode, redirect), `POST /api/revalidate` (check `x-revalidate-secret` = `REVALIDATE_SECRET`, `revalidateTag` each
+  tag), the preview routes `/preview/templates/<type>` and `/preview/overrides/<type>/<itemId>`, and CMS fetches
+  tagged with the tags above. The storefront has no CMS login, so preview renders the draft from live preview's
+  postMessage data (`@payloadcms/live-preview-react` `useLivePreview`), not by fetching drafts
 - [ ] New Next.js App Router app; Tailwind + shadcn/ui; theme tokens from the CMS as CSS variables. Images only from
       Blob and Open Library (the closed AWS account's bucket and CloudFront hosts are not carried over)
 - [ ] Components for the kept blocks, close to the original look (not pixel-matched); block registry + safe renderer + per-block Suspense

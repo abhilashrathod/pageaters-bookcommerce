@@ -16,8 +16,11 @@ export const adminOnly: Access = ({ req }) => isAdminUser(req.user);
 /** A field only admins may set (the role itself). */
 export const adminOnlyField: FieldAccess = ({ req }) => isAdminUser(req.user);
 
-/** Published content and media: anyone, the storefront included. */
+/** Media and globals: anyone, the storefront included. */
 export const anyone: Access = () => true;
+
+/** Drafted content: published versions for anyone, drafts too for signed-in CMS users (live preview). */
+export const publishedOrSignedIn: Access = ({ req }) => (req.user ? true : { _status: { equals: 'published' } });
 
 /** Accounts: admins see every account, anyone else only their own. */
 export const adminOrSelf: Access = ({ req }) => (isAdminUser(req.user) ? true : req.user ? { id: { equals: req.user.id } } : false);

@@ -21,6 +21,13 @@ const schema = z.object({
   API_URL: z
     .url({ protocol: /^https?$/, error: 'must be an http(s) URL, e.g. http://localhost:5005/api/v1' })
     .default('http://localhost:5005/api/v1'),
+  // The storefront: live preview opens it in draft mode (PREVIEW_SECRET), and a publish asks it to revalidate its
+  // caches (REVALIDATE_SECRET, server to server). Each feature is off while its secret is unset.
+  STOREFRONT_URL: z
+    .url({ protocol: /^https?$/, error: 'must be an http(s) URL, e.g. http://localhost:3000' })
+    .default('http://localhost:3000'),
+  PREVIEW_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
+  REVALIDATE_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
   // The public demo: the login form is prefilled with the read-only demo login (demo.ts).
   DEMO_MODE: z
     .enum(['true', 'false'], { error: 'must be true or false' })

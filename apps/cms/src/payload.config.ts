@@ -19,20 +19,44 @@ import { Header } from './globals/Header.ts';
 import { Seo } from './globals/Seo.ts';
 import { Theme } from './globals/Theme.ts';
 import { parseEnv } from './env.ts';
+import { revalidateGlobal, revalidateOnChange, revalidateOnDelete } from './hooks/revalidate.ts';
+import { previewPath, previewUrl } from './storefront.ts';
 
 // Payload CMS (AGENTS.md "apps/cms"): content only, in its own database; commerce data stays in the API.
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const env = parseEnv(process.env);
 
+const revalidateTarget = env.REVALIDATE_SECRET ? { url: env.STOREFRONT_URL, secret: env.REVALIDATE_SECRET } : undefined;
+const drafted = [Pages, Templates, Overrides].map((collection) => ({
+  ...collection,
+  hooks: { afterChange: [revalidateOnChange(revalidateTarget)], afterDelete: [revalidateOnDelete(revalidateTarget)] },
+}));
+const globals = [Header, Footer, AnnouncementBar, Theme, Seo].map((global) => ({
+  ...global,
+  hooks: { afterChange: [revalidateGlobal(revalidateTarget)] },
+}));
+const previewSecret = env.PREVIEW_SECRET;
+
 export default buildConfig({
   admin: {
     user: Users.slug,
     importMap: { baseDir: path.resolve(dirname) },
     ...(env.DEMO_MODE && { autoLogin: { ...DEMO_EDITOR, prefillOnly: true } }),
+    ...(previewSecret && {
+      livePreview: {
+        collections: drafted.map((collection) => collection.slug),
+        url: ({ data, collectionConfig }) => previewUrl(env.STOREFRONT_URL, previewSecret, previewPath(collectionConfig?.slug ?? '', data)),
+        breakpoints: [
+          { name: 'mobile', label: 'Mobile', width: 390, height: 844 },
+          { name: 'tablet', label: 'Tablet', width: 820, height: 1180 },
+          { name: 'desktop', label: 'Desktop', width: 1440, height: 900 },
+        ],
+      },
+    }),
   },
-  collections: [Pages, Templates, Overrides, Media, Users],
-  globals: [Header, Footer, AnnouncementBar, Theme, Seo],
+  collections: [...drafted, Media, Users],
+  globals,
   endpoints: [commerceEndpoint(env.API_URL)],
   editor: lexicalEditor(),
   secret: env.PAYLOAD_SECRET,

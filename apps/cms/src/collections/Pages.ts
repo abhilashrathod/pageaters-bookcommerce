@@ -1,13 +1,15 @@
 import type { CollectionConfig } from 'payload';
 
-import { adminOnly, anyone } from '../access.ts';
+import { adminOnly, publishedOrSignedIn } from '../access.ts';
 import { FREE_BLOCKS } from '../blocks/free.ts';
 
 // Free-form block pages addressed by slug: the homepage (`home`) and campaign landing pages.
 export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: { useAsTitle: 'title', defaultColumns: ['title', 'slug', 'updatedAt'] },
-  access: { read: anyone, create: adminOnly, update: adminOnly, delete: adminOnly },
+  access: { read: publishedOrSignedIn, create: adminOnly, update: adminOnly, delete: adminOnly },
+  // Drafts and history; publishing validates (a template's core blocks included), a draft save doesn't.
+  versions: { drafts: true, maxPerDoc: 25 },
   fields: [
     { name: 'title', type: 'text', required: true },
     {
