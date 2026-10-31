@@ -3,7 +3,7 @@ const moment = require('moment');
 
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
-const { cancelOrder, finishCancelledReturn, unfinishedCancel } = require('./order-cancellation.service');
+const { cancelOrder } = require('./order-cancellation.service');
 const { sendCancelEmail, sendRequestEmail } = require('./order-notifications.service');
 
 // Shopper requests on a placed order: cancel before shipping, return or replace within 7 days of delivery.
@@ -71,14 +71,13 @@ const requestReturn = async (userId, uniqueId, { type, comments, reason, books, 
 };
 
 /**
- * Shopper: cancels a paid or confirmed order, records the cancel request, e-mails the buyer (production only), puts
- * the stock back and gives back the store credit it spent (order-cancellation.service.js). No refund is started.
- * On an order already cancelled whose store credit return was cut short, it only finishes that return (the storefront
- * offers Cancel only for paid, confirmed or shipped orders, so in practice an admin cancel or a refund event does).
+ * Shopper: cancels a paid or confirmed order, records the cancel request, e-mails the buyer (production only) and
+ * puts the stock back (order-cancellation.service.js). Store credit applied to the order is spent and stays spent.
+ * No refund is started.
  * @param {string} userId
  * @param {string} uniqueId Public order id (`OD-…`).
  * @param {{ reason?: string, comments?: string }} request
- * @returns {Promise<void>} Rejects when giving the store credit back failed (the order stays cancelled; logged).
+ * @returns {Promise<void>}
  * @throws {AppError} ORDER_CANCEL_INVALID (already shipped), ORDER_INFO_ATTEMPT_FAILED (no such paid/confirmed order
  *   of the user), ORDER_CHANGED_CONFLICT (409, it changed meanwhile).
  */
@@ -87,16 +86,8 @@ const cancelByUser = async (userId, uniqueId, { reason, comments }) => {
     throw new AppError('ORDER_CANCEL_INVALID');
   }
 
-  const order = await Order.findOne({
-    $or: [{ orderStatus: PAID }, { orderStatus: CONFIRMED }, unfinishedCancel()],
-    orderId: uniqueId,
-    userId,
-  }).populate([BUYER]);
+  const order = await Order.findOne({ $or: [{ orderStatus: PAID }, { orderStatus: CONFIRMED }], orderId: uniqueId, userId }).populate([BUYER]);
   if (!order) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
-  if (order.orderStatus === CANCELLED) {
-    await finishCancelledReturn(order);
-    return;
-  }
 
   await cancelOrder(order, {
     history: { title: CANCELLED, description: 'Order cancelled by customer.', time: new Date().toISOString() },

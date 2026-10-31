@@ -41,7 +41,7 @@ const StoreCredit: NextPage = () => {
                                     3. Store credit may be used towards the purchase of any item in the store, including books and merchandise. <br />
                                     4. Store credit cannot be redeemed for cash or used to purchase additional store credit. <br />
                                     5. Store credit cannot be combined with any other promotional offer or discount. <br />
-                                    6. If an item purchased with store credit is returned, the value of the item will be refunded to the original payment method and the store credit will be reinstated. <br />
+                                    6. Store credit applied to an order is used up. If the order is cancelled or refunded, only the amount paid is refunded to the original payment method; the store credit is not reinstated. <br />
                                     8. The bookstore reserves the right to cancel or modify the store credit policy at any time without prior notice. <br />
                                     9. The decision of the bookstore regarding the use and validity of store credit shall be final and binding. <br />
                                     10. Customer can&apos;t request more credit if they already have it.<br />

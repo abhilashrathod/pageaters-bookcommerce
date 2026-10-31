@@ -87,8 +87,9 @@ export const orders = {
     response: adminEmptyResponseSchema.shape.data,
   }),
   // POST /orders/admin-cancel/:id — here `id` is the order's `OD-…` id, and the legacy controller reads it from the
-  // body's `uniqueId`, so send it in both (Phase 4: read the path). Restores stock and gives
-  // back the store credit the order spent; issues no refund.
+  // body's `uniqueId`, so send it in both (Phase 4: read the path). Only a paid or confirmed order: a shipped or later
+  // one answers 400 ORDER_CANCEL_INVALID. Restores stock; the store credit the order spent stays spent (it works like
+  // a coupon); issues no refund.
   cancel: defineEndpoint({
     method: 'POST',
     path: '/orders/admin-cancel/:id',

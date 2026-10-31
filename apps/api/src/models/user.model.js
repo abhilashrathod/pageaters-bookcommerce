@@ -1,4 +1,4 @@
-const { Schema, model, trusted } = require('mongoose');
+const { Schema, model } = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 
 const { generateOneTimeToken, hashPassword, verifyPassword } = require('./../helpers/encryption.helper');
@@ -55,9 +55,6 @@ const schema = new Schema(
 
     razorPayCustId: { type: String, default: '' },
     storeCredit: { type: Number, default: 0 },
-    // Credit ids (`RF-…`) already added to `storeCredit`, so a retried cancel/refund credit return adds once
-    // (order-fulfilment addToBalance). Never selected.
-    appliedCreditIds: { type: [String], default: undefined, select: false },
 
     __v: { type: Number, select: false },
   },

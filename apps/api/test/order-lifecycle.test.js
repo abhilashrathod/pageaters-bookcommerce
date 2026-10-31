@@ -212,19 +212,22 @@ describe('POST /orders/admin-cancel/:id', () => {
       ...body,
     });
 
+  // Like the shopper's: never after shipping (ORDER_CANCEL_INVALID).
+  const SHIPPED_OR_LATER = ['shipped', 'fulfilled', 'returned', 'return in progress', 'replacement', 'replacement in progress'];
   for (const stage of STAGES) {
-    const allowed = ['paid', 'confirmed', 'shipped'].includes(stage);
+    const allowed = ['paid', 'confirmed'].includes(stage);
     test(`${allowed ? 'cancels' : 'refuses'} an order in stage '${stage}'`, async () => {
       const order = await orderFor({ orderStatus: stage });
       const res = await cancel(order);
       if (allowed) assertBody(res, 200, ok('ORDER_CANCEL_SUCCESS', {}));
+      else if (SHIPPED_OR_LATER.includes(stage)) assertBody(res, 400, badRequest('ORDER_CANCEL_INVALID'));
       else assertBody(res, 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
       assert.equal((await Order().findById(order._id)).orderStatus, allowed ? 'cancelled' : stage);
     });
   }
 
   test('logs the reason as history, records no request and puts the stock back', async () => {
-    const order = await orderFor({ orderStatus: 'shipped' });
+    const order = await orderFor({ orderStatus: 'confirmed' });
     await cancel(order);
     const cancelled = await Order().findById(order._id);
     assert.deepEqual(

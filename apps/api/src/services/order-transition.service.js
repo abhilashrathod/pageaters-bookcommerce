@@ -10,18 +10,18 @@ const { AppError } = require('../helpers/appError.helper');
 const Order = mongoose.model(models.ORDER);
 
 /**
- * Applies a transition to `order` in the database, only while it is still in the stage it was read in (and matches
- * `filter`), then to the document in memory (for the e-mail and the answer).
+ * Applies a transition to `order` in the database, only while it is still in the stage it was read in, then to the
+ * document in memory (for the e-mail and the answer).
  * @param {import('mongoose').Document & { orderStatus: string }} order The order as read.
- * @param {{ set: object, history: object, push?: object, filter?: object }} change `history` is the new
- *   `orderHistory` entry; `push` other array entries (e.g. `requests`); `filter` extra conditions.
+ * @param {{ set: object, history: object, push?: object }} change `history` is the new `orderHistory` entry; `push`
+ *   other array entries (e.g. `requests`).
  * @returns {Promise<void>}
  * @throws {AppError} ORDER_CHANGED_CONFLICT (409) when the order changed since it was read.
  */
-const transitionOrder = async (order, { set, history, push = {}, filter = {} }) => {
+const transitionOrder = async (order, { set, history, push = {} }) => {
   const entry = { _id: new mongoose.Types.ObjectId(), ...history };
   const moved = await Order.updateOne(
-    { _id: order._id, orderStatus: order.orderStatus, ...filter },
+    { _id: order._id, orderStatus: order.orderStatus },
     { $set: set, $push: { orderHistory: entry, ...push } },
   );
   if (moved.matchedCount !== 1) throw new AppError('ORDER_CHANGED_CONFLICT', { status: 409 });

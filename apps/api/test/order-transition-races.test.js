@@ -10,7 +10,7 @@ const shipping = require('../src/adapters/shipping');
 // PLAN.md Phase 4 "Fix legacy bugs", sub-step b (review): every order transition (ship, Delhivery shipment, deliver,
 // cancel) is conditional on the stage it read, so one that loses a race with another changes nothing and answers 409
 // ORDER_CHANGED_CONFLICT. Each test forces the race by landing the competing change between the read and the write.
-// Legacy saved unconditionally: a ship after a shopper's cancel shipped the books while the shopper kept the credit.
+// Legacy saved unconditionally: a ship after a shopper's cancel shipped the books of a cancelled order.
 
 const { ok } = envelopes;
 const CONFLICT = { statusCode: 409, status: 'ORDER_CHANGED_CONFLICT', message: '', error: '', data: {} };
@@ -60,12 +60,12 @@ const shopperCancel = (order) => call('POST', `/orders/cancel/${order.orderId}`,
 const adminCancel = (order) =>
   call('POST', `/orders/admin-cancel/${order._id}`, { uniqueId: order.orderId, userId: String(shopper.user._id), reason: 'Out of stock' });
 
-// The shopper's cancel landed in full: cancelled, stock back, credit given back once.
+// The shopper's cancel landed in full: cancelled, stock back; the store credit stays spent.
 const assertCancelledInFull = async (order, stockBefore) => {
   const current = await reload(order);
-  assert.deepEqual([current.orderStatus, current.storeCreditReturn, current.shipmentTrackingId], ['cancelled', 'returned', '']);
+  assert.deepEqual([current.orderStatus, current.shipmentTrackingId], ['cancelled', '']);
   assert.equal(await stock(), stockBefore + 1);
-  assert.equal(await balance(), 50);
+  assert.equal(await balance(), 0);
 };
 
 before(async () => {
@@ -118,15 +118,22 @@ describe('a ship that loses to a cancel changes nothing', () => {
     );
     assert.deepEqual(sentEmails(), []);
   });
+});
 
-  test('PATCH /orders/ship/:id/complete', async (t) => {
+describe('a deliver that loses to another change changes nothing', () => {
+  test('PATCH /orders/ship/:id/complete after a full refund landed', async (t) => {
     const order = await creditOrder({ orderStatus: 'shipped' });
-    const stockBefore = await stock();
-    const raced = before1stWrite(t, (set) => set.orderStatus === 'fulfilled', () => adminCancel(order).then((res) => assertBody(res, 200, CANCELLED_OK)));
+    const raced = before1stWrite(
+      t,
+      (set) => set.orderStatus === 'fulfilled',
+      () => Order().collection.updateOne({ _id: order._id }, { $set: { orderStatus: 'refunded' } }),
+    );
 
     assertConflict(await call('PATCH', `/orders/ship/${order._id}/complete`));
     assert.ok(raced());
-    await assertCancelledInFull(order, stockBefore);
+    const current = await reload(order);
+    assert.deepEqual([current.orderStatus, current.orderHistory.length], ['refunded', 0]);
+    assert.deepEqual(sentEmails(), []);
   });
 });
 
@@ -147,7 +154,7 @@ describe('a cancel that loses to another change changes nothing', () => {
       assertConflict(await cancel(order));
       assert.ok(raced());
       const current = await reload(order);
-      assert.deepEqual([current.orderStatus, current.storeCreditReturn, current.requests.length], ['shipped', undefined, 0]);
+      assert.deepEqual([current.orderStatus, current.requests.length], ['shipped', 0]);
       assert.equal(await stock(), stockBefore);
       assert.equal(await balance(), 0);
     });

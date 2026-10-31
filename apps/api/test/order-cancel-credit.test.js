@@ -2,18 +2,14 @@ const { after, before, beforeEach, test } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-const { assertBody, captureLogs, createUser, envelopes, loadCatalog, messagesAt, startTestApp } = require('./helpers');
+const { assertBody, createUser, envelopes, loadCatalog, startTestApp } = require('./helpers');
 const { createOrder, razorpaySignature } = require('./helpers/fixtures/orders');
 
-// PLAN.md Phase 4 "Fix legacy bugs", sub-step b: cancelling an order (shopper or admin) gives back the store credit it
-// spent, with the refunds' durable return (`storeCreditReturn` pending → crediting → returned, one `RF-<order _id>`
-// CREDIT row, the balance step keyed by `appliedCreditIds`). A paid order can be cancelled and then refunded (the
-// refund webhook applies to a cancelled order), so the credit is given back once per order whichever comes first,
-// also when they race. A return cut short answers 500, is logged, and is finished by an admin cancel or a refund event
-// (the shopper's cancel route would too, but the storefront offers Cancel only for paid, confirmed or shipped orders).
-// Legacy: a cancel gave nothing back (a later full refund did).
+// Store credit works like a coupon: once applied to a placed order it is spent. Cancelling the order (shopper or
+// admin) or refunding it never gives it back; a refund returns only the money paid. No cancel after shipping, by the
+// shopper or the admin.
 
-const { badRequest, ok, serverError } = envelopes;
+const { badRequest, ok } = envelopes;
 const WEBHOOK_OK = { status: 'ok' };
 const CANCELLED_OK = ok('ORDER_CANCEL_SUCCESS', {});
 
@@ -26,7 +22,6 @@ let admin;
 let shopper;
 
 const balance = async () => (await User().findById(shopper.user._id)).storeCredit;
-const credits = () => Transactions().find({ action: 'CREDIT' });
 const reload = (order) => Order().findById(order._id);
 
 // An order that spent 50 of store credit (its DEBIT recorded and linked, the balance already debited), paid online.
@@ -70,28 +65,14 @@ const refund = async () => {
   return { status: res.status, body: await res.json() };
 };
 
-// Given back exactly once: the balance, one RF- row for the order, the order marked returned.
-const assertReturnedOnce = async (order) => {
-  assert.equal(await balance(), 50);
-  const rows = await credits();
+// The credit stays spent: the balance is unchanged and the only ledger row is the order's DEBIT.
+const assertCreditSpent = async () => {
+  assert.equal(await balance(), 0);
   assert.deepEqual(
-    rows.map((row) => [row.creditId, row.amount, String(row.orderId)]),
-    [[`RF-${order._id}`, 50, String(order._id)]],
+    (await Transactions().find({})).map((row) => [row.action, row.amount]),
+    [['DEBIT', 50]],
   );
-  assert.equal((await reload(order)).storeCreditReturn, 'returned');
-  const user = await User().findById(shopper.user._id).select('+appliedCreditIds');
-  assert.deepEqual([...user.appliedCreditIds], [`RF-${order._id}`]);
 };
-
-// Makes model[method] reject for the matching calls; other calls go through.
-const failWhen = (t, model, method, matches) => {
-  const original = model[method];
-  t.mock.method(model, method, function (...args) {
-    if (matches(...args)) return Promise.reject(new Error('Test write failure'));
-    return original.apply(this, args);
-  });
-};
-const isBalanceIncrement = (filter, update) => update?.$inc?.storeCredit > 0;
 
 before(async () => {
   api = await startTestApp();
@@ -108,44 +89,33 @@ beforeEach(async () => {
   shopper = await createUser();
 });
 
-test('a shopper cancel gives back the store credit the order spent, once', async () => {
-  for (const orderStatus of ['paid', 'confirmed']) {
-    await Promise.all([Order().deleteMany({}), Transactions().deleteMany({}), User().updateOne({ _id: shopper.user._id }, { storeCredit: 0, $unset: { appliedCreditIds: 1 } })]);
-    const order = await creditOrder({ orderStatus });
-    assertBody(await shopperCancel(order), 200, CANCELLED_OK);
-    const cancelled = await reload(order);
-    assert.deepEqual(
-      [cancelled.orderStatus, cancelled.orderHistory.map((entry) => entry.title), cancelled.requests.map((r) => r.type)],
-      ['cancelled', ['cancelled'], ['cancel']],
-    );
-    await assertReturnedOnce(order);
+test('a shopper or admin cancel of a paid or confirmed order gives no store credit back', async () => {
+  for (const cancel of [shopperCancel, adminCancel]) {
+    for (const orderStatus of ['paid', 'confirmed']) {
+      await Promise.all([Order().deleteMany({}), Transactions().deleteMany({})]);
+      const order = await creditOrder({ orderStatus });
+      assertBody(await cancel(order), 200, CANCELLED_OK);
+      assert.equal((await reload(order)).orderStatus, 'cancelled');
+      await assertCreditSpent();
 
-    // Cancelling again is refused and gives nothing more.
-    assertBody(await shopperCancel(order), 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
-    await assertReturnedOnce(order);
+      // Cancelling again is refused.
+      assertBody(await cancel(order), 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
+    }
   }
 });
 
-test('an admin cancel (shipped included) gives back the store credit, once', async () => {
-  const order = await creditOrder({ orderStatus: 'shipped' });
-  await Promise.all([adminCancel(order), adminCancel(order), adminCancel(order)]);
-  const cancelled = await reload(order);
-  assert.deepEqual([cancelled.orderStatus, cancelled.orderHistory.map((entry) => entry.description)], ['cancelled', ['Out of stock']]);
-  await assertReturnedOnce(order);
+test('no cancel after shipping: shopper and admin get ORDER_CANCEL_INVALID and the order is unchanged', async () => {
+  for (const orderStatus of ['shipped', 'fulfilled', 'return in progress']) {
+    await Promise.all([Order().deleteMany({}), Transactions().deleteMany({})]);
+    const order = await creditOrder({ orderStatus });
+    assertBody(await adminCancel(order), 400, badRequest('ORDER_CANCEL_INVALID'));
+    if (orderStatus === 'shipped') assertBody(await shopperCancel(order), 400, badRequest('ORDER_CANCEL_INVALID'));
+    assert.deepEqual([(await reload(order)).orderStatus, (await reload(order)).orderHistory.length], [orderStatus, 0]);
+    await assertCreditSpent();
+  }
 });
 
-test('an order that spent no credit, or whose debit was never linked, gives nothing back', async () => {
-  const none = await creditOrder({ storeCredit: 0, storeCreditTransaction: null });
-  assertBody(await shopperCancel(none), 200, CANCELLED_OK);
-  const unlinked = await creditOrder({ storeCreditTransaction: null });
-  assertBody(await adminCancel(unlinked), 200, CANCELLED_OK);
-
-  for (const order of [none, unlinked]) assert.equal((await reload(order)).storeCreditReturn, undefined);
-  assert.equal(await balance(), 0);
-  assert.equal((await credits()).length, 0);
-});
-
-test('cancelled, then fully refunded: the refund records the order refunded but gives nothing again', async () => {
+test('cancelled, then fully refunded: the refund returns only the money paid', async () => {
   const order = await creditOrder();
   assertBody(await shopperCancel(order), 200, CANCELLED_OK);
   assertBody(await refund(), 200, WEBHOOK_OK);
@@ -156,96 +126,14 @@ test('cancelled, then fully refunded: the refund records the order refunded but 
     [refunded.orderStatus, refunded.orderHistory.map((entry) => entry.title), [...refunded.refundIds]],
     ['refunded', ['cancelled', 'refunded'], ['rfnd_test_c']],
   );
-  await assertReturnedOnce(order);
+  await assertCreditSpent();
 });
 
-test('fully refunded first: the order can no longer be cancelled, and the credit came back once', async () => {
+test('fully refunded first: the order can no longer be cancelled and no credit comes back', async () => {
   const order = await creditOrder({ orderStatus: 'returned' });
   assertBody(await refund(), 200, WEBHOOK_OK);
   assertBody(await shopperCancel(order), 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
   assertBody(await adminCancel(order), 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
   assert.equal((await reload(order)).orderStatus, 'refunded');
-  await assertReturnedOnce(order);
-});
-
-test('a cancel and a full refund racing give the credit back once', async () => {
-  for (let round = 0; round < 5; round += 1) {
-    await Promise.all([Order().deleteMany({}), Transactions().deleteMany({}), User().updateOne({ _id: shopper.user._id }, { storeCredit: 0, $unset: { appliedCreditIds: 1 } })]);
-    const order = await creditOrder();
-    const [cancel, refunded] = await Promise.all([round % 2 ? adminCancel(order) : shopperCancel(order), refund()]);
-    // The loser of the race: 400 when the refund landed before the cancel's read, 409 between its read and write.
-    assert.ok([200, 400, 409].includes(cancel.status), JSON.stringify(cancel.body));
-    assertBody(refunded, 200, WEBHOOK_OK);
-    assert.equal((await reload(order)).orderStatus, 'refunded');
-    await assertReturnedOnce(order);
-  }
-});
-
-test('a refund that read the order before a cancel started its return records the refund without a second return', async (t) => {
-  const order = await creditOrder();
-  const original = Order().updateOne;
-  let cancelledMeanwhile = false;
-  t.mock.method(Order(), 'updateOne', async function (filter, ...rest) {
-    if (!cancelledMeanwhile && filter?.refundIds) {
-      cancelledMeanwhile = true;
-      // The cancel lands between the refund's read and its update (the cancel's own return is left pending).
-      await Order().collection.updateOne({ _id: order._id }, { $set: { orderStatus: 'cancelled', storeCreditReturn: 'pending' } });
-    }
-    return original.call(this, filter, ...rest);
-  });
-
-  assertBody(await refund(), 200, WEBHOOK_OK);
-  assert.ok(cancelledMeanwhile);
-  const refunded = await reload(order);
-  assert.deepEqual([refunded.orderStatus, [...refunded.refundIds]], ['refunded', ['rfnd_test_c']]);
-  // The refund finished the cancel's unfinished return (the same RF- row and credit id), once.
-  await assertReturnedOnce(order);
-});
-
-test('a cancel whose balance step fails answers 500, stays cancelled and crediting; cancelling again finishes it', async (t) => {
-  const logs = captureLogs(t);
-  const order = await creditOrder();
-  failWhen(t, User(), 'updateOne', isBalanceIncrement);
-
-  assertBody(await shopperCancel(order), 500, serverError);
-  const cut = await reload(order);
-  assert.deepEqual([cut.orderStatus, cut.storeCreditReturn, await balance()], ['cancelled', 'crediting', 0]);
-  assert.equal(
-    messagesAt(logs).find((message) => message.startsWith('Cancelled order')),
-    `Cancelled order ${order.orderId}: adding CREDIT transaction RF-${order._id} (50) to the balance failed; an admin cancel or a refund event retries it`,
-  );
-  // The cut-short return is logged with its state, so staff can find and finish it.
-  assert.ok(
-    messagesAt(logs).includes(
-      `Cancelled order ${order.orderId} is cancelled, but its store credit return is left crediting; an admin cancel or a refund event finishes it`,
-    ),
-  );
-
-  t.mock.restoreAll();
-  assertBody(await shopperCancel(order), 200, CANCELLED_OK);
-  await assertReturnedOnce(order);
-  // The retry only finished the return: one history entry and one request.
-  const finished = await reload(order);
-  assert.deepEqual([finished.orderHistory.length, finished.requests.length], [1, 1]);
-  assertBody(await adminCancel(order), 400, badRequest('ORDER_INFO_ATTEMPT_FAILED'));
-});
-
-test('a cancel cut short before its CREDIT row is left pending; an admin cancel or a refund event finishes it', async (t) => {
-  const order = await creditOrder({ orderStatus: 'confirmed' });
-  failWhen(t, Transactions(), 'findOneAndUpdate', () => true);
-  assertBody(await adminCancel(order), 500, serverError);
-  assert.deepEqual([(await reload(order)).storeCreditReturn, await balance(), (await credits()).length], ['pending', 0, 0]);
-  t.mock.restoreAll();
-  assertBody(await adminCancel(order), 200, CANCELLED_OK);
-  await assertReturnedOnce(order);
-
-  // The same cut, finished by the refund webhook instead.
-  await Promise.all([Order().deleteMany({}), Transactions().deleteMany({}), User().updateOne({ _id: shopper.user._id }, { storeCredit: 0, $unset: { appliedCreditIds: 1 } })]);
-  const paid = await creditOrder();
-  failWhen(t, Transactions(), 'findOneAndUpdate', () => true);
-  assertBody(await shopperCancel(paid), 500, serverError);
-  t.mock.restoreAll();
-  assertBody(await refund(), 200, WEBHOOK_OK);
-  assert.equal((await reload(paid)).orderStatus, 'refunded');
-  await assertReturnedOnce(paid);
+  await assertCreditSpent();
 });

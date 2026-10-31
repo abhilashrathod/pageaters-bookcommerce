@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
 const { getId } = require('../helpers/utils.helper');
-const { cancelOrder, finishCancelledReturn, unfinishedCancel } = require('./order-cancellation.service');
+const { cancelOrder } = require('./order-cancellation.service');
 const { transitionOrder } = require('./order-transition.service');
 const { adminOrderView } = require('./order-queries.service');
 const { sendAdminCancelEmail, sendDeliveredEmail, sendShippedEmail } = require('./order-notifications.service');
@@ -13,17 +13,19 @@ const { sendAdminCancelEmail, sendDeliveredEmail, sendShippedEmail } = require('
 //   attempted ─ create(online) → created ─ payment webhook → paid ┐
 //   attempted ─ create(cod) → confirmed ──────────────────────────┤
 //   paid | confirmed ─ ship / Delhivery shipment → shipped ─ complete → fulfilled
-//   paid | confirmed ─ shopper cancel → cancelled;  paid | confirmed | shipped ─ admin cancel → cancelled
-//     (a cancel gives back the store credit the order spent, once, also when the order is later refunded)
+//   paid | confirmed ─ shopper or admin cancel → cancelled (never after shipping; store credit applied to the order
+//     is spent like a coupon: neither a cancel nor a refund gives it back)
 //   fulfilled ─ return request → returned ─ align pickup → return in progress ─ close → returned
 //   fulfilled ─ replace request → replacement ─ align → replacement in progress ─ close → fulfilled
 //   any (with a Razorpay order) ─ refund webhook → refunded
 //
-// A transition from any other stage is refused with ORDER_INFO_ATTEMPT_FAILED.
+// A transition from any other stage is refused with ORDER_INFO_ATTEMPT_FAILED (a cancel of a shipped or later order
+// with ORDER_CANCEL_INVALID).
 
 const Order = mongoose.model(models.ORDER);
 
-const { PAID, CONFIRMED, SHIPPED, FULFILLED, CANCELLED, RETURNED, RETURNED_IN_PROGRESS, REPLACEMENT_IN_PROGRESS } = enums.ORDER_STAGES;
+const { PAID, CONFIRMED, SHIPPED, FULFILLED, CANCELLED, RETURNED, RETURNED_IN_PROGRESS, REPLACEMENT, REPLACEMENT_IN_PROGRESS } = enums.ORDER_STAGES;
+const SHIPPED_OR_LATER = [SHIPPED, FULFILLED, RETURNED, RETURNED_IN_PROGRESS, REPLACEMENT, REPLACEMENT_IN_PROGRESS];
 const BUYER = { path: 'userId', select: 'fullName email contactNo' };
 const BUYER_AND_ADDRESS = [BUYER, { path: 'deliveryAddress' }];
 
@@ -55,7 +57,7 @@ const shipOrder = async (orderId, shipmentTrackingId) => {
  * @param {string} id Order `_id`.
  * @returns {Promise<object>} The order, buyer and address populated, `payment` as the summary (adminOrderView).
  * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such order in `shipped`), ORDER_CHANGED_CONFLICT (409, it changed
- *   meanwhile, e.g. an admin cancel landed).
+ *   meanwhile, e.g. a full refund landed).
  */
 const completeShipment = async (id) => {
   const order = await Order.findOne({ _id: id, orderStatus: SHIPPED }).populate(BUYER_AND_ADDRESS);
@@ -68,26 +70,19 @@ const completeShipment = async (id) => {
 };
 
 /**
- * Admin: cancels a paid, confirmed or shipped order, logs the reason as its history, e-mails the buyer (production,
- * when `notify`), puts the stock back and gives back the store credit it spent (order-cancellation.service.js). No
- * refund is started. On an order already cancelled whose store credit return was cut short, it only finishes that
- * return: this is how staff finish one (the error log names the order).
+ * Admin: cancels a paid or confirmed order (like the shopper's cancel, never after shipping), logs the reason as its
+ * history, e-mails the buyer (production, when `notify`) and puts the stock back (order-cancellation.service.js).
+ * Store credit applied to the order is spent and stays spent. No refund is started.
  * Legacy: the order is found by `uniqueId` and `userId` from the body; the route's `:id` is ignored.
  * @param {{ uniqueId?: string, userId?: string, reason?: string, notify?: unknown }} request
- * @returns {Promise<void>} Rejects when giving the store credit back failed (the order stays cancelled; logged).
- * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no such order), ORDER_CHANGED_CONFLICT (409, it changed meanwhile)
+ * @returns {Promise<void>}
+ * @throws {AppError} ORDER_CANCEL_INVALID (shipped or later), ORDER_INFO_ATTEMPT_FAILED (no such paid/confirmed order),
+ *   ORDER_CHANGED_CONFLICT (409, it changed meanwhile)
  */
 const cancelByAdmin = async ({ uniqueId, userId, reason, notify }) => {
-  const order = await Order.findOne({
-    $or: [{ orderStatus: PAID }, { orderStatus: CONFIRMED }, { orderStatus: SHIPPED }, unfinishedCancel()],
-    orderId: uniqueId,
-    userId,
-  }).populate([BUYER]);
-  if (!order) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
-  if (order.orderStatus === CANCELLED) {
-    await finishCancelledReturn(order);
-    return;
-  }
+  const order = await Order.findOne({ orderId: uniqueId, userId }).populate([BUYER]);
+  if (order && SHIPPED_OR_LATER.includes(order.orderStatus)) throw new AppError('ORDER_CANCEL_INVALID');
+  if (!order || ![PAID, CONFIRMED].includes(order.orderStatus)) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
 
   await cancelOrder(order, { history: historyEntry(CANCELLED, reason), notify: () => sendAdminCancelEmail(order, reason, notify) });
 };

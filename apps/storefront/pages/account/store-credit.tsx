@@ -324,7 +324,7 @@ const StoreCredit: React.FC<Props> = () => {
                       <Accordion.Control>What happens if I return an item purchased with store credit?</Accordion.Control>
                       <Accordion.Panel>
                         <p>
-                        If you return an item that was purchased with store credit, the credit will be returned to your account and can be used towards a future purchase.
+                        Store credit works like a coupon: once applied to an order it is used up, and it is not returned if the order is cancelled or refunded.
                         </p>
                       </Accordion.Panel>
                     </Accordion.Item>

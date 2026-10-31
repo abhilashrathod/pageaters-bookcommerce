@@ -56,7 +56,9 @@ export type AdminShipmentCreateRequest = z.infer<typeof adminShipmentCreateReque
 
 // POST /orders/admin-cancel/:id. The legacy controller ignores the path and finds the order by `uniqueId` (its
 // `OD-…` id) and `userId` from the body, so the admin sends the `OD-…` id in both (Phase 4: read it from the path).
-// `reason` becomes the timeline entry and the email text; `notify` emails the customer (production only).
+// `reason` becomes the timeline entry and the email text; `notify` emails the customer (production only). Only a paid
+// or confirmed order can be cancelled (a shipped or later one answers 400 ORDER_CANCEL_INVALID); the store credit it
+// spent stays spent.
 export const adminOrderCancelPayloadSchema = z.object({
   uniqueId: orderSchema.shape.orderId,
   userId: objectIdSchema,

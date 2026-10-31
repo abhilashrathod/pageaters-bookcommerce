@@ -168,10 +168,6 @@ export const orderSchema = z.object({
   // Admin view only (not in customerOrderSchema). The Razorpay refund ids (`rfnd_…`) the refund webhook recorded;
   // absent until the first refund.
   refundIds: z.array(z.string()).optional(),
-  // Giving the spent store credit back after a cancel or a full refund (once per order): `pending` (to do),
-  // `crediting` (the CREDIT transaction is recorded; the balance step may still run), `returned`. Absent when nothing
-  // is to be given back.
-  storeCreditReturn: z.enum(['pending', 'crediting', 'returned']).optional(),
 
   // Money, in rupees: total = subTotal + shipping + gift wrapping − storeCredit.
   subTotal: moneySchema,
