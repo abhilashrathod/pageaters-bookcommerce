@@ -28,6 +28,8 @@ const create = ({ webhookSecret, idSalt = crypto.randomBytes(16) } = {}) => {
 
   return {
     name: 'mock',
+    // A placeholder: Razorpay Checkout can't open a mock order; pay it by signing a webhook (see above).
+    keyId: 'rzp_test_mock',
     createOrder: async ({ amount, currency, receipt }) => {
       count += 1;
       const id = `order_mock${crypto.createHmac('sha256', idSalt).update(`${receipt}:${count}`).digest('hex').slice(0, 14)}`;

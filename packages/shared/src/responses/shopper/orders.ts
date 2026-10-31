@@ -1,4 +1,4 @@
-import type { z } from 'zod';
+import { z } from 'zod';
 
 import { orderSchema } from '../../commerce/order.ts';
 import { populatedCustomerOrderSchema } from '../../populated.ts';
@@ -29,10 +29,11 @@ export const shopperCheckoutOrderSchema = orderSchema
 export type ShopperCheckoutOrder = z.infer<typeof shopperCheckoutOrderSchema>;
 export const shopperCheckoutOrderResponseSchema = apiResponse(shopperCheckoutOrderSchema);
 
-// POST /orders/create: the total to pay and the order's ID; for an online payment also the Razorpay order ID that
-// opens the checkout. Cash on delivery confirms the order right away.
+// POST /orders/create: the total to pay and the order's ID; for an online payment also the Razorpay order ID and the
+// public key id that open the checkout. Cash on delivery confirms the order right away.
 export const shopperOrderCreateResultSchema = orderSchema
   .pick({ orderId: true, total: true, razorOrderId: true })
-  .partial({ razorOrderId: true });
+  .partial({ razorOrderId: true })
+  .extend({ razorKeyId: z.string().optional() });
 export type ShopperOrderCreateResult = z.infer<typeof shopperOrderCreateResultSchema>;
 export const shopperOrderCreateResponseSchema = apiResponse(shopperOrderCreateResultSchema);

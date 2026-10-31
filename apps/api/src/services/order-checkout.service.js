@@ -5,7 +5,7 @@ const { AppError } = require('../helpers/appError.helper');
 const { generateRandomNumber } = require('../helpers/utils.helper');
 const { debitStoreCredit, deductInventory, resetCart } = require('./order-fulfilment.service');
 const { sendConfirmationEmail, sendConfirmationSms } = require('./order-notifications.service');
-const { createPaymentOrder, unclaimedPayment } = require('./order-payment.service');
+const { createPaymentOrder, paymentKeyId, unclaimedPayment } = require('./order-payment.service');
 const { isPendingOrderConflict, putBackPlacedOrder, settleFailedLink } = require('./order-place-compensation.service');
 const {
   CART_POPULATE,
@@ -115,8 +115,8 @@ const attemptOrder = async (userId, cartId, address) => {
  * @param {string} userId
  * @param {string | undefined} cartId From the cart cookie; must be the user's cart.
  * @param {{ method: 'cod' | 'online', instructions?: string, giftOptions: object }} checkout
- * @returns {Promise<{ razorOrderId: string, total: number, orderId: string } | { total: number, orderId: string }>}
- *   The response data: with `razorOrderId` for online payment.
+ * @returns {Promise<{ razorOrderId: string, razorKeyId: string, total: number, orderId: string } | { total: number, orderId: string }>}
+ *   The response data: with `razorOrderId` and the public `razorKeyId` for online payment.
  * @throws {AppError} INVALID_REQUEST (a gift without a known package), ORDER_INFO_ATTEMPT_FAILED (no cart cookie, no
  *   pending order, its payment is being confirmed, or another request placed it meanwhile), CART_NOT_EXIST,
  *   STORE_CREDIT_SURPLUS (the applied credit is more than the order now costs), STORE_CREDIT_UNAVAILABLE (more than
@@ -189,7 +189,7 @@ const placeOrder = async (userId, cartId, { method, instructions, giftOptions: r
   );
   if (claimed.matchedCount !== 1) throw new AppError('ORDER_INFO_ATTEMPT_FAILED');
 
-  if (online) return { razorOrderId: paymentOrder.id, total, orderId: order.orderId };
+  if (online) return { razorOrderId: paymentOrder.id, razorKeyId: paymentKeyId(), total, orderId: order.orderId };
 
   // Takes the order back out of `confirmed` (compensation; there are no transactions; order-place-compensation).
   const putBack = (debit) => putBackPlacedOrder(order, before, history._id, debit);

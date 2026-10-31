@@ -340,7 +340,7 @@ describe('POST /orders/create — online payment (mock payments adapter)', () =>
     assert.equal(created.length, 1);
     const [paymentOrder] = created;
     assert.match(paymentOrder.id, /^order_mock[0-9a-f]{14}$/);
-    assertBody(res, 200, ok('ORDER_CREATE_SUCCESS', { razorOrderId: paymentOrder.id, total: 499, orderId: attempted.orderId }));
+    assertBody(res, 200, ok('ORDER_CREATE_SUCCESS', { razorOrderId: paymentOrder.id, razorKeyId: 'rzp_test_mock', total: 499, orderId: attempted.orderId }));
     assert.equal(
       JSON.stringify({ amount: paymentOrder.amount, currency: paymentOrder.currency, receipt: paymentOrder.receipt }),
       JSON.stringify({ amount: 49900, currency: 'INR', receipt: `${attempted.orderId}-RCPTID` }),

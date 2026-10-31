@@ -34,6 +34,7 @@ const create = (config = {}) => {
 
   return {
     name: 'razorpay',
+    keyId: config.keyId,
     createOrder: async ({ amount, currency, receipt }) => {
       try {
         return await client.orders.create({ amount, currency, receipt });

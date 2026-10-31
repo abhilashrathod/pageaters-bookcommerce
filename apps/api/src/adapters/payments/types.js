@@ -23,6 +23,7 @@
 /**
  * @typedef {object} PaymentsAdapter
  * @property {'razorpay' | 'mock'} name
+ * @property {string} keyId The public key id the browser's Razorpay Checkout opens with (never the secret).
  * @property {(order: PaymentOrderRequest) => Promise<PaymentOrder>} createOrder Creates a payment order; rejects
  *   when it was not created.
  * @property {(rawBody: string, signature?: string) => boolean} verifyWebhookSignature Whether `signature` (the

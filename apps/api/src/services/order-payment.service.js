@@ -114,6 +114,9 @@ const isId = (value) => typeof value === 'string' && value !== '';
  * @returns {Promise<{ id: string }>} The payment order. Rejects when the adapter fails (the caller answers 500
  *   and leaves the order `attempted`).
  */
+// The public key id the storefront opens Razorpay Checkout with.
+const paymentKeyId = () => payments.keyId;
+
 const createPaymentOrder = (orderId, total) => payments.createOrder({ amount: toPaise(total), currency: 'INR', receipt: `${orderId}-RCPTID` });
 
 /**
@@ -246,4 +249,4 @@ const confirmPayment = async ({ rawBody, signature }) => {
   await sendConfirmationEmail(user, order);
 };
 
-module.exports = { PAYMENT_SUMMARY_FIELDS, confirmPayment, createPaymentOrder, isId, paymentSummary, unclaimedPayment, verifiedEvent };
+module.exports = { PAYMENT_SUMMARY_FIELDS, confirmPayment, createPaymentOrder, isId, paymentKeyId, paymentSummary, unclaimedPayment, verifiedEvent };

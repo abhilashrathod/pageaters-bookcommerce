@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { get } = require('lodash');
+const { PUBLIC_PAGE_LIMIT } = require('@pageaters/shared');
 
 const { models, enums } = require('../constants');
 const { AppError } = require('../helpers/appError.helper');
@@ -136,7 +137,7 @@ const getUserOrder = async (userId, uniqueId) => {
 };
 
 /**
- * The user's placed orders, newest first.
+ * The user's placed orders, newest first, at most PUBLIC_PAGE_LIMIT (50; public lists are capped).
  * @param {string} userId
  * @returns {Promise<object[]>}
  */
@@ -144,6 +145,7 @@ const listUserOrders = (userId) =>
   Order.find({ userId, orderStatus: mongoose.trusted({ $nin: NOT_PLACED }) })
     .select('orderId orderDate deliveryAddress orderStatus shipmentTrackingId products boxes bundles total')
     .sort({ createdAt: -1 })
+    .limit(PUBLIC_PAGE_LIMIT)
     .populate(ORDER_POPULATE);
 
 /**
