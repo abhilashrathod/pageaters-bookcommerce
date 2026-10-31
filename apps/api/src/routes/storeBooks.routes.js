@@ -4,12 +4,13 @@ const router = new Router();
 const { adminBookReferencesPayloadSchema } = require('@pageaters/shared');
 const { USER_ROLES } = require('./../constants/enums');
 
+const pageLimit = require('./../middlewares/pageLimit.middleware');
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
 const validate = require('./../middlewares/validate.middleware');
 
 const controller = require('./../controllers/storeBook.controller');
 
-router.get('/', controller.getAll);
+router.get('/', pageLimit, controller.getAll);
 router.get('/unique/:id', controller.getByUniqueId);
 router.get('/search', controller.search);
 

@@ -4,12 +4,13 @@ const router = new Router();
 const { adminDealReferencesPayloadSchema, dealListFilterSchema } = require('@pageaters/shared');
 const { USER_ROLES } = require('./../constants/enums');
 
+const pageLimit = require('./../middlewares/pageLimit.middleware');
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
 const validate = require('./../middlewares/validate.middleware');
 
 const controller = require('./../controllers/storeDeal.contoller');
 
-router.get('/', validate(dealListFilterSchema), controller.getAll);
+router.get('/', validate(dealListFilterSchema), pageLimit, controller.getAll);
 router.get('/unique/:id', controller.getByUniqueId);
 
 // ADMIN

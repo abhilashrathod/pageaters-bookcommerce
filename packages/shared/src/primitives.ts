@@ -42,8 +42,10 @@ export const sortOrderSchema = z.preprocess(
 export type SortOrder = z.infer<typeof sortOrderSchema>;
 
 export const DEFAULT_PAGE_LIMIT = 10;
-// The legacy frontends ask for up to 1000 rows at once (admin pickers, sitemap); keep that ceiling.
+// The ceiling for an authenticated ADMIN (the admin's pickers ask for up to 1000 rows at once) and internal callers.
 export const MAX_PAGE_LIMIT = 1000;
+// The ceiling for everyone else: the API answers a public list request over it with 400 INVALID_PAGING.
+export const PUBLIC_PAGE_LIMIT = 50;
 
 // List endpoints' query. Values arrive as strings and are coerced. An endpoint that restricts sorting replaces
 // `sortBy` with its own enum: `paginationQuerySchema.extend({ sortBy: z.enum([...]).default('createdAt') })`.

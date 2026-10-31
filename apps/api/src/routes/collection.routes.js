@@ -4,11 +4,12 @@ const router = new Router();
 const { adminCollectionReferencesPayloadSchema } = require('@pageaters/shared');
 const { USER_ROLES } = require('./../constants/enums');
 
+const pageLimit = require('./../middlewares/pageLimit.middleware');
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
 const validate = require('./../middlewares/validate.middleware');
 const controller = require('./../controllers/collection.controller');
 
-router.get('/', controller.getAll);
+router.get('/', pageLimit, controller.getAll);
 router.get('/unique/:id', controller.getByUniqueId);
 router.get('/search/:q', controller.search);
 

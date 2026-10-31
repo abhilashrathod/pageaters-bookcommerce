@@ -3,12 +3,13 @@ const router = new Router();
 
 const { USER_ROLES } = require('./../constants/enums');
 
+const pageLimit = require('./../middlewares/pageLimit.middleware');
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
 const controller = require('./../controllers/category.controller');
 
-router.get('/', controller.getAll);
-router.get('/:id/products', controller.getAllProducts);
-router.get('/:id/overview', controller.getOverviewProducts);
+router.get('/', pageLimit, controller.getAll);
+router.get('/:id/products', pageLimit, controller.getAllProducts);
+router.get('/:id/overview', pageLimit, controller.getOverviewProducts);
 router.get('/unique/:id', controller.getByUniqueId);
 router.get('/search/:q', controller.search);
 

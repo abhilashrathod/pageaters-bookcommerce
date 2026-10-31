@@ -89,7 +89,11 @@ describe('GET /categories', () => {
     for (const query of ['page=0', 'page=abc', 'limit=0', 'limit=1001', 'limit=2.5', 'sortOrder=up']) {
       assertBody(await api.request(`/categories?${query}`), 400, badRequest('INVALID_PAGING'));
     }
-    assert.equal((await api.request('/categories?limit=1000')).status, 200);
+    // Public pages stop at 50; an ADMIN may ask for up to 1000 (test/page-limit.test.js covers every public list).
+    assertBody(await api.request('/categories?limit=51'), 400, badRequest('INVALID_PAGING'));
+    assert.equal((await api.request('/categories?limit=50')).status, 200);
+    assert.equal((await api.request('/categories?limit=1000', { cookie: admin.cookie })).status, 200);
+    assertBody(await api.request('/categories?limit=1001', { cookie: admin.cookie }), 400, badRequest('INVALID_PAGING'));
   });
 });
 

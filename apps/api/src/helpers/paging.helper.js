@@ -5,7 +5,8 @@ const { AppError } = require('./appError.helper');
 // Paging defaults for list endpoints (mongoose-paginate-v2 options), from the shared list-query contract
 // (`paginationQuerySchema` in @pageaters/shared): page 1, limit DEFAULT_PAGE_LIMIT (10), at most MAX_PAGE_LIMIT
 // (1000), newest first (`createdAt` descending). `sortOrder` takes asc/desc/1/-1 (also ascending/descending).
-// '' counts as missing, as the admin sends every key.
+// '' counts as missing, as the admin sends every key. 1000 is the admin and internal ceiling: public list routes also
+// mount pageLimit.middleware.js, which refuses a limit over PUBLIC_PAGE_LIMIT (50) unless the caller is an ADMIN.
 
 /**
  * A sort on `field` with `_id` as the tiebreak (same direction), so pages never repeat or skip documents that tie.

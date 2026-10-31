@@ -4,9 +4,10 @@ const router = new Router();
 const { USER_ROLES } = require('./../constants/enums');
 
 const controller = require('./../controllers/mysteryBox.controller');
+const pageLimit = require('./../middlewares/pageLimit.middleware');
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
 
-router.get('/', controller.getAll);
+router.get('/', pageLimit, controller.getAll);
 router.get('/unique/:id', controller.getByUniqueId);
 
 // ADMIN
