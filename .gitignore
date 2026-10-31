@@ -26,6 +26,9 @@ seed/data/
 .env.*
 !.env.example
 
+# CMS media written to local disk when no Blob token is set (apps/cms/src/payload.config.ts)
+apps/cms/media/
+
 # Subagent worktrees
 .claude/worktrees/
 

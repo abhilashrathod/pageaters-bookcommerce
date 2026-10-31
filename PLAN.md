@@ -605,9 +605,17 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
 
 ## Phase 6 — CMS (Payload)
 
-- [ ] `apps/cms` scaffold: Payload 3, MongoDB adapter (separate DB), Vercel Blob storage adapter
+- [x] `apps/cms` scaffold: Payload 3, MongoDB adapter (separate DB), Vercel Blob storage adapter
+  - Done 2026-10-31 (inline, reviewed + audited): Payload **3.91.0** on Next 16.4.3 / React 19.2.6 (3.92.x needs Node
+    ≥22.23.4 and was 4 days old), port 3001, `/` → `/admin`, REST only (no GraphQL routes). `src/env.ts` (zod) validates
+    `MONGODB_URI` (must name a database, never `pageaters_api`), `PAYLOAD_SECRET` (≥32) and the optional
+    `BLOB_READ_WRITE_TOKEN` (media under `cms/` on Blob; local disk without it). Users (auth) and Media collections as
+    placeholders for the next step. Generated `importMap.js`, `payload-types.ts` and the `app/(payload)` route files
+    are lint/prettier-ignored. `esbuild` install script denied (prebuilt binary). Smoke-tested `next start` against an
+    in-memory MongoDB: `/admin`, create-first-user and the REST API answer 200
 - [ ] Collections: Pages, Templates (one `type` per page: Product, Collection, Category, Bundle, Book Box), Overrides,
-      Media, Users (roles: admin, demo-readonly); seed the CMS read-only demo user
+      Media, Users (roles: admin, demo-readonly); seed the CMS read-only demo user and the owner's admin account (from
+      the local `.env`), so `/admin/create-first-user` is never open on a deployment
 - [ ] Globals: Header (with navigation), Footer, Announcement Bar, Theme tokens, SEO defaults
 - [ ] Blocks: Banner (one block with a layout option, replacing the five legacy banner variants), Product Set row,
       Featured Books, Carousel (collections, categories, bundles or deals), Rich text; template core blocks (product

@@ -10,5 +10,6 @@ allowBuilds:
   aws-sdk: false # maintenance notice
   core-js: false # funding notice
   es5-ext: false # postinstall message
+  esbuild: false # prebuilt binary via optional deps
   fsevents: false # optional native watcher (legacy chokidar)
   unrs-resolver: false # prebuilt binary via optional deps

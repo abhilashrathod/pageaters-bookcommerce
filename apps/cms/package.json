@@ -1,0 +1,40 @@
+{
+  "name": "cms",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "NODE_OPTIONS=--no-deprecation next dev --port 3001",
+    "build": "NODE_OPTIONS=--no-deprecation next build",
+    "start": "NODE_OPTIONS=--no-deprecation next start --port 3001",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test 'src/**/*.test.ts'",
+    "payload": "NODE_OPTIONS=--no-deprecation payload",
+    "generate:importmap": "NODE_OPTIONS=--no-deprecation payload generate:importmap",
+    "generate:types": "NODE_OPTIONS=--no-deprecation payload generate:types"
+  },
+  "dependencies": {
+    "@payloadcms/db-mongodb": "3.91.0",
+    "@payloadcms/next": "3.91.0",
+    "@payloadcms/richtext-lexical": "3.91.0",
+    "@payloadcms/storage-vercel-blob": "3.91.0",
+    "@payloadcms/ui": "3.91.0",
+    "graphql": "16.11.0",
+    "next": "16.4.3",
+    "payload": "3.91.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "sharp": "0.35.4",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@pageaters/config": "workspace:*",
+    "@types/node": "22.20.5",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.5",
+    "typescript": "6.0.3"
+  },
+  "license": "UNLICENSED"
+}
