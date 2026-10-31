@@ -8,25 +8,27 @@ This file is temporary: when every phase is done, archive the decision log into 
 
 ## Decision log (agreed 2026-10-25 / 26)
 
-| Topic                  | Decision                                                                                                                                                                                                                                                       |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Monorepo               | Turborepo + pnpm, Node 22 LTS                                                                                                                                                                                                                                  |
-| Hosting                | Everything on Vercel (storefront, admin, cms, api)                                                                                                                                                                                                             |
-| Domains                | `demo.pageaters.com`, `admin.demo.`, `cms.demo.`, `api.demo.pageaters.com`. Root domain untouched                                                                                                                                                              |
-| Storefront             | Migrate to Next.js **App Router**; UI moves to **Tailwind + shadcn/ui** (translate existing components)                                                                                                                                                        |
-| Backend                | Stays **JavaScript** (CommonJS; ADR 0001), validated with the shared zod schemas; layered architecture; serverless-safe                                                                                                                                        |
-| CMS                    | **Payload CMS 3** as `apps/cms`. Controls: Home + campaign pages (free-form), templates for Product, Collection, Category, Bundle, Book Box pages (locked core blocks + per-item overrides), Header, Nav, Footer, Announcement bar, Theme, SEO                 |
-| Code-owned pages       | Cart, checkout, profile/account, auth                                                                                                                                                                                                                          |
-| Git history            | **Keep** all three repos' history (Bitbucket → GitHub), scrubbed of secrets only                                                                                                                                                                               |
-| License                | **All Rights Reserved** — review/showcase only; no reuse of code, brand or content                                                                                                                                                                             |
-| Name                   | Keep **Pageaters** branding                                                                                                                                                                                                                                    |
-| Database               | New MongoDB Atlas cluster (free tier) with fake/sanitised data. Old Vultr instance destroyed                                                                                                                                                                   |
-| Seed data              | From `pageaters-data-dump` (books-only export: 669 books, 313 authors, 55 bundles, 14 collections, 12 categories, 23 product sets). Strip `wholeSalePriceHistory`; replace `inventory` with generated values. Local dev only, never committed                  |
-| Images                 | Book covers from Open Library by ISBN (515/618); author photos from Open Library only on confident name match, else branded initials avatar; collections, bundles, categories and the 4 ISBN-less books get generated brand artwork. All stored on Vercel Blob |
-| Payments               | Razorpay **test mode only**; boot guard rejects `rzp_live_` keys in demo                                                                                                                                                                                       |
-| Email / SMS / Shipping | Mock adapters; in-app outbox                                                                                                                                                                                                                                   |
-| Demo access            | Storefront: one-click demo shopper; cart/address/orders/search only. Admin: catalog read-only, order lifecycle actions allowed. CMS: read-only. Uploads: super-admin only. Seeded once; weekly visitor cleanup                                                 |
-| Credentials            | Razorpay, Twilio, Delhivery, SendGrid revoked/rotated by owner; AWS and Cloudinary accounts closed; Vultr DB destroyed                                                                                                                                         |
+| Topic                  | Decision                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo               | Turborepo + pnpm, Node 22 LTS                                                                                                                                                                                                                                                                                                                       |
+| Hosting                | Everything on Vercel (storefront, admin, cms, api)                                                                                                                                                                                                                                                                                                  |
+| Domains                | `demo.pageaters.com`, `admin.demo.`, `cms.demo.`, `api.demo.pageaters.com`. Root domain untouched                                                                                                                                                                                                                                                   |
+| Storefront             | Migrate to Next.js **App Router**; UI moves to **Tailwind + shadcn/ui** (translate existing components)                                                                                                                                                                                                                                             |
+| Backend                | Stays **JavaScript** (CommonJS; ADR 0001), validated with the shared zod schemas; layered architecture; serverless-safe                                                                                                                                                                                                                             |
+| CMS                    | **Payload CMS 3** as `apps/cms`. Controls: Home + campaign pages (free-form), templates for Product, Collection, Category, Bundle, Book Box pages (locked core blocks + per-item overrides), Header, Nav, Footer, Announcement bar, Theme, SEO                                                                                                      |
+| Code-owned pages       | Cart, checkout, profile/account, auth                                                                                                                                                                                                                                                                                                               |
+| Git history            | **Keep** all three repos' history (Bitbucket → GitHub), scrubbed of secrets only                                                                                                                                                                                                                                                                    |
+| License                | **All Rights Reserved** — review/showcase only; no reuse of code, brand or content                                                                                                                                                                                                                                                                  |
+| Name                   | Keep **Pageaters** branding                                                                                                                                                                                                                                                                                                                         |
+| Database               | New MongoDB Atlas cluster (free tier) with fake/sanitised data. Old Vultr instance destroyed                                                                                                                                                                                                                                                        |
+| Seed data              | From `pageaters-data-dump` (books-only export: 669 books, 313 authors, 55 bundles, 14 collections, 12 categories, 23 product sets). Strip `wholeSalePriceHistory`; replace `inventory` with generated values. Local dev only, never committed                                                                                                       |
+| Images                 | Book covers from Open Library by ISBN (515/618); author photos from Open Library only on confident name match, else branded initials avatar; collections, bundles, categories and the 4 ISBN-less books get generated brand artwork. All stored on Vercel Blob                                                                                      |
+| Payments               | Razorpay **test mode only**; boot guard rejects `rzp_live_` keys in demo                                                                                                                                                                                                                                                                            |
+| Email / SMS / Shipping | Mock adapters; in-app outbox                                                                                                                                                                                                                                                                                                                        |
+| Demo access            | Storefront: one-click demo shopper; cart/address/orders/search only. Admin: catalog read-only, order lifecycle actions allowed. CMS: read-only. Uploads: super-admin only. Seeded once; weekly visitor cleanup                                                                                                                                      |
+| Credentials            | Razorpay, Twilio, Delhivery, SendGrid revoked/rotated by owner; AWS and Cloudinary accounts closed; Vultr DB destroyed                                                                                                                                                                                                                              |
+| Demo scope             | (2026-10-30) A portfolio demo, not an enterprise product: the goal is to show skills, architecture and design thinking. Build the basic, mostly positive paths well; fix minor things; don't chase rare races or failure cases or build machinery for them (note them as known limitations). One review round per step unless something real breaks |
+| Store rules            | (2026-10-30) Store credit is a coupon: spent once applied, never returned on cancel or refund. No cancel after shipping. Public lists max 50 items; admin/internal up to 1000                                                                                                                                                                       |
 
 ---
 
@@ -416,47 +418,38 @@ This file is temporary: when every phase is done, archive the decision log into 
       parallel worktrees (at most three at once): wave 1 = a, c, e; wave 2 = b, d (b after a: both edit the order
       code; d after c: both edit list paging). Items already fixed by earlier steps (`deleteAccount`/`recoverAccount`
       removed, `jobs/` removed, the duplicate `retrieve`) are checked and left out.
-  - Follow-ups from a, c and e (2026-10-30), placed:
-    - Sub-step f below (small API robustness, found in review): register isn't atomic (a failed password save
-      leaves an account without a password that can't re-register); stock-alert routes 500 on a malformed product
-      id; `createAddress` clears the old default before the insert; book create with an unknown author 500s;
-      public `category`/`:id` values that aren't ObjectIds 500 (CastError) instead of 400; `page` has no upper
-      bound; two concurrent `PUT /store-books/:id` can count one category change twice
-    - Owner decisions (before Phase 5): a lower max `limit` for public lists (100?) with 1000 kept for admin and
-      sitemap callers; a full cash refund returns all applied store credit even for a partial return; staff must
-      no longer issue credit by hand after a full refund (it is automatic now); a shopper whose payment is
-      captured but not yet confirmed can switch to COD and is left with a payment to refund by hand
-    - Phase 10: check after each deploy that `one_pending_order_per_user` and `one_refund_credit_per_order` exist
-      (autoIndex fails silently; needs MongoDB ≥ 6.0; two pending orders for one user block the first)
-    - Docs (`docs/order-lifecycle.md`): store-credit return states and the query that finds a return left
-      `pending`/`crediting`; the list paging contract; the stock-alert e-mail shows the price without the discount; cancels return store credit too; deals list by priority by default; a product set's slug never changes
-    - Also for f (found in d and b): a deal whose product set was hard-deleted 500s in `sortSets`, and a deactivated
-      set still shows inside a deal; the deal admin detail's populate path `products.product.author` is invalid;
-      admin `:id` values that aren't ObjectIds 500 (CastError) on add-on, deal and mystery-box routes
-    - Also for f (from b's re-review): return/replace requests (`requestReturn`), `alignReturnShipment` and
-      `closeRequest` still write the stage unconditionally (a refund landing meanwhile is overwritten; a double
-      submit pushes two requests) — route them through `transitionOrder`; a cancel during a COD place's link window
-      can leave the credit spent (filter the cancel on the `storeCreditTransaction` it read); test an e-mail failure
-      together with a failed credit return; `transitionOrder` gives a pushed `requests` entry a new `_id` and leaves
-      `updatedAt` stale in memory; ship/deliver still 500 when their e-mail fails after the stage changed (cancel
-      only logs); the Delhivery adapter has no cancel call, so a waybill booked for an order that lost the race is
-      cancelled by hand
-    - Phase 8 (admin): ship/deliver/cancel errors show "[object Object]" (the snackbar gets the envelope); show the
-      message, e.g. for the new 409
-    - Phase 5 (Vercel Cron, with the weekly cleanup): a protected sweep that finishes store-credit returns left
-      `pending`/`crediting` on cancelled or refunded orders (a COD cancel cut short gets no refund event, and the
-      shopper can't re-cancel)
+  - Follow-ups (2026-10-30, after the owner's demo-first decision below), placed:
+    - Sub-step f (minor fixes only): a book create with an unknown author, and `:id`/`category` values that aren't
+      ObjectIds (public catalog routes, stock alerts, add-on/deal/mystery-box admin routes) answer 500 instead of 400;
+      a deal whose product set was deleted 500s on its detail page; the deal admin detail's author populate path
+      (`products.product.author`) is wrong
+    - Known demo limitations, not fixed on purpose (rare races and failure paths): a failed register can leave an
+      account without a password; two simultaneous book updates can count a category twice; return/replace and
+      return-shipment writes aren't conditional; ship/deliver answer 500 if their e-mail fails; a Delhivery waybill
+      booked for an order that lost a race is cancelled by hand; a payment confirmed late while the shopper switched
+      to COD is refunded by hand
     - Phase 7 (storefront): `FeaturedDeals` sends `offset: 1` (now ignored) — ask for `page: 1, limit: 4` and drop the
       first, or delete the unmounted component
-    - Phase 8 (admin): show `storeCreditReturn` on the order view, next to "Send Store Credit"
-    - Owner decisions (added from b): an admin cancel of a shipped order returns the applied store credit; staff must
-      not re-issue credit by hand after a cancel either (it is automatic now)
+    - Phase 8 (admin): ship/deliver/cancel errors show "[object Object]" (the snackbar gets the envelope); show the
+      message, e.g. for the 409
+    - Phase 10: check after deploy that the `one_pending_order_per_user` index exists (needs MongoDB 6.0+)
+    - Docs: the list paging contract (public max 50); deals list by priority by default; a product set's slug never
+      changes; store credit is spent once applied
     - Owner, one-off: re-run the seed sanitise step so the local `seed/data/product-sets.json` drops the 14 inactive
-      sets (an already-seeded DB keeps them unless loaded with `sync`; harmless, never served)
+      sets
     - Tooling: the seed tests create `seed/data/fonts`, which makes shared's `seed-data.test.ts` stop skipping and
       fail when both run together (skip on the missing files instead); `pnpm --filter api test` uses the built
       `packages/shared/dist`, so run `pnpm turbo run build --filter=@pageaters/shared` first or the suites fail in
       their hooks and never exit
+  - [x] Owner decisions, 2026-10-30 (store rules + simplification): store credit is a coupon — once applied it is spent,
+        never returned on cancel or refund (a refund returns only money paid), so remove the credit-return machinery
+        from a and b (`storeCreditReturn`, `RF-` credit rows, `appliedCreditIds`); no cancel after shipping (admin too);
+        public list pages max 50, admin up to 1000
+    - Done 2026-10-31: the credit-return machinery is removed (cancel and refund leave the balance alone; a failed
+      checkout still undoes its debit); admin cancel only for paid/confirmed orders (`ORDER_CANCEL_INVALID` after
+      shipping); public lists capped at 50 by `pageLimit.middleware.js` (an ADMIN session may ask for up to 1000);
+      storefront store-credit copy updated. Phase 8: hide the admin Cancel button after shipping. Reviewed (one light
+      round)
   - [x] a. Orders: placement, payment and refunds (money). `placeOrder` and `getPendingOrder` pick any pending order,
         so with a `created` order waiting for payment `/orders/create` re-places the older one (7c); enforce "one
         pending order per user" with a unique partial index on `{ userId }` for attempted/created orders (two
@@ -469,12 +462,13 @@ This file is temporary: when every phase is done, archive the decision log into 
       answers 400 `ORDER_PENDING_CONFLICT`; the test harness waits for indexes); the payment webhook releases its
       claim before giving credit back, and COD puts the order back (or cancels it when a newer checkout exists)
       before giving credit back, every unresolved case logged; refunds deduped by refund id (`refundIds`); COD is
-      refused while a Razorpay order exists (400 `ORDER_ONLINE_PAYMENT_PENDING`); a full refund returns the applied
+      refused while a Razorpay order exists (400 `ORDER_ONLINE_PAYMENT_PENDING`); a full refund returned the applied
       store credit once (`storeCreditReturn` pending → crediting → returned, one `RF-<order _id>` CREDIT row under a
       unique partial index, the balance step keyed by `appliedCreditIds`), so a redelivery finishes an interrupted
       return; create without `giftOptions` answers 200. `issueCredit` validation and floored line totals were
       already fixed. Shared: `RF-` credit ids, optional `refundIds`/`storeCreditReturn` on `orderSchema` (not
-      shoppers'). Reviewed (three rounds) + audited
+      shoppers'). Reviewed (three rounds) + audited. The credit return was removed on 2026-10-31 (store credit is a
+      spent coupon; see the owner decisions sub-step)
   - [x] b. Orders: details, analytics, checkout and notifications. `order.getByUniqueId` calls `orderPaymentInfo(null)`
         (500) for an order without payment; analytics: best-selling matches `status` not `orderStatus`, dates are
         compared as strings (always `[]`), and `startDate`/`endDate` must be parsed to dates (aggregations aren't
@@ -487,8 +481,7 @@ This file is temporary: when every phase is done, archive the decision log into 
       offset, start before end, else 400 `ORDER_ANALYTICS_INVALID_RANGE`); a return after 7 days answers 400; the
       checkout reads `boxes`; the confirmation e-mail's bundle line has its title, poster and a `/bundles/` link;
       `GIFT_PACKAGES` lives in `packages/shared` (subpath `@pageaters/shared/gift-packages` for the storefront's
-      TS 4.5); a cancel returns applied store credit once through a's durable return (a cancel and a refund never
-      both return it); ship, Delhivery booking, deliver and cancel are conditional on the stage they read
+      TS 4.5); a cancel returned applied store credit (removed 2026-10-31: store credit is a spent coupon); ship, Delhivery booking, deliver and cancel are conditional on the stage they read
       (`order-transition.service.js`; a lost race answers 409 `ORDER_CHANGED_CONFLICT`, a booked waybill is logged
       for manual cancellation); a cancel restores stock and credit before e-mailing and logs a cut-short return.
       Reviewed (two rounds) + audited
@@ -535,7 +528,7 @@ This file is temporary: when every phase is done, archive the decision log into 
       serviceability only; cart add/add-on answer `true` with quantity defaulting to 1 (add-on route validated);
       `/cart/empty` clears every line; `STOCK_ALERT_NOT_EXIST`; the STOCK_ALERT e-mail renders (`en.ejs`, escaped,
       control characters stripped from the subject). Reviewed + audited
-  - [ ] f. Review follow-ups from a, c and e (listed above under "Sub-step f"); after d
+  - [ ] f. Minor fixes listed above under "Sub-step f"
 - [ ] OpenAPI from zod at `/docs`
 - [ ] Remove `page.controller` / page & banner models (moved to CMS); move sitemap + Google product feed to storefront
 - **Checkpoint:** API runs locally, all routes reachable, lint and tests clean
@@ -559,6 +552,12 @@ This file is temporary: when every phase is done, archive the decision log into 
 - [ ] Sample-order generator: random orders across the lifecycle through the order services (realistic pricing, discounts, stock deduction)
 - [ ] Weekly cleanup endpoint (protected, `DEMO_MODE` only): wipe visitor carts/addresses/favourites/orders/outbox, restore their stock, regenerate sample orders
 - [ ] Tests for every guard
+
+## Phase 5½ — Scope trim
+
+- [ ] After Phase 5: review Phases 6–11 against the demo scope (decision log) and cut or shrink what is enterprise
+      polish rather than skill or architecture showcase. Report to the owner what was removed, updated or trimmed,
+      and get approval before continuing
 
 ## Phase 6 — CMS (Payload)
 
