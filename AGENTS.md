@@ -3,6 +3,10 @@
 Standing rules for any agent (or human) working in this repository. Read this fully before making changes.
 The phased migration plan lives in [`PLAN.md`](./PLAN.md); this file holds the rules that outlive it.
 
+**Top priority: spend as few tokens as the job needs.** Tokens are money. Keep code simple, refactor only when a
+change needs it, and don't overcomplicate. Read only the files a step needs, run only the tests it touches while
+working, and keep reports short.
+
 ---
 
 ## 1. What this project is
@@ -138,7 +142,7 @@ Add new scripts to the relevant `package.json` and register them in `turbo.json`
   collection). Missing override → template only.
 - **Globals**: Header, Navigation, Footer, Announcement Bar, Theme tokens, SEO defaults.
 - Every block config must have a matching storefront component and a type in `packages/cms-types`.
-  Adding a block = Payload block config + storefront component + registry entry + doc in `docs/blocks.md`.
+  Adding a block = Payload block config + storefront component + registry entry + a note in `docs/cms.md`.
 - Drafts, versions and live preview are enabled for Pages, Templates and Overrides.
 
 ---
@@ -233,8 +237,8 @@ Rules:
 
 - **`docs/*.md`** — explanations of features, the site and the architecture. Keep them current: if a change alters
   behaviour described in a doc, update the doc in the same change. Expected docs include
-  `architecture.md`, `demo-mode.md`, `cms.md`, `blocks.md`, `checkout-flow.md`, `order-lifecycle.md`,
-  `deployment.md`, `local-development.md`, `seed-data.md`.
+  `architecture.md`, `demo-mode.md`, `cms.md` (with the blocks), `order-lifecycle.md` (with checkout), `api.md`,
+  `deployment.md` and `local-development.md` (with the seed).
 - **`docs/adr/NNNN-title.md`** — one ADR per significant decision (context, decision, consequences). Never edit an
   accepted ADR's decision; supersede it with a new one.
 - **`agents/*.md`** — subagent definitions. Each file has YAML frontmatter (`name`, `description` saying when to use
@@ -287,8 +291,11 @@ above still applies — subagents split a checkbox, they don't widen it.
   share a working tree. Agents commit on their branch with hooks enforced (that is how work leaves a worktree) and
   never push or rewrite history. Worktrees branch from the pushed `main`, so a step that builds on earlier work starts
   only after the owner has committed and pushed that work.
-- **Before merge**, every branch passes `code-reviewer` (verdict merge) and `security-auditor` (verdict clear).
-  The orchestrator then brings each branch into `main` with `git merge --squash` (staged, not committed), makes any
+- **Review: one combined review per batch, once its code is settled for the phase.** A batch is a group of steps
+  whose code nothing later in the phase touches; its branches together get one `code-reviewer` + `security-auditor`
+  pass (verdicts merge and clear). The orchestrator fixes small findings itself; only a real security hole gets a
+  second look. Agents run their gates on each branch as usual.
+- The orchestrator brings each branch into `main` with `git merge --squash` (staged, not committed), makes any
   integration fixes, runs the root gates and a secret scan, regenerates the lockfile if needed, ticks PLAN.md,
   removes the worktree and branch, and stops for the owner's review.
 - Changes a subagent needs outside its scope go in its report; the orchestrator makes them or briefs the owner agent.

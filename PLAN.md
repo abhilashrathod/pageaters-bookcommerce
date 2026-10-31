@@ -8,27 +8,27 @@ This file is temporary: when every phase is done, archive the decision log into 
 
 ## Decision log (agreed 2026-10-25 / 26)
 
-| Topic                  | Decision                                                                                                                                                                                                                                                                                                                                            |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Monorepo               | Turborepo + pnpm, Node 22 LTS                                                                                                                                                                                                                                                                                                                       |
-| Hosting                | Everything on Vercel (storefront, admin, cms, api)                                                                                                                                                                                                                                                                                                  |
-| Domains                | `demo.pageaters.com`, `admin.demo.`, `cms.demo.`, `api.demo.pageaters.com`. Root domain untouched                                                                                                                                                                                                                                                   |
-| Storefront             | Migrate to Next.js **App Router**; UI moves to **Tailwind + shadcn/ui** (translate existing components)                                                                                                                                                                                                                                             |
-| Backend                | Stays **JavaScript** (CommonJS; ADR 0001), validated with the shared zod schemas; layered architecture; serverless-safe                                                                                                                                                                                                                             |
-| CMS                    | **Payload CMS 3** as `apps/cms`. Controls: Home + campaign pages (free-form), templates for Product, Collection, Category, Bundle, Book Box pages (locked core blocks + per-item overrides), Header, Nav, Footer, Announcement bar, Theme, SEO                                                                                                      |
-| Code-owned pages       | Cart, checkout, profile/account, auth                                                                                                                                                                                                                                                                                                               |
-| Git history            | **Keep** all three repos' history (Bitbucket → GitHub), scrubbed of secrets only                                                                                                                                                                                                                                                                    |
-| License                | **All Rights Reserved** — review/showcase only; no reuse of code, brand or content                                                                                                                                                                                                                                                                  |
-| Name                   | Keep **Pageaters** branding                                                                                                                                                                                                                                                                                                                         |
-| Database               | New MongoDB Atlas cluster (free tier) with fake/sanitised data. Old Vultr instance destroyed                                                                                                                                                                                                                                                        |
-| Seed data              | From `pageaters-data-dump` (books-only export: 669 books, 313 authors, 55 bundles, 14 collections, 12 categories, 23 product sets). Strip `wholeSalePriceHistory`; replace `inventory` with generated values. Local dev only, never committed                                                                                                       |
-| Images                 | Book covers from Open Library by ISBN (515/618); author photos from Open Library only on confident name match, else branded initials avatar; collections, bundles, categories and the 4 ISBN-less books get generated brand artwork. All stored on Vercel Blob                                                                                      |
-| Payments               | Razorpay **test mode only**; boot guard rejects `rzp_live_` keys in demo                                                                                                                                                                                                                                                                            |
-| Email / SMS / Shipping | Mock adapters; in-app outbox                                                                                                                                                                                                                                                                                                                        |
-| Demo access            | Storefront: one-click demo shopper; cart/address/orders/search only. Admin: catalog read-only, order lifecycle actions allowed. CMS: read-only. Uploads: super-admin only. Seeded once; weekly visitor cleanup                                                                                                                                      |
-| Credentials            | Razorpay, Twilio, Delhivery, SendGrid revoked/rotated by owner; AWS and Cloudinary accounts closed; Vultr DB destroyed                                                                                                                                                                                                                              |
-| Demo scope             | (2026-10-30) A portfolio demo, not an enterprise product: the goal is to show skills, architecture and design thinking. Build the basic, mostly positive paths well; fix minor things; don't chase rare races or failure cases or build machinery for them (note them as known limitations). One review round per step unless something real breaks |
-| Store rules            | (2026-10-30) Store credit is a coupon: spent once applied, never returned on cancel or refund. No cancel after shipping. Public lists max 50 items; admin/internal up to 1000                                                                                                                                                                       |
+| Topic                  | Decision                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Monorepo               | Turborepo + pnpm, Node 22 LTS                                                                                                                                                                                                                                                                                                                                      |
+| Hosting                | Everything on Vercel (storefront, admin, cms, api)                                                                                                                                                                                                                                                                                                                 |
+| Domains                | `demo.pageaters.com`, `admin.demo.`, `cms.demo.`, `api.demo.pageaters.com`. Root domain untouched                                                                                                                                                                                                                                                                  |
+| Storefront             | Migrate to Next.js **App Router**; UI moves to **Tailwind + shadcn/ui** (translate existing components)                                                                                                                                                                                                                                                            |
+| Backend                | Stays **JavaScript** (CommonJS; ADR 0001), validated with the shared zod schemas; layered architecture; serverless-safe                                                                                                                                                                                                                                            |
+| CMS                    | **Payload CMS 3** as `apps/cms`. Controls: Home + campaign pages (free-form), templates for Product, Collection, Category, Bundle, Book Box pages (locked core blocks + per-item overrides), Header, Nav, Footer, Announcement bar, Theme, SEO                                                                                                                     |
+| Code-owned pages       | Cart, checkout, profile/account, auth                                                                                                                                                                                                                                                                                                                              |
+| Git history            | **Keep** all three repos' history (Bitbucket → GitHub), scrubbed of secrets only                                                                                                                                                                                                                                                                                   |
+| License                | **All Rights Reserved** — review/showcase only; no reuse of code, brand or content                                                                                                                                                                                                                                                                                 |
+| Name                   | Keep **Pageaters** branding                                                                                                                                                                                                                                                                                                                                        |
+| Database               | New MongoDB Atlas cluster (free tier) with fake/sanitised data. Old Vultr instance destroyed                                                                                                                                                                                                                                                                       |
+| Seed data              | From `pageaters-data-dump` (books-only export: 669 books, 313 authors, 55 bundles, 14 collections, 12 categories, 23 product sets). Strip `wholeSalePriceHistory`; replace `inventory` with generated values. Local dev only, never committed                                                                                                                      |
+| Images                 | Book covers from Open Library by ISBN (515/618); author photos from Open Library only on confident name match, else branded initials avatar; collections, bundles, categories and the 4 ISBN-less books get generated brand artwork. All stored on Vercel Blob                                                                                                     |
+| Payments               | Razorpay **test mode only**; boot guard rejects `rzp_live_` keys in demo                                                                                                                                                                                                                                                                                           |
+| Email / SMS / Shipping | Mock adapters; in-app outbox                                                                                                                                                                                                                                                                                                                                       |
+| Demo access            | Storefront: one-click demo shopper; cart/address/orders/search only. Admin: catalog read-only, order lifecycle actions allowed. CMS: read-only. Uploads: super-admin only. Seeded once; weekly visitor cleanup                                                                                                                                                     |
+| Credentials            | Razorpay, Twilio, Delhivery, SendGrid revoked/rotated by owner; AWS and Cloudinary accounts closed; Vultr DB destroyed                                                                                                                                                                                                                                             |
+| Demo scope             | (2026-10-30) A portfolio demo, not an enterprise product: the goal is to show skills, architecture and design thinking. Build the basic, mostly positive paths well; fix minor things; don't chase rare races or failure cases or build machinery for them (note them as known limitations). One combined review per batch, once its code is settled for the phase |
+| Store rules            | (2026-10-30) Store credit is a coupon: spent once applied, never returned on cancel or refund. No cancel after shipping. Public lists max 50 items; admin/internal up to 1000                                                                                                                                                                                      |
 
 ---
 
@@ -549,108 +549,127 @@ This file is temporary: when every phase is done, archive the decision log into 
 
 ## Phase 5 — Demo mode
 
-- [ ] `DEMO_MODE` flag; server-side write guards per AGENTS.md §6. The API refuses to boot when `DEMO_MODE=true` and
-      `EMAIL_ADAPTER`/`SMS_ADAPTER` isn't `mock` or SendGrid/Twilio keys are set (like the `rzp_live_` guard), and refuses
-      `PAYMENTS_ADAPTER=mock` when `APP_ENV=production` (the demo uses Razorpay with test keys); the storefront checks at
-      build/runtime that its public Razorpay key starts with `rzp_test_`; with tests
-- [ ] Demo shopper one-click login (no signup/OTP); remove the email-OTP login too, which can sign into any account by email, the demo shopper included
-- [ ] Admin catalog read-only; order lifecycle via mock shipping allowed
-  - The demo admin must not issue store credit (`POST /store-credit` adds to another account's balance; AGENTS.md §6 "cannot touch other accounts"); record which admin issued a credit (7 audit, 2026-10-30)
-- [ ] Razorpay test-mode checkout (the `rzp_live_` boot guard is done: `env.js` refuses live keys in every environment)
-- [ ] Mock email/SMS → outbox collection + outbox view: capped/TTL'd and swept by the weekly cleanup; an entry is
-      visible only to its addressee (super-admin sees all) or its links and tokens are redacted; forgot-password and
-      verify-email are disabled in `DEMO_MODE`, so nobody can read the demo admin's reset link in the outbox and take
-      the account over
-- [ ] Super-admin role exempt from catalog read-only and upload guards (server-side role checks, rate-limited login)
-- [ ] Uploads for super-admin only (Vercel Blob); demo-specific rate limits (the general limiters are mounted in Phase 4 7a)
-- [ ] Sample-order generator: random orders across the lifecycle through the order services (realistic pricing, discounts, stock deduction)
-- [ ] Weekly cleanup endpoint (protected, `DEMO_MODE` only): wipe visitor carts/addresses/favourites/orders/outbox, restore their stock, regenerate sample orders
-- [ ] Tests for every guard
+Trimmed 2026-10-31 (scope trim, below). Work runs in batches whose code nothing later in the phase touches; each
+batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
+
+- [ ] Batch A — access and config
+  - [ ] `DEMO_MODE` flag. With `DEMO_MODE=true` the API refuses to boot unless `EMAIL_ADAPTER` and `SMS_ADAPTER` are
+        `mock` and no SendGrid/Twilio keys are set (the `rzp_live_` guard is already done in `env.js`)
+  - [ ] Demo shopper one-click login; signup and OTP login off in `DEMO_MODE`; remove the email-OTP login, which can
+        sign into any account by email
+- [ ] Batch B — demo write guard
+  - [ ] One server-side guard: in `DEMO_MODE` the demo admin's catalog writes, uploads and store-credit issuing are
+        rejected with a clear demo message; order lifecycle actions (mock shipping) stay allowed; the super-admin is
+        exempt from all of it
+- [ ] Batch C — outbox
+  - [ ] Mock email/SMS write to an outbox collection; `GET` lists the caller's own messages (super-admin: all);
+        forgot-password and verify-email are off in `DEMO_MODE`, so the demo admin's account can't be taken over
+- [ ] Batch D — demo data upkeep (after A–C are committed)
+  - [ ] Weekly cleanup endpoint (protected by a cron secret, `DEMO_MODE` only): wipe visitor carts, addresses,
+        favourites, orders and outbox, put back the stock those orders took, then create a small set of sample orders
+        across the lifecycle through the order services
+- **Checkpoint:** demo shopper can browse and order; demo admin can run the order lifecycle but not edit the catalog
 
 ## Phase 5½ — Scope trim
 
-- [ ] After Phase 5: review Phases 6–11 against the demo scope (decision log) and cut or shrink what is enterprise
-      polish rather than skill or architecture showcase. Report to the owner what was removed, updated or trimmed,
-      and get approval before continuing
+- [x] Review Phases 5–11 against the demo scope (decision log) and cut or shrink what is enterprise polish rather
+      than skill or architecture showcase
+  - Done 2026-10-31 (pulled forward from after Phase 5, with the owner): the cuts are listed under "Dropped for the
+    demo" at the end of this file
 
 ## Phase 6 — CMS (Payload)
 
 - [ ] `apps/cms` scaffold: Payload 3, MongoDB adapter (separate DB), Vercel Blob storage adapter
-- [ ] Collections: Pages, Templates (Product, Collection, Category, Bundle, Book Box), Overrides, Media, Users (roles: admin, demo-readonly); seed the CMS read-only demo user (moved from Phase 2)
-- [ ] Globals: Header, Navigation, Footer, Announcement Bar, Theme tokens, SEO defaults
-- [ ] Block configs mirroring existing components: Hero/GiantSquare/Landscape/PreOrder/FullBleed banners, Product Set row, Featured Books, Collections/Bundles/Categories/Deals carousels, Featured Category, Featured Deals, Authors, Rich text, Spacer; plus template core blocks (product info + buy box, collection header + grid, etc.) marked locked
-- [ ] Custom fields that pick commerce records from the API (product sets, collections, categories)
-- [ ] Drafts, versions, scheduled publish, live preview
-- [ ] `afterChange` hooks → storefront revalidation webhook
+- [ ] Collections: Pages, Templates (one `type` per page: Product, Collection, Category, Bundle, Book Box), Overrides,
+      Media, Users (roles: admin, demo-readonly); seed the CMS read-only demo user
+- [ ] Globals: Header (with navigation), Footer, Announcement Bar, Theme tokens, SEO defaults
+- [ ] Blocks: Banner (one block with a layout option, replacing the five legacy banner variants), Product Set row,
+      Featured Books, Carousel (collections, categories, bundles or deals), Rich text; template core blocks (product
+      info + buy box, listing header + grid) locked
+- [ ] Commerce pickers: fields that pick a product set, collection or category from the API and store only its ID
+- [ ] Drafts, versions and live preview; `afterChange` hook → storefront revalidation webhook
 - [ ] `packages/cms-types` generation wired into Turbo
-- [ ] Seed initial CMS content recreating the original homepage and page layouts
-- **Checkpoint:** owner edits a page in CMS and sees it locally
+- [ ] Seed CMS content: the homepage, one template per page type, header, footer and theme
+- **Checkpoint:** owner edits the homepage in the CMS and sees it locally
 
 ## Phase 7 — Storefront rebuild (App Router + Tailwind/shadcn)
 
-- [ ] New Next.js App Router app; Tailwind + shadcn/ui; theme tokens from CMS as CSS variables
-- [ ] Translate existing components (banners, cards, carousels, elements, partials) to Tailwind/shadcn, preserving the original look
-- [ ] Block registry + safe renderer + per-block Suspense
-- [ ] Routes: `/` and `[...slug]` (CMS pages), `/books/[id]`, `/collections/[id]`, `/categories/[id]`, `/bundles/[id]`, `/book-boxes` (templates + overrides)
-- [ ] Code-owned: cart, checkout (Razorpay test), account/orders, address select, demo login
-- [ ] Header/nav/footer/announcement from CMS globals; footer credits "Cover images via Open Library" (their covers guidance)
+- [ ] New Next.js App Router app; Tailwind + shadcn/ui; theme tokens from the CMS as CSS variables. Images only from
+      Blob and Open Library (the closed AWS account's bucket and CloudFront hosts are not carried over)
+- [ ] Components for the kept blocks, close to the original look (not pixel-matched); block registry + safe renderer + per-block Suspense
+- [ ] Routes: `/` and `[...slug]` (CMS pages), `/books/[id]`, `/collections/[id]`, `/categories/[id]`,
+      `/bundles/[id]`, `/book-boxes` (templates + overrides)
+- [ ] Code-owned: demo login, cart, checkout with Razorpay test mode (end to end), orders list and detail, address
+      select
+- [ ] Header/footer/announcement from CMS globals; footer credits "Cover images via Open Library"; the owner's logo,
+      favicon and share image; demo banner
 - [ ] Caching with tags + revalidation route; draft mode for CMS preview
-- [ ] SEO: metadata API, `app/sitemap.ts`, robots (noindex for demo); no product feed (dropped for the demo)
-- [ ] Drop every image host of the closed AWS account (audit 2026-10-30): `next.config.js` `images.domains` still
-      allows the `storebooks` S3 bucket and the `d2jesamohckae0` CloudFront host, `core/_variables.ts` `BUCKETS_ORIGINS`
-      names six `pageaters-*` buckets, and six listing pages hard-code `pageaters-assets` hero images. Deleted bucket
-      names can be registered by anyone, who would then serve content on our pages. The legacy storefront can't drop
-      them alone (next/image throws for an unlisted host), so the rebuild serves images from Blob / Open Library only.
-      Also replace the text wordmark with the owner's new logo, and add favicons and share images back
-- [ ] Demo banner; move the GA measurement ID to env (owner keeps GA; decide whether the demo uses the old property)
-- **Checkpoint:** visual comparison with original store
+- [ ] SEO: metadata API, `app/sitemap.ts`, robots (noindex for demo)
+- **Checkpoint:** owner browses home → book → cart → checkout → order
 
 ## Phase 8 — Admin upgrade (Angular)
 
 - [ ] Stepwise `ng update` from 12 to latest stable, one major at a time, building after each
-- [ ] Fix devkit/CLI mismatch; TSLint → angular-eslint; remove Protractor; Karma → Jest/Vitest (today `ng test` runs Karma in watch mode and never exits, which hangs root `pnpm test`)
-- [ ] Standalone components, new control flow; typed services via `packages/api-client` (pass `validate: true` on `client.admin.users.*` until the API stops sending credentials, and parse form values through the `admin…PayloadSchema` before sending so a loaded record can't send `wholeSalePriceHistory` back)
-- [ ] Demo-mode UX: read-only notices on catalog forms; outbox view
-- [ ] Validate the admin catalog create/update routes with the shared admin schemas (deferred from Phase 4 5b)
-- [ ] Image fields hold full Blob URLs and uploads answer the URL (Phase 4 6b), but the legacy admin prepends an S3 bucket
-      origin on load and saves only the file name — don't edit catalog records through the legacy admin until this phase
-      replaces it
-- [ ] Super-admin catalog editing: update any record (fix inconsistent or generated data) and upload covers/author photos
-- **Checkpoint:** every admin route renders against the new API
+- [ ] TSLint → angular-eslint; remove Protractor; Karma → Vitest (today `ng test` runs Karma in watch mode and never
+      exits)
+- [ ] Standalone components and the new control flow through Angular's own migration schematics (no hand rewrite);
+      orders and catalog services typed via `packages/api-client` (pass `validate: true` on `client.admin.users.*`)
+- [ ] Demo UX: read-only notice on catalog forms, outbox view, hide Cancel after shipping, show API error messages
+      (ship/deliver/cancel show "[object Object]" today)
+- [ ] Super-admin catalog editing: image fields keep full Blob URLs (the legacy admin prepends an S3 origin and saves
+      only the file name; don't edit catalog records through it until this step), cover and author-photo upload; send
+      form values through the `admin…PayloadSchema` so a loaded record can't send `wholeSalePriceHistory` back
+- **Checkpoint:** admin logs in, views the catalog, runs an order from confirmed to delivered
 
 ## Phase 9 — Tests
 
-- [ ] API: close the remaining gaps in the existing suite (`node:test` + in-memory MongoDB harness, 593 tests after Phase 4
-      layering): demo guards, flows still uncovered, a coverage report
-- [ ] Storefront: component tests for cart and block renderer
-- [ ] Admin: service + key component tests
-- [ ] Playwright E2E: browse → add to cart → checkout (Razorpay test) → order visible in admin → ship → delivered
+- [ ] Storefront: component tests for the cart and the block renderer
+- [ ] Admin: tests for the orders service and one key component
+- [ ] Playwright E2E, one happy path: browse → add to cart → checkout (Razorpay test) → order visible in admin → ship
+      → delivered
 
 ## Phase 10 — CI/CD & deployment
 
-- [ ] GitHub Actions: lint, typecheck, test, build via Turbo (affected only), Vercel Remote Cache, gitleaks, CodeQL
-- [ ] Renovate
+- [ ] GitHub Actions: lint, typecheck, test, build via Turbo (affected only) and gitleaks
 - [ ] Vercel projects ×4 with root directories, `turbo-ignore`, preview deploys per PR
 - [ ] Environment variables per project (test-mode Razorpay, Atlas, Blob, CMS secret, `DEMO_MODE=true`); the API
-      needs `PAYMENTS_ADAPTER=razorpay` (test keys + webhook secret) and `STORAGE_ADAPTER=blob` — the mock defaults would
-      store fake upload URLs; email, SMS and shipping stay `mock`
+      needs `PAYMENTS_ADAPTER=razorpay` (test keys + webhook secret) and `STORAGE_ADAPTER=blob`; email, SMS and
+      shipping stay `mock`
 - [ ] Vercel Cron: weekly demo cleanup
-- [ ] Rate limits before the public deploy: a shared store (Upstash Redis or a Mongo TTL store — today each Vercel
-      instance counts on its own, so the login and code-check limits don't cap brute force); a bypass or separate
-      bucket for the storefront's server-side requests (they all arrive from the storefront function's IP); drop
-      slow-down on serverless (it holds a billed invocation open)
-- [ ] Uploads: re-encode images (a PNG header followed by HTML passes the magic-byte check) and confirm Blob serves
-      `X-Content-Type-Options: nosniff`
-- [ ] DNS for the four `*.demo.pageaters.com` hosts
-- [ ] Multi-stage Dockerfile for API (`turbo prune`) as alternate target
-- **Checkpoint:** all four apps live, E2E passing against production demo
+- [ ] Serverless rate limits: let the storefront's server-side requests through (they all arrive from one IP; a
+      shared-secret header) and drop slow-down on Vercel (it holds a billed invocation open)
+- [ ] DNS for the four `*.demo.pageaters.com` hosts; check the `one_pending_order_per_user` index exists (MongoDB 6.0+)
+- **Checkpoint:** all four apps live, E2E passing against the demo
 
 ## Phase 11 — Documentation & launch
 
-- [ ] Root README: story (real business, ~10k customers, hand-built 2022–24, re-architected 2026), Mermaid architecture diagram, live links, demo logins, screenshots, 3-command local setup
+- [ ] Root README: story (real business, ~10k customers, hand-built 2022–24, re-architected 2026), Mermaid
+      architecture diagram, live links, demo logins, screenshots, 3-command local setup
 - [ ] `docs/*.md` per AGENTS.md §9
-- [ ] ADRs: monorepo, Payload CMS & content/commerce boundary, App Router + Tailwind/shadcn, serverless API & adapters, demo-mode sandbox, history preservation
-- [ ] `agents/*.md` subagents — final review of the roster. Added early (2026-10-27, workflow in AGENTS.md §10): `api-engineer`, `storefront-engineer`, `admin-engineer`, `code-reviewer`, `security-auditor`, `docs-writer`, `test-writer`, `lint-fixer`, `deploy-engineer`. Still to add in their phases: `cms-engineer` (Phase 6)
-- [ ] Final gitleaks + manual sensitive-data sweep
-- [ ] Make GitHub repo public
-- [ ] Archive decision log to `docs/adr/`, delete PLAN.md
+- [ ] ADRs (short): monorepo, Payload CMS & the content/commerce boundary, App Router + Tailwind/shadcn, serverless
+      API & adapters, demo-mode sandbox, history preservation
+- [ ] Final gitleaks + manual sensitive-data sweep; final look at the `agents/` roster
+- [ ] Make the GitHub repo public
+- [ ] Archive the decision log to `docs/adr/`, delete PLAN.md
+
+## Dropped for the demo (scope trim 2026-10-31)
+
+Kept as known limitations; none blocks the demo.
+
+- Phase 5: `PAYMENTS_ADAPTER=mock` refused in production, and the storefront's `rzp_test_` key check (the API's
+  `rzp_live_` guard already covers live keys); a separate Razorpay step (folded into the Phase 7 checkout); outbox
+  cap/TTL and link redaction (only the addressee sees a message, and the weekly cleanup empties it); recording which
+  admin issued store credit; demo-specific rate limits (the general limiters stay); "realistic pricing, discounts"
+  in sample orders; a separate "tests for every guard" step (each batch tests itself)
+- Phase 6: scheduled publish; separate Navigation global (merged into Header); Spacer block and the five banner
+  variants as separate blocks; seeding every legacy page layout (homepage + templates only); `cms-engineer` agent
+- Phase 7: pixel-matching the original store; translating components no kept block uses; account/profile editing;
+  the Google product feed; GA on the demo; the `FeaturedDeals` offset fix (the component is not carried over)
+- Phase 8: hand-rewriting components to standalone/control flow; typing every legacy service; validating the admin
+  catalog create/update routes with the shared schemas (catalog writes are super-admin only)
+- Phase 9: an API coverage report and gap-hunting (985 API tests already); broad admin test coverage
+- Phase 10: CodeQL, Vercel Remote Cache, Renovate; a shared rate-limit store (each instance counts on its own, so
+  login/code-check limits are per instance); re-encoding uploaded images (uploads are super-admin only); the API
+  Dockerfile
+- Phase 11: `blocks.md`, `checkout-flow.md` and `seed-data.md` as separate docs (folded into `cms.md`,
+  `order-lifecycle.md` and `local-development.md`)
