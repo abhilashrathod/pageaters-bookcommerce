@@ -116,12 +116,14 @@ const listBooks = ({ type, ...params }) =>
 /**
  * Creates a store book; adds one to each of its live categories' `numberOfBooks`, adds it to its author's books and
  * lists it on each related book. A list left out is empty.
- * Legacy: with an unknown author the book is created and then the call fails (500).
  * @param {object} fields The book fields (see pickBookFields) plus `author`.
  * @returns {Promise<object>} The new book document.
+ * @throws {AppError} AUTHOR_NOT_EXIST (400) for an unknown or deleted author, INVALID_ID (400) for a malformed one
+ *   (nothing is written in either case).
  */
 const createBook = async (fields) => {
   const { author, categories = [], relatedBooks } = fields;
+  if (author && !(await Author.exists({ _id: author, isDeleted: false }))) throw new AppError('AUTHOR_NOT_EXIST');
   const bookRes = await Book.create({ bookId: `BK-${generateRandomNumber(10)}`, author, ...pickBookFields(fields) });
 
   await countBooksIn({ added: idsNotIn(categories, []) });

@@ -134,16 +134,37 @@ describe('detail', () => {
     assertBody(await api.request('/deals/unique/DE-test-inactive'), 400, badRequest('STORE_DEAL_NOT_EXIST'));
   });
 
-  test('admin detail answers with the deal message keys (the legacy used the author ones)', async () => {
+  test('admin detail answers with the deal message keys (the legacy used the author ones), books with their author name', async () => {
     const res = await api.request(`/deals/${storeIds.dealOne}`, { cookie: admin.cookie });
+    const books = res.body.data.productSets.flatMap(({ set }) => set.products.map(({ product }) => product));
+    assert.deepEqual(
+      books.map(({ author }) => author),
+      [
+        { _id: String(ids.authorA), name: 'Test Author A' },
+        { _id: String(ids.authorB), name: 'Test Author B' },
+        { _id: String(ids.authorB), name: 'Test Author B' },
+      ],
+    );
+    // Otherwise the public detail (was: books carried only their author id, the populate path was wrong).
+    for (const book of books) book.author = book.author._id;
     const publicRes = await api.request('/deals/unique/DE-test-one');
     assertBody(res, 200, ok('STORE_DEAL_LIST_SUCCESS', publicRes.body.data));
     assertBody(await api.request(`/deals/${storeIds.dealInactive}`, { cookie: admin.cookie }), 400, badRequest('STORE_DEAL_NOT_EXIST'));
   });
 
-  test('legacy: a deal whose product set is gone answers 500', async () => {
+  test('skips a product set deleted since (was: 500)', async () => {
     await mongoose.model('product_sets').deleteOne({ _id: storeIds.setTwo });
-    assertBody(await api.request('/deals/unique/DE-test-one'), 500, serverError);
+    for (const res of [await api.request('/deals/unique/DE-test-one'), await api.request(`/deals/${storeIds.dealOne}`, { cookie: admin.cookie })]) {
+      assert.equal(res.status, 200);
+      assert.deepEqual(res.body.data.productSets.map((s) => s.set._id), [String(storeIds.setOne)]);
+    }
+  });
+
+  test('skips a product set deactivated since', async () => {
+    await mongoose.model('product_sets').updateOne({ _id: storeIds.setOne }, { isActive: false });
+    const res = await api.request('/deals/unique/DE-test-one');
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.body.data.productSets.map((s) => s.set._id), [String(storeIds.setTwo)]);
   });
 });
 

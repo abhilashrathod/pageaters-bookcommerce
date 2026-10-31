@@ -9,7 +9,7 @@ const { loadStore, storeIds } = require('./helpers/fixtures/store');
 // its side effects on categories, authors, bundles and collections. Written against the legacy controller
 // before the service refactor. `wholeSalePriceHistory` uses obviously fake values only (AGENTS.md §7).
 
-const { ok, okString, badRequest, serverError } = envelopes;
+const { ok, okString, badRequest } = envelopes;
 
 const Book = () => mongoose.model('storeBook');
 const Category = () => mongoose.model('category');
@@ -125,7 +125,7 @@ describe('detail', () => {
     const book = asJson(await Book().findById(ids.bookOne).populate(ADMIN_POPULATE));
     assertBody(await api.request(`/store-books/get/${ids.bookOne}`, { cookie: admin.cookie }), 200, ok('BOOK_LIST_SUCCESS', book));
     assertBody(await api.request(`/store-books/get/${ids.bookDeleted}`, { cookie: admin.cookie }), 400, badRequest('BOOK_NOT_EXIST'));
-    assertBody(await api.request('/store-books/get/not-an-id', { cookie: admin.cookie }), 500, serverError);
+    assertBody(await api.request('/store-books/get/not-an-id', { cookie: admin.cookie }), 400, badRequest('INVALID_ID'));
   });
 });
 
@@ -166,6 +166,14 @@ describe('POST /store-books', () => {
     const book = await Book().findOne({ title: 'Test Book Bare' });
     assertBody(res, 200, ok('BOOK_CREATE_SUCCESS', asCreated(book)));
     assert.deepEqual([book.categories, book.relatedBooks], [[], []]);
+    assert.equal((await Category().findById(ids.categoryFiction)).numberOfBooks, 2);
+  });
+
+  test('refuses an unknown author and writes nothing (was: 500 after creating the book)', async () => {
+    const author = String(new mongoose.Types.ObjectId());
+    const res = await api.request('/store-books', { method: 'POST', body: newBook({ author }), cookie: admin.cookie });
+    assertBody(res, 400, badRequest('AUTHOR_NOT_EXIST'));
+    assert.equal(await Book().countDocuments({ title: 'Test Book New' }), 0);
     assert.equal((await Category().findById(ids.categoryFiction)).numberOfBooks, 2);
   });
 

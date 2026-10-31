@@ -59,7 +59,7 @@ const findPendingOrder = (userId) => Order.findOne({ userId, $or: PENDING }).sor
  * @throws {AppError} ORDER_INFO_ATTEMPT_FAILED (no cart cookie, or the pending order's payment is being confirmed or
  *   it changed meanwhile), CART_NOT_EXIST (no such cart for this user), ORDER_ADDRESS_ATTEMPT_FAILED (not the
  *   user's live address), ORDER_PENDING_CONFLICT (a concurrent first attempt created the user's pending order
- *   meanwhile; trying again takes it over). A malformed cart id rejects with a CastError (→ 500).
+ *   meanwhile; trying again takes it over). A malformed cart id rejects with a CastError (→ 400 INVALID_ID).
  */
 const attemptOrder = async (userId, cartId, address) => {
   const orderId = `OD-${generateRandomNumber(10)}`;

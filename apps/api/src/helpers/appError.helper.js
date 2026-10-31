@@ -40,17 +40,31 @@ class ProductMismatchError extends Error {
 }
 
 /**
+ * A Mongoose CastError for a string that isn't an ObjectId (a malformed `:id`, `category` or other id the client sent)
+ * becomes 400 INVALID_ID. Request input arrives as strings; a cast of anything else (an object, a number) is a bug of
+ * ours and stays a 500.
+ * @param {unknown} error
+ * @returns {unknown}
+ */
+const fromCastError = (error) =>
+  error?.name === 'CastError' && error.kind === 'ObjectId' && typeof error.value === 'string'
+    ? new AppError('INVALID_ID', { cause: error })
+    : error;
+
+/**
  * Answers an error with the legacy envelope:
  * - AppError 401 → `res.unauthorized(code)`; 403 → `res.forbidden()` (always says FORBIDDEN);
  * - AppError 400 without `data` → `res.error(code, debugMessage)`;
  * - other AppError 4xx or 503, or 400 with `data` → `res.error({ statusCode, message: code, data }, debugMessage)`;
+ * - a CastError of a string id (fromCastError) → 400 INVALID_ID;
  * - ProductMismatchError → 400 PRODUCT_ITEM_MISMATCH with its text as `message` and `error`;
  * - other AppError 5xx and anything else → `res.internalServerError(error)` (500 SOME_ERROR_OCCURRED, logged as a
  *   summary only).
  * @param {import('express').Response} res
- * @param {unknown} error
+ * @param {unknown} caught
  */
-const handleControllerError = (res, error) => {
+const handleControllerError = (res, caught) => {
+  const error = fromCastError(caught);
   if (error instanceof ProductMismatchError) {
     return res
       .status(400)

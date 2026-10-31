@@ -84,7 +84,7 @@ const sendAlerts = async (product) => {
 const isSubscribed = async (userId, product) => Boolean(await activeAlert(userId, product));
 
 /**
- * Opens an alert for the user on a product. Legacy: the product is not checked to exist; a malformed id is a 500.
+ * Opens an alert for the user on a product. Legacy: the product is not checked to exist; a malformed id is 400 INVALID_ID.
  * @param {string} userId
  * @param {string} product Store book id.
  * @returns {Promise<object>} The new alert document.

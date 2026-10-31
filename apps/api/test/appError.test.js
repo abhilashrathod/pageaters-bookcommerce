@@ -1,5 +1,6 @@
 const { describe, test } = require('node:test');
 const assert = require('node:assert/strict');
+const mongoose = require('mongoose');
 
 const { AppError, ProductMismatchError, handleControllerError } = require('../src/helpers/appError.helper');
 
@@ -81,6 +82,19 @@ describe('handleControllerError', () => {
       const { calls, res } = recorder();
       handleControllerError(res, error);
       assert.deepEqual(calls, [['internalServerError', error]]);
+    }
+  });
+
+  test('a CastError of a string id → 400 INVALID_ID; any other CastError stays a 500', () => {
+    const castOf = (value, type = 'ObjectId') => new mongoose.Error.CastError(type, value, '_id');
+    const { calls, res } = recorder();
+    handleControllerError(res, castOf('not-an-id'));
+    assert.deepEqual(calls, [['error', 'INVALID_ID', undefined]]);
+
+    for (const error of [castOf({ $gt: 1 }), castOf(42), castOf('abc', 'Number')]) {
+      const other = recorder();
+      handleControllerError(other.res, error);
+      assert.deepEqual(other.calls, [['internalServerError', error]]);
     }
   });
 

@@ -9,7 +9,7 @@ const t = require('../src/locales/en.json');
 // Order reads over HTTP: the shopper's order and order list, the admin list, lookup and search, and the analytics
 // endpoints. Written against the legacy controller first; projections are pinned by their key lists.
 
-const { badRequest, badRequestObject, forbidden, ok, serverError } = envelopes;
+const { badRequest, badRequestObject, forbidden, ok } = envelopes;
 const unauthorized = envelopes.unauthorized('NO_AUTH_HEADER');
 
 const assertEnvelope = (res, status) => {
@@ -312,9 +312,9 @@ describe('GET /orders/getById/:id (admin)', () => {
     assert.equal(JSON.stringify(res.body.data.payment), JSON.stringify({ method: 'card', name: 'Test Card', last4: '1111', network: 'Visa' }));
   });
 
-  test('refuses an unknown id; a malformed id answers 500', async () => {
+  test('refuses an unknown id and a malformed one', async () => {
     assertBody(await get(`/orders/getById/${new mongoose.Types.ObjectId()}`), 400, badRequest('ORDER_NOT_EXIST'));
-    assertBody(await get('/orders/getById/nope'), 500, serverError);
+    assertBody(await get('/orders/getById/nope'), 400, badRequest('INVALID_ID'));
   });
 });
 

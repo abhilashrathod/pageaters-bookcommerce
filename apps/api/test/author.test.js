@@ -7,7 +7,7 @@ const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, ids
 // /api/v1/authors over HTTP: public list, detail and search; admin CRUD. Written against the legacy controller
 // before the service refactor.
 
-const { ok, okString, badRequest, serverError } = envelopes;
+const { ok, okString, badRequest } = envelopes;
 
 const Author = () => mongoose.model('author');
 const Book = () => mongoose.model('storeBook');
@@ -93,7 +93,7 @@ describe('GET /authors/unique/:authorId and /authors/:id', () => {
     const expected = await Author().findById(ids.authorA).populate({ path: 'books', select: '_id title' });
     assertBody(await api.request(`/authors/${ids.authorA}`, { cookie: admin.cookie }), 200, ok('AUTHOR_LIST_SUCCESS', asJson(expected)));
     assertBody(await api.request(`/authors/${new mongoose.Types.ObjectId()}`, { cookie: admin.cookie }), 400, badRequest('AUTHOR_NOT_EXIST'));
-    assertBody(await api.request('/authors/not-an-id', { cookie: admin.cookie }), 500, serverError);
+    assertBody(await api.request('/authors/not-an-id', { cookie: admin.cookie }), 400, badRequest('INVALID_ID'));
   });
 });
 

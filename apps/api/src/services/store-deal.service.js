@@ -16,10 +16,15 @@ const SORTABLE = ['title', 'createdAt', 'priority'];
 const PRODUCT_SELECT = 'bookId title ISBN author inventory poster price popularity editorsPick currentDiscount inventory newRelease preOrder bestSeller';
 const CATEGORY_POPULATE = { path: 'categories', select: 'categoryId _id title numberOfBooks thumbnail' };
 
-// Sets in priority order, and each set's products in priority order. Legacy: a set that no longer exists
-// (`set: null`) makes this throw (500).
+// Only active sets are populated (ACTIVE_SET); a set deleted or deactivated since is left `null` and skipped here.
+const ACTIVE_SET = { path: 'productSets.set', match: { isActive: true } };
+
+// The deal's remaining sets in priority order, and each set's products in priority order.
 const sortSets = (deal) => {
-  deal.productSets = sortBy(deal.productSets, (item) => item.priority);
+  deal.productSets = sortBy(
+    deal.productSets.filter((item) => item.set),
+    (item) => item.priority,
+  );
   for (const productSet of deal.productSets) {
     productSet.set.products = sortBy(productSet.set.products, (item) => item.priority);
   }
@@ -96,8 +101,7 @@ const updateDeal = async (id, { poster, ctaLink, ctaText, title, description, ca
 
 /**
  * An active deal by id with its sets (and their books) and categories populated and sorted by priority (admin).
- * Legacy: the nested populate path `products.product.author` doesn't exist on store books (kept working by
- * `strictPopulate: false`), so books carry their author id, as on the public detail.
+ * Books carry their author's name.
  * @param {string} id
  * @returns {Promise<object>}
  * @throws {AppError} STORE_DEAL_NOT_EXIST (400).
@@ -105,8 +109,8 @@ const updateDeal = async (id, { poster, ctaLink, ctaText, title, description, ca
 const getDealById = async (id) => {
   const dealRes = await StoreDeal.findOne({ _id: id, isActive: true }).populate([
     {
-      path: 'productSets.set',
-      populate: { path: 'products.product', select: PRODUCT_SELECT, populate: { path: 'products.product.author', select: 'name' } },
+      ...ACTIVE_SET,
+      populate: { path: 'products.product', select: PRODUCT_SELECT, populate: { path: 'author', select: 'name' } },
     },
     CATEGORY_POPULATE,
   ]);
@@ -122,7 +126,7 @@ const getDealById = async (id) => {
  */
 const getDealByDealId = async (dealId) => {
   const dealRes = await StoreDeal.findOne({ dealId, isActive: true }).populate([
-    { path: 'productSets.set', populate: { path: 'products.product', select: PRODUCT_SELECT } },
+    { ...ACTIVE_SET, populate: { path: 'products.product', select: PRODUCT_SELECT } },
     CATEGORY_POPULATE,
   ]);
   if (!dealRes) throw new AppError('STORE_DEAL_NOT_EXIST');

@@ -27,7 +27,7 @@ const CART_POPULATE = [
  * @param {object | object[]} [populate] Mongoose populate options.
  * @returns {Promise<object>} The cart document.
  * @throws {AppError} CART_NOT_EXIST (400) when there is no such cart for this user. A cart id that is not an ObjectId
- *   fails the cast (500, legacy).
+ *   fails the cast (400 INVALID_ID).
  */
 const findUserCart = async (cartId, userId, populate) => {
   const query = Cart.findOne({ _id: cartId, user: userId });

@@ -7,7 +7,7 @@ const { asJson, assertBody, assertGuarded, captureLogs, createUser, envelopes, i
 // /api/v1/stock-alerts over HTTP: shoppers subscribe/unsubscribe to back-in-stock alerts, admins list them and
 // send the alerts. Written against the legacy controller before the service refactor.
 
-const { ok, okString, badRequest, serverError } = envelopes;
+const { ok, okString, badRequest } = envelopes;
 const { HOST } = require('../src/appConfig');
 
 const StockAlert = () => mongoose.model('stock_alert');
@@ -72,8 +72,9 @@ describe('subscribe, check and unsubscribe', () => {
     assert.equal((await activeAlerts(shopper.user)).length, 1);
   });
 
-  test('legacy: a malformed product id answers 500', async () => {
-    assertBody(await subscribe('not-an-id'), 500, serverError);
+  test('a malformed product id answers 400 INVALID_ID (was: 500)', async () => {
+    assertBody(await subscribe('not-an-id'), 400, badRequest('INVALID_ID'));
+    assertBody(await api.request('/stock-alerts/not-an-id', { cookie: shopper.cookie }), 400, badRequest('INVALID_ID'));
   });
 
   test('checks the subscription', async () => {

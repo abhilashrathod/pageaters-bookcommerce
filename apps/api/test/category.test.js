@@ -7,7 +7,7 @@ const { asCreated, asJson, assertBody, assertGuarded, createUser, envelopes, ids
 // /api/v1/categories over HTTP: public list, detail, search and the category's books; admin CRUD. Written against
 // the legacy controller before the service refactor.
 
-const { ok, okString, created, badRequest, serverError } = envelopes;
+const { ok, okString, created, badRequest } = envelopes;
 
 const Category = () => mongoose.model('category');
 const Book = () => mongoose.model('storeBook');
@@ -171,6 +171,6 @@ describe('admin writes', () => {
     assertBody(await api.request(`/categories/${ids.categoryFiction}`, { method: 'DELETE', cookie: admin.cookie }), 200, okString('CATEGORY_DELETE_SUCCESS'));
     assert.equal((await Category().findById(ids.categoryFiction)).isDeleted, true);
     assertBody(await api.request(`/categories/${ids.categoryFiction}`, { method: 'DELETE', cookie: admin.cookie }), 400, badRequest('CATEGORY_NOT_EXIST'));
-    assertBody(await api.request('/categories/not-an-id', { method: 'DELETE', cookie: admin.cookie }), 500, serverError);
+    assertBody(await api.request('/categories/not-an-id', { method: 'DELETE', cookie: admin.cookie }), 400, badRequest('INVALID_ID'));
   });
 });

@@ -167,7 +167,7 @@ const listOrders = ({ page, limit, status }) => {
 
 /**
  * Admin: any order by `_id`, every field, with `payment` as the summary (`adminOrderView`): the stored Razorpay
- * entity (payer email/phone, card/bank/VPA details) never leaves. A malformed id rejects with a CastError (→ 500).
+ * entity (payer email/phone, card/bank/VPA details) never leaves. A malformed id rejects with a CastError (→ 400 INVALID_ID).
  * @param {string} id
  * @returns {Promise<object>} The order as JSON (virtuals included, as the document serialised before).
  * @throws {AppError} ORDER_NOT_EXIST
