@@ -706,8 +706,15 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
   tag), the preview routes `/preview/templates/<type>` and `/preview/overrides/<type>/<itemId>`, and CMS fetches
   tagged with the tags above. The storefront has no CMS login, so preview renders the draft from live preview's
   postMessage data (`@payloadcms/live-preview-react` `useLivePreview`), not by fetching drafts
-- [ ] New Next.js App Router app; Tailwind + shadcn/ui; theme tokens from the CMS as CSS variables. Images only from
+- [x] New Next.js App Router app; Tailwind + shadcn/ui; theme tokens from the CMS as CSS variables. Images only from
       Blob and Open Library (the closed AWS account's bucket and CloudFront hosts are not carried over)
+  - Done 2026-10-31 (inline): rebuilt in place on Next 16.4 / React 19.2 / Tailwind 4.3 (legacy Pages Router app in
+    git history at `117c451`; `public/` kept). Tailwind imports `@pageaters/config/tailwind/theme.css`; the root
+    layout reads the CMS Theme global (`cms:global:theme` tag) and writes it as a `:root` rule after re-checking each
+    value (hex/rem only, `src/lib/theme.ts`); CMS down → defaults, never a broken page. shadcn/ui set up
+    (`components.json`, `cn`, Button with an `accent` variant). `src/env.ts` (zod): `CMS_URL`, `SITE_URL`. Image
+    `remotePatterns`: `*.public.blob.vercel-storage.com`, `covers.openlibrary.org`. Placeholder home page until the
+    Routes step. 5 tests (env, theme)
 - [ ] Components for the kept blocks, close to the original look (not pixel-matched); block registry + safe renderer + per-block Suspense
 - [ ] Routes: `/` and `[...slug]` (CMS pages), `/books/[id]`, `/collections/[id]`, `/categories/[id]`,
       `/bundles/[id]`, `/book-boxes` (templates + overrides)

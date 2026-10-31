@@ -1,0 +1,19 @@
+@import 'tailwindcss';
+@import '@pageaters/config/tailwind/theme.css';
+
+@font-face {
+  font-family: 'Metropolis';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Metropolis-Regular.otf') format('opentype');
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+}
