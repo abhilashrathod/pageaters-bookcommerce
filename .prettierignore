@@ -6,5 +6,5 @@ apps/api/
 apps/storefront/
 
 # Written by Payload (`payload generate:importmap`, `payload generate:types`, its app/(payload) route files)
-apps/cms/src/payload-types.ts
+packages/cms-types/src/payload-types.ts
 apps/cms/src/app/(payload)/

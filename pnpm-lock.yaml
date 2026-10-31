@@ -411,6 +411,9 @@ importers:
       '@pageaters/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@pageaters/cms-types':
+        specifier: workspace:*
+        version: link:../../packages/cms-types
       '@payloadcms/db-mongodb':
         specifier: 3.91.0
         version: 3.91.0(payload@3.91.0(graphql@16.11.0)(supports-color@7.2.0)(typescript@6.0.3))(socks@2.8.10)(supports-color@7.2.0)
@@ -593,6 +596,21 @@ importers:
       zod:
         specifier: 4.6.7
         version: 4.6.7
+    devDependencies:
+      '@pageaters/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: 22.20.5
+        version: 22.20.5
+      eslint:
+        specifier: 9.39.5
+        version: 9.39.5(jiti@2.7.0)(supports-color@7.2.0)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  packages/cms-types:
     devDependencies:
       '@pageaters/config':
         specifier: workspace:*

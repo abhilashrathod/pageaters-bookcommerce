@@ -20,10 +20,11 @@ pnpm lint                   # ESLint (flat config on @pageaters/config/eslint/ne
 pnpm typecheck
 pnpm test                   # node --test (env validation)
 pnpm generate:importmap     # after adding admin components (writes src/app/(payload)/admin/importMap.js)
-pnpm generate:types         # after changing collections/globals (writes src/payload-types.ts)
+pnpm generate:types         # after changing collections/globals/blocks (writes packages/cms-types; commit it)
 ```
 
 The first visit to `/admin` offers to create the first user. Create the owner account before a deployment's URL
 is public; later steps seed the editor accounts.
 
-`src/app/(payload)/`, `src/payload-types.ts` and the import map are written by Payload: don't edit them by hand.
+`src/app/(payload)/`, the import map and `packages/cms-types/src/payload-types.ts` are written by Payload: don't edit
+them by hand.

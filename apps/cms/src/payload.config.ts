@@ -60,7 +60,9 @@ export default buildConfig({
   endpoints: [commerceEndpoint(env.API_URL)],
   editor: lexicalEditor(),
   secret: env.PAYLOAD_SECRET,
-  typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
+  // Generated into the shared types package; the `payload` module augmentation lives in payload-generated.ts, so
+  // the package doesn't need Payload installed by its readers.
+  typescript: { outputFile: path.resolve(dirname, '../../../packages/cms-types/src/payload-types.ts'), declare: false },
   db: mongooseAdapter({ url: env.MONGODB_URI }),
   sharp,
   plugins: [

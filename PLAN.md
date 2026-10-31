@@ -666,7 +666,14 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     delete or global save, `POST ${STOREFRONT_URL}/api/revalidate` with `x-revalidate-secret` and `{ tags }`
     (`cms:pages`, `cms:page:<slug>`, `cms:template:<type>`, `cms:override:<type>:<itemId>`, `cms:global:<slug>`;
     a published previous version's tags too), 3 s timeout, never fails the save. Smoke-tested with a fake storefront
-- [ ] `packages/cms-types` generation wired into Turbo
+- [x] `packages/cms-types` generation wired into Turbo
+  - Done 2026-10-31 (inline, reviewed + audited): Payload writes `packages/cms-types/src/payload-types.ts`
+    (committed; `declare: false`, so readers don't need Payload); the CMS keeps its typed local API through
+    `apps/cms/src/payload-generated.ts`. The package adds `CmsBlock`, `CmsBlockType`, `CmsBlockOf<T>`,
+    `CmsGlobals` and `CMS_BLOCK_TYPES` (a compile-time check fails until it lists exactly the generated block types),
+    built to `dist/` like `@pageaters/shared`; the CMS depends on it, so Turbo builds it first. Regenerate with
+    `pnpm cms:types` (Turbo task `generate:types`, uncached). A CI drift check (regenerate, `git diff --exit-code`)
+    belongs to Phase 10
 - [ ] Seed CMS content: the homepage, one template per page type, header, footer and theme (created published:
       visitors only see documents with `_status: published`)
 - **Checkpoint:** owner edits the homepage in the CMS and sees it locally

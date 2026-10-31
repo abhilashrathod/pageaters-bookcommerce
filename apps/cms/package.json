@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@pageaters/api-client": "workspace:*",
+    "@pageaters/cms-types": "workspace:*",
     "@payloadcms/db-mongodb": "3.91.0",
     "@payloadcms/next": "3.91.0",
     "@payloadcms/richtext-lexical": "3.91.0",
