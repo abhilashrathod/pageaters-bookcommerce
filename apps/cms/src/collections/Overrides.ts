@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 
 import { adminOnly, anyone } from '../access.ts';
+import { FREE_BLOCKS } from '../blocks/free.ts';
 import { PAGE_TYPES } from './page-types.ts';
 
 // Optional additions for one commerce item (e.g. a custom hero for one collection), keyed by the item's API id. No
@@ -19,6 +20,6 @@ export const Overrides: CollectionConfig = {
       admin: { description: 'The item’s id in the API (a 24-character ObjectId).' },
       validate: (value: string | null | undefined) => /^[a-f0-9]{24}$/.test(value ?? '') || 'Must be a 24-character ObjectId',
     },
-    { name: 'layout', type: 'blocks', blocks: [] },
+    { name: 'layout', type: 'blocks', blocks: FREE_BLOCKS },
   ],
 };

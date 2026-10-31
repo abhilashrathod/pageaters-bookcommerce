@@ -146,35 +146,36 @@ export interface Page {
    * The page’s path: `home` is the homepage; lowercase letters, digits and dashes.
    */
   slug: string;
-  layout?: unknown[] | null;
+  layout?: (BannerBlock | ProductSetRowBlock | FeaturedBooksBlock | CarouselBlock | RichTextBlock)[] | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "templates".
+ * via the `definition` "BannerBlock".
  */
-export interface Template {
-  id: string;
-  type: 'product' | 'collection' | 'category' | 'bundle' | 'book-box';
-  layout?: unknown[] | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "overrides".
- */
-export interface Override {
-  id: string;
-  type: 'product' | 'collection' | 'category' | 'bundle' | 'book-box';
+export interface BannerBlock {
+  layout: 'hero' | 'full-bleed' | 'square' | 'landscape' | 'promo';
+  heading: string;
+  text?: string | null;
   /**
-   * The item’s id in the API (a 24-character ObjectId).
+   * Required for every layout but the promo strip.
    */
-  itemId: string;
-  layout?: unknown[] | null;
-  updatedAt: string;
-  createdAt: string;
+  image?: (string | null) | Media;
+  /**
+   * Optional call to action.
+   */
+  link?: {
+    label?: string | null;
+    /**
+     * A site path such as /collections, or a full https:// URL.
+     */
+    href?: string | null;
+    newTab?: boolean | null;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'banner';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -194,6 +195,135 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProductSetRowBlock".
+ */
+export interface ProductSetRowBlock {
+  heading?: string | null;
+  /**
+   * The product set’s id in the API (a 24-character ObjectId).
+   */
+  productSet: string;
+  limit: number;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'productSetRow';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeaturedBooksBlock".
+ */
+export interface FeaturedBooksBlock {
+  heading?: string | null;
+  list: 'bestSeller' | 'editorsPick' | 'newRelease' | 'preOrder';
+  limit: number;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'featuredBooks';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CarouselBlock".
+ */
+export interface CarouselBlock {
+  heading?: string | null;
+  source: 'collections' | 'categories' | 'bundles' | 'deals';
+  limit: number;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'carousel';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RichTextBlock".
+ */
+export interface RichTextBlock {
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'richText';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "templates".
+ */
+export interface Template {
+  id: string;
+  type: 'product' | 'collection' | 'category' | 'bundle' | 'book-box';
+  layout?:
+    | (
+        | ProductInfoBlock
+        | ListingHeaderBlock
+        | ListingGridBlock
+        | BannerBlock
+        | ProductSetRowBlock
+        | FeaturedBooksBlock
+        | CarouselBlock
+        | RichTextBlock
+      )[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProductInfoBlock".
+ */
+export interface ProductInfoBlock {
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'productInfo';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ListingHeaderBlock".
+ */
+export interface ListingHeaderBlock {
+  showDescription?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'listingHeader';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ListingGridBlock".
+ */
+export interface ListingGridBlock {
+  pageSize: '12' | '24' | '48';
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'listingGrid';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "overrides".
+ */
+export interface Override {
+  id: string;
+  type: 'product' | 'collection' | 'category' | 'bundle' | 'book-box';
+  /**
+   * The item’s id in the API (a 24-character ObjectId).
+   */
+  itemId: string;
+  layout?: (BannerBlock | ProductSetRowBlock | FeaturedBooksBlock | CarouselBlock | RichTextBlock)[] | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -315,9 +445,78 @@ export interface PayloadMigration {
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
-  layout?: T | {};
+  layout?:
+    | T
+    | {
+        banner?: T | BannerBlockSelect<T>;
+        productSetRow?: T | ProductSetRowBlockSelect<T>;
+        featuredBooks?: T | FeaturedBooksBlockSelect<T>;
+        carousel?: T | CarouselBlockSelect<T>;
+        richText?: T | RichTextBlockSelect<T>;
+      };
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BannerBlock_select".
+ */
+export interface BannerBlockSelect<T extends boolean = true> {
+  layout?: T;
+  heading?: T;
+  text?: T;
+  image?: T;
+  link?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+        newTab?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProductSetRowBlock_select".
+ */
+export interface ProductSetRowBlockSelect<T extends boolean = true> {
+  heading?: T;
+  productSet?: T;
+  limit?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeaturedBooksBlock_select".
+ */
+export interface FeaturedBooksBlockSelect<T extends boolean = true> {
+  heading?: T;
+  list?: T;
+  limit?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CarouselBlock_select".
+ */
+export interface CarouselBlockSelect<T extends boolean = true> {
+  heading?: T;
+  source?: T;
+  limit?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RichTextBlock_select".
+ */
+export interface RichTextBlockSelect<T extends boolean = true> {
+  content?: T;
+  id?: T;
+  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -325,9 +524,46 @@ export interface PagesSelect<T extends boolean = true> {
  */
 export interface TemplatesSelect<T extends boolean = true> {
   type?: T;
-  layout?: T | {};
+  layout?:
+    | T
+    | {
+        productInfo?: T | ProductInfoBlockSelect<T>;
+        listingHeader?: T | ListingHeaderBlockSelect<T>;
+        listingGrid?: T | ListingGridBlockSelect<T>;
+        banner?: T | BannerBlockSelect<T>;
+        productSetRow?: T | ProductSetRowBlockSelect<T>;
+        featuredBooks?: T | FeaturedBooksBlockSelect<T>;
+        carousel?: T | CarouselBlockSelect<T>;
+        richText?: T | RichTextBlockSelect<T>;
+      };
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProductInfoBlock_select".
+ */
+export interface ProductInfoBlockSelect<T extends boolean = true> {
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ListingHeaderBlock_select".
+ */
+export interface ListingHeaderBlockSelect<T extends boolean = true> {
+  showDescription?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ListingGridBlock_select".
+ */
+export interface ListingGridBlockSelect<T extends boolean = true> {
+  pageSize?: T;
+  id?: T;
+  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -336,7 +572,15 @@ export interface TemplatesSelect<T extends boolean = true> {
 export interface OverridesSelect<T extends boolean = true> {
   type?: T;
   itemId?: T;
-  layout?: T | {};
+  layout?:
+    | T
+    | {
+        banner?: T | BannerBlockSelect<T>;
+        productSetRow?: T | ProductSetRowBlockSelect<T>;
+        featuredBooks?: T | FeaturedBooksBlockSelect<T>;
+        carousel?: T | CarouselBlockSelect<T>;
+        richText?: T | RichTextBlockSelect<T>;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

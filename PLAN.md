@@ -634,17 +634,30 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     tokens of `packages/config/tailwind/theme.css` (6-digit hex) + `radius` (rem), defaults equal to that file (a test
     keeps them in step); SEO defaults: site name, title template with `%s`, description (≤160), share image.
     Smoke-tested over REST: visitor reads defaults, demo login 403, unsafe href/colour 400, owner 200
-- [ ] Blocks: Banner (one block with a layout option, replacing the five legacy banner variants), Product Set row,
+- [x] Blocks: Banner (one block with a layout option, replacing the five legacy banner variants), Product Set row,
       Featured Books, Carousel (collections, categories, bundles or deals), Rich text; template core blocks (product
       info + buy box, listing header + grid) locked
+  - Done 2026-10-31 (inline, reviewed + audited): `src/blocks/free.ts` (Pages, Templates, Overrides): Banner (`layout`
+    hero | full-bleed | square | landscape | promo; heading, text, image required except promo, optional safe link),
+    Product Set row (product set id), Featured Books (`list` = a book flag: bestSeller | editorsPick | newRelease |
+    preOrder), Carousel (collections | categories | bundles | deals), Rich text (Lexical); rows take `limit` 4–24.
+    `src/blocks/core.ts` (Templates only): Product info + buy box (product, bundle, book-box), Listing header +
+    Listing grid (collection, category; page size 12/24/48); `validateCoreBlocks` refuses a template without each of
+    its core blocks exactly once or with another type's (moved, not removed). Commerce ids: ObjectId text fields
+    (`fields/commerce.ts`) until the pickers step. Payload drops block types a field doesn't allow, so pages and
+    overrides never store core blocks. Smoke-tested over REST (400 on each broken rule, 201 otherwise)
 - [ ] Commerce pickers: fields that pick a product set, collection or category from the API and store only its ID
-- [ ] Drafts, versions and live preview; `afterChange` hook → storefront revalidation webhook
+- [ ] Drafts, versions and live preview; `afterChange` hook → storefront revalidation webhook. Draft saves skip
+      validation: keep the template core-block lock on publish (`validateCoreBlocks`)
 - [ ] `packages/cms-types` generation wired into Turbo
 - [ ] Seed CMS content: the homepage, one template per page type, header, footer and theme
 - **Checkpoint:** owner edits the homepage in the CMS and sees it locally
 
 ## Phase 7 — Storefront rebuild (App Router + Tailwind/shadcn)
 
+- Notes from Phase 6: the Featured Books block picks a book flag (`bestSeller`, `editorsPick`, `newRelease`,
+  `preOrder`), so `GET /store-books` needs a filter by flag; render rich text links only when they pass the CMS's
+  `isSafeHref` (defence in depth) and the footer `contact` as plain text
 - [ ] New Next.js App Router app; Tailwind + shadcn/ui; theme tokens from the CMS as CSS variables. Images only from
       Blob and Open Library (the closed AWS account's bucket and CloudFront hosts are not carried over)
 - [ ] Components for the kept blocks, close to the original look (not pixel-matched); block registry + safe renderer + per-block Suspense
