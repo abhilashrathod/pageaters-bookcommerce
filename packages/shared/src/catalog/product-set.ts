@@ -52,6 +52,6 @@ export const productSetDetailSchema = productSetSchema.extend({
 });
 export type ProductSetDetail = z.infer<typeof productSetDetailSchema>;
 
-// GET /product-sets (admin only): whole documents, nothing populated.
+// GET /product-sets (public, active sets): whole documents, nothing populated.
 export const productSetListResponseSchema = apiResponse(paginated(productSetSchema));
 export const productSetDetailResponseSchema = apiResponse(productSetDetailSchema);

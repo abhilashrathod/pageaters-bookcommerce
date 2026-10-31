@@ -203,7 +203,7 @@ export interface Media {
 export interface ProductSetRowBlock {
   heading?: string | null;
   /**
-   * The product set’s id in the API (a 24-character ObjectId).
+   * Search the store by title and pick one; only its id is stored.
    */
   productSet: string;
   limit: number;
@@ -318,7 +318,7 @@ export interface Override {
   id: string;
   type: 'product' | 'collection' | 'category' | 'bundle' | 'book-box';
   /**
-   * The item’s id in the API (a 24-character ObjectId).
+   * Search the store by title and pick one; only its id is stored.
    */
   itemId: string;
   layout?: (BannerBlock | ProductSetRowBlock | FeaturedBooksBlock | CarouselBlock | RichTextBlock)[] | null;

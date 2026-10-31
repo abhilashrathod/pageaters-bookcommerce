@@ -45,7 +45,7 @@ export const Banner: Block = {
 export const ProductSetRow: Block = {
   slug: 'productSetRow',
   interfaceName: 'ProductSetRowBlock',
-  fields: [heading, commerceId('productSet', 'product set'), limit(12)],
+  fields: [heading, commerceId('productSet', 'product-sets'), limit(12)],
 };
 
 // A row of books from one of the catalog's own lists (the books' flags).

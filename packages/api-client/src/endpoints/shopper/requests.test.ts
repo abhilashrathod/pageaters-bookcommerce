@@ -110,6 +110,7 @@ const rows: Row[] = [
   ],
   ['auth.demoLogin', (c) => c.auth.demoLogin(), 'POST', '/auth/demo-login'],
   ['auth.demoAdminLogin', (c) => c.auth.demoAdminLogin(), 'POST', '/auth/demo-login/admin'],
+  ['productSets.list', (c) => c.productSets.list({ page: 1, limit: 50 }), 'GET', '/product-sets?page=1&limit=50'],
   ['outbox.list', (c) => c.outbox.list(), 'GET', '/outbox'],
   [
     'auth.verifyEmail',

@@ -12,6 +12,7 @@ import { Pages } from './collections/Pages.ts';
 import { Templates } from './collections/Templates.ts';
 import { Users } from './collections/Users.ts';
 import { DEMO_EDITOR } from './demo.ts';
+import { commerceEndpoint } from './endpoints/commerce.ts';
 import { AnnouncementBar } from './globals/AnnouncementBar.ts';
 import { Footer } from './globals/Footer.ts';
 import { Header } from './globals/Header.ts';
@@ -32,6 +33,7 @@ export default buildConfig({
   },
   collections: [Pages, Templates, Overrides, Media, Users],
   globals: [Header, Footer, AnnouncementBar, Theme, Seo],
+  endpoints: [commerceEndpoint(env.API_URL)],
   editor: lexicalEditor(),
   secret: env.PAYLOAD_SECRET,
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },

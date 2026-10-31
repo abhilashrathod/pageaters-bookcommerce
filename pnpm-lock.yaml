@@ -408,6 +408,9 @@ importers:
 
   apps/cms:
     dependencies:
+      '@pageaters/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
       '@payloadcms/db-mongodb':
         specifier: 3.91.0
         version: 3.91.0(payload@3.91.0(graphql@16.11.0)(supports-color@7.2.0)(typescript@6.0.3))(socks@2.8.10)(supports-color@7.2.0)

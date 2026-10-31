@@ -7,7 +7,13 @@ import { parseEnv } from './env.ts';
 const VALID = { MONGODB_URI: 'mongodb://127.0.0.1:27017/pageaters_cms', PAYLOAD_SECRET: 's'.repeat(32) };
 
 void test('accepts the CMS database and a long secret; the Blob token is optional', () => {
-  assert.deepEqual(parseEnv(VALID), { ...VALID, DEMO_MODE: false, BLOB_READ_WRITE_TOKEN: undefined, VERCEL: undefined });
+  assert.deepEqual(parseEnv(VALID), {
+    ...VALID,
+    API_URL: 'http://localhost:5005/api/v1',
+    DEMO_MODE: false,
+    BLOB_READ_WRITE_TOKEN: undefined,
+    VERCEL: undefined,
+  });
   assert.equal(parseEnv({ ...VALID, BLOB_READ_WRITE_TOKEN: ' ' }).BLOB_READ_WRITE_TOKEN, undefined);
 });
 

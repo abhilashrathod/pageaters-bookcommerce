@@ -17,6 +17,10 @@ const schema = z.object({
     .regex(/^mongodb(\+srv)?:\/\/\S+$/, 'must start with mongodb:// or mongodb+srv://')
     .refine((uri) => databaseName(uri) !== '', 'must name its database, e.g. …/pageaters_cms')
     .refine((uri) => databaseName(uri) !== 'pageaters_api', 'must not be the API database (pageaters_api)'),
+  // The API root the commerce pickers read (server-side only), version prefix included.
+  API_URL: z
+    .url({ protocol: /^https?$/, error: 'must be an http(s) URL, e.g. http://localhost:5005/api/v1' })
+    .default('http://localhost:5005/api/v1'),
   // The public demo: the login form is prefilled with the read-only demo login (demo.ts).
   DEMO_MODE: z
     .enum(['true', 'false'], { error: 'must be true or false' })

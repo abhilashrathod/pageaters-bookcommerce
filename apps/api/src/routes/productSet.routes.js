@@ -7,9 +7,11 @@ const { USER_ROLES } = require('./../constants/enums');
 const controller = require('./../controllers/productSets.controller');
 const permissionValidator = require('./../middlewares/permissionVerification.middleware');
 const { demoAdminReadOnly } = require('../middlewares/demoMode.middleware');
+const pageLimit = require('../middlewares/pageLimit.middleware');
 const validate = require('./../middlewares/validate.middleware');
 
-router.get('/', permissionValidator(USER_ROLES.ADMIN), validate(adminProductSetListFilterSchema), controller.getAll);
+// Public since Phase 6: the CMS product-set picker and the storefront list active sets (pages of at most 50).
+router.get('/', pageLimit, validate(adminProductSetListFilterSchema), controller.getAll);
 router.get('/unique/:id', controller.getByUniqueId);
 router.get('/slug/:slug', controller.getBySlug);
 

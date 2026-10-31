@@ -66,11 +66,6 @@ module.exports = [
     response: s.mysteryBoxDetailResponseSchema,
   }),
 
-  admin('GET', '/product-sets', 'List product sets', {
-    request: s.adminProductSetListFilterSchema,
-    query: s.adminProductSetListQuerySchema,
-    response: s.productSetListResponseSchema,
-  }),
   ...crud('/product-sets', 'product set', {
     create: s.adminProductSetCreatePayloadSchema,
     update: s.adminProductSetUpdatePayloadSchema,

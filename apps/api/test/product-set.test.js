@@ -42,9 +42,8 @@ const populatedSet = async (id) => (await ProductSet().findById(id).populate(POP
 const byPriority = (products) => [...products].sort((a, b) => a.priority - b.priority);
 
 describe('auth', () => {
-  test('the list and admin routes need an ADMIN session', async () => {
+  test('the admin routes need an ADMIN session', async () => {
     for (const route of [
-      ['GET', '/product-sets'],
       ['GET', `/product-sets/${storeIds.setOne}`],
       ['POST', '/product-sets', { title: 'Test New' }],
       ['PUT', `/product-sets/${storeIds.setOne}`, { title: 'Test New' }],
@@ -55,7 +54,15 @@ describe('auth', () => {
   });
 });
 
-describe('GET /product-sets (admin)', () => {
+describe('GET /product-sets', () => {
+  test('is public, at most 50 a page for anyone but an admin', async () => {
+    const res = await api.request('/product-sets?page=1&limit=50');
+    assert.equal(res.status, 200);
+    assert.equal(res.body.data.totalDocs, 2);
+    assert.equal((await api.request('/product-sets?page=1&limit=51', { cookie: shopper.cookie })).status, 400);
+    assert.equal((await api.request('/product-sets?page=1&limit=51', { cookie: admin.cookie })).status, 200);
+  });
+
   test('pages active sets, optionally by categories (comma list or array)', async () => {
     const all = asJson(await ProductSet().find({ isActive: true }).sort({ createdAt: -1, _id: -1 }));
     const page = (docs) => paged(docs, { totalDocs: docs.length, limit: 10, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null });

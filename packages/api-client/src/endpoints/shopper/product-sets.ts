@@ -1,10 +1,17 @@
-import { productSetDetailResponseSchema } from '@pageaters/shared';
+import { adminProductSetListQuerySchema, productSetDetailResponseSchema, productSetListResponseSchema } from '@pageaters/shared';
 
 import { defineEndpoint } from '../../core/endpoint.ts';
 
-// Public product-set reads (`apps/api/src/routes/productSet.routes.js`). The list and the other routes are admin
-// only (2c). Both reads flatten `products` to the books themselves, sorted by priority.
+// Public product-set reads (`apps/api/src/routes/productSet.routes.js`). The writes and the by-ObjectId read are admin
+// only (2c). The detail reads flatten `products` to the books themselves, sorted by priority.
 export const productSets = {
+  // GET /product-sets — active sets, newest first, at most 50 a page; `categories` keeps the sets in any of them.
+  list: defineEndpoint({
+    method: 'GET',
+    path: '/product-sets',
+    query: adminProductSetListQuerySchema,
+    response: productSetListResponseSchema.shape.data,
+  }),
   // GET /product-sets/unique/:id — `id` is the public `setId`.
   detail: defineEndpoint({
     method: 'GET',

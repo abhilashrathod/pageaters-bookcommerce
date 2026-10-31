@@ -646,7 +646,15 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     its core blocks exactly once or with another type's (moved, not removed). Commerce ids: ObjectId text fields
     (`fields/commerce.ts`) until the pickers step. Payload drops block types a field doesn't allow, so pages and
     overrides never store core blocks. Smoke-tested over REST (400 on each broken rule, 201 otherwise)
-- [ ] Commerce pickers: fields that pick a product set, collection or category from the API and store only its ID
+- [x] Commerce pickers: fields that pick a product set, collection or category from the API and store only its ID
+  - Done 2026-10-31 (inline, reviewed + audited): `GET /api/commerce/:kind?q=` in the CMS (`endpoints/commerce.ts`,
+    signed-in CMS users only) reads the API server-side through `@pageaters/api-client` (`API_URL`, default
+    `http://localhost:5005/api/v1`; no CORS change): product sets, collections, categories, bundles and book boxes
+    (store books of type `book_box`) are listed (≤5 pages of 50) and filtered by title; books use the API's prefix
+    search (≥2 letters); answers ≤20 `{ id, label }`, 502 when the API is down. `components/CommercePicker.tsx`
+    (search-as-you-type, stores the id) on the Product Set row's set and the override's item (kind from its page
+    type). API: `GET /product-sets` is public now (active sets, ≤50 a page unless admin), with api-client
+    `productSets.list`. Smoke-tested: admin forms render, endpoint 401 for visitors, 502 with the API down
 - [ ] Drafts, versions and live preview; `afterChange` hook → storefront revalidation webhook. Draft saves skip
       validation: keep the template core-block lock on publish (`validateCoreBlocks`)
 - [ ] `packages/cms-types` generation wired into Turbo

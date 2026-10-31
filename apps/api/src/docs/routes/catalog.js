@@ -52,6 +52,12 @@ module.exports = [
   catalog('GET', '/deals', 'List deals', { request: s.dealListFilterSchema, paged: 'public', response: s.dealListResponseSchema }),
   catalog('GET', '/deals/unique/:id', 'Get a deal', { params: publicId('dealId'), response: s.dealDetailResponseSchema }),
 
+  catalog('GET', '/product-sets', 'List product sets', {
+    description: 'Active sets, newest first; `categories` (comma list or array of ObjectIds) keeps the sets in any of them.',
+    request: s.adminProductSetListFilterSchema,
+    paged: 'public',
+    response: s.productSetListResponseSchema,
+  }),
   catalog('GET', '/product-sets/unique/:id', 'Get a product set', {
     params: publicId('setId'),
     response: s.productSetDetailResponseSchema,
