@@ -12,6 +12,7 @@ const requestContext = require('./middlewares/requestContext.middleware');
 const { errorHandler, notFound } = require('./middlewares/errorHandler.middleware');
 const { limiters } = require('./middlewares/rateLimit.middleware');
 const health = require('./routes/health.route');
+const docs = require('./docs');
 
 // Builds the Express app only: no listen, no database connect, no queries, and no timers beyond the rate-limit
 // stores' unref'd expiry timers. src/server.js runs it locally; a serverless handler can import it as-is, because
@@ -71,6 +72,10 @@ app.use(limiters.slowDown, limiters.general);
 // Health check (routes/health.route.js): before the body parsers and requireDb, so it does no other work and
 // answers 503 itself, within its own time limits, while the database is down.
 app.get('/health', health);
+
+// API reference (src/docs): GET /openapi.json, generated from the shared zod schemas on first request, and GET /docs,
+// the interactive page with its own CSP. Public; no database.
+app.use(docs.router);
 
 // Bodies: JSON only, 100 kb at most (a larger one answers 413). No client sends urlencoded bodies, and a form post is
 // the cross-site (CSRF) path, so they are not parsed. Multipart is parsed only on the upload route

@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@pageaters/config": "workspace:*",
+    "@seriousme/openapi-schema-validator": "2.11.0",
     "eslint": "9.39.5",
     "mongodb-memory-server-core": "11.3.0",
     "prettier": "3.9.10",

@@ -91,6 +91,12 @@ src/notes/        domain notes on orders, payments and refunds
   cold instance connects, as its first database-backed request would) and pings it within 1 s: `{ "status": "ok" }`
   when both succeed, else 503 `{ "status": "unavailable" }`, never the reason.
 
+## API reference
+
+`GET /docs` is an interactive reference (Scalar) for `GET /openapi.json`, an OpenAPI 3.1 document generated from
+the zod schemas in `@pageaters/shared` through the route registry in `src/docs/routes/`. Adding a route means adding
+its registry entry; `test/openapi.test.js` fails otherwise. See `docs/api.md`.
+
 ## Response format
 
 ```js
