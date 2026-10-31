@@ -38,6 +38,7 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.5",
+    "mongodb-memory-server-core": "11.3.0",
     "typescript": "6.0.3"
   },
   "license": "UNLICENSED"

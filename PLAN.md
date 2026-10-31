@@ -688,6 +688,12 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     and every seeded href against `isSafeHref`, and that every internal link leads to a seeded page or a planned
     route. Ran on an in-memory DB: 20 documents created, a rerun changed nothing,
     visitors read all of it; with a (fake) API the homepage got two product set rows
+- [x] Access-rules integration test (added 2026-10-31 with the owner): `apps/cms/src/access.integration.test.ts` runs
+      the real Payload config on an in-memory MongoDB through the local API with access control on, as a visitor,
+      the read-only demo login and an admin: the demo login can't write content, media, globals, its own password or
+      role, or unlock the owner, and sees only its own account; a visitor reads published content only (never drafts
+      or versions) and writes nothing; an admin writes and unlocks; a template publishes only with its core blocks.
+      8 tests, ~4 s, part of `pnpm --filter cms test`; checked by breaking two rules on purpose (both caught)
 - **Checkpoint:** owner edits the homepage in the CMS and sees it locally
 
 ## Phase 7 — Storefront rebuild (App Router + Tailwind/shadcn)
