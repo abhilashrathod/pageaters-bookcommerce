@@ -626,7 +626,14 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     password and role; owner 201; duplicate override 400; first-register 403 after the seed. Unlock is admin only
     (Payload's default let any user lift the owner's lockout). Known limit: anyone can lock the public demo login for
     10 minutes with 5 wrong passwords
-- [ ] Globals: Header (with navigation), Footer, Announcement Bar, Theme tokens, SEO defaults
+- [x] Globals: Header (with navigation), Footer, Announcement Bar, Theme tokens, SEO defaults
+  - Done 2026-10-31 (inline, reviewed + audited): public read, admin-only update. Links (`fields/link.ts`): label +
+    href that must be a site path (`/…`) or an `https://` URL (no `javascript:`, `http:`, `//host`). Header: logo text +
+    up to 6 navigation groups of links; Footer: contact, up to 4 link columns, legal line, image credit (default
+    "Cover images via Open Library"); Announcement Bar: enabled, message (≤140), optional link; Theme: the 13 colour
+    tokens of `packages/config/tailwind/theme.css` (6-digit hex) + `radius` (rem), defaults equal to that file (a test
+    keeps them in step); SEO defaults: site name, title template with `%s`, description (≤160), share image.
+    Smoke-tested over REST: visitor reads defaults, demo login 403, unsafe href/colour 400, owner 200
 - [ ] Blocks: Banner (one block with a layout option, replacing the five legacy banner variants), Product Set row,
       Featured Books, Carousel (collections, categories, bundles or deals), Rich text; template core blocks (product
       info + buy box, listing header + grid) locked

@@ -12,6 +12,11 @@ import { Pages } from './collections/Pages.ts';
 import { Templates } from './collections/Templates.ts';
 import { Users } from './collections/Users.ts';
 import { DEMO_EDITOR } from './demo.ts';
+import { AnnouncementBar } from './globals/AnnouncementBar.ts';
+import { Footer } from './globals/Footer.ts';
+import { Header } from './globals/Header.ts';
+import { Seo } from './globals/Seo.ts';
+import { Theme } from './globals/Theme.ts';
 import { parseEnv } from './env.ts';
 
 // Payload CMS (AGENTS.md "apps/cms"): content only, in its own database; commerce data stays in the API.
@@ -26,6 +31,7 @@ export default buildConfig({
     ...(env.DEMO_MODE && { autoLogin: { ...DEMO_EDITOR, prefillOnly: true } }),
   },
   collections: [Pages, Templates, Overrides, Media, Users],
+  globals: [Header, Footer, AnnouncementBar, Theme, Seo],
   editor: lexicalEditor(),
   secret: env.PAYLOAD_SECRET,
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
