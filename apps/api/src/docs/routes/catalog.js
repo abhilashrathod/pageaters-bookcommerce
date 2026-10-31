@@ -14,7 +14,10 @@ const search = (path, summary, rest) => ({ method: 'GET', path: v1(path), tag: '
 module.exports = [
   catalog('GET', '/store-books', 'List books', {
     paged: 'public',
-    filters: { type: { schema: s.productTypeSchema, description: 'Only this product type.' } },
+    filters: {
+      type: { schema: s.productTypeSchema, description: 'Only this product type.' },
+      list: { schema: s.bookListFlagSchema, description: 'Only books with this flag set.' },
+    },
     response: s.bookListResponseSchema,
   }),
   catalog('GET', '/store-books/unique/:id', 'Get a book', {

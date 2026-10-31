@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   bookDetailResponseSchema,
+  bookListFlagSchema,
   bookListResponseSchema,
   paginationQuerySchema,
   productTypeSchema,
@@ -13,11 +14,11 @@ import { defineEndpoint } from '../../core/endpoint.ts';
 // are 2c's; GET /store-books/bulk/export (a CSV dump) is left out.
 export const books = {
   // GET /store-books — `type` defaults to 'book' (the collection also holds boxes and blind books). `sortBy` must be
-  // one of title, createdAt, popularity, priority, currentDiscount.
+  // one of title, createdAt, popularity, priority, currentDiscount. `list` keeps only books with that flag.
   list: defineEndpoint({
     method: 'GET',
     path: '/store-books',
-    query: paginationQuerySchema.extend({ type: productTypeSchema.optional() }),
+    query: paginationQuerySchema.extend({ type: productTypeSchema.optional(), list: bookListFlagSchema.optional() }),
     response: bookListResponseSchema.shape.data,
   }),
   // GET /store-books/unique/:id — `id` is the public `bookId`, not the ObjectId.

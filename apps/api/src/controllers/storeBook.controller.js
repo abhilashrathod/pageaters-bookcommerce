@@ -49,8 +49,8 @@ const bookFields = (params) => {
 
 module.exports.getAll = async (req, res) => {
   try {
-    const { page, limit, sortBy, sortOrder, type } = req.allParams();
-    const data = await storeBookService.listBooks({ page, limit, sortBy, sortOrder, type });
+    const { page, limit, sortBy, sortOrder, type, list } = req.allParams();
+    const data = await storeBookService.listBooks({ page, limit, sortBy, sortOrder, type, list });
     return res.ok({ message: 'BOOK_LIST_SUCCESS', data });
   } catch (e) {
     return handleControllerError(res, e);

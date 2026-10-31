@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { BookListFlag } = require('@pageaters/shared');
 
 const { models } = require('../constants');
 const enums = require('../constants/enums');
@@ -93,16 +94,19 @@ const idsNotIn = (next, current) => {
   return [...new Set(next.map(String))].filter((id) => !have.has(id));
 };
 
+const LIST_FLAGS = Object.values(BookListFlag);
+
 /**
- * One page of live store books of a type (default `book`), list fields, with author and categories. Paging
- * defaults: helpers/paging.helper.js.
- * @param {{ page?, limit?, sortBy?, sortOrder?, type? }} options
+ * One page of live store books of a type (default `book`), list fields, with author and categories; `list` keeps
+ * only books with that flag (bestSeller, editorsPick, newRelease, preOrder). Paging defaults: helpers/paging.helper.js.
+ * @param {{ page?, limit?, sortBy?, sortOrder?, type?, list? }} options
  * @returns {Promise<object>} The mongoose-paginate-v2 result.
- * @throws {AppError} SORTING_NOT_ALLOWED (400), INVALID_PAGING (400).
+ * @throws {AppError} SORTING_NOT_ALLOWED (400), INVALID_PAGING (400), INVALID_REQUEST (400) for another `list`.
  */
-const listBooks = ({ type, ...params }) =>
-  Book.paginate(
-    { isDeleted: false, type: type || enums.PRODUCT_TYPES.BOOK },
+const listBooks = ({ type, list, ...params }) => {
+  if (list !== undefined && !LIST_FLAGS.includes(list)) throw new AppError('INVALID_REQUEST');
+  return Book.paginate(
+    { isDeleted: false, type: type || enums.PRODUCT_TYPES.BOOK, ...(list && { [list]: true }) },
     {
       ...pageOptions(params, { sortable: SORTABLE }),
       select: `title bookId ISBN author inventory poster images tags price weight popularity editorsPick newRelease preOrder currentDiscount bestSeller`,
@@ -112,6 +116,7 @@ const listBooks = ({ type, ...params }) =>
       ],
     },
   );
+};
 
 /**
  * Creates a store book; adds one to each of its live categories' `numberOfBooks`, adds it to its author's books and

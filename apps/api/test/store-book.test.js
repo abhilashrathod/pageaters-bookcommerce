@@ -109,6 +109,13 @@ describe('GET /store-books', () => {
     const second = await api.request('/store-books?page=2&limit=1');
     assert.deepEqual([second.body.data.page, second.body.data.docs.map((b) => b._id)], [2, [docs[1]._id]]);
   });
+
+  test('list= keeps only books with that flag; another value is refused', async () => {
+    const res = await api.request('/store-books?list=bestSeller');
+    assert.deepEqual([res.status, res.body.data.docs.map((b) => b._id)], [200, [String(ids.bookTwo)]]);
+    assert.equal((await api.request('/store-books?list=editorsPick')).body.data.totalDocs, 0);
+    assertBody(await api.request('/store-books?list=isDeleted'), 400, badRequest('INVALID_REQUEST'));
+  });
 });
 
 describe('detail', () => {

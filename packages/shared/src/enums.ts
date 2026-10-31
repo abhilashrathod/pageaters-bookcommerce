@@ -40,6 +40,16 @@ export const ProductType = {
 export const productTypeSchema = z.enum(ProductType);
 export type ProductType = z.infer<typeof productTypeSchema>;
 
+// GET /store-books?list=: only books with this flag set (the CMS Featured Books block picks one).
+export const BookListFlag = {
+  BEST_SELLER: 'bestSeller',
+  EDITORS_PICK: 'editorsPick',
+  NEW_RELEASE: 'newRelease',
+  PRE_ORDER: 'preOrder',
+} as const;
+export const bookListFlagSchema = z.enum(BookListFlag);
+export type BookListFlag = z.infer<typeof bookListFlagSchema>;
+
 // StoreBook.version (binding).
 export const BookVersion = {
   HARDCOVER: 'hardcover',

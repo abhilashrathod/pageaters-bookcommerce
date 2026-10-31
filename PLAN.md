@@ -716,6 +716,15 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     `remotePatterns`: `*.public.blob.vercel-storage.com`, `covers.openlibrary.org`. Placeholder home page until the
     Routes step. 5 tests (env, theme)
 - [ ] Components for the kept blocks, close to the original look (not pixel-matched); block registry + safe renderer + per-block Suspense
+      (split 2026-10-31 with the owner; the core blocks — product info, listing header, listing grid — move to Routes,
+      which has the page's item; (b) and (c) are one review batch)
+  - [x] (a) API: `GET /store-books?list=bestSeller|editorsPick|newRelease|preOrder` (shared schema, API, api-client)
+    - Done 2026-10-31 (inline): `BookListFlag` / `bookListFlagSchema` in shared `enums.ts`; `listBooks` adds
+      `{ [list]: true }` only for one of the four flags, anything else (another field, an array) is 400
+      `INVALID_REQUEST`; OpenAPI filter documented; `client.books.list({ list })`. 1 new API test (18 in the file)
+  - [ ] (b) Storefront base: api-client wiring, block registry + safe renderer + per-block Suspense, section heading,
+        cards and a carousel close to the legacy look
+  - [ ] (c) Free blocks: banner (5 layouts), product set row, featured books, carousel, rich text (safe links only)
 - [ ] Routes: `/` and `[...slug]` (CMS pages), `/books/[id]`, `/collections/[id]`, `/categories/[id]`,
       `/bundles/[id]`, `/book-boxes` (templates + overrides)
 - [ ] Code-owned: demo login, cart, checkout with Razorpay test mode (end to end), orders list and detail, address
