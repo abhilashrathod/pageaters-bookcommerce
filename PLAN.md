@@ -740,14 +740,45 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
       `images.remotePatterns` (`/api/media/file/**`; localhost only in development). Checked in the browser with a
       sample layout; image banners untested until a banner has an image. The DB has no active deals, so a deals
       carousel (and the seeded Deals page) is empty. 14 storefront tests
-- [ ] Routes: `/` and `[...slug]` (CMS pages), `/books/[id]`, `/collections/[id]`, `/categories/[id]`,
+- Remaining steps run as three parallel tracks (owner, 2026-10-31), one agent and worktree each, each track one review
+  batch: **A content** = Routes (+ the core blocks), Caching/draft mode, SEO; **B commerce** = Code-owned;
+  **C shell** = Header/footer. Shared seam: `components/cart/add-to-cart-button.tsx` (A stubs it, B's version wins)
+- [x] Routes: `/` and `[...slug]` (CMS pages), `/books/[id]`, `/collections/[id]`, `/categories/[id]`,
       `/bundles/[id]`, `/book-boxes` (templates + overrides)
-- [ ] Code-owned: demo login, cart, checkout with Razorpay test mode (end to end), orders list and detail, address
+  - Done 2026-10-31 (track A agent; reviewed + audited, approved): published CMS pages by slug (`home` = `/`,
+    `/home` 404s); item pages fetch the item, then the type's template plus the item's override (missing → template;
+    no template → the core blocks alone); `/books/[id]` uses the book-box template for `book_box` items, and
+    `/book-boxes` is a paginated list of boxes. Core blocks `productInfo`, `listingHeader`, `listingGrid` read the
+    page's item through a block context. Item pages 404 while the API is down
+- [x] Code-owned: demo login, cart, checkout with Razorpay test mode (end to end), orders list and detail, address
       select
-- [ ] Header/footer/announcement from CMS globals; footer credits "Cover images via Open Library"; the owner's logo,
+  - Done 2026-10-31 (track B agent; reviewed + audited, fixes applied): `app/(shop)/` cart, checkout address and
+    checkout (cash on delivery or Razorpay Checkout, store credit), order confirmation, orders list and detail, all
+    noindex; `lib/session.ts` (demo-shopper session, `useSession()`), browser client `lib/shopper-api.ts`
+    (`NEXT_PUBLIC_API_URL`, cookies); `AddToCartButton` signs in as the demo shopper when needed; `AccountMenu` and
+    `CartBadge` in the header. API: `POST /orders/create` (online) returns the public `razorKeyId` (adapter
+    `keyId`; mock: `rzp_test_mock`); the shopper orders list is capped at 50. Mock path checked end to end by the
+    agent; the Razorpay test-mode run is the checkpoint. Local demo mode needs SendGrid/Twilio unset and a
+    `CRON_SECRET` (the API refuses otherwise)
+- [x] Header/footer/announcement from CMS globals; footer credits "Cover images via Open Library"; the owner's logo,
       favicon and share image; demo banner
-- [ ] Caching with tags + revalidation route; draft mode for CMS preview
-- [ ] SEO: metadata API, `app/sitemap.ts`, robots (noindex for demo)
+  - Done 2026-10-31 (track C agent; reviewed + audited, fixes applied): `components/site/` header (CMS menu groups,
+    cart and account links, a slot for a cart badge), mobile menu (the only client component), footer (plain-text
+    contact, linked Open Library credit), announcement bar and the permanent §6 demo banner, mounted in the layout
+    (pages render their own `<main>`). Links pass `isSafeHref`; CMS down → logo-only header and footer. `app/icon.svg`
+    and `app/opengraph-image.png` from the brand assets (the share image is 1881×468, not 1200×630). Review fixes:
+    keyboard-openable desktop menus, distinct nav labels, Escape closes the mobile menu. `agentRules: false` in the
+    CMS `next.config` too. 16 storefront tests
+- [x] Caching with tags + revalidation route; draft mode for CMS preview
+  - Done 2026-10-31 (track A agent; reviewed + audited, approved): every CMS fetch tagged per the contract;
+    `/api/draft` and `/api/revalidate` (404 while their secret is unset, constant-time checks in `lib/secrets.ts`,
+    `cms:` tags only); `/preview/templates/<type>` and `/preview/overrides/<type>/<itemId>` render live-preview data
+    (`@payloadcms/live-preview-react`) through a server action that answers only in draft mode. Known limits: no
+    route turns draft mode off (the cookie ends with the browser session); override previews show core blocks empty
+- [x] SEO: metadata API, `app/sitemap.ts`, robots (noindex for demo)
+  - Done 2026-10-31 (track A agent): titles/descriptions/share image from the CMS SEO global (`lib/seo.ts`,
+    `lib/metadata.ts`), `generateMetadata` per route, noindex everywhere (root layout default too), `robots.ts`
+    disallows all, `sitemap.ts` (CMS pages + 50 of each item type, hourly). 29 storefront tests
 - **Checkpoint:** owner browses home → book → cart → checkout → order
 
 ## Phase 8 — Admin upgrade (Angular)

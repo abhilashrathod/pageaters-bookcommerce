@@ -20,6 +20,11 @@ void test('renders the registered component with its block', async () => {
   assert.equal(warn.mock.callCount(), 0);
 });
 
+void test('passes the page context to the component', async () => {
+  const registry: BlockRegistry = { richText: ({ context }) => `page ${context.page}` };
+  assert.equal(await renderBlock(richText, registry, { page: 3 }), 'page 3');
+});
+
 void test('an unknown or malformed block renders nothing and warns', async () => {
   assert.equal(await renderBlock({ blockType: 'spacer' } as unknown as CmsBlock, {}), null);
   assert.equal(await renderBlock(null as unknown as CmsBlock, {}), null);

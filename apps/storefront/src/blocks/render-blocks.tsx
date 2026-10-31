@@ -5,19 +5,27 @@ import { Skeleton } from '@/components/ui/skeleton.tsx';
 
 import { blockRegistry } from './registry.ts';
 import { renderBlock } from './safe-block.ts';
-import type { BlockRegistry } from './types.ts';
+import type { BlockContext, BlockRegistry } from './types.ts';
 
 // A CMS layout: each block streams on its own behind a skeleton, and a failing block drops out alone.
-export function RenderBlocks({ blocks, registry = blockRegistry }: { blocks?: CmsBlock[] | null; registry?: BlockRegistry }) {
+export function RenderBlocks({
+  blocks,
+  context = {},
+  registry = blockRegistry,
+}: {
+  blocks?: CmsBlock[] | null;
+  context?: BlockContext;
+  registry?: BlockRegistry;
+}) {
   return (blocks ?? []).map((block, index) => (
     <Suspense key={block.id ?? index} fallback={<BlockSkeleton />}>
-      <SafeBlock block={block} registry={registry} />
+      <SafeBlock block={block} context={context} registry={registry} />
     </Suspense>
   ));
 }
 
-function SafeBlock({ block, registry }: { block: CmsBlock; registry: BlockRegistry }) {
-  return renderBlock(block, registry);
+function SafeBlock({ block, context, registry }: { block: CmsBlock; context: BlockContext; registry: BlockRegistry }) {
+  return renderBlock(block, registry, context);
 }
 
 function BlockSkeleton() {
