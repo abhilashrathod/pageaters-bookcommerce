@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrderServices } from '@services/order.services';
@@ -9,12 +9,37 @@ import { MatDialog } from '@angular/material/dialog';
 import { IssueCreditComponent } from './issue-credit.component';
 import { CreateShipmentComponent } from './create-shipment.component';
 import { CancelOrderDialogComponent } from './cancel-order-dialog.component';
+import { MatCard, MatCardTitle, MatCardSubtitle, MatCardContent } from '@angular/material/card';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatButton, MatFabButton } from '@angular/material/button';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
+import { DecimalPipe, TitleCasePipe, CurrencyPipe, DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-order-view',
   templateUrl: 'order-view.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [
+    MatCard,
+    MatCardTitle,
+    MatCardSubtitle,
+    MatCardContent,
+    FormsModule,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatButton,
+    MatFabButton,
+    MatTooltip,
+    MatIcon,
+    DecimalPipe,
+    TitleCasePipe,
+    CurrencyPipe,
+    DatePipe,
+  ],
 })
 export class OrderViewComponent implements OnInit {
   order: IOrder;

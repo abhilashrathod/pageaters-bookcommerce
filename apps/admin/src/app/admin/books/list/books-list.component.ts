@@ -1,12 +1,15 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { get } from 'lodash';
+import { EntityTableComponent } from '@components/entity-table/entity-table-component';
+import { MatFabButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-books-list',
   templateUrl: 'books-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [EntityTableComponent, MatFabButton, RouterLink, MatIcon],
 })
 export class BooksListComponent implements OnInit {
   public editResourceUrl: string[] = ['/', 'admin', 'books', 'update'];

@@ -1,10 +1,10 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { debounceTime } from 'rxjs/operators';
 import { get, sumBy } from 'lodash';
-import { MatChipInputEvent } from '@angular/material/chips';
+import { MatChipInputEvent, MatChipGrid, MatChipRow, MatChipRemove, MatChipInput } from '@angular/material/chips';
 
 import { CategoryService } from '@services/category.service';
 import { BundleService } from '@services/bundle.service';
@@ -13,12 +13,36 @@ import { FilesService } from '@services/files.service';
 import { CollectionService } from '@services/collection.service';
 
 import { BUCKETS, FILE_UPLOAD_MODULES, returnPercentageValue } from '@helpers/constants';
+import { MatButton, MatFabButton } from '@angular/material/button';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
+import { MatIcon } from '@angular/material/icon';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { TitleCasePipe } from '@angular/common';
 
 @Component({
   selector: 'app-bundle-update',
   templateUrl: 'bundle-update.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [
+    FormsModule,
+    ReactiveFormsModule,
+    MatButton,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    AngularMultiSelectModule,
+    MatChipGrid,
+    MatChipRow,
+    MatIcon,
+    MatChipRemove,
+    MatChipInput,
+    CdkTextareaAutosize,
+    MatFabButton,
+    RouterLink,
+    TitleCasePipe,
+  ],
 })
 export class BundleUpdateComponent implements OnInit {
   bundleFormGroup: UntypedFormGroup;

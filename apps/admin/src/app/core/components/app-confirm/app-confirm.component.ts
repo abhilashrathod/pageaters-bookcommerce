@@ -1,5 +1,7 @@
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MatDialogTitle, MatDialogContent } from '@angular/material/dialog';
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatButton } from '@angular/material/button';
 
 @Component({
   selector: 'app-confirm',
@@ -16,7 +18,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
       <button type="button" color="primary" mat-stroked-button (click)="dialogRef.close(false)">Cancel</button>
     </div>`,
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [MatDialogTitle, CdkScrollable, MatDialogContent, MatButton],
 })
 export class AppComfirmComponent {
   public title: string;

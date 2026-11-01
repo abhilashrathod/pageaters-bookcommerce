@@ -1,17 +1,24 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { get } from 'lodash';
 
 import { FilesService } from '@services/files.service';
 import { BUCKETS, FILE_UPLOAD_MODULES } from '@helpers/constants';
 import { IProductSet } from '@schema/product-set';
-import { AngularMultiSelect } from 'angular2-multiselect-dropdown';
+import { AngularMultiSelect, AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
 import { DealsService } from '@services/deals.service';
 import { CategoryService } from '@services/category.service';
 import { ProductSetService } from '@services/product-set.service';
 import { IDeal } from '@schema/deal';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { MatButton, MatFabButton } from '@angular/material/button';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { SortablejsModule } from '@dustfoundation/ngx-sortablejs';
+import { MatIcon } from '@angular/material/icon';
 
 // The settings interface is not exported from the package entry point.
 type DropdownSettings = AngularMultiSelect['settings'];
@@ -20,7 +27,24 @@ type DropdownSettings = AngularMultiSelect['settings'];
   selector: 'app-update-deal',
   templateUrl: 'update-deal.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [
+    FormsModule,
+    ReactiveFormsModule,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    MatButton,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    CdkTextareaAutosize,
+    AngularMultiSelectModule,
+    SortablejsModule,
+    MatFabButton,
+    RouterLink,
+    MatIcon,
+  ],
 })
 export class UpdateDealComponent implements OnInit {
   dealFormGroup: UntypedFormGroup;

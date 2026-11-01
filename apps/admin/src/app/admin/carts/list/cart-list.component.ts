@@ -1,10 +1,11 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { EntityTableComponent } from '@components/entity-table/entity-table-component';
 
 @Component({
   selector: 'app-cart-list',
   templateUrl: 'cart-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [EntityTableComponent],
 })
 export class CartListComponent implements OnInit {
   public editResourceUrl: string[] = ['/', 'admin', 'customers', 'update'];

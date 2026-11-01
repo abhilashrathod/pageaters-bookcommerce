@@ -1,12 +1,20 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime } from 'rxjs/operators';
 import { BooksService } from '@services/books.service';
 import { ProductSetService } from '@services/product-set.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { AngularMultiSelect } from 'angular2-multiselect-dropdown';
+import { AngularMultiSelect, AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
 import { CategoryService } from '@services/category.service';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent, MatCardActions } from '@angular/material/card';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { SortablejsModule } from '@dustfoundation/ngx-sortablejs';
+import { MatFabButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { TitleCasePipe, CurrencyPipe } from '@angular/common';
 
 // The settings interface is not exported from the package entry point.
 type DropdownSettings = AngularMultiSelect['settings'];
@@ -15,7 +23,26 @@ type DropdownSettings = AngularMultiSelect['settings'];
   selector: 'app-create-product-set',
   templateUrl: 'create-product-set.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [
+    FormsModule,
+    ReactiveFormsModule,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    CdkTextareaAutosize,
+    AngularMultiSelectModule,
+    MatCardActions,
+    SortablejsModule,
+    MatFabButton,
+    RouterLink,
+    MatIcon,
+    TitleCasePipe,
+    CurrencyPipe,
+  ],
 })
 export class CreateProductSetComponent implements OnInit {
   productSetFormGroup: UntypedFormGroup;

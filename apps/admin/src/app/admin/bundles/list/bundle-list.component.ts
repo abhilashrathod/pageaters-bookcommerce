@@ -1,10 +1,14 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { EntityTableComponent } from '@components/entity-table/entity-table-component';
+import { MatFabButton } from '@angular/material/button';
+import { RouterLink } from '@angular/router';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-bundle-list',
   templateUrl: 'bundle-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [EntityTableComponent, MatFabButton, RouterLink, MatIcon],
 })
 export class BundleListComponent implements OnInit {
   public editResourceUrl: string[] = ['/', 'admin', 'bundles', 'update'];

@@ -7,12 +7,14 @@ import { ICart } from '@schema/cart';
 import { IAddress } from '@schema/address';
 import { IOrder } from '@schema/order';
 import { ORDER_STATUSES } from '@helpers/constants';
+import { MatCard, MatCardContent, MatCardTitle, MatCardSubtitle } from '@angular/material/card';
+import { DecimalPipe, CurrencyPipe } from '@angular/common';
 
 @Component({
   selector: 'app-view-customer',
   templateUrl: 'view-customer.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [MatCard, MatCardContent, MatCardTitle, MatCardSubtitle, DecimalPipe, CurrencyPipe],
 })
 export class ViewCustomerComponent implements OnInit {
   details: { user: IUser; cart: ICart; addresses: Array<IAddress>; orders: Array<IOrder> } = {

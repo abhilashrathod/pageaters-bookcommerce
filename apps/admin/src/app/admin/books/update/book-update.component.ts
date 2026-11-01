@@ -1,10 +1,10 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { Location } from '@angular/common';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Location, TitleCasePipe } from '@angular/common';
 import { get } from 'lodash';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatChipInputEvent } from '@angular/material/chips';
+import { MatChipInputEvent, MatChipGrid, MatChipRow, MatChipRemove, MatChipInput } from '@angular/material/chips';
 import { CategoryService } from '@services/category.service';
 import { AuthorService } from '@services/author.service';
 import { CollectionService } from '@services/collection.service';
@@ -23,12 +23,48 @@ import {
 import { BundleService } from '@services/bundle.service';
 import { debounceTime } from 'rxjs/operators';
 import { AppLoaderService } from '@components/app-loader/app-loader.service';
+import { MatStepper, MatStep, MatStepLabel } from '@angular/material/stepper';
+import { MatMiniFabButton, MatButton, MatFabButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/autocomplete';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 
 @Component({
   selector: 'app-book-update',
   templateUrl: 'book-update.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [
+    MatStepper,
+    MatStep,
+    MatStepLabel,
+    FormsModule,
+    ReactiveFormsModule,
+    MatMiniFabButton,
+    MatIcon,
+    MatButton,
+    MatRadioGroup,
+    MatRadioButton,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    AngularMultiSelectModule,
+    MatSelect,
+    MatOption,
+    MatChipGrid,
+    MatChipRow,
+    MatChipRemove,
+    MatChipInput,
+    MatSlideToggle,
+    CdkTextareaAutosize,
+    MatFabButton,
+    TitleCasePipe,
+  ],
 })
 export class BookUpdateComponent implements OnInit {
   book;

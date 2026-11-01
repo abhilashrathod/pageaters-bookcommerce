@@ -3,12 +3,14 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CartService } from '@services/cart.service';
 import { ICart } from '@schema/cart';
+import { MatCard, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { DecimalPipe, CurrencyPipe } from '@angular/common';
 
 @Component({
   selector: 'app-cart-view',
   templateUrl: './cart-view.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [MatCard, MatCardTitle, MatCardContent, DecimalPipe, CurrencyPipe],
 })
 export class CartViewComponent implements OnInit {
   cart: ICart;

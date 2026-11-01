@@ -1,15 +1,13 @@
-import {NgModule} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import {AdminRoutingModule} from './admin-routing.module';
-import {SharedModule} from '@core/shared/shared.module';
+import { AdminRoutingModule } from './admin-routing.module';
 
-import {HeaderComponent} from './partials/header/header.component';
-import {SidebarComponent} from './partials/sidebar/sidebar.component';
-import {DashboardComponent} from './dashboard/dashboard.component';
-import {LayoutComponent} from './partials/layout/layout.component';
-
+import { HeaderComponent } from './partials/header/header.component';
+import { SidebarComponent } from './partials/sidebar/sidebar.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { LayoutComponent } from './partials/layout/layout.component';
 
 @NgModule({
   imports: [
@@ -17,16 +15,12 @@ import {LayoutComponent} from './partials/layout/layout.component';
     AdminRoutingModule,
     FormsModule,
     ReactiveFormsModule,
-    SharedModule,
-  ],
-  exports: [],
-  declarations: [
     HeaderComponent,
     SidebarComponent,
     LayoutComponent,
-    DashboardComponent
+    DashboardComponent,
   ],
+  exports: [],
   providers: [],
 })
-export class AdminModule {
-}
+export class AdminModule {}

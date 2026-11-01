@@ -12,12 +12,13 @@ import { FilesService } from '@services/files.service';
 
 import { IBook } from '@schema/book';
 import { BUCKETS } from '@helpers/constants';
+import { MatCard, MatCardTitle, MatCardContent } from '@angular/material/card';
 
 @Component({
   selector: 'app-book-view',
   templateUrl: 'book-view.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [MatCard, MatCardTitle, MatCardContent],
 })
 export class BookViewComponent implements OnInit {
   book: IBook;

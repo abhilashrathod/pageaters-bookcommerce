@@ -1,17 +1,33 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { UntypedFormBuilder, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { get } from 'lodash';
 import { CategoryService } from '@services/category.service';
 import { FilesService } from '@services/files.service';
 import { BUCKETS, FILE_UPLOAD_MODULES } from '@helpers/constants';
+import { MatButton, MatFabButton } from '@angular/material/button';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-category-update',
   templateUrl: 'category-update.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [
+    FormsModule,
+    ReactiveFormsModule,
+    MatButton,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    CdkTextareaAutosize,
+    MatFabButton,
+    RouterLink,
+    MatIcon,
+  ],
 })
 export class CategoryUpdateComponent implements OnInit {
   categoryFormGroup: UntypedFormGroup;

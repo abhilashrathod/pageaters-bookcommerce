@@ -2,12 +2,38 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { BundleService } from '@services/bundle.service';
 import { IBundle } from '@schema/bundle';
 import { BUCKETS } from '@helpers/constants';
+import { SortablejsModule } from '@dustfoundation/ngx-sortablejs';
+import {
+  MatCard,
+  MatCardHeader,
+  MatCardAvatar,
+  MatCardTitle,
+  MatCardSubtitle,
+  MatCardImage,
+  MatCardContent,
+  MatCardActions,
+} from '@angular/material/card';
+import { MatButton } from '@angular/material/button';
+import { DecimalPipe, CurrencyPipe } from '@angular/common';
 
 @Component({
   selector: 'app-bundle-rearrange',
   templateUrl: 'bundle-rearrange.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [
+    SortablejsModule,
+    MatCard,
+    MatCardHeader,
+    MatCardAvatar,
+    MatCardTitle,
+    MatCardSubtitle,
+    MatCardImage,
+    MatCardContent,
+    MatCardActions,
+    MatButton,
+    DecimalPipe,
+    CurrencyPipe,
+  ],
 })
 export class BundleRearrangeComponent implements OnInit {
   bundles: Array<IBundle> = [];

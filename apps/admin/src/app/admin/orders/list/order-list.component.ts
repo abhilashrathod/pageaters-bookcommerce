@@ -1,11 +1,12 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import moment from 'moment';
+import { EntityTableComponent } from '@components/entity-table/entity-table-component';
 
 @Component({
   selector: 'app-order-list',
   templateUrl: 'order-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [EntityTableComponent],
 })
 export class OrderListComponent implements OnInit {
   public editResourceUrl: string[] = ['/', 'admin', 'orders', 'update'];

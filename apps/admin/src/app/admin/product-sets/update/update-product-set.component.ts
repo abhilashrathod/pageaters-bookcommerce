@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { debounceTime } from 'rxjs/operators';
 import { get } from 'lodash';
@@ -8,12 +8,40 @@ import { BooksService } from '@services/books.service';
 import { ProductSetService } from '@services/product-set.service';
 import { IProductSet } from '@schema/product-set';
 import { CategoryService } from '@services/category.service';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent, MatCardActions } from '@angular/material/card';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
+import { SortablejsModule } from '@dustfoundation/ngx-sortablejs';
+import { MatFabButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { TitleCasePipe, CurrencyPipe } from '@angular/common';
 
 @Component({
   selector: 'app-create-product-set',
   templateUrl: 'update-product-set.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [
+    FormsModule,
+    ReactiveFormsModule,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    CdkTextareaAutosize,
+    AngularMultiSelectModule,
+    MatCardActions,
+    SortablejsModule,
+    MatFabButton,
+    RouterLink,
+    MatIcon,
+    TitleCasePipe,
+    CurrencyPipe,
+  ],
 })
 export class UpdateProductSetComponent implements OnInit {
   productSetFormGroup: UntypedFormGroup;

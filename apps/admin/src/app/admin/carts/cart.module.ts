@@ -1,27 +1,16 @@
-import {NgModule} from '@angular/core';
+import { NgModule } from '@angular/core';
 
-import {CommonModule} from '@angular/common';
-import {SharedModule} from '@core/shared/shared.module';
-import {EntityTableModule} from '@components/entity-table/entity-table.module';
-import {CartRoutingModule} from './cart-routing.module';
+import { CommonModule } from '@angular/common';
 
-import {CartListComponent} from './list/cart-list.component';
+import { EntityTableModule } from '@components/entity-table/entity-table.module';
+import { CartRoutingModule } from './cart-routing.module';
+
+import { CartListComponent } from './list/cart-list.component';
 import { CartViewComponent } from './view/cart-view.component';
 
-
 @NgModule({
-  imports: [
-    CommonModule,
-    SharedModule,
-    EntityTableModule,
-    CartRoutingModule,
-  ],
+  imports: [CommonModule, EntityTableModule, CartRoutingModule, CartListComponent, CartViewComponent],
   exports: [],
-  declarations: [
-    CartListComponent,
-    CartViewComponent
-  ],
   providers: [],
 })
-export class CartModule {
-}
+export class CartModule {}

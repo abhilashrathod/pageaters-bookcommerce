@@ -1,8 +1,8 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { ActivatedRoute, Router } from '@angular/router';
+import { MatChipInputEvent, MatChipGrid, MatChipRow, MatChipRemove, MatChipInput } from '@angular/material/chips';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { debounceTime } from 'rxjs/operators';
 import { get } from 'lodash';
 import { range } from 'lodash';
@@ -14,12 +14,36 @@ import { AuthorService } from '@services/author.service';
 import { FilesService } from '@services/files.service';
 
 import { BUCKETS, FILE_UPLOAD_MODULES } from '@helpers/constants';
+import { MatButton, MatFabButton } from '@angular/material/button';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
+import { MatIcon } from '@angular/material/icon';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { TitleCasePipe } from '@angular/common';
 
 @Component({
   selector: 'app-collection-update',
   templateUrl: 'collection-update.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [
+    FormsModule,
+    ReactiveFormsModule,
+    MatButton,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    AngularMultiSelectModule,
+    MatChipGrid,
+    MatChipRow,
+    MatIcon,
+    MatChipRemove,
+    MatChipInput,
+    CdkTextareaAutosize,
+    MatFabButton,
+    RouterLink,
+    TitleCasePipe,
+  ],
 })
 export class CollectionUpdateComponent implements OnInit {
   collectionFormGroup: UntypedFormGroup;

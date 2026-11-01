@@ -7,12 +7,36 @@ import { AppConfirmService } from '@components/app-confirm/app-confirm.service';
 
 import { IDeal } from '@schema/deal';
 import { BUCKETS } from '@helpers/constants';
+import {
+  MatCard,
+  MatCardHeader,
+  MatCardTitle,
+  MatCardSubtitle,
+  MatCardImage,
+  MatCardContent,
+  MatCardActions,
+} from '@angular/material/card';
+import { MatButton, MatFabButton } from '@angular/material/button';
+import { RouterLink } from '@angular/router';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-deals',
   templateUrl: 'deals.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  standalone: false,
+  imports: [
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardSubtitle,
+    MatCardImage,
+    MatCardContent,
+    MatCardActions,
+    MatButton,
+    RouterLink,
+    MatFabButton,
+    MatIcon,
+  ],
 })
 export class DealsComponent implements OnInit {
   deals: Array<IDeal>;
