@@ -10,11 +10,17 @@
 }
 
 @layer base {
+  /* Light body text as in the legacy storefront (skeleton.scss); the root stays 16px where the legacy one was 14px. */
+  :root {
+    font-size: 16px;
+  }
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background font-sans text-foreground antialiased;
+    font-weight: 300;
+    line-height: 1.6;
   }
 }
 

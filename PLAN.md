@@ -775,6 +775,8 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     `cms:` tags only); `/preview/templates/<type>` and `/preview/overrides/<type>/<itemId>` render live-preview data
     (`@payloadcms/live-preview-react`) through a server action that answers only in draft mode. Known limits: no
     route turns draft mode off (the cookie ends with the browser session); override previews show core blocks empty
+    - Fix 2026-11-01 (owner saw a published homepage edit not show): CMS reads also expire after 5 minutes (a safety
+      net when `REVALIDATE_SECRET` is unset or a call fails) and skip the cache in development
 - [x] SEO: metadata API, `app/sitemap.ts`, robots (noindex for demo)
   - Done 2026-10-31 (track A agent): titles/descriptions/share image from the CMS SEO global (`lib/seo.ts`,
     `lib/metadata.ts`), `generateMetadata` per route, noindex everywhere (root layout default too), `robots.ts`

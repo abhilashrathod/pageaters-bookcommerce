@@ -4,10 +4,15 @@ import { env } from '@/env.ts';
 import { imageSrc } from '@/lib/images.ts';
 
 // Reads Payload's REST API, cached under the given tags; the CMS calls /api/revalidate with them after a publish.
+// The 5-minute expiry is a safety net for a missed revalidation (secret unset, CMS call failed). In development the
+// cache is skipped so an edit shows on the next reload (the dev data cache survives restarts).
 // A CMS outage returns null so callers fall back to defaults instead of breaking the page.
+const CACHING: RequestInit =
+  process.env.NODE_ENV === 'development' ? { cache: 'no-store' } : { cache: 'force-cache', next: { revalidate: 300 } };
+
 export async function cmsFetch<T>(path: `/${string}`, tags: string[]): Promise<T | null> {
   try {
-    const res = await fetch(`${env.CMS_URL}/api${path}`, { cache: 'force-cache', next: { tags } });
+    const res = await fetch(`${env.CMS_URL}/api${path}`, { ...CACHING, next: { ...CACHING.next, tags } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return (await res.json()) as T;
   } catch (error) {
