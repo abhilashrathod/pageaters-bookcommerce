@@ -357,6 +357,9 @@ const cases: Case[] = [
     },
   },
   { name: 'addOns.remove', call: (a) => a.addOns.remove({ id: id(1) }), method: 'DELETE', url: `/add-ons/${id(1)}` },
+  { name: 'analytics.summary', call: (a) => a.analytics.summary(), method: 'GET', url: '/analytics/summary' },
+  { name: 'analytics.book', call: (a) => a.analytics.book({ id: id(1) }), method: 'GET', url: `/analytics/books/${id(1)}` },
+  { name: 'analytics.customer', call: (a) => a.analytics.customer({ id: id(1) }), method: 'GET', url: `/analytics/customers/${id(1)}` },
   // Orders
   {
     name: 'orders.list',

@@ -38,7 +38,6 @@ export interface ICart {
   createdAt: string;
   updatedAt: string;
   products: Array<ICartItem>;
-  rentals: Array<ICartItem>;
   bundles: Array<ICartBundle>;
   mysteryBoxes: Array<ICartMysteryBox>;
   subTotal: number;

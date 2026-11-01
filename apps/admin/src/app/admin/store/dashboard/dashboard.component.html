@@ -1,71 +1,57 @@
-<div class="row">
-  <div class="col-12">
-    <h1>Pageaters Store Dashboard</h1>
-  </div>
-  <div class="col-12">
-    <mat-form-field class="w-100">
-      <mat-label>Announcement</mat-label>
-      <input matInput [(ngModel)]="announcement">
-    </mat-form-field>
-  </div>
-  <div class="col-4">
-    <mat-form-field class="w-100">
-      <mat-label>Email</mat-label>
-      <input matInput [(ngModel)]="email">
-    </mat-form-field>
-  </div>
-  <div class="col-4">
-    <mat-form-field class="w-100">
-      <mat-label>Contact No</mat-label>
-      <input matInput [(ngModel)]="contactNo">
-    </mat-form-field>
-  </div>
-  <div class="col-4">
-    <mat-form-field class="w-100">
-      <mat-label>Address</mat-label>
-      <input matInput [(ngModel)]="address">
-    </mat-form-field>
-  </div>
-  <div class="col-12 mt-5">
-    <h1>Store Sections</h1>
-  </div>
-  <div class="col-3">
-    <mat-card appearance="outlined" class="mb-4" [routerLink]="['/', 'admin', 'store', 'deals']">
-      <mat-card-title>Deals: {{dealsStat}}</mat-card-title>
+<h1 class="mb-1">Store details</h1>
+<p class="text-muted mb-4">Store copy lives in the CMS. This is a read-only view; edit it there.</p>
+
+@if (cmsDown()) {
+  <div class="alert alert-warning">The CMS is unreachable right now, so store details can't be shown.</div>
+}
+
+<div class="row g-3 mb-5">
+  <div class="col-lg-4">
+    <mat-card appearance="outlined" class="h-100">
+      <mat-card-title>Announcement bar</mat-card-title>
       <mat-card-content>
-        <p>Deals specific to event, group or holidays</p>
+        @if (announcement(); as a) {
+          <p class="mb-1">{{ a.message || '—' }}</p>
+          <p class="small text-muted">
+            {{ a.enabled ? 'Shown' : 'Hidden' }}@if (a.link?.href) {
+              · links to {{ a.link.label || a.link.href }}
+            }
+          </p>
+        }
+        <a [href]="editAnnouncement" target="_blank" rel="noopener">Edit in CMS</a>
       </mat-card-content>
     </mat-card>
   </div>
-  <div class="col-3">
-    <mat-card appearance="outlined" class="mb-4">
-      <mat-card-title>Static Content: {{1}}</mat-card-title>
+  <div class="col-lg-4">
+    <mat-card appearance="outlined" class="h-100">
+      <mat-card-title>Footer contact</mat-card-title>
       <mat-card-content>
-        <p>Privacy policy, terms and conditions etc..</p>
+        @if (footer(); as f) {
+          <p style="white-space: pre-line">{{ f.contact || '—' }}</p>
+          <p class="small text-muted">{{ f.legal }}</p>
+        }
+        <a [href]="editFooter" target="_blank" rel="noopener">Edit in CMS</a>
       </mat-card-content>
     </mat-card>
   </div>
-  <div class="col-3">
-    <mat-card appearance="outlined" class="mb-4">
-      <mat-card-title>FAQs: {{1}}</mat-card-title>
+  <div class="col-lg-4">
+    <mat-card appearance="outlined" class="h-100">
+      <mat-card-title>FAQ</mat-card-title>
       <mat-card-content>
-        <p>FAQs throughout site</p>
+        <p>FAQs are an FAQ block on CMS pages.</p>
+        <a [href]="editFaq" target="_blank" rel="noopener">Edit FAQ in CMS</a>
       </mat-card-content>
     </mat-card>
   </div>
-  <div class="col-3">
-    <mat-card appearance="outlined" class="mb-4">
-      <mat-card-title>Banners: {{1}}</mat-card-title>
+</div>
+
+<h2 class="h5 mb-3">Store sections</h2>
+<div class="row g-3">
+  <div class="col-lg-4">
+    <mat-card appearance="outlined" class="c-pointer" [routerLink]="['/', 'admin', 'store', 'deals']">
+      <mat-card-title>Deals: {{ dealsStat() }}</mat-card-title>
       <mat-card-content>
-        <p>Landing page, subscription banner etc..</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-  <div class="col-3">
-    <mat-card appearance="outlined" class="mb-4">
-      <mat-card-title>Featured Products: {{1}}</mat-card-title>
-      <mat-card-content>
-        <p>General Featured Products</p>
+        <p class="mb-0">Deals specific to event, group or holidays</p>
       </mat-card-content>
     </mat-card>
   </div>

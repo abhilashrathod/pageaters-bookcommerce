@@ -24,6 +24,7 @@ export const CMS_BLOCK_TYPES = [
   'featuredBooks',
   'carousel',
   'richText',
+  'faq',
   'productInfo',
   'listingHeader',
   'listingGrid',

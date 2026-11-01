@@ -11,6 +11,7 @@ void test('accepts the CMS database and a long secret; the Blob token is optiona
     ...VALID,
     API_URL: 'http://localhost:5005/api/v1',
     STOREFRONT_URL: 'http://localhost:3000',
+    ADMIN_URL: 'http://localhost:4200',
     PREVIEW_SECRET: undefined,
     REVALIDATE_SECRET: undefined,
     DEMO_MODE: false,

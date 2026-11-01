@@ -67,16 +67,6 @@ export class SidebarComponent implements OnInit {
       title: 'Product Sets',
     },
     {
-      icon: 'paid',
-      path: [],
-      title: 'Discounts',
-    },
-    {
-      icon: 'star',
-      path: [],
-      title: 'Reviews',
-    },
-    {
       icon: 'store',
       path: ['/', 'admin', 'store'],
       title: 'Store',

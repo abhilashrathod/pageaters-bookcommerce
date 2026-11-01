@@ -1,80 +1,52 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatCard, MatCardContent, MatCardTitle } from '@angular/material/card';
+import type { AdminCart, AdminCustomerAnalytics, AdminUserDetails } from '@pageaters/shared';
 import { CustomerService } from '@services/customer.service';
-import type { AdminUserDetails } from '@pageaters/shared';
-import { ORDER_STATUSES } from '@helpers/constants';
-import { MatCard, MatCardContent, MatCardTitle, MatCardSubtitle } from '@angular/material/card';
-import { DecimalPipe, CurrencyPipe } from '@angular/common';
+import { AnalyticsService } from '@services/analytics.service';
+import { CartService } from '@services/cart.service';
+import { apiErrorMessage } from '@services/api-client';
+import { cartLines, cartTotal, statusRows } from '@helpers/analytics';
+import { InrPipe } from '@helpers/inr.pipe';
 
 @Component({
   selector: 'app-view-customer',
   templateUrl: 'view-customer.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [MatCard, MatCardContent, MatCardTitle, MatCardSubtitle, DecimalPipe, CurrencyPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [MatCard, MatCardContent, MatCardTitle, DatePipe, RouterLink, InrPipe],
 })
 export class ViewCustomerComponent implements OnInit {
-  details: AdminUserDetails = {
-    user: null,
-    cart: null,
-    addresses: [],
-    orders: [],
-  };
-  isReady = false;
+  private snackBar = inject(MatSnackBar);
+  private route = inject(ActivatedRoute);
+  private customerService = inject(CustomerService);
+  private analyticsService = inject(AnalyticsService);
+  private cartService = inject(CartService);
 
-  shipped = 0;
-  fulfilled = 0;
-  cancelled = 0;
-  pending = 0;
-  refunded = 0;
-  returned = 0;
+  details = signal<AdminUserDetails | null>(null);
+  stats = signal<AdminCustomerAnalytics | null>(null);
+  cart = signal<AdminCart | null>(null);
 
-  constructor(
-    private snackBar: MatSnackBar,
-    private router: Router,
-    private route: ActivatedRoute,
-    private customerService: CustomerService,
-  ) {}
+  statuses = computed(() => statusRows(this.stats()?.ordersByStatus ?? {}));
+  lines = computed(() => (this.cart() ? cartLines(this.cart()) : []));
+  total = computed(() => cartTotal(this.lines()));
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
-      if (params.id) {
-        this.getOrderDetails(params.id);
-      }
+      if (params.id) this.load(params.id);
     });
   }
 
-  getOrderDetails(id): void {
-    const user$ = this.customerService.getById(id);
-    user$.subscribe(
-      (res) => {
-        this.details = res;
-        this.isReady = true;
-
-        console.log('user', this.details);
-
-        this.details.orders = this.details.orders.filter((x) => x.orderStatus !== ORDER_STATUSES.ATTEMPTED);
-        this.getPastOrderStats(this.details.orders);
+  private load(id: string): void {
+    const fail = (err: unknown) => this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
+    this.customerService.getById(id).subscribe({
+      next: (res) => {
+        this.details.set(res);
+        if (res.cart) this.cartService.getById(res.cart._id).subscribe({ next: (c) => this.cart.set(c), error: fail });
       },
-      (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
-      },
-    );
-  }
-
-  getPastOrderStats(orders): void {
-    this.pending = orders.filter((x) => x.orderStatus === ORDER_STATUSES.PAID || x.orderStatus === ORDER_STATUSES.CONFIRMED).length;
-    this.fulfilled = orders.filter((x) => x.orderStatus === ORDER_STATUSES.FULFILLED).length;
-    this.cancelled = orders.filter((x) => x.orderStatus === ORDER_STATUSES.CANCELLED).length;
-    this.shipped = orders.filter((x) => x.orderStatus === ORDER_STATUSES.SHIPPED).length;
-    this.returned = orders.filter(
-      (x) =>
-        x.orderStatus === ORDER_STATUSES.RETURNED ||
-        x.orderStatus === ORDER_STATUSES.REPLACEMENT ||
-        x.orderStatus === ORDER_STATUSES.REPLACEMENT_IN_PROGRESS ||
-        x.orderStatus === ORDER_STATUSES.RETURNED_IN_PROGRESS,
-    ).length;
-    this.shipped = orders.filter((x) => x.orderStatus === ORDER_STATUSES.SHIPPED).length;
-    this.refunded = orders.filter((x) => x.orderStatus === ORDER_STATUSES.REFUNDED).length;
+      error: fail,
+    });
+    this.analyticsService.customer(id).subscribe({ next: (s) => this.stats.set(s), error: fail });
   }
 }

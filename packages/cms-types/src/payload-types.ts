@@ -146,7 +146,7 @@ export interface Page {
    * The page’s path: `home` is the homepage; lowercase letters, digits and dashes.
    */
   slug: string;
-  layout?: (BannerBlock | ProductSetRowBlock | FeaturedBooksBlock | CarouselBlock | RichTextBlock)[] | null;
+  layout?: (BannerBlock | ProductSetRowBlock | FeaturedBooksBlock | CarouselBlock | RichTextBlock | FaqBlock)[] | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -263,6 +263,21 @@ export interface RichTextBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FaqBlock".
+ */
+export interface FaqBlock {
+  heading?: string | null;
+  items: {
+    question: string;
+    answer: string;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'faq';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "templates".
  */
 export interface Template {
@@ -278,6 +293,7 @@ export interface Template {
         | FeaturedBooksBlock
         | CarouselBlock
         | RichTextBlock
+        | FaqBlock
       )[]
     | null;
   updatedAt: string;
@@ -324,7 +340,7 @@ export interface Override {
    * Search the store by title and pick one; only its id is stored.
    */
   itemId: string;
-  layout?: (BannerBlock | ProductSetRowBlock | FeaturedBooksBlock | CarouselBlock | RichTextBlock)[] | null;
+  layout?: (BannerBlock | ProductSetRowBlock | FeaturedBooksBlock | CarouselBlock | RichTextBlock | FaqBlock)[] | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -457,6 +473,7 @@ export interface PagesSelect<T extends boolean = true> {
         featuredBooks?: T | FeaturedBooksBlockSelect<T>;
         carousel?: T | CarouselBlockSelect<T>;
         richText?: T | RichTextBlockSelect<T>;
+        faq?: T | FaqBlockSelect<T>;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -526,6 +543,22 @@ export interface RichTextBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FaqBlock_select".
+ */
+export interface FaqBlockSelect<T extends boolean = true> {
+  heading?: T;
+  items?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "templates_select".
  */
 export interface TemplatesSelect<T extends boolean = true> {
@@ -541,6 +574,7 @@ export interface TemplatesSelect<T extends boolean = true> {
         featuredBooks?: T | FeaturedBooksBlockSelect<T>;
         carousel?: T | CarouselBlockSelect<T>;
         richText?: T | RichTextBlockSelect<T>;
+        faq?: T | FaqBlockSelect<T>;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -587,6 +621,7 @@ export interface OverridesSelect<T extends boolean = true> {
         featuredBooks?: T | FeaturedBooksBlockSelect<T>;
         carousel?: T | CarouselBlockSelect<T>;
         richText?: T | RichTextBlockSelect<T>;
+        faq?: T | FaqBlockSelect<T>;
       };
   updatedAt?: T;
   createdAt?: T;

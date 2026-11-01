@@ -51,6 +51,18 @@ module.exports = [
     request: s.adminOrderCancelPayloadSchema,
     response: s.adminEmptyResponseSchema,
   }),
+  orders('GET', '/analytics/summary', 'Dashboard summary', {
+    description: 'Order counts, sales revenue, customers, catalog counts, 30 days of sales, best sellers, recent orders.',
+    response: s.adminStoreSummaryResponseSchema,
+  }),
+  orders('GET', '/analytics/books/:id', 'A book’s sales', {
+    params: { id: 'The book’s ObjectId.' },
+    response: s.adminBookAnalyticsResponseSchema,
+  }),
+  customers('GET', '/analytics/customers/:id', 'A customer’s orders and spend', {
+    params: { id: 'The user’s ObjectId.' },
+    response: s.adminCustomerAnalyticsResponseSchema,
+  }),
   orders('GET', '/orders/analytics/best-selling', 'Best-selling books', {
     description: 'The ten books sold most in the range, by quantity.',
     request: s.adminOrderAnalyticsQuerySchema,

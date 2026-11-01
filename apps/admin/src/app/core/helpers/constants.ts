@@ -33,11 +33,4 @@ export const ORDER_STATUSES = {
   REFUNDED: 'refunded',
 };
 
-export const PRICING_PERCENTAGES = {
-  NON_MEMBER_RENT: 50,
-  MEMBER_PRICE: 75,
-  MEMBER_RENT: 0,
-  WHOLESALE_PRICE: 65,
-};
-
 export const returnPercentageValue = (percent, total) => Math.floor((percent / 100) * total);

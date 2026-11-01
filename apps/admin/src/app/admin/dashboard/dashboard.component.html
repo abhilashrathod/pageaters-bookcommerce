@@ -1,21 +1,108 @@
-<div class="row">
-  <div class="col-12">
-    <h1>Dashboard</h1>
+<h1 class="mb-4">Dashboard</h1>
+
+@if (summary(); as s) {
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <mat-card appearance="outlined" class="kpi">
+        <span class="kpi-label">Orders</span>
+        <span class="kpi-value">{{ s.orders.today }} today</span>
+        <span class="kpi-sub">{{ s.orders.last30Days }} in 30 days · {{ s.orders.total }} total</span>
+      </mat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <mat-card appearance="outlined" class="kpi">
+        <span class="kpi-label">Revenue</span>
+        <span class="kpi-value">{{ s.revenue.today | inr }} today</span>
+        <span class="kpi-sub">{{ s.revenue.last30Days | inr }} in 30 days · {{ s.revenue.total | inr }} total</span>
+      </mat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <mat-card appearance="outlined" class="kpi">
+        <span class="kpi-label">Customers</span>
+        <span class="kpi-value">{{ s.customers.total }}</span>
+        <span class="kpi-sub">{{ s.customers.newLast30Days }} new in 30 days</span>
+      </mat-card>
+    </div>
+    <div class="col-6 col-lg-3">
+      <mat-card appearance="outlined" class="kpi">
+        <span class="kpi-label">Catalog</span>
+        <span class="kpi-value">{{ s.catalog.books }} books</span>
+        <span class="kpi-sub">{{ s.catalog.outOfStock }} out of stock · {{ s.catalog.bundles }} bundles · {{ s.catalog.authors }} authors</span>
+      </mat-card>
+    </div>
   </div>
-  <div class="col-12">
-    <mat-tab-group mat-align-tabs="center">
-      <mat-tab label="Purchases">
-        <p></p>
-      </mat-tab>
-      <mat-tab label="Rentals">
-        Content 2
-      </mat-tab>
-      <mat-tab label="Listings">
-        Content 3
-      </mat-tab>
-      <mat-tab label="Subscriptions">
-        Content 3
-      </mat-tab>
-    </mat-tab-group>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-8">
+      <mat-card appearance="outlined" class="h-100">
+        <mat-card-title>Sales, last 30 days</mat-card-title>
+        <mat-card-content><app-bar-chart [points]="salesPoints()" label="Revenue per day, last 30 days" /></mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-lg-4">
+      <mat-card appearance="outlined" class="h-100">
+        <mat-card-title>Orders by status</mat-card-title>
+        <mat-card-content>
+          <ul class="list-unstyled mb-0">
+            @for (row of statuses(); track row.status) {
+              <li class="d-flex justify-content-between py-1 border-bottom"><span class="text-capitalize">{{ row.status }}</span><strong>{{ row.count }}</strong></li>
+            } @empty {
+              <li class="text-muted">No orders yet.</li>
+            }
+          </ul>
+        </mat-card-content>
+      </mat-card>
+    </div>
   </div>
-</div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <mat-card appearance="outlined" class="h-100">
+        <mat-card-title>Best sellers</mat-card-title>
+        <mat-card-content>
+          <table class="table table-sm align-middle mb-0">
+            <thead><tr><th colspan="2">Book</th><th class="text-end">Units</th><th class="text-end">Revenue</th></tr></thead>
+            <tbody>
+              @for (b of s.bestSellers; track b._id) {
+                <tr>
+                  <td style="width: 40px"><img [src]="b.poster" [alt]="b.title" width="32" height="48" style="object-fit: cover" /></td>
+                  <td><a [routerLink]="['/admin/books/view', b._id]">{{ b.title }}</a></td>
+                  <td class="text-end">{{ b.units }}</td>
+                  <td class="text-end">{{ b.revenue | inr }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="text-muted">No sales yet.</td></tr>
+              }
+            </tbody>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-lg-6">
+      <mat-card appearance="outlined" class="h-100">
+        <mat-card-title>Recent orders</mat-card-title>
+        <mat-card-content>
+          <table class="table table-sm mb-0">
+            <thead><tr><th>Order</th><th>Customer</th><th>Status</th><th class="text-end">Total</th></tr></thead>
+            <tbody>
+              @for (o of s.recentOrders; track o._id) {
+                <tr>
+                  <td><a [routerLink]="['/admin/orders/view', o._id]">{{ o.uniqueId }}</a><br /><small class="text-muted">{{ o.createdAt | date: 'medium' }}</small></td>
+                  <td>{{ o.customerName || '—' }}</td>
+                  <td class="text-capitalize">{{ o.status }}</td>
+                  <td class="text-end">{{ o.total | inr }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="text-muted">No orders yet.</td></tr>
+              }
+            </tbody>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+} @else if (error()) {
+  <p class="text-danger">Couldn't load the store summary: {{ error() }}</p>
+} @else {
+  <p class="text-muted">Loading…</p>
+}

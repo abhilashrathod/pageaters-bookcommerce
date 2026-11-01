@@ -167,6 +167,7 @@
 	"ORDER_ADDRESS_SUCCESS": "Address Selection Success",
 	"ORDER_PENDING_CONFLICT": "Another checkout for your account started at the same time. Please try again.",
 	"ORDER_ONLINE_PAYMENT_PENDING": "This order is waiting for its online payment. To pay cash on delivery instead, please start checkout again.",
+	"ANALYTICS_SUCCESS": "Analytics fetched successfully",
 	"ORDER_ANALYTICS_INVALID_RANGE": "Analytics needs a startDate and an endDate, both ISO date-times with an offset, the start before the end",
 	"ORDER_CHANGED_CONFLICT": "This order changed in the meantime. Please reload it and try again.",
 	"INVALID_PAYMENT_METHOD": "Payment Method Invalid",

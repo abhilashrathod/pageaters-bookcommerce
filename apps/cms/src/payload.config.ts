@@ -39,6 +39,8 @@ const globals = [Header, Footer, AnnouncementBar, Theme, Seo].map((global) => ({
 const previewSecret = env.PREVIEW_SECRET;
 
 export default buildConfig({
+  // Only the admin panel reads the CMS from a browser (its Store page); the storefront reads server-side.
+  cors: [new URL(env.ADMIN_URL).origin],
   admin: {
     user: Users.slug,
     importMap: { baseDir: path.resolve(dirname) },

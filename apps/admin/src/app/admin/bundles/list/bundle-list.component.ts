@@ -37,9 +37,9 @@ export class BundleListComponent implements OnInit {
       cell: (element) => `${element.currentDiscount}`,
     },
     {
-      header: 'Prices (Retail | Member)',
-      columnDef: 'prices',
-      cell: (element) => `${element.price} | ${element.membersPrice}`,
+      header: 'Price',
+      columnDef: 'price',
+      cell: (element) => `${element.price}`,
     },
     {
       header: 'Action',

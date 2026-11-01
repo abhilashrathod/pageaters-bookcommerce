@@ -26,6 +26,8 @@ const schema = z.object({
   STOREFRONT_URL: z
     .url({ protocol: /^https?$/, error: 'must be an http(s) URL, e.g. http://localhost:3000' })
     .default('http://localhost:3000'),
+  // The admin panel: its Store page reads the announcement bar and footer from the browser (CORS allows this origin).
+  ADMIN_URL: z.url({ protocol: /^https?$/, error: 'must be an http(s) URL, e.g. http://localhost:4200' }).default('http://localhost:4200'),
   PREVIEW_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
   REVALIDATE_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
   // The public demo: the login form is prefilled with the read-only demo login (demo.ts).

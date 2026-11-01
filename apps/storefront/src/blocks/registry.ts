@@ -1,5 +1,6 @@
 import { BannerBlock } from './banner.tsx';
 import { CarouselBlock } from './carousel.tsx';
+import { FaqBlock } from './faq.tsx';
 import { FeaturedBooksBlock } from './featured-books.tsx';
 import { ListingGridBlock } from './listing-grid.tsx';
 import { ListingHeaderBlock } from './listing-header.tsx';
@@ -16,6 +17,7 @@ export const blockRegistry: BlockRegistry = {
   featuredBooks: FeaturedBooksBlock,
   carousel: CarouselBlock,
   richText: RichTextBlock,
+  faq: FaqBlock,
   productInfo: ProductInfoBlock,
   listingHeader: ListingHeaderBlock,
   listingGrid: ListingGridBlock,

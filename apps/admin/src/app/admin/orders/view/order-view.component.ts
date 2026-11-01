@@ -128,10 +128,6 @@ export class OrderViewComponent implements OnInit {
     return !!this.order && canCancelOrder(this.order.orderStatus);
   }
 
-  dumpRecord(): string {
-    return JSON.stringify(this.order, null, `\t`);
-  }
-
   handleShipmentSubmit(): void {
     const { value } = this.shipmentFormGroup;
 

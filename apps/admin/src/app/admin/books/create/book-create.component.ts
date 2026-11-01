@@ -11,10 +11,8 @@ import { BooksService } from '@services/books.service';
 import {
   BOOK_AVAILABILITY,
   BOOK_VERSIONS,
-  PRICING_PERCENTAGES,
   PRODUCT_TYPES,
   READING_LEVELS,
-  returnPercentageValue,
 } from '@helpers/constants';
 import { MatChipInputEvent, MatChipGrid, MatChipRow, MatChipRemove, MatChipInput } from '@angular/material/chips';
 import { BundleService } from '@services/bundle.service';
@@ -199,11 +197,6 @@ export class BookCreateComponent implements OnInit {
     });
     this.pricingFormGroup = this.formBuilder.group({
       price: [0],
-      rentPrice: [0],
-      membersPrice: [0],
-      membersRentPrice: [0],
-
-      wholeSalePriceHistory: [0],
       inventory: [1],
 
       currentDiscount: [15],
@@ -346,14 +339,6 @@ export class BookCreateComponent implements OnInit {
     this.snackBar.open('Image removed from list', 'OKAY', { duration: 3000 });
   }
 
-  calculateAmounts(): void {
-    const { price } = this.pricingFormGroup.value;
-
-    this.pricingFormGroup.get('rentPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.NON_MEMBER_RENT, price));
-    this.pricingFormGroup.get('membersPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.MEMBER_PRICE, price));
-    this.pricingFormGroup.get('membersRentPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.MEMBER_RENT, price));
-    this.pricingFormGroup.get('wholeSalePriceHistory').patchValue(returnPercentageValue(PRICING_PERCENTAGES.WHOLESALE_PRICE, price));
-  }
 
   add(event: MatChipInputEvent): void {
     const value = (event.value || '').trim();

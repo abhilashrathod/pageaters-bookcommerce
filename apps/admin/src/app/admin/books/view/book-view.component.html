@@ -1,97 +1,39 @@
-@if (isReady) {
-  <div class="row">
-    <div class="col-12">
-      <h1>{{ book?.title }}</h1>
-    </div>
-    <div class="col-3">
-      <mat-card appearance="outlined" class="mb-4">
-        <mat-card-title>Ordered: {{ 1 }}</mat-card-title>
-        <mat-card-content>
-          <p>This card indeterminates progress bar.</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-3">
-      <mat-card appearance="outlined" class="mb-4">
-        <mat-card-title>Rented: {{ 1 }}</mat-card-title>
-        <mat-card-content>
-          <p>This card indeterminates progress bar.</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-3">
-      <mat-card appearance="outlined" class="mb-4">
-        <mat-card-title>Wishlisted: {{ 1 }}</mat-card-title>
-        <mat-card-content>
-          <p>This card indeterminates progress bar.</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-3">
-      <mat-card appearance="outlined" class="mb-4">
-        <mat-card-title>Waitlisted: {{ 1 }}</mat-card-title>
-        <mat-card-content>
-          <p>This card indeterminates progress bar.</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-3">
-      <mat-card appearance="outlined" class="mb-4">
-        <mat-card-title>Cart but Not Checkout: {{ 1 }}</mat-card-title>
-        <mat-card-content>
-          <p>This card indeterminates progress bar.</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-3">
-      <mat-card appearance="outlined" class="mb-4">
-        <mat-card-title>Total Revenue: {{ 1 }}</mat-card-title>
-        <mat-card-content>
-          <p>This card indeterminates progress bar.</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-3">
-      <mat-card appearance="outlined" class="mb-4">
-        <mat-card-title>Total Revenue (this Month): {{ 1 }}</mat-card-title>
-        <mat-card-content>
-          <p>This card indeterminates progress bar.</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-3">
-      <mat-card appearance="outlined" class="mb-4">
-        <mat-card-title>Popularity: {{ 1 }}</mat-card-title>
-        <mat-card-content>
-          <p>This card indeterminates progress bar.</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-3">
-      <mat-card appearance="outlined" class="mb-4">
-        <mat-card-title>Priority: {{ 1 }}</mat-card-title>
-        <mat-card-content>
-          <p>This card indeterminates progress bar.</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-3">
-      <mat-card appearance="outlined" class="mb-4">
-        <mat-card-title>Stock: {{ 1 }}</mat-card-title>
-        <mat-card-content>
-          <p>This card indeterminates progress bar.</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-        </mat-card-content>
-      </mat-card>
+@if (book(); as b) {
+  <div class="d-flex gap-4 mb-4">
+    <img [src]="b.poster" [alt]="b.title" width="120" height="180" class="rounded shadow-sm" style="object-fit: cover" />
+    <div>
+      <h1 class="mb-1">{{ b.title }}</h1>
+      <p class="text-muted mb-2">{{ authorName() || 'Unknown author' }} · {{ b.bookId }} · ISBN {{ b.ISBN || '—' }}</p>
+      <p class="mb-1">
+        <strong>{{ b.price | inr }}</strong> · {{ b.currentDiscount }}% off · {{ b.inventory }} in stock ·
+        <span class="text-capitalize">{{ b.availability }}</span>
+      </p>
+      <p class="small text-muted mb-2">
+        {{ b.publisher }} {{ b.publicationYear }} · {{ b.language }} · {{ b.pages ?? '—' }} pages · Popularity {{ b.popularity }} ·
+        Priority {{ b.priority }}
+      </p>
+      <a [routerLink]="['/admin/books/update', b._id]">Edit book</a>
     </div>
   </div>
+}
+
+@if (stats(); as s) {
+  <h2 class="h5 mb-3">Sales analytics</h2>
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><mat-card appearance="outlined" class="kpi"><span class="kpi-label">Units sold</span><span class="kpi-value">{{ s.unitsSold }}</span><span class="kpi-sub">in {{ s.orderCount }} orders</span></mat-card></div>
+    <div class="col-6 col-lg-3"><mat-card appearance="outlined" class="kpi"><span class="kpi-label">Revenue</span><span class="kpi-value">{{ s.revenue | inr }}</span><span class="kpi-sub">avg {{ s.averageSellingPrice | inr }} / unit</span></mat-card></div>
+    <div class="col-6 col-lg-3"><mat-card appearance="outlined" class="kpi"><span class="kpi-label">Demand</span><span class="kpi-value">{{ s.inCarts }} in carts</span><span class="kpi-sub">{{ s.inFavourites }} favourites · {{ s.pendingStockAlerts }} stock alerts</span></mat-card></div>
+    <div class="col-6 col-lg-3"><mat-card appearance="outlined" class="kpi"><span class="kpi-label">Cancelled / returned</span><span class="kpi-value">{{ s.cancelledOrReturned }}</span><span class="kpi-sub">First sold {{ s.firstSoldAt ? (s.firstSoldAt | date: 'mediumDate') : '—' }} · Last {{ s.lastSoldAt ? (s.lastSoldAt | date: 'mediumDate') : '—' }}</span></mat-card></div>
+  </div>
+  <mat-card appearance="outlined" class="mb-4">
+    <mat-card-title>Units sold, last 12 months</mat-card-title>
+    <mat-card-content><app-bar-chart [points]="monthPoints()" label="Units sold per month, last 12 months" /></mat-card-content>
+  </mat-card>
+}
+
+@if (book(); as b) {
+  <mat-card appearance="outlined" class="mb-4">
+    <mat-card-title>Description</mat-card-title>
+    <mat-card-content><p class="mb-0" style="white-space: pre-line">{{ b.description || '—' }}</p></mat-card-content>
+  </mat-card>
 }

@@ -231,7 +231,6 @@ export class BundleUpdateComponent implements OnInit {
       relatedCollections: [get(data, 'relatedCollections', [])],
       price: [get(data, 'price', 0)],
       weight: [get(data, 'weight', 0)],
-      membersPrice: [get(data, 'membersPrice', 0)],
       currentDiscount: [get(data, 'currentDiscount', 0)],
       popularity: [get(data, 'popularity', 0)],
       priority: [get(data, 'priority', 0)],
@@ -260,7 +259,6 @@ export class BundleUpdateComponent implements OnInit {
     this.bundleFormGroup.patchValue({
       price,
       weight,
-      membersPrice: price,
     });
   }
 

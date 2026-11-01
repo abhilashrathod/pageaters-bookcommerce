@@ -16,7 +16,6 @@ export interface IBundle {
   priority: number;
   price: number;
   weight: number;
-  membersPrice: number;
   isDeleted: boolean;
   deletedAt: string;
   createdAt: string;

@@ -849,6 +849,24 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     forms upload as soon as a file is picked (a save sent the local `data:` preview → "Invalid poster URL"); the
     API's product-set list populates book titles (the deal form showed none, also in the legacy). Local uploads need
     `STORAGE_ADAPTER=blob`: the default mock answers `storage.mock.invalid` URLs that never load
+- [x] Admin polish & analytics (owner, 2026-11-01; contracts first, then three parallel worktrees, one review)
+  - [x] Contracts: `responses/admin/analytics.ts` (store summary, book, customer; a sale = paid/confirmed/shipped/
+        fulfilled) + `client.admin.analytics.*`
+  - [x] E. API: `GET /analytics/summary`, `/analytics/books/:id`, `/analytics/customers/:id` (ADMIN), tests
+  - [x] F. Admin: dashboard (no tabs) on the summary; book analytics on the book page; customer analytics + current
+        cart; drop rent/member prices from book and bundle forms; card padding; no raw order dump; Discounts and
+        Reviews out of the sidebar; Store page shows the CMS's store details (announcement, contact, FAQ) with
+        "Edit in CMS" links (owner: the CMS owns store details)
+  - [x] G. CMS + storefront: FAQ block (question/answer list) with a storefront accordion
+  - Done 2026-11-01 (three agents, reviewed + audited). E: `analytics.service.js` aggregations (line revenue from the
+    stored discounted `productTotal`; out of stock = inventory ≤ 0; units count books, not bundles), 1015 API tests.
+    F: dashboard (KPIs, 30-day CSS bars, by status, top 5, recent 5; `inr` pipe), book and customer analytics (+
+    current cart), rent/members' prices gone from forms/lists/types (updates still send the stored values the update
+    schema requires), global card padding, no raw order dump, sidebar without Discounts/Reviews, Store page reads the
+    CMS announcement bar and footer (`CMS_URL`). G: `faq` block + `<details>` accordion, `docs/cms.md` started (other
+    blocks still undocumented; seeds unchanged). Merge: CMS `cors` allows `ADMIN_URL` (new env, default
+    localhost:4200); api-client request cases for the analytics endpoints. Review nit fixed: cart lines of deleted items
+    are skipped
 - **Checkpoint:** admin logs in, views the catalog, runs an order from confirmed to delivered
 
 ## Phase 9 — Tests

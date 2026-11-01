@@ -13,10 +13,8 @@ import { FilesService } from '@services/files.service';
 import {
   BOOK_AVAILABILITY,
   BOOK_VERSIONS,
-  PRICING_PERCENTAGES,
   PRODUCT_TYPES,
   READING_LEVELS,
-  returnPercentageValue,
 } from '@helpers/constants';
 import { BundleService } from '@services/bundle.service';
 import { debounceTime } from 'rxjs/operators';
@@ -239,10 +237,6 @@ export class BookUpdateComponent implements OnInit {
 
     this.pricingFormGroup = this.formBuilder.group({
       price: [get(data, 'price', 0)],
-      rentPrice: [get(data, 'rentPrice', 0)],
-      membersPrice: [get(data, 'membersPrice', 0)],
-      membersRentPrice: [get(data, 'membersRentPrice', 0)],
-      wholeSalePriceHistory: [get(data, 'wholeSalePriceHistory', 0)],
       inventory: [get(data, 'inventory', 1)],
       currentDiscount: [get(data, 'currentDiscount', 15)],
     });
@@ -444,14 +438,6 @@ export class BookUpdateComponent implements OnInit {
     this.tags.updateValueAndValidity();
   }
 
-  calculateAmounts(): void {
-    const { price } = this.pricingFormGroup.value;
-
-    this.pricingFormGroup.get('rentPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.NON_MEMBER_RENT, price));
-    this.pricingFormGroup.get('membersPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.MEMBER_PRICE, price));
-    this.pricingFormGroup.get('membersRentPrice').patchValue(returnPercentageValue(PRICING_PERCENTAGES.MEMBER_RENT, price));
-    this.pricingFormGroup.get('wholeSalePriceHistory').patchValue(returnPercentageValue(PRICING_PERCENTAGES.WHOLESALE_PRICE, price));
-  }
 
   onSubmit() {
     const { relatedBooks, relatedCollections, relatedBundles, categories } = this.relatedInfoFormGroup.value;

@@ -1,3 +1,4 @@
+export * from './analytics.ts';
 export * from './cart.ts';
 export * from './catalog.ts';
 export * from './common.ts';

@@ -13,7 +13,6 @@ export interface IBook {
   poster: string;
   readingLevel: string;
   price: number;
-  membersPrice: number;
   currentDiscount: number;
   tags: Array<string>;
   popularity: number;
@@ -28,15 +27,12 @@ export interface IBook {
   publisher: string;
   totalReviews: number;
   averageReviews: string;
-  wholeSalePriceHistory: Array<string>;
   categories: Array<ICategory>;
   relatedBooks: Array<IBook>;
   relatedBundles: Array<IBundle>;
   relatedCollections: Array<ICollection>;
   author: IAuthor;
   inventory: number;
-  rentPrice: number;
-  membersRentPrice: number;
   isDeleted: boolean;
   deletedAt: string;
 }

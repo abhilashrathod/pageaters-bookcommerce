@@ -124,4 +124,23 @@ export const RichText: Block = {
   fields: [{ name: 'content', type: 'richText', required: true, editor: richTextEditor }],
 };
 
-export const FREE_BLOCKS = [Banner, ProductSetRow, FeaturedBooks, Carousel, RichText];
+// Questions and answers, shown as an accordion (one plain-text answer per question).
+export const Faq: Block = {
+  slug: 'faq',
+  interfaceName: 'FaqBlock',
+  fields: [
+    heading,
+    {
+      name: 'items',
+      type: 'array',
+      required: true,
+      minRows: 1,
+      fields: [
+        { name: 'question', type: 'text', required: true, maxLength: 160 },
+        { name: 'answer', type: 'textarea', required: true, maxLength: 2000 },
+      ],
+    },
+  ],
+};
+
+export const FREE_BLOCKS = [Banner, ProductSetRow, FeaturedBooks, Carousel, RichText, Faq];

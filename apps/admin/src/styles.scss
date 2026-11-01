@@ -34,6 +34,39 @@ body {
   cursor: grab;
 }
 
+/* CARDS: one padding for every mat-card, whatever its children */
+.mat-mdc-card {
+  padding: 16px;
+}
+.mat-mdc-card > .mat-mdc-card-content,
+.mat-mdc-card > .mat-mdc-card-header,
+.mat-mdc-card > .mat-mdc-card-actions {
+  padding: 0;
+}
+.mat-mdc-card .mat-mdc-card-title {
+  font-size: 1.05rem;
+  margin-bottom: 0.5rem;
+}
+
+/* KPI tiles (dashboard, book and customer analytics) */
+.kpi {
+  height: 100%;
+}
+.kpi-label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.kpi-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.kpi-sub {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
 /* APP STYLES */
 
 @import "assets/styles/index";

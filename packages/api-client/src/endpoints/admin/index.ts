@@ -1,4 +1,5 @@
 import { addOns } from './add-ons.ts';
+import { analytics } from './analytics.ts';
 import { authors } from './authors.ts';
 import { bundles } from './bundles.ts';
 import { carts } from './carts.ts';
@@ -21,6 +22,7 @@ export type { FileUploadInput } from './files.ts';
 // (`client.admin.orders.ship()`). The file upload is multipart and goes through `client.request` (see files.ts).
 export const adminEndpoints = {
   addOns,
+  analytics,
   authors,
   bundles,
   carts,

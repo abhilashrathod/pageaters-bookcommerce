@@ -1,121 +1,71 @@
-@if (isReady) {
-  <div>
-    <div class="row">
-      <div class="col-12">
-        <h1>{{ details?.user?.fullName }}</h1>
-      </div>
+@if (details(); as d) {
+  <h1 class="mb-1">{{ d.user?.fullName || 'Customer' }}</h1>
+  <p class="text-muted mb-4">{{ d.user?.email }} · {{ d.user?.contactNo }}</p>
+
+  @if (stats(); as s) {
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3"><mat-card appearance="outlined" class="kpi"><span class="kpi-label">Orders</span><span class="kpi-value">{{ s.orderCount }}</span><span class="kpi-sub">{{ s.saleCount }} sales</span></mat-card></div>
+      <div class="col-6 col-lg-3"><mat-card appearance="outlined" class="kpi"><span class="kpi-label">Total spent</span><span class="kpi-value">{{ s.totalSpent | inr }}</span><span class="kpi-sub">AOV {{ s.averageOrderValue | inr }}</span></mat-card></div>
+      <div class="col-6 col-lg-3"><mat-card appearance="outlined" class="kpi"><span class="kpi-label">Items bought</span><span class="kpi-value">{{ s.itemsBought }}</span><span class="kpi-sub">{{ s.favouritesCount }} favourites</span></mat-card></div>
+      <div class="col-6 col-lg-3"><mat-card appearance="outlined" class="kpi"><span class="kpi-label">Store credit</span><span class="kpi-value">{{ s.storeCreditBalance | inr }}</span><span class="kpi-sub">balance</span></mat-card></div>
     </div>
-    <div class="row">
-      <div class="col-4">
-        <mat-card appearance="outlined" class="mb-4">
+
+    <div class="row g-3 mb-4">
+      <div class="col-lg-4">
+        <mat-card appearance="outlined" class="h-100">
+          <mat-card-title>Orders by status</mat-card-title>
           <mat-card-content>
-            <p>Email: {{ details?.user?.email }}</p>
-            <p>Contact No: {{ details?.user?.contactNo }}</p>
+            <p class="small text-muted">First order {{ s.firstOrderAt ? (s.firstOrderAt | date: 'mediumDate') : '—' }} · Last {{ s.lastOrderAt ? (s.lastOrderAt | date: 'mediumDate') : '—' }}</p>
+            <ul class="list-unstyled mb-0">
+              @for (row of statuses(); track row.status) {
+                <li class="d-flex justify-content-between"><span class="text-capitalize">{{ row.status }}</span><strong>{{ row.count }}</strong></li>
+              } @empty {
+                <li class="text-muted">No orders yet.</li>
+              }
+            </ul>
           </mat-card-content>
         </mat-card>
       </div>
-      <div class="col-3">
-        <mat-card appearance="outlined" class="mb-4">
-          <mat-card-title>Order History</mat-card-title>
-          <mat-card-subtitle>Total Orders: {{ details.orders.length }}</mat-card-subtitle>
-          <p>
-            <strong>pending: {{ pending }}</strong>
-          </p>
-          <p>
-            <strong>fulfilled: {{ fulfilled }}</strong>
-          </p>
-          <p>
-            <strong>shipped: {{ shipped }}</strong>
-          </p>
-          <p>
-            <strong>cancelled: {{ cancelled }}</strong>
-          </p>
-          <p>
-            <strong>refunded: {{ refunded }}</strong>
-          </p>
-          <p>
-            <strong>returns and replacements: {{ refunded }}</strong>
-          </p>
+      <div class="col-lg-8">
+        <mat-card appearance="outlined" class="h-100">
+          <mat-card-title>Recent orders</mat-card-title>
+          <mat-card-content>
+            <table class="table table-sm mb-0">
+              <tbody>
+                @for (o of s.recentOrders; track o._id) {
+                  <tr>
+                    <td><a [routerLink]="['/admin/orders/view', o._id]">{{ o.uniqueId }}</a></td>
+                    <td>{{ o.createdAt | date: 'mediumDate' }}</td>
+                    <td class="text-capitalize">{{ o.status }}</td>
+                    <td class="text-end">{{ o.total | inr }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td class="text-muted">No orders yet.</td></tr>
+                }
+              </tbody>
+            </table>
+          </mat-card-content>
         </mat-card>
       </div>
     </div>
-    <div class="row">
-      <div class="col-9">
-        <div class="row">
-          <div class="col-6">
-            <mat-card appearance="outlined" class="mb-4">
-              <mat-card-title>Cart Items</mat-card-title>
-              <mat-card-content>
-                <ol class="list-group list-group-numbered">
-                  @for (productItem of details.cart.products; track productItem) {
-                    <li class="list-group-item d-flex justify-content-between align-items-start">
-                      <div class="ms-2 me-auto">
-                        <div class="fw-bold">{{ productItem.product.title }}</div>
-                        <p>
-                          MRP: {{ productItem.price | currency: 'INR' }}&nbsp;|&nbsp;Discount:{{
-                            productItem.product.currentDiscount | number
-                          }}&nbsp;|&nbsp;Qty: {{ productItem.quantity | number }}
-                        </p>
-                      </div>
-                      <span class="badge bg-primary rounded-pill"
-                        >{{ productItem.productTotal | currency: 'INR' }} x {{ productItem.quantity }}</span
-                      >
-                    </li>
-                  }
-                  @for (bundleItem of details.cart.bundles; track bundleItem) {
-                    <li class="list-group-item d-flex justify-content-between align-items-start">
-                      <div class="ms-2 me-auto">
-                        <div class="fw-bold">{{ bundleItem.bundle.title }}</div>
-                        <p>
-                          MRP: {{ bundleItem.total | currency: 'INR' }}&nbsp;|&nbsp;Discount:{{
-                            bundleItem.bundle.currentDiscount | number
-                          }}&nbsp;|&nbsp;Qty: {{ bundleItem.quantity | number }}
-                        </p>
-                      </div>
-                      <span class="badge bg-primary rounded-pill"
-                        >{{ bundleItem.total | currency: 'INR' }} x {{ bundleItem.quantity }}</span
-                      >
-                    </li>
-                  }
-                  @for (mysteryBoxItem of details.cart.mysteryBoxes; track mysteryBoxItem) {
-                    <li class="list-group-item d-flex justify-content-between align-items-start">
-                      <div class="ms-2 me-auto">
-                        <div class="fw-bold">{{ mysteryBoxItem.box.title }}</div>
-                        <p>
-                          MRP: {{ mysteryBoxItem.price | currency: 'INR' }}&nbsp;|&nbsp;Discount:{{
-                            mysteryBoxItem.box.currentDiscount | number
-                          }}&nbsp;|&nbsp;Qty: {{ mysteryBoxItem.quantity | number }}
-                        </p>
-                        <ul>
-                          <li>
-                            <strong>Favorite Books:</strong>
-                            {{ mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.favoriteBooks : 'n/a' }}
-                          </li>
-                          <li>
-                            <strong>Books to Ignore:</strong>
-                            {{ mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.ignoredBooks : 'n/a' }}
-                          </li>
-                          <li>
-                            <strong>Favorite Authors:</strong>
-                            {{ mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.preferredAuthors : 'n/a' }}
-                          </li>
-                          <li>
-                            <strong>Favorite Genres:</strong>
-                            {{ mysteryBoxItem.preferences.favoriteBooks ? mysteryBoxItem.preferences.preferredGenres : 'n/a' }}
-                          </li>
-                        </ul>
-                      </div>
-                      <span class="badge bg-primary rounded-pill"
-                        >{{ mysteryBoxItem.total | currency: 'INR' }} x {{ mysteryBoxItem.quantity }}</span
-                      >
-                    </li>
-                  }
-                </ol>
-              </mat-card-content>
-            </mat-card>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  }
+
+  <mat-card appearance="outlined" class="mb-4">
+    <mat-card-title>Current cart</mat-card-title>
+    <mat-card-content>
+      @if (lines().length) {
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Item</th><th class="text-end">Qty</th><th class="text-end">Price</th><th class="text-end">Total</th></tr></thead>
+          <tbody>
+            @for (l of lines(); track $index) {
+              <tr><td>{{ l.title }}</td><td class="text-end">{{ l.quantity }}</td><td class="text-end">{{ l.unitPrice | inr }}</td><td class="text-end">{{ l.total | inr }}</td></tr>
+            }
+          </tbody>
+          <tfoot><tr><th colspan="3">Total</th><th class="text-end">{{ total() | inr }}</th></tr></tfoot>
+        </table>
+      } @else {
+        <p class="text-muted mb-0">The cart is empty.</p>
+      }
+    </mat-card-content>
+  </mat-card>
 }

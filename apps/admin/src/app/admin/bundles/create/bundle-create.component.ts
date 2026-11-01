@@ -218,7 +218,6 @@ export class BundleCreateComponent implements OnInit {
       price: [0],
       popularity: [0],
       priority: [0],
-      membersPrice: [0],
     });
   }
 
@@ -262,7 +261,6 @@ export class BundleCreateComponent implements OnInit {
     this.bundleFormGroup.patchValue({
       price,
       weight,
-      membersPrice: price,
     });
   }
 
