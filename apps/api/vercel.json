@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "ignoreCommand": "npx turbo-ignore@2.11.10 --task=test",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=api^...",
+  "outputDirectory": "public",
+  "functions": {
+    "api/index.js": { "includeFiles": "src/**" }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "crons": [{ "path": "/api/v1/demo/cleanup", "schedule": "0 3 * * 1" }]
+}

@@ -85,8 +85,8 @@ pnpm test:e2e
 - **Demo mode locally:** with `DEMO_MODE=true` the API refuses to boot while any SendGrid/Twilio key is set or
   `CRON_SECRET` is missing. Blank those keys and pass a throwaway `CRON_SECRET` on the command line rather than
   editing your `.env`.
-- **Storefront build needs the API:** `sitemap.ts` and `/book-boxes` fetch the catalog at build time, so run the API
-  on `:5005` (or set `API_URL`/`NEXT_PUBLIC_API_URL`) before `pnpm build`.
+- **Storefront build and the API:** `sitemap.ts` and `/book-boxes` fetch the catalog at build time; without the API
+  on `:5005` (or `API_URL`/`NEXT_PUBLIC_API_URL`) the build still passes with empty lists, refreshed at runtime.
 - **API tests use the built `@pageaters/shared`:** after changing `packages/shared`, run
   `pnpm turbo run build --filter=@pageaters/shared` first, or the suites fail in their hooks.
 - **Admin dev server caches packages:** after changing `packages/shared` or `packages/api-client`, restart

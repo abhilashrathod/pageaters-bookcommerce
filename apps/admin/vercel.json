@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "angular",
+  "ignoreCommand": "npx turbo-ignore@2.11.10",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=admin",
+  "outputDirectory": "dist/pageaters-admin/browser",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

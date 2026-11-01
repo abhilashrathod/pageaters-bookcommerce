@@ -1,0 +1,10 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "env": ["API_URL", "NEXT_PUBLIC_API_URL", "CMS_URL", "SITE_URL"],
+      "passThroughEnv": ["PREVIEW_SECRET", "REVALIDATE_SECRET", "INTERNAL_API_SECRET"]
+    }
+  }
+}

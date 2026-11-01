@@ -1,0 +1,10 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "env": ["API_URL", "STOREFRONT_URL", "ADMIN_URL", "DEMO_MODE", "VERCEL"],
+      "passThroughEnv": ["MONGODB_URI", "PAYLOAD_SECRET", "PREVIEW_SECRET", "REVALIDATE_SECRET", "BLOB_READ_WRITE_TOKEN"]
+    }
+  }
+}
