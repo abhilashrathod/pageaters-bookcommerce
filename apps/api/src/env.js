@@ -52,6 +52,9 @@ const schema = z.object({
   // The bearer token of the weekly demo cleanup (GET /demo/cleanup; Vercel Cron sends `Authorization: Bearer
   // <CRON_SECRET>`). Required with DEMO_MODE=true.
   CRON_SECRET: z.string().min(16, 'must be at least 16 characters').optional(),
+  // Shared with the storefront's server: a request with `x-internal-secret: <this>` skips the general per-IP rate
+  // limit (src/middlewares/rateLimit.middleware.js). Unset = nobody skips it.
+  INTERNAL_API_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
   STOREFRONT_URL: httpUrl('must be an http(s) URL').default('http://localhost:3000'),
   ALLOWED_ORIGINS: z
     .string()

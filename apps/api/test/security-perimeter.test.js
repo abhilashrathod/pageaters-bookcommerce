@@ -384,6 +384,43 @@ describe('rate limits', () => {
     assert.equal(shipping.list().filter((entry) => entry.type === 'pincode').length, 30);
   });
 
+  test('x-internal-secret skips the general limit only with the right secret; named limits still apply', async () => {
+    const secret = 'internal-test-secret-'.padEnd(40, '0');
+    settings.internalSecret = secret;
+    settings.limits.general = 2;
+    settings.limits.pincodeCheck = 3;
+    try {
+      const get = (headers) => send(`${api.baseUrl}/`, { headers });
+      for (const res of await repeat(4, () => get({ 'x-internal-secret': secret }))) assert.equal(res.status, 200);
+      for (const res of await repeat(2, () => get({}))) assert.equal(res.status, 200);
+      assert.equal((await get({})).status, 429);
+      assert.equal((await get({ 'x-internal-secret': `${secret}x` })).status, 429);
+      assert.equal((await get({ 'x-internal-secret': '' })).status, 429);
+      const check = () => send(`${api.baseUrl}/addresses/check-pincode/100001`, { headers: { 'x-internal-secret': secret } });
+      for (const res of await repeat(3, check)) assert.equal(res.status, 200);
+      assert.equal((await check()).status, 429);
+    } finally {
+      settings.internalSecret = undefined;
+    }
+  });
+
+  test('without INTERNAL_API_SECRET set, no header skips the general limit', async () => {
+    assert.equal(settings.internalSecret, undefined);
+    settings.limits.general = 1;
+    await api.request('/');
+    assert.equal((await send(`${api.baseUrl}/`, { headers: { 'x-internal-secret': 'undefined' } })).status, 429);
+  });
+
+  test('the slow-down is on locally and off on Vercel', () => {
+    assert.equal(settings.slowDown, true);
+    const onVercel = require('node:child_process').execFileSync(
+      process.execPath,
+      ['-e', "process.stdout.write(String(require('./src/middlewares/rateLimit.middleware').settings.slowDown))"],
+      { cwd: require('node:path').join(__dirname, '..'), env: { ...process.env, APP_ENV: 'production', VERCEL: '1' }, encoding: 'utf8' },
+    );
+    assert.equal(onVercel, 'false');
+  });
+
   test('each named limit counts on its own', async () => {
     settings.limits.pincodeCheck = 1;
     await api.request('/addresses/check-pincode/100001');

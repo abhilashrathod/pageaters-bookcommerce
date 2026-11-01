@@ -41,7 +41,7 @@ The commerce API behind the Pageaters storefront and admin: catalog, search, car
   mongoose-paginate envelopes: \`docs\`, \`totalDocs\`, \`page\`, \`totalPages\`, \`hasNextPage\`…
 - **Request IDs.** Every response carries \`X-Request-Id\` (a safe incoming one is reused), also on its log line.
 - **Rate limits** per client IP: ${limits.general} requests a minute overall (slowed down after
-  ${limits.slowDownAfter}); failed logins ${limits.login}, e-mail/SMS sends ${limits.messageSend}, failed code
+  ${limits.slowDownAfter}, except on Vercel; the storefront's server skips this one with a shared secret); failed logins ${limits.login}, e-mail/SMS sends ${limits.messageSend}, failed code
   checks ${limits.codeCheck} and pincode checks ${limits.pincodeCheck} per 15 minutes. Limited routes send
   \`RateLimit\` / \`RateLimit-Policy\` headers and answer 429 \`TOO_MANY_REQUESTS\` past the limit.
 `.trim();

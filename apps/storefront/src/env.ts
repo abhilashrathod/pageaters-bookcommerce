@@ -20,6 +20,9 @@ const schema = z.object({
   // Shared with the CMS; unset turns the feature off (/api/draft and /api/revalidate answer 404).
   PREVIEW_SECRET: secret.optional(),
   REVALIDATE_SECRET: secret.optional(),
+  // Shared with the API: sent as `x-internal-secret` on server-side API reads so they skip the API's per-IP general
+  // limit (they all come from a few Vercel IPs). Server-only: never NEXT_PUBLIC_.
+  INTERNAL_API_SECRET: secret.optional(),
 });
 
 export type Env = z.infer<typeof schema>;

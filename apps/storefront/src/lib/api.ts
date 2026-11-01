@@ -11,5 +11,7 @@ export const CATALOG_TAG = 'api:catalog';
 export const catalogApi = createApiClient({
   baseUrl: env.API_URL,
   credentials: 'omit',
+  // Server-only secret (src/env.ts): lets these reads skip the API's per-IP general rate limit.
+  headers: env.INTERNAL_API_SECRET ? { 'x-internal-secret': env.INTERNAL_API_SECRET } : undefined,
   fetch: (url, init) => fetch(url, { ...init, cache: 'force-cache', next: { revalidate: 3600, tags: [CATALOG_TAG] } }),
 });

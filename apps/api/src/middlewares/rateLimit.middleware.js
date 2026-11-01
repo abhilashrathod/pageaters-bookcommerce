@@ -1,5 +1,9 @@
+const crypto = require('node:crypto');
 const { rateLimit, MemoryStore } = require('express-rate-limit');
 const { slowDown } = require('express-slow-down');
+
+const { env } = require('../env');
+const { ON_VERCEL } = require('../appConfig');
 
 // Rate limiting (AGENTS.md §5, §6): one general limit (with a slow-down before it) for every request, and stricter
 // named limits on the routes that cost something per call — login, the e-mail/SMS sends, the one-time-code checks
@@ -13,11 +17,18 @@ const { slowDown } = require('express-slow-down');
 // (test/helpers/app.js) switches them off through `settings.enabled`, so the integration suites (which send every
 // request from 127.0.0.1) can't trip them. test/security-perimeter.test.js switches them back on and may lower a
 // limit for one test through `settings` (limits are read per request; windows are fixed).
+//
+// Serverless (PLAN.md Phase 10): the storefront's server-side reads all arrive from Vercel's few egress IPs, so a
+// request carrying `x-internal-secret: <INTERNAL_API_SECRET>` skips the general limit and the slow-down (the named
+// limits still apply to everyone). The slow-down is off on Vercel: its delay holds a billed invocation open.
 
 const MINUTE = 60 * 1000;
 
 const settings = {
   enabled: true,
+  // Unset = no request skips the general limit. Min length is enforced by src/env.js.
+  internalSecret: env.INTERNAL_API_SECRET,
+  slowDown: !ON_VERCEL,
   limits: {
     // Every request from one IP (legacy values: 150 a minute, slowed by 500 ms per request after 125).
     general: 150,
@@ -48,6 +59,14 @@ const stores = {};
 
 const skip = () => !settings.enabled;
 
+const digest = (value) => crypto.createHash('sha256').update(String(value)).digest();
+
+// Constant-time compare (hashing first makes the lengths equal).
+const isInternal = (req) => {
+  const sent = req.get('x-internal-secret');
+  return Boolean(settings.internalSecret && sent) && crypto.timingSafeEqual(digest(sent), digest(settings.internalSecret));
+};
+
 // The legacy envelope shape (like res.forbidden), sent directly: res.error would log the request, params included
 // (a password on login).
 const tooManyRequests = (req, res) =>
@@ -59,7 +78,7 @@ const tooManyRequests = (req, res) =>
     error: res.__('TOO_MANY_REQUESTS'),
   });
 
-const limiter = (name, { onlyFailures = false } = {}) => {
+const limiter = (name, { onlyFailures = false, skipInternal = false } = {}) => {
   stores[name] = new MemoryStore();
   return rateLimit({
     windowMs: WINDOWS[name],
@@ -69,7 +88,7 @@ const limiter = (name, { onlyFailures = false } = {}) => {
     legacyHeaders: false,
     skipSuccessfulRequests: onlyFailures,
     store: stores[name],
-    skip,
+    skip: skipInternal ? (req) => skip() || isInternal(req) : skip,
     handler: tooManyRequests,
   });
 };
@@ -81,14 +100,14 @@ stores.slowDown = new MemoryStore();
  * @type {Record<'general' | 'slowDown' | 'login' | 'demoLogin' | 'messageSend' | 'codeCheck' | 'pincodeCheck', import('express').RequestHandler>}
  */
 const limiters = {
-  general: limiter('general'),
+  general: limiter('general', { skipInternal: true }),
   // +500 ms per request over the threshold (express-slow-down v1 behaviour).
   slowDown: slowDown({
     windowMs: WINDOWS.general,
     delayAfter: () => settings.limits.slowDownAfter,
     delayMs: (used, req) => (used - req.slowDown.limit) * 500,
     store: stores.slowDown,
-    skip,
+    skip: (req) => skip() || !settings.slowDown || isInternal(req),
   }),
   login: limiter('login', { onlyFailures: true }),
   demoLogin: limiter('demoLogin'),

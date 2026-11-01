@@ -11,6 +11,7 @@ void test('defaults to the local CMS and storefront', () => {
     SITE_URL: 'http://localhost:3000',
     PREVIEW_SECRET: undefined,
     REVALIDATE_SECRET: undefined,
+    INTERNAL_API_SECRET: undefined,
   });
 });
 
