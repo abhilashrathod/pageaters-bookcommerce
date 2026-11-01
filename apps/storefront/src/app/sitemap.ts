@@ -39,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       (bundle) => `/bundles/${bundle.bundleId}`,
     ),
   ]);
-  return [...new Set([...(pages?.docs ?? []).map((page) => pageHref(page.slug)), '/', '/book-boxes', ...paths.flat()])].map((path) => ({
+  return [...new Set([...(pages?.docs ?? []).map((page) => pageHref(page.slug)), '/', '/about', '/book-boxes', ...paths.flat()])].map((path) => ({
     url: `${env.SITE_URL}${path}`,
   }));
 }

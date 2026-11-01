@@ -1,4 +1,5 @@
 import type { Footer as FooterData } from '@pageaters/cms-types';
+import Link from 'next/link';
 
 import { cmsFetch } from '@/lib/cms.ts';
 
@@ -23,6 +24,9 @@ export async function Footer() {
             <h2 className="mb-2 text-base">Contact</h2>
             {/* Plain text on purpose: contact copy is never turned into links. */}
             <address className="whitespace-pre-line not-italic">{footer.contact}</address>
+            <Link href="/about" className="mt-2 inline-block text-[#999] transition-colors duration-500 hover:text-accent">
+              About us
+            </Link>
           </div>
         ) : null}
         {columns.length ? (

@@ -33,7 +33,7 @@ void test('every seeded link is a safe href', () => {
 });
 
 void test('every internal link leads to a seeded page or a storefront route', () => {
-  const routes = new Set(['/', '/book-boxes', ...pages.map((page) => `/${page.slug}`)]);
+  const routes = new Set(['/', '/about', '/book-boxes', ...pages.map((page) => `/${page.slug}`)]);
   const hrefs = JSON.stringify({ globals, home: homePage([]), pages }).match(/"href":"\/[^"]*"/g) ?? [];
   for (const href of hrefs) {
     const path = (JSON.parse(`{${href}}`) as { href: string }).href;
