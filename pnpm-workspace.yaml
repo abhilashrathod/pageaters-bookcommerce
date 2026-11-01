@@ -2,6 +2,7 @@ packages:
   - apps/*
   - packages/*
   - seed
+  - e2e
 
 # Install scripts are denied unless a package needs one to work.
 allowBuilds:

@@ -871,10 +871,10 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
 
 ## Phase 9 — Tests
 
-- [ ] Storefront: component tests for the cart and the block renderer
-- [ ] Admin: tests for the orders service and one key component
-- [ ] Playwright E2E, one happy path: browse → add to cart → checkout (Razorpay test) → order visible in admin → ship
-      → delivered
+- [x] Storefront: component tests for the cart and the block renderer
+- [x] Admin: tests for the orders service and one key component
+- [x] Playwright E2E, one happy path: browse → add to cart → checkout (cash on delivery) → order visible in admin →
+      ship → delivered (`e2e/`)
 
 ## Phase 10 — CI/CD & deployment
 
@@ -915,7 +915,8 @@ Kept as known limitations; none blocks the demo.
   the Google product feed; GA on the demo; the `FeaturedDeals` offset fix (the component is not carried over)
 - Phase 8: hand-rewriting components to standalone/control flow; typing every legacy service; validating the admin
   catalog create/update routes with the shared schemas (catalog writes are super-admin only)
-- Phase 9: an API coverage report and gap-hunting (985 API tests already); broad admin test coverage
+- Phase 9: an API coverage report and gap-hunting (985 API tests already); broad admin test coverage; Razorpay in
+  the E2E (its test webhook can't reach localhost, so the spec pays cash on delivery)
 - Phase 10: CodeQL, Vercel Remote Cache, Renovate; a shared rate-limit store (each instance counts on its own, so
   login/code-check limits are per instance); re-encoding uploaded images (uploads are super-admin only); the API
   Dockerfile
