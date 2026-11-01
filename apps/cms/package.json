@@ -9,7 +9,7 @@
     "start": "NODE_OPTIONS=--no-deprecation next start --port 3001",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test 'src/**/*.test.ts'",
+    "test": "node --test --test-force-exit 'src/**/*.test.ts'",
     "payload": "NODE_OPTIONS=--no-deprecation payload",
     "generate:importmap": "NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "NODE_OPTIONS=--no-deprecation payload generate:types",

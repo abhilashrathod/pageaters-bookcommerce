@@ -354,11 +354,11 @@ export class BookUpdateComponent implements OnInit {
   }
 
   detectFiles(event) {
-    let files = event.target.files;
+    const files = event.target.files;
 
     if (files) {
-      for (let file of files) {
-        let reader = new FileReader();
+      for (const file of files) {
+        const reader = new FileReader();
         reader.onload = (e: any) => this.images.push({ url: reader.result, cloudUrl: '', isPoster: false, file });
 
         reader.readAsDataURL(file);
@@ -430,7 +430,7 @@ export class BookUpdateComponent implements OnInit {
     if (value) {
       this.tags.value.push(value);
     }
-    event.chipInput!.clear();
+    event.chipInput.clear();
   }
 
   remove(index): void {

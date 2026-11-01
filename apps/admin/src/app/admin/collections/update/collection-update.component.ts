@@ -231,7 +231,7 @@ export class CollectionUpdateComponent implements OnInit {
     if (value) {
       this.tags.value.push(value);
     }
-    event.chipInput!.clear();
+    event.chipInput.clear();
   }
 
   remove(index) {

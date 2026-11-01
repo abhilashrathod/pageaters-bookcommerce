@@ -219,7 +219,7 @@ export class BundleCreateComponent implements OnInit {
     if (value) {
       this.tags.value.push(value);
     }
-    event.chipInput!.clear();
+    event.chipInput.clear();
   }
 
   remove(index): void {

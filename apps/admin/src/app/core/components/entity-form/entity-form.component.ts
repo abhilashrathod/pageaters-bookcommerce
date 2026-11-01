@@ -11,7 +11,7 @@ import {IControlSchema} from './control-schema';
 
 export class EntityFormComponent implements OnInit {
 
-  @Input('formSchema') formSchema: Array<IControlSchema> = [];
+  @Input() formSchema: Array<IControlSchema> = [];
   @Output() onSubmit = new EventEmitter();
   controlsFormGroup: FormGroup;
 

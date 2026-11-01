@@ -1,12 +1,10 @@
 # PageatersAdmin
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 10.1.3.
+Angular 22 admin panel (standalone components, built-in control flow), upgraded stepwise from Angular 12.
 
 ## Development server
 
 Run `pnpm --filter admin dev` (or `pnpm dev` from the repo root to run every app) for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
-
-The scripts start the Angular CLI with `node --openssl-legacy-provider`: this legacy Angular 12 / webpack 4 toolchain hashes with MD4, which OpenSSL 3 on Node 22 rejects. The flag is a stopgap until the Angular upgrade.
 
 ## Configuration
 
@@ -23,15 +21,11 @@ Run `pnpm --filter admin ng generate component component-name` to generate a new
 
 ## Build
 
-Run `pnpm --filter admin build` for a development build, or `pnpm --filter admin build:prod` for a production build (`--configuration production`). The build artifacts will be stored in the `dist/` directory.
+Run `pnpm --filter admin build` for a production build (the default configuration). Output goes to `dist/pageaters-admin/browser`.
 
-## Running unit tests
+## Lint and tests
 
-Run `pnpm --filter admin test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `pnpm --filter admin e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+Run `pnpm --filter admin lint` (ESLint with angular-eslint; legacy rule breaches are warnings) and `pnpm --filter admin test` (Vitest on jsdom through Angular's unit-test builder; runs once and exits).
 
 ## Further help
 

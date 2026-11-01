@@ -806,15 +806,31 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     keeps TS 6's new strict default off. The v21 update also ran the control-flow migration (kept: step 3 wants it).
     Build output moved to `dist/pageaters-admin/browser` (Phase 10 deploy config must use it). Root: `allowBuilds`
     denies `lmdb`, `msgpackr-extract`, `nice-napi` (prebuilt/optional). Lint/test still red until the next step
-- [ ] TSLint → angular-eslint; remove Protractor; Karma → Vitest (today `ng test` runs Karma in watch mode and never
-      exits)
-- [ ] Standalone components and the new control flow through Angular's own migration schematics (no hand rewrite);
-      orders and catalog services typed via `packages/api-client` (pass `validate: true` on `client.admin.users.*`)
-- [ ] Demo UX: read-only notice on catalog forms, outbox view, hide Cancel after shipping, show API error messages
-      (ship/deliver/cancel show "[object Object]" today)
-- [ ] Super-admin catalog editing: image fields keep full Blob URLs (the legacy admin prepends an S3 origin and saves
-      only the file name; don't edit catalog records through it until this step), cover and author-photo upload; send
-      form values through the `admin…PayloadSchema` so a loaded record can't send `wholeSalePriceHistory` back
+- Remaining work runs as two parallel waves (owner-approved 2026-11-01); the orchestrator commits and pushes wave 1
+  after its gates so wave 2 can branch from it; one code + security review over all of Phase 8 at the end
+- [x] Wave 1 (parallel worktrees)
+  - [x] A. Tooling: TSLint → angular-eslint (legacy-failing rules start as warnings); remove Protractor; Karma →
+        Vitest (today `ng test` runs Karma in watch mode and never exits). Config only, no source rewrites
+  - [x] B. Standalone components and the rest of the new control flow through Angular's own migration schematics
+        (no hand rewrite)
+  - [x] At merge: one `eslint --fix` over the combined result; root `test` no longer needs `--filter='!admin'`
+  - Done 2026-11-01. A: flat `eslint.config.mjs` (`@pageaters/config` base + angular-eslint recommended and
+    accessibility; `consistent-type-imports` off, it breaks DI); legacy breaches are warnings (1675, mostly
+    `no-unsafe-*`, `prefer-inject`, `no-explicit-any`); Vitest 5 on jsdom via `@angular/build:unit-test`, `test` runs once
+    (one smoke spec); all builders now `@angular/build`; Protractor, Karma, TSLint, codelyzer, `polyfills.ts` gone.
+    B: standalone schematic (3 passes) + control flow; `AppModule`/`SharedModule` gone, `bootstrapApplication`. 29
+    NgModules remain (routing, lazy feature modules, 4 provider modules) — removing them needs hand route conversion.
+    Merge fixes: `provideZoneChangeDetection()` added (the bootstrap pass imported it but didn't provide it; the
+    legacy code needs zone change detection); CMS `test` gets `--test-force-exit` (Payload leaves a handle open after
+    `destroy()`, so the run never exited). Gates: admin lint 0 errors, test, build; root test 11/11
+- [ ] Wave 2 (parallel worktrees, from pushed wave 1)
+  - [ ] C. Orders: orders/customers services typed via `packages/api-client` (pass `validate: true` on
+        `client.admin.users.*`); hide Cancel after shipping; show API error messages (ship/deliver/cancel show
+        "[object Object]" today); outbox view
+  - [ ] D. Catalog: catalog services typed via `packages/api-client`; read-only notice on catalog forms; super-admin
+        editing — image fields keep full Blob URLs (the legacy admin prepends an S3 origin and saves only the file
+        name; don't edit catalog records through it until this step), cover and author-photo upload; send form values
+        through the `admin…PayloadSchema` so a loaded record can't send `wholeSalePriceHistory` back
 - **Checkpoint:** admin logs in, views the catalog, runs an order from confirmed to delivered
 
 ## Phase 9 — Tests

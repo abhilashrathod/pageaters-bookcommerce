@@ -41,7 +41,7 @@
   <ng-container [matColumnDef]="col.columnDef">
     <mat-header-cell *matHeaderCellDef> {{col.header}}</mat-header-cell>
     <mat-cell *matCellDef="let row">
-      @if (col.columnDef == 'action') {
+      @if (col.columnDef === 'action') {
       <span>
         @if (editResource) {
         <button mat-icon-button color="primary" [routerLink]="col.cell(row)" matTooltip="Edit" class="me-1">
@@ -53,13 +53,13 @@
         </button>
         }
       </span>
-      } @if (col.columnDef == 'view') {
+      } @if (col.columnDef === 'view') {
       <span>
         <button mat-icon-button color="secondary" [routerLink]="col.cell(row)" matTooltip="View" class="me-1">
           <mat-icon>visibility</mat-icon>
         </button>
       </span>
-      } @if (col.columnDef == 'image') {
+      } @if (col.columnDef === 'image') {
       <span>
         @if (col.cell(row)) {
         <img width="100px" class="img-fluid img-thumbnail" [src]="col.cell(row)" />

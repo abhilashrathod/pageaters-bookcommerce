@@ -95,12 +95,12 @@ export interface IOrder {
   storeCredit: number;
   total: number;
   giftOptions: {
-    isGift: Boolean;
+    isGift: boolean;
     details: {
-      package: String;
-      cost: Number;
-      message: String;
-      from: String;
+      package: string;
+      cost: number;
+      message: string;
+      from: string;
     },
   }
 }
