@@ -10,9 +10,9 @@ import { CollectionService } from '@services/collection.service';
 import { BooksService } from '@services/books.service';
 import { FilesService } from '@services/files.service';
 
-import { IBook } from '@schema/book';
-import { BUCKETS } from '@helpers/constants';
+import type { Book } from '@pageaters/shared';
 import { MatCard, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { apiErrorMessage } from '@services/api-client';
 
 @Component({
   selector: 'app-book-view',
@@ -21,7 +21,7 @@ import { MatCard, MatCardTitle, MatCardContent } from '@angular/material/card';
   imports: [MatCard, MatCardTitle, MatCardContent],
 })
 export class BookViewComponent implements OnInit {
-  book: IBook;
+  book: Book;
   isReady = false;
 
   constructor(
@@ -50,11 +50,10 @@ export class BookViewComponent implements OnInit {
     book$.subscribe(
       (res) => {
         this.book = res;
-        this.book.poster = `${BUCKETS.BOOKS}/${this.book.poster}`;
         this.isReady = true;
       },
       (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }

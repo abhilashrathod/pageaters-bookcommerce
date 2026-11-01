@@ -1,3 +1,4 @@
+<app-demo-read-only-notice />
 <form [formGroup]="bundleFormGroup">
   <div class="row">
     <div class="col-12">
@@ -10,15 +11,15 @@
       <div class="col-5">
         <div class="mb-4">
           @if (!poster) {
-            <div class="image-upload-thumbnail" (click)="profileImage.click()">Bundle Poster</div>
+            <div class="image-upload-thumbnail" (click)="profileImage.click()" [appFileDrop]="profileImage">Bundle Poster</div>
           }
           @if (poster) {
-            <img class="pointer img-fluid img-thumbnail" [src]="poster" (click)="profileImage.click()" />
+            <img class="pointer img-fluid img-thumbnail" [src]="poster" (click)="profileImage.click()" [appFileDrop]="profileImage" />
           }
           <input #profileImage class="d-none" type="file" (change)="previewImage($event)" />
         </div>
         <p class="text-center">
-          <button mat-stroked-button [color]="'accent'" (click)="uploadImage()">Upload</button>
+          <button mat-stroked-button [color]="'accent'" [disabled]="demoAdmin.readOnly()" (click)="uploadImage()">Upload</button>
         </p>
       </div>
       <div class="col-7">
@@ -217,7 +218,7 @@
     <mat-icon>arrow_back</mat-icon>
   </button>
 
-  <button mat-fab color="primary" (click)="onSubmit()">
+  <button mat-fab color="primary" [disabled]="demoAdmin.readOnly()" (click)="onSubmit()">
     <mat-icon>check</mat-icon>
   </button>
 </div>

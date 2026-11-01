@@ -63,8 +63,8 @@ describe('GET /product-sets', () => {
     assert.equal((await api.request('/product-sets?page=1&limit=51', { cookie: admin.cookie })).status, 200);
   });
 
-  test('pages active sets, optionally by categories (comma list or array)', async () => {
-    const all = asJson(await ProductSet().find({ isActive: true }).sort({ createdAt: -1, _id: -1 }));
+  test('pages active sets with their book titles, optionally by categories (comma list or array)', async () => {
+    const all = asJson(await ProductSet().find({ isActive: true }).sort({ createdAt: -1, _id: -1 }).populate('products.product', 'title'));
     const page = (docs) => paged(docs, { totalDocs: docs.length, limit: 10, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null });
     assertBody(await api.request('/product-sets?page=1&limit=10', { cookie: admin.cookie }), 200, ok('PRODUCT_SET_LIST_SUCCESS', page(all)));
     const fiction = all.filter((set) => set._id === String(storeIds.setOne));
@@ -80,7 +80,7 @@ describe('GET /product-sets', () => {
   });
 
   test('an empty categories filter is no filter (the admin deal form with no category selected)', async () => {
-    const all = asJson(await ProductSet().find({ isActive: true }).sort({ createdAt: -1, _id: -1 }));
+    const all = asJson(await ProductSet().find({ isActive: true }).sort({ createdAt: -1, _id: -1 }).populate('products.product', 'title'));
     const page = paged(all, { totalDocs: all.length, limit: 10, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null });
     assertBody(await api.request('/product-sets?categories=', { cookie: admin.cookie }), 200, ok('PRODUCT_SET_LIST_SUCCESS', page));
   });

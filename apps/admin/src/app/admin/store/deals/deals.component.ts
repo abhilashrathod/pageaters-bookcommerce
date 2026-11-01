@@ -5,8 +5,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { AppLoaderService } from '@components/app-loader/app-loader.service';
 import { AppConfirmService } from '@components/app-confirm/app-confirm.service';
 
-import { IDeal } from '@schema/deal';
-import { BUCKETS } from '@helpers/constants';
+import type { DealListItem } from '@pageaters/shared';
 import {
   MatCard,
   MatCardHeader,
@@ -39,8 +38,7 @@ import { MatIcon } from '@angular/material/icon';
   ],
 })
 export class DealsComponent implements OnInit {
-  deals: Array<IDeal>;
-  BASE = BUCKETS.ASSETS;
+  deals: Array<DealListItem>;
 
   constructor(
     private dealsService: DealsService,

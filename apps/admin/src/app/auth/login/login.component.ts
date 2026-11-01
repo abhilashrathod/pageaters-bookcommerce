@@ -1,5 +1,6 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { AuthorService } from '@services/auth.service';
+import { API_CLIENT, apiErrorMessage } from '@services/api-client';
 import { Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
@@ -11,6 +12,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, Reactive
 })
 export class LoginComponent implements OnInit {
   loginFormGroup: UntypedFormGroup;
+  private client = inject(API_CLIENT);
 
   constructor(
     private auth: AuthorService,
@@ -42,8 +44,16 @@ export class LoginComponent implements OnInit {
         this.router.navigate(['/', 'admin']);
       },
       (error) => {
-        alert(error);
+        alert(apiErrorMessage(error));
       },
+    );
+  }
+
+  // One click into the read-only demo admin (DEMO_MODE only; its password is random, so this is the only way in).
+  demoLogin(): void {
+    this.client.auth.demoAdminLogin().then(
+      () => this.router.navigate(['/', 'admin']),
+      (error) => alert(apiErrorMessage(error)),
     );
   }
 }

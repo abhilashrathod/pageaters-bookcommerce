@@ -1,28 +1,16 @@
-import {Injectable} from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import {Observable, throwError} from 'rxjs';
-import {catchError, map} from 'rxjs/operators';
-import {IResponse} from '@schema/responses';
-import {environment} from '@env/environment';
+import { inject, Injectable } from '@angular/core';
+import { defer, Observable } from 'rxjs';
+import type { AdminUserDetails } from '@pageaters/shared';
+import { API_CLIENT } from '@services/api-client';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CustomerService {
+  private client = inject(API_CLIENT);
 
-  constructor(private _http: HttpClient) {
-  }
-
-  getById(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/users/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-  handleError(err: any): any {
-    return throwError(err.error);
+  // validate: true strips credential fields the legacy API still sends on user documents (see api-client users.ts).
+  getById(id: string): Observable<AdminUserDetails> {
+    return defer(() => this.client.admin.users.detail({ id }, { validate: true }));
   }
 }

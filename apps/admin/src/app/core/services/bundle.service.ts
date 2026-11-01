@@ -1,78 +1,34 @@
-import {Injectable} from '@angular/core';
-import {Observable, throwError} from 'rxjs';
-import {environment} from '@env/environment';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import {catchError, map} from 'rxjs/operators';
-import {IResponse} from '@schema/responses';
+import { Injectable, inject } from '@angular/core';
+import { defer } from 'rxjs';
+import { adminBundleCreatePayloadSchema, adminBundleUpdatePayloadSchema } from '@pageaters/shared';
+import { API_CLIENT } from './api-client';
+import { parsePayload, type AdminBody } from './payload';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class BundleService {
+  private client = inject(API_CLIENT);
 
-  constructor(private _http: HttpClient) {
+  getAllBundles(filters: { page: number; limit: number }) {
+    return defer(() => this.client.bundles.list({ page: filters.page, limit: filters.limit }));
   }
 
-  getAllBundles(filters): Observable<any> {
-    const url = `${environment.BASE_PATH}/bundles`;
-    let params = new HttpParams();
-    params = params.append('page', filters.page);
-    params = params.append('limit', filters.limit);
-    return this._http.get(url, {params})
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  searchBundles(q: string) {
+    return defer(() => this.client.bundles.search({ q }));
   }
 
-  searchBundles(title): Observable<any> {
-    const url = `${environment.BASE_PATH}/bundles/search/${title}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  create(payload: unknown) {
+    return defer(() => this.client.admin.bundles.create(parsePayload<AdminBody<'bundles', 'create'>>(adminBundleCreatePayloadSchema, payload)));
   }
 
-  create(payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/bundles`;
-    return this._http.post(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  getById(id: string) {
+    return defer(() => this.client.admin.bundles.detail({ id }));
   }
 
-
-  getById(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/bundles/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  getByUniqueId(id: string) {
+    return defer(() => this.client.bundles.detail({ id }));
   }
 
-  getByUniqueId(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/bundles/unique/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-
-  update(id, payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/bundles/${id}`;
-    return this._http.put(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-  handleError(err: any): any {
-    return throwError(err.error);
+  update(id: string, payload: unknown) {
+    return defer(() => this.client.admin.bundles.update({ ...parsePayload<AdminBody<'bundles', 'update'>>(adminBundleUpdatePayloadSchema, payload), id }));
   }
 }

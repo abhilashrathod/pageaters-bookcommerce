@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { BundleService } from '@services/bundle.service';
-import { IBundle } from '@schema/bundle';
-import { BUCKETS } from '@helpers/constants';
+import type { BundleListItem } from '@pageaters/shared';
 import { SortablejsModule } from '@dustfoundation/ngx-sortablejs';
 import {
   MatCard,
@@ -36,8 +35,7 @@ import { DecimalPipe, CurrencyPipe } from '@angular/common';
   ],
 })
 export class BundleRearrangeComponent implements OnInit {
-  bundles: Array<IBundle> = [];
-  IMAGE_BASE = BUCKETS.BUNDLES;
+  bundles: Array<BundleListItem> = [];
 
   constructor(private bundleService: BundleService) {}
 

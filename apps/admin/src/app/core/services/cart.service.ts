@@ -1,30 +1,15 @@
-import {Injectable} from '@angular/core';
-import {Observable, throwError} from 'rxjs';
-import {catchError, map} from 'rxjs/operators';
-import { HttpClient } from '@angular/common/http';
-
-import {IResponse} from '@schema/responses';
-
-import {environment} from '@env/environment';
+import { inject, Injectable } from '@angular/core';
+import { defer, Observable } from 'rxjs';
+import type { AdminCart } from '@pageaters/shared';
+import { API_CLIENT } from '@services/api-client';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CartService {
+  private client = inject(API_CLIENT);
 
-  constructor(private _http: HttpClient) {
-  }
-
-  getById(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/cart/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-  handleError(err: any): any {
-    return throwError(err.error);
+  getById(id: string): Observable<AdminCart> {
+    return defer(() => this.client.admin.carts.detail({ id }));
   }
 }

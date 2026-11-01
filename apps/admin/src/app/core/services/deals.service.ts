@@ -1,67 +1,30 @@
-import {Injectable} from '@angular/core';
-import {Observable, throwError} from 'rxjs';
-import {environment} from '@env/environment';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import {catchError, map} from 'rxjs/operators';
-import {IResponse} from '@schema/responses';
+import { Injectable, inject } from '@angular/core';
+import { defer } from 'rxjs';
+import { adminDealCreatePayloadSchema, adminDealUpdatePayloadSchema } from '@pageaters/shared';
+import { API_CLIENT } from './api-client';
+import { parsePayload, type AdminBody } from './payload';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class DealsService {
+  private client = inject(API_CLIENT);
 
-  constructor(private _http: HttpClient) {
+  getAllDeals(filters: { page: number; limit: number }) {
+    return defer(() => this.client.deals.list({ page: filters.page, limit: filters.limit }));
   }
 
-  getAllDeals(filters): Observable<any> {
-    const url = `${environment.BASE_PATH}/deals`;
-    let params = new HttpParams();
-    params = params.append('page', filters.page);
-    params = params.append('limit', filters.limit);
-    return this._http.get(url, {params})
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  create(payload: unknown) {
+    return defer(() => this.client.admin.deals.create(parsePayload<AdminBody<'deals', 'create'>>(adminDealCreatePayloadSchema, payload)));
   }
 
-  create(payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/deals`;
-    return this._http.post(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  getById(id: string) {
+    return defer(() => this.client.admin.deals.detail({ id }));
   }
 
-  getById(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/deals/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  update(id: string, payload: unknown) {
+    return defer(() => this.client.admin.deals.update({ ...parsePayload<AdminBody<'deals', 'update'>>(adminDealUpdatePayloadSchema, payload), id }));
   }
 
-  update(id, payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/deals/${id}`;
-    return this._http.put(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-  destroy(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/deals/${id}`;
-    return this._http.delete(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-  handleError(err: any): any {
-    return throwError(err.error);
+  destroy(id: string) {
+    return defer(() => this.client.admin.deals.remove({ id }));
   }
 }

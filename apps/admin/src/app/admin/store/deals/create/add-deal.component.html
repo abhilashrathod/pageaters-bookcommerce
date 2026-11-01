@@ -1,3 +1,4 @@
+<app-demo-read-only-notice />
 <form [formGroup]="dealFormGroup" (ngSubmit)="onSubmit()">
   <div class="row">
     <div class="col-4">
@@ -9,15 +10,15 @@
           <div class="col-12">
             <div class="mb-4">
               @if (!poster) {
-                <div class="image-upload-thumbnail" style="font-size: large" (click)="profileImage.click()">Poster</div>
+                <div class="image-upload-thumbnail" style="font-size: large" (click)="profileImage.click()" [appFileDrop]="profileImage">Poster</div>
               }
               @if (poster) {
-                <img class="pointer img-fluid img-thumbnail" [src]="poster" (click)="profileImage.click()" />
+                <img class="pointer img-fluid img-thumbnail" [src]="poster" (click)="profileImage.click()" [appFileDrop]="profileImage" />
               }
               <input #profileImage class="d-none" type="file" (change)="previewImage($event)" />
             </div>
             <p class="text-center">
-              <button type="button" mat-stroked-button [color]="'accent'" (click)="uploadImage()">Upload</button>
+              <button type="button" mat-stroked-button [color]="'accent'" [disabled]="demoAdmin.readOnly()" (click)="uploadImage()">Upload</button>
             </p>
           </div>
           <div class="">
@@ -101,7 +102,7 @@
       <mat-icon>arrow_back</mat-icon>
     </button>
 
-    <button mat-fab color="primary" type="submit">
+    <button mat-fab color="primary" type="submit" [disabled]="demoAdmin.readOnly()">
       <mat-icon>check</mat-icon>
     </button>
   </div>

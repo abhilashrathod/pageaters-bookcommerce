@@ -2,9 +2,7 @@ import { z } from 'zod';
 
 import { apiResponse } from '../../primitives.ts';
 
-// POST /file/upload. The legacy API answers with the stored object's key (`slug-random-timestamp.ext`), not a URL,
-// although the field is called `fileUrl`; the catalog contract's image fields need an https URL, so Phase 5
-// (Vercel Blob) must answer with the blob URL.
+// POST /file/upload: `fileUrl` is the uploaded file's full Vercel Blob URL, stored as-is in catalog image fields.
 export const adminFileUploadResultSchema = z.object({
   fileUrl: z.string().min(1),
 });

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { Location, TitleCasePipe } from '@angular/common';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -11,8 +11,6 @@ import { BooksService } from '@services/books.service';
 import {
   BOOK_AVAILABILITY,
   BOOK_VERSIONS,
-  BUCKETS,
-  FILE_UPLOAD_MODULES,
   PRICING_PERCENTAGES,
   PRODUCT_TYPES,
   READING_LEVELS,
@@ -32,12 +30,18 @@ import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/autocomplete';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { apiErrorMessage } from '@services/api-client';
+import { AdminFileModule } from '@pageaters/shared';
+import { DemoAdminService } from '@services/demo-admin.service';
+import { DemoReadOnlyNoticeComponent } from '@components/demo-read-only-notice/demo-read-only-notice.component';
+import { FileDropDirective } from '@core/directives/file-drop.directive';
 
 @Component({
   selector: 'app-book-create',
   templateUrl: 'book-create.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [
+  imports: [FileDropDirective, 
+    DemoReadOnlyNoticeComponent,
     MatStepper,
     MatStep,
     MatStepLabel,
@@ -65,6 +69,8 @@ import { CdkTextareaAutosize } from '@angular/cdk/text-field';
   ],
 })
 export class BookCreateComponent implements OnInit {
+  protected demoAdmin = inject(DemoAdminService);
+
   poster;
   images: any[] = [];
 
@@ -388,19 +394,19 @@ export class BookCreateComponent implements OnInit {
   }
 
   uploadImage(file, title, index): any {
-    const formData: FormData = new FormData();
-    formData.append('file', file, file.name);
-    formData.append('title', title);
-    formData.append('fileModule', FILE_UPLOAD_MODULES.STORE_BOOK);
-
-    const file$ = this.filesService.upload(formData);
+    const file$ = this.filesService.upload({
+      file: file,
+      fileName: file.name,
+      title: title,
+      fileModule: AdminFileModule.STORE_BOOK,
+    });
     file$.subscribe(
       (res) => {
         this.images[index].cloudUrl = res.fileUrl;
         this.snackBar.open('Book Thumbnail Uploaded!', 'OKAY', { duration: 5000 });
       },
       (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -433,7 +439,7 @@ export class BookCreateComponent implements OnInit {
       relatedCollections: relatedCollections.map((x) => x._id),
       relatedBundles: relatedBundles.map((x) => x._id),
       categories: categories.map((x) => x._id),
-      poster: posterImages[0].cloudUrl.split('/').pop(),
+      poster: posterImages[0].cloudUrl,
       images: this.images.filter((x) => !x.isPoster).map((x) => x.cloudUrl),
     };
     const book$ = this.booksService.create(payload);
@@ -443,7 +449,7 @@ export class BookCreateComponent implements OnInit {
         this.snackBar.open('New Book Added', 'OKAY', { duration: 5000 });
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }

@@ -36,7 +36,7 @@ const findActive = async (query, unwrap) => {
 };
 
 /**
- * One page of active product sets, newest first, optionally only those in any of `categories` (array or
+ * One page of active product sets (book titles populated), newest first, optionally only those in any of `categories` (array or
  * comma-separated; the route checks they are ids). Paging defaults: helpers/paging.helper.js (no client sorting).
  * @param {{ page?, limit?, categories?: string | string[] }} options
  * @returns {Promise<object>} The mongoose-paginate-v2 result.
@@ -46,7 +46,8 @@ const listProductSets = ({ page, limit, categories }) => {
   const query = { isActive: true };
   if (categories) query.categories = mongoose.trusted({ $in: isArray(categories) ? categories : categories.split(',') });
 
-  return ProductSets.paginate(query, pageOptions({ page, limit }));
+  // Book titles only, so the admin deal form can show what each set holds.
+  return ProductSets.paginate(query, { ...pageOptions({ page, limit }), populate: { path: 'products.product', select: 'title' } });
 };
 
 /**

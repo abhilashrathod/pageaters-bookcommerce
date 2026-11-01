@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Location, TitleCasePipe } from '@angular/common';
 import { get } from 'lodash';
@@ -13,8 +13,6 @@ import { FilesService } from '@services/files.service';
 import {
   BOOK_AVAILABILITY,
   BOOK_VERSIONS,
-  BUCKETS,
-  FILE_UPLOAD_MODULES,
   PRICING_PERCENTAGES,
   PRODUCT_TYPES,
   READING_LEVELS,
@@ -34,12 +32,18 @@ import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/autocomplete';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { apiErrorMessage } from '@services/api-client';
+import { AdminFileModule } from '@pageaters/shared';
+import { DemoAdminService } from '@services/demo-admin.service';
+import { DemoReadOnlyNoticeComponent } from '@components/demo-read-only-notice/demo-read-only-notice.component';
+import { FileDropDirective } from '@core/directives/file-drop.directive';
 
 @Component({
   selector: 'app-book-update',
   templateUrl: 'book-update.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [
+  imports: [FileDropDirective, 
+    DemoReadOnlyNoticeComponent,
     MatStepper,
     MatStep,
     MatStepLabel,
@@ -67,6 +71,8 @@ import { CdkTextareaAutosize } from '@angular/cdk/text-field';
   ],
 })
 export class BookUpdateComponent implements OnInit {
+  protected demoAdmin = inject(DemoAdminService);
+
   book;
   images: any[] = [];
   isReady = false;
@@ -176,7 +182,7 @@ export class BookUpdateComponent implements OnInit {
         this.buildForms(res);
       },
       (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -185,14 +191,14 @@ export class BookUpdateComponent implements OnInit {
     this.images = book.images.map((image: string, idx: number) => {
       return {
         url: '',
-        cloudUrl: `${BUCKETS.BOOKS}/${image}`,
+        cloudUrl: image,
         isPoster: image === book.poster,
         file: null,
       };
     });
     this.images.unshift({
       url: '',
-      cloudUrl: `${BUCKETS.BOOKS}/${book.poster}`,
+      cloudUrl: book.poster,
       isPoster: true,
       file: null,
     });
@@ -408,19 +414,19 @@ export class BookUpdateComponent implements OnInit {
   }
 
   uploadImage(file, title, index) {
-    const formData: FormData = new FormData();
-    formData.append('file', file, file.name);
-    formData.append('title', title);
-    formData.append('fileModule', FILE_UPLOAD_MODULES.STORE_BOOK);
-
-    const file$ = this.filesService.upload(formData);
+    const file$ = this.filesService.upload({
+      file: file,
+      fileName: file.name,
+      title: title,
+      fileModule: AdminFileModule.STORE_BOOK,
+    });
     file$.subscribe(
       (res) => {
-        this.images[index].cloudUrl = `${BUCKETS.BOOKS}/${res.fileUrl}`;
+        this.images[index].cloudUrl = res.fileUrl;
         this.snackBar.open('Book Thumbnail Uploaded!', 'OKAY', { duration: 5000 });
       },
       (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -476,8 +482,8 @@ export class BookUpdateComponent implements OnInit {
       relatedCollections: relatedCollections.map((x) => x._id),
       relatedBundles: relatedBundles.map((x) => x._id),
       categories: categories.map((x) => x._id),
-      poster: posterImages[0].cloudUrl.split('/').pop(),
-      images: this.images.filter((x) => !x.isPoster).map((x) => x.cloudUrl.split('/').pop()),
+      poster: posterImages[0].cloudUrl,
+      images: this.images.filter((x) => !x.isPoster).map((x) => x.cloudUrl),
     };
     const book$ = this.booksService.update(this.book._id, payload);
     book$.subscribe(
@@ -486,7 +492,7 @@ export class BookUpdateComponent implements OnInit {
         this.snackBar.open('Book Info Updated', 'OKAY', { duration: 5000 });
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }

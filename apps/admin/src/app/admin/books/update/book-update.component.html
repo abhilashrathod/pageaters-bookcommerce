@@ -1,3 +1,4 @@
+<app-demo-read-only-notice />
 @if (isReady) {
   <div class="row">
     <div class="col-12">
@@ -13,7 +14,7 @@
                 <div class="col-5">
                   <div class="mb-4">
                     @if (images.length <= 0) {
-                      <div class="image-upload-thumbnail" (click)="profileImage.click()">Book Images</div>
+                      <div class="image-upload-thumbnail" (click)="profileImage.click()" [appFileDrop]="profileImage">Book Images</div>
                     }
                     @for (image of images; track image; let idx = $index) {
                       <div class="position-relative mb-3">
@@ -38,10 +39,10 @@
                   </div>
                   <p class="text-center">
                     @if (images.length > 0) {
-                      <button mat-stroked-button [color]="'primary'" (click)="profileImage.click()">Add More</button>
+                      <button mat-stroked-button [color]="'primary'" (click)="profileImage.click()" [appFileDrop]="profileImage">Add More</button>
                     }
                     &nbsp;
-                    <button mat-stroked-button [color]="'accent'" (click)="uploadImages()">Upload</button>
+                    <button mat-stroked-button [color]="'accent'" [disabled]="demoAdmin.readOnly()" (click)="uploadImages()">Upload</button>
                   </p>
                 </div>
                 <div class="col-7">
@@ -457,7 +458,7 @@
     <mat-icon>arrow_back</mat-icon>
   </button>
 
-  <button mat-fab color="primary" (click)="onSubmit()">
+  <button mat-fab color="primary" [disabled]="demoAdmin.readOnly()" (click)="onSubmit()">
     <mat-icon>check</mat-icon>
   </button>
 </div>

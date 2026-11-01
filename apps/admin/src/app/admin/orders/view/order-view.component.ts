@@ -2,8 +2,9 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
-import { OrderServices } from '@services/order.services';
-import { IOrder } from '@schema/order';
+import { canCancelOrder, OrderServices } from '@services/order.services';
+import { apiErrorMessage } from '@services/api-client';
+import type { AdminOrder } from '@pageaters/shared';
 import { AlignShipmentDialogComponent } from './align-shipment-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { IssueCreditComponent } from './issue-credit.component';
@@ -42,7 +43,7 @@ import { DecimalPipe, TitleCasePipe, CurrencyPipe, DatePipe } from '@angular/com
   ],
 })
 export class OrderViewComponent implements OnInit {
-  order: IOrder;
+  order: AdminOrder;
   isReady = false;
 
   shipmentFormGroup: UntypedFormGroup;
@@ -75,7 +76,7 @@ export class OrderViewComponent implements OnInit {
         this.prepareRequestInfo();
       },
       (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -118,9 +119,13 @@ export class OrderViewComponent implements OnInit {
         this.getOrderDetails(this.order._id);
       },
       (err) => {
-        this.snackBar.open(err, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
+  }
+
+  canCancel(): boolean {
+    return !!this.order && canCancelOrder(this.order.orderStatus);
   }
 
   dumpRecord(): string {
@@ -142,7 +147,7 @@ export class OrderViewComponent implements OnInit {
         this.getOrderDetails(this.order._id);
       },
       (err) => {
-        this.snackBar.open(err, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -155,7 +160,7 @@ export class OrderViewComponent implements OnInit {
         this.getOrderDetails(this.order._id);
       },
       (err) => {
-        this.snackBar.open(err, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -215,15 +220,14 @@ export class OrderViewComponent implements OnInit {
       address: {},
       dimensions,
     };
-    const obs$ = this.orderServices.creteShipment(this.order._id, payload);
+    const obs$ = this.orderServices.createShipment(this.order._id, payload);
     obs$.subscribe(
       (res) => {
         this.snackBar.open('Shipment Created', 'OKAY', { duration: 3000 });
         this.getOrderDetails(this.order._id);
       },
       (err) => {
-        console.log(err);
-        this.snackBar.open(err.message, 'OKAY', { duration: 3000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }

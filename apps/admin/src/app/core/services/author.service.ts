@@ -1,81 +1,34 @@
-import {Injectable} from '@angular/core';
-import {Observable, throwError} from 'rxjs';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import {environment} from '@env/environment';
-import {catchError, map} from 'rxjs/operators';
-import {IResponse} from '@schema/responses';
+import { Injectable, inject } from '@angular/core';
+import { defer } from 'rxjs';
+import { adminAuthorCreatePayloadSchema, adminAuthorUpdatePayloadSchema } from '@pageaters/shared';
+import { API_CLIENT } from './api-client';
+import { parsePayload, type AdminBody } from './payload';
 
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AuthorService {
+  private client = inject(API_CLIENT);
 
-  constructor(private _http: HttpClient) {
+  getAllAuthors(filters: { page: number; limit: number }) {
+    return defer(() => this.client.authors.list({ page: filters.page, limit: filters.limit }));
   }
 
-  getAllAuthors(filters): Observable<any> {
-    const url = `${environment.BASE_PATH}/authors`;
-    let params = new HttpParams();
-    params = params.append('page', filters.page);
-    params = params.append('limit', filters.limit);
-    return this._http.get(url, {params})
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  searchAuthors(q: string) {
+    return defer(() => this.client.authors.search({ q }));
   }
 
-  searchAuthors(title): Observable<any> {
-    const url = `${environment.BASE_PATH}/authors/search`;
-    let params = new HttpParams();
-    params = params.append('q', title);
-    return this._http.get(url, {params})
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  create(payload: unknown) {
+    return defer(() => this.client.admin.authors.create(parsePayload<AdminBody<'authors', 'create'>>(adminAuthorCreatePayloadSchema, payload)));
   }
 
-  create(payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/authors`;
-    return this._http.post(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  getById(id: string) {
+    return defer(() => this.client.admin.authors.detail({ id }));
   }
 
-  getById(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/authors/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  getByUniqueId(id: string) {
+    return defer(() => this.client.authors.detail({ id }));
   }
 
-  getByUniqueId(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/authors/unique/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-
-
-  update(id, payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/authors/${id}`;
-    return this._http.put(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-  handleError(err: any): any {
-    return throwError(err.error);
+  update(id: string, payload: unknown) {
+    return defer(() => this.client.admin.authors.update({ ...parsePayload<AdminBody<'authors', 'update'>>(adminAuthorUpdatePayloadSchema, payload), id }));
   }
 }

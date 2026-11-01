@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CartService } from '@services/cart.service';
-import { ICart } from '@schema/cart';
+import type { AdminCart } from '@pageaters/shared';
 import { MatCard, MatCardTitle, MatCardContent } from '@angular/material/card';
 import { DecimalPipe, CurrencyPipe } from '@angular/common';
 
@@ -13,7 +13,7 @@ import { DecimalPipe, CurrencyPipe } from '@angular/common';
   imports: [MatCard, MatCardTitle, MatCardContent, DecimalPipe, CurrencyPipe],
 })
 export class CartViewComponent implements OnInit {
-  cart: ICart;
+  cart: AdminCart;
   isReady = false;
 
   constructor(

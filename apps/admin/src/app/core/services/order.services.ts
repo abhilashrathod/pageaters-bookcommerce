@@ -1,115 +1,65 @@
-import {Injectable} from '@angular/core';
-import {Observable, throwError} from 'rxjs';
-import {environment} from '@env/environment';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import {catchError, map} from 'rxjs/operators';
-import {IResponse} from '@schema/responses';
+import { inject, Injectable } from '@angular/core';
+import { defer, Observable } from 'rxjs';
+import type {
+  AdminOrder,
+  AdminOrderCancelPayload,
+  AdminOrderShipPayload,
+  AdminOrderWithCustomer,
+  AdminReturnShipmentPayload,
+  AdminShipmentCreatePayload,
+  AdminShipmentCreateResult,
+  AdminStoreCreditIssuePayload,
+  OrderStatus,
+} from '@pageaters/shared';
+import { API_CLIENT } from '@services/api-client';
+
+/** Only a paid or confirmed order can be cancelled: once shipped or delivered, the API refuses (no cancel after shipping). */
+export function canCancelOrder(status: OrderStatus): boolean {
+  return status === 'paid' || status === 'confirmed';
+}
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class OrderServices {
+  private client = inject(API_CLIENT);
 
-  constructor(private _http: HttpClient) {
-  }
-
-  getAllOrders(filters): Observable<any> {
-    const url = `${environment.BASE_PATH}/orders`;
-    let params = new HttpParams();
-    params = params.append('page', filters.page);
-    params = params.append('limit', filters.limit);
-    return this._http.get(url, {params})
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-  getById(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/orders/getById/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  getById(id: string): Observable<AdminOrder> {
+    return defer(() => this.client.admin.orders.detail({ id }));
   }
 
   /** FORWARD SHIPMENT **/
-  ship(payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/orders/ship`;
-    return this._http.post(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  ship(payload: AdminOrderShipPayload): Observable<AdminOrderWithCustomer> {
+    return defer(() => this.client.admin.orders.ship(payload));
   }
 
-  fulfilled(orderId: string): Observable<any> {
-    const url = `${environment.BASE_PATH}/orders/ship/${orderId}/complete`;
-    return this._http.patch(url, {})
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  fulfilled(id: string): Observable<AdminOrderWithCustomer> {
+    return defer(() => this.client.admin.orders.deliver({ id }));
   }
 
   /** RETURN / REPLACEMENT SHIPMENTS **/
 
-  alignReturnShipment(orderId: string, requestId: string, payload: any): Observable<any> {
-    const url = `${environment.BASE_PATH}/orders/return/${orderId}/shipment/${requestId}`;
-    return this._http.patch(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  alignReturnShipment(id: string, requestId: string, payload: AdminReturnShipmentPayload): Observable<unknown> {
+    return defer(() => this.client.admin.orders.alignReturnShipment({ id, requestId, ...payload }));
   }
 
-  closeReturnShipment(orderId: string, requestId: string): Observable<any> {
-    const url = `${environment.BASE_PATH}/orders/return/${orderId}/shipment/${requestId}/close`;
-    return this._http.patch(url, {})
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  closeReturnShipment(id: string, requestId: string): Observable<unknown> {
+    return defer(() => this.client.admin.orders.closeReturn({ id, requestId }));
   }
 
-  closeReplacementShipment(orderId: string, requestId: string): Observable<any> {
-    const url = `${environment.BASE_PATH}/orders/replace/${orderId}/shipment/${requestId}/close`;
-    return this._http.patch(url, {})
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  closeReplacementShipment(id: string, requestId: string): Observable<unknown> {
+    return defer(() => this.client.admin.orders.closeReplacement({ id, requestId }));
   }
 
-  issueStoreCredit(payload: any): Observable<any> {
-    const url = `${environment.BASE_PATH}/store-credit`;
-    return this._http.post(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  issueStoreCredit(payload: AdminStoreCreditIssuePayload): Observable<unknown> {
+    return defer(() => this.client.admin.storeCredit.issue(payload));
   }
 
-  creteShipment(orderId: string, payload: any): Observable<any> {
-    const url = `${environment.BASE_PATH}/orders/create-shipment/${orderId}`;
-    return this._http.post(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  createShipment(orderId: string, payload: AdminShipmentCreatePayload): Observable<AdminShipmentCreateResult> {
+    return defer(() => this.client.admin.orders.createShipment({ orderId, ...payload }));
   }
 
-  cancelOrder(payload: any): Observable<any> {
-    const url = `${environment.BASE_PATH}/orders/admin-cancel/${payload.uniqueId}`;
-    return this._http.post(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-  handleError(err: any): any {
-    return throwError(err.error);
+  cancelOrder(payload: AdminOrderCancelPayload): Observable<unknown> {
+    return defer(() => this.client.admin.orders.cancel({ id: payload.uniqueId, ...payload }));
   }
 }

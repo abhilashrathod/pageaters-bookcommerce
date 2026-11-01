@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime } from 'rxjs/operators';
 import { BooksService } from '@services/books.service';
@@ -15,6 +15,9 @@ import { SortablejsModule } from '@dustfoundation/ngx-sortablejs';
 import { MatFabButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { TitleCasePipe, CurrencyPipe } from '@angular/common';
+import { apiErrorMessage } from '@services/api-client';
+import { DemoAdminService } from '@services/demo-admin.service';
+import { DemoReadOnlyNoticeComponent } from '@components/demo-read-only-notice/demo-read-only-notice.component';
 
 // The settings interface is not exported from the package entry point.
 type DropdownSettings = AngularMultiSelect['settings'];
@@ -24,6 +27,7 @@ type DropdownSettings = AngularMultiSelect['settings'];
   templateUrl: 'create-product-set.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
+    DemoReadOnlyNoticeComponent,
     FormsModule,
     ReactiveFormsModule,
     MatCard,
@@ -45,6 +49,8 @@ type DropdownSettings = AngularMultiSelect['settings'];
   ],
 })
 export class CreateProductSetComponent implements OnInit {
+  protected demoAdmin = inject(DemoAdminService);
+
   productSetFormGroup: UntypedFormGroup;
   books = [];
   categories = [];
@@ -153,7 +159,7 @@ export class CreateProductSetComponent implements OnInit {
 
     const selectedBooks = this.selectedBooks.map((item, index) => {
       return {
-        product: item,
+        product: item._id,
         priority: index + 1,
       };
     });
@@ -172,7 +178,7 @@ export class CreateProductSetComponent implements OnInit {
         this.snackBar.open('New Set Added', 'OKAY', { duration: 5000 });
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }

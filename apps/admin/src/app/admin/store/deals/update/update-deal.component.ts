@@ -1,17 +1,16 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { get } from 'lodash';
+import { FileDropDirective } from '@core/directives/file-drop.directive';
 
 import { FilesService } from '@services/files.service';
-import { BUCKETS, FILE_UPLOAD_MODULES } from '@helpers/constants';
-import { IProductSet } from '@schema/product-set';
 import { AngularMultiSelect, AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
 import { DealsService } from '@services/deals.service';
 import { CategoryService } from '@services/category.service';
 import { ProductSetService } from '@services/product-set.service';
-import { IDeal } from '@schema/deal';
+import type { Deal, ProductSet } from '@pageaters/shared';
 import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
 import { MatButton, MatFabButton } from '@angular/material/button';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
@@ -19,6 +18,10 @@ import { MatInput } from '@angular/material/input';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { SortablejsModule } from '@dustfoundation/ngx-sortablejs';
 import { MatIcon } from '@angular/material/icon';
+import { apiErrorMessage } from '@services/api-client';
+import { AdminFileModule } from '@pageaters/shared';
+import { DemoAdminService } from '@services/demo-admin.service';
+import { DemoReadOnlyNoticeComponent } from '@components/demo-read-only-notice/demo-read-only-notice.component';
 
 // The settings interface is not exported from the package entry point.
 type DropdownSettings = AngularMultiSelect['settings'];
@@ -27,7 +30,8 @@ type DropdownSettings = AngularMultiSelect['settings'];
   selector: 'app-update-deal',
   templateUrl: 'update-deal.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [
+  imports: [FileDropDirective, 
+    DemoReadOnlyNoticeComponent,
     FormsModule,
     ReactiveFormsModule,
     MatCard,
@@ -47,10 +51,12 @@ type DropdownSettings = AngularMultiSelect['settings'];
   ],
 })
 export class UpdateDealComponent implements OnInit {
+  protected demoAdmin = inject(DemoAdminService);
+
   dealFormGroup: UntypedFormGroup;
   poster;
   selectedFile;
-  selectedSets: Array<IProductSet> = [];
+  selectedSets: ProductSet[] = [];
   categories = [];
   productSets = [];
 
@@ -84,7 +90,7 @@ export class UpdateDealComponent implements OnInit {
   };
 
   isReady = false;
-  deal: IDeal;
+  deal: Deal;
 
   constructor(
     private formBuilder: UntypedFormBuilder,
@@ -110,19 +116,19 @@ export class UpdateDealComponent implements OnInit {
     deal$.subscribe(
       (res) => {
         this.deal = res;
-        this.poster = `${BUCKETS.ASSETS}/${this.deal.poster}`;
-        this.selectedSets = this.deal.productSets.map((x) => x.set);
+        this.poster = this.deal.poster;
+        this.selectedSets = this.deal.productSets.map((x) => x.set as ProductSet); // GET /deals/:id populates the sets
         this.buildForm(this.deal);
         this.getCategories();
         this.getProductSets();
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }
 
-  buildForm(deal: IDeal): void {
+  buildForm(deal: Deal): void {
     const sets = deal.productSets.map((x) => x.set);
 
     this.dealFormGroup = this.formBuilder.group({
@@ -168,7 +174,11 @@ export class UpdateDealComponent implements OnInit {
       const file = event.target.files[0];
 
       const reader = new FileReader();
-      reader.onload = (e) => (this.poster = reader.result);
+      // Upload as soon as the preview is ready, so a save can't send the local data: URL.
+      reader.onload = () => {
+        this.poster = reader.result;
+        this.uploadImage();
+      };
 
       reader.readAsDataURL(file);
 
@@ -181,18 +191,19 @@ export class UpdateDealComponent implements OnInit {
       return this.snackBar.open('Please enter the title before file upload', 'OKAY', { duration: 3000 });
     }
 
-    const formData: FormData = new FormData();
-    formData.append('file', this.selectedFile, this.selectedFile.name);
-    formData.append('title', this.dealFormGroup.get('title').value);
-    formData.append('fileModule', FILE_UPLOAD_MODULES.ASSETS);
-    const file$ = this.filesService.upload(formData);
+    const file$ = this.filesService.upload({
+      file: this.selectedFile,
+      fileName: this.selectedFile.name,
+      title: this.dealFormGroup.get('title').value,
+      fileModule: AdminFileModule.ASSETS,
+    });
     file$.subscribe(
       (res) => {
-        this.poster = `${BUCKETS.ASSETS}/${res.fileUrl}`;
+        this.poster = res.fileUrl;
         this.snackBar.open('Image Uploaded!', 'OKAY', { duration: 5000 });
       },
       (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -202,7 +213,7 @@ export class UpdateDealComponent implements OnInit {
 
     const selectedSets = this.selectedSets.map((item, index) => {
       return {
-        set: item,
+        set: item._id,
         priority: index + 1,
       };
     });
@@ -211,7 +222,7 @@ export class UpdateDealComponent implements OnInit {
       ...rest,
       categories: categories.map((x) => x._id),
       productSets: selectedSets,
-      poster: this.poster.split('/').pop(),
+      poster: this.poster,
     };
 
     const update$ = this.dealsService.update(this.deal._id, payload);
@@ -221,7 +232,7 @@ export class UpdateDealComponent implements OnInit {
         this.snackBar.open('Deal Info Updated', 'OKAY', { duration: 5000 });
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }

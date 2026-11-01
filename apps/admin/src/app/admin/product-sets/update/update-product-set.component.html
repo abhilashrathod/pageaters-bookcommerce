@@ -1,3 +1,4 @@
+<app-demo-read-only-notice />
 @if (isReady) {
   <form [formGroup]="productSetFormGroup" (ngSubmit)="onSubmit()">
     <div class="row">
@@ -112,7 +113,7 @@
       <button class="me-3" mat-fab color="warn" [routerLink]="['/', 'admin', 'sets']">
         <mat-icon>arrow_back</mat-icon>
       </button>
-      <button mat-fab color="primary" type="submit">
+      <button mat-fab color="primary" type="submit" [disabled]="demoAdmin.readOnly()">
         <mat-icon>check</mat-icon>
       </button>
     </div>

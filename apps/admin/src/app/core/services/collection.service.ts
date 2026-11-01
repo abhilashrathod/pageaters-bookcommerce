@@ -1,77 +1,34 @@
-import {Injectable} from '@angular/core';
-import {Observable, throwError} from 'rxjs';
-import {environment} from '@env/environment';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import {catchError, map} from 'rxjs/operators';
-import {IResponse} from '@schema/responses';
+import { Injectable, inject } from '@angular/core';
+import { defer } from 'rxjs';
+import { adminCollectionCreatePayloadSchema, adminCollectionUpdatePayloadSchema } from '@pageaters/shared';
+import { API_CLIENT } from './api-client';
+import { parsePayload, type AdminBody } from './payload';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class CollectionService {
+  private client = inject(API_CLIENT);
 
-  constructor(private _http: HttpClient) {
+  getAllCollections(filters: { page: number; limit: number }) {
+    return defer(() => this.client.collections.list({ page: filters.page, limit: filters.limit }));
   }
 
-  getAllCollections(filters): Observable<any> {
-    const url = `${environment.BASE_PATH}/collections`;
-    let params = new HttpParams();
-    params = params.append('page', filters.page);
-    params = params.append('limit', filters.limit);
-    return this._http.get(url, {params})
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  searchCollections(q: string) {
+    return defer(() => this.client.collections.search({ q }));
   }
 
-  searchCollections(title): Observable<any> {
-    const url = `${environment.BASE_PATH}/collections/search/${title}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  create(payload: unknown) {
+    return defer(() => this.client.admin.collections.create(parsePayload<AdminBody<'collections', 'create'>>(adminCollectionCreatePayloadSchema, payload)));
   }
 
-  create(payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/collections`;
-    return this._http.post(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  getById(id: string) {
+    return defer(() => this.client.admin.collections.detail({ id }));
   }
 
-  getById(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/collections/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  getByUniqueId(id: string) {
+    return defer(() => this.client.collections.detail({ id }));
   }
 
-  getByUniqueId(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/collections/unique/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-
-  update(id, payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/collections/${id}`;
-    return this._http.put(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-  handleError(err: any): any {
-    return throwError(err.error);
+  update(id: string, payload: unknown) {
+    return defer(() => this.client.admin.collections.update({ ...parsePayload<AdminBody<'collections', 'update'>>(adminCollectionUpdatePayloadSchema, payload), id }));
   }
 }

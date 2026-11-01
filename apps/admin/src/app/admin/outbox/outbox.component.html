@@ -1,0 +1,38 @@
+<div class="row">
+  <div class="col-12">
+    <h1>Outbox</h1>
+    <p class="text-muted">Messages the demo's mock e-mail and SMS adapters "sent" (newest 50). Nothing leaves the demo.</p>
+  </div>
+  <div class="col-12">
+    @if (loading()) {
+      <p>Loading…</p>
+    } @else if (notInDemo()) {
+      <p>Outbox is only available in the demo.</p>
+    } @else if (error()) {
+      <p class="text-danger">{{ error() }}</p>
+    } @else if (messages().length === 0) {
+      <p>No messages yet.</p>
+    } @else {
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th scope="col">Time</th>
+            <th scope="col">Channel</th>
+            <th scope="col">To</th>
+            <th scope="col">Subject / message</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (message of messages(); track message._id) {
+            <tr>
+              <td>{{ message.createdAt | date: 'dd/MM/yy, HH:mm' }}</td>
+              <td>{{ message.channel === 'email' ? 'E-mail' : 'SMS' }}</td>
+              <td>{{ message.to }}</td>
+              <td>{{ preview(message) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

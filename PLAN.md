@@ -823,14 +823,32 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
     Merge fixes: `provideZoneChangeDetection()` added (the bootstrap pass imported it but didn't provide it; the
     legacy code needs zone change detection); CMS `test` gets `--test-force-exit` (Payload leaves a handle open after
     `destroy()`, so the run never exited). Gates: admin lint 0 errors, test, build; root test 11/11
-- [ ] Wave 2 (parallel worktrees, from pushed wave 1)
-  - [ ] C. Orders: orders/customers services typed via `packages/api-client` (pass `validate: true` on
+- [x] Wave 2 (parallel worktrees, from pushed wave 1)
+  - [x] C. Orders: orders/customers services typed via `packages/api-client` (pass `validate: true` on
         `client.admin.users.*`); hide Cancel after shipping; show API error messages (ship/deliver/cancel show
         "[object Object]" today); outbox view
-  - [ ] D. Catalog: catalog services typed via `packages/api-client`; read-only notice on catalog forms; super-admin
+  - [x] D. Catalog: catalog services typed via `packages/api-client`; read-only notice on catalog forms; super-admin
         editing — image fields keep full Blob URLs (the legacy admin prepends an S3 origin and saves only the file
         name; don't edit catalog records through it until this step), cover and author-photo upload; send form values
         through the `admin…PayloadSchema` so a loaded record can't send `wholeSalePriceHistory` back
+  - Done 2026-11-01. Shared `core/services/api-client.ts` (`API_CLIENT` token, `apiErrorMessage`); every service
+    returns a cold `Observable<T>` (`defer`) typed from `@pageaters/shared`. C: orders/customers/carts via
+    `client.admin.*` (`users.detail` validated); `canCancelOrder` = paid or confirmed only; order actions show the API's
+    message; "Cancel Shipment" opened nothing and would have crashed — now opens the cancel dialog; `admin/outbox`
+    page (404 → "only in the demo"). D: catalog services via the client; writes pass the `admin…PayloadSchema` (stray
+    keys such as `wholeSalePriceHistory` dropped, first zod issue shown); `DemoAdminService` (`auth.me()` email) shows
+    a read-only notice and disables save/upload on all 14 catalog forms (the API's `demoAdminReadOnly` is the real
+    guard); S3 `BUCKETS` prefixing gone, full Blob URLs shown and saved; uploads via `fileUploadRequest`. Smoke
+    (curl, local API in demo mode): Blob posters listed, demo-admin PUT and upload refused. Phase 8 review: code
+    approve, security clear; nits fixed (eager `from` → `defer`, stale upload comments). Known limits: a book update
+    can't change its author (the API ignores `author` on update since Phase 4); the demo-admin notice keys on the
+    e-mail only (fine: the demo always runs with `DEMO_MODE`); entity-table cells still use sanitised `[innerHTML]`
+  - Added at checkpoint: "Sign in as demo admin" on the login page (`auth.demoAdminLogin`, the API side is Phase 5);
+    login errors show the API's message
+  - Checkpoint fixes: sidebar uses the MDC list attributes (`matListItemIcon`/`matListItemTitle`); the 10 single-image
+    forms upload as soon as a file is picked (a save sent the local `data:` preview → "Invalid poster URL"); the
+    API's product-set list populates book titles (the deal form showed none, also in the legacy). Local uploads need
+    `STORAGE_ADAPTER=blob`: the default mock answers `storage.mock.invalid` URLs that never load
 - **Checkpoint:** admin logs in, views the catalog, runs an order from confirmed to delivered
 
 ## Phase 9 — Tests

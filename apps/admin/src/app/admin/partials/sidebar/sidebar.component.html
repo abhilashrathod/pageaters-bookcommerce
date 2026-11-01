@@ -1,20 +1,12 @@
-<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-  <div class="position-sticky">
-    <div class="position-sticky">
-      <mat-list>
-        <ul class="nav flex-column">
-          <li class="nav-item">
-            @for (menuItem of menuItems; track menuItem) {
-              <a class="nav-link active" [routerLink]="menuItem.path">
-                <mat-list-item>
-                  <mat-icon mat-list-icon>{{ menuItem.icon }}</mat-icon>
-                  <div mat-line>{{ menuItem.title }}</div>
-                </mat-list-item>
-              </a>
-            }
-          </li>
-        </ul>
-      </mat-list>
-    </div>
-  </div>
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse" aria-label="Admin sections">
+  <ul class="sidebar-nav">
+    @for (menuItem of menuItems; track menuItem.title) {
+      <li>
+        <a class="sidebar-link" [routerLink]="menuItem.path" routerLinkActive="active">
+          <mat-icon class="sidebar-icon" aria-hidden="true">{{ menuItem.icon }}</mat-icon>
+          <span>{{ menuItem.title }}</span>
+        </a>
+      </li>
+    }
+  </ul>
 </nav>

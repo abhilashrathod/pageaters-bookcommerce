@@ -1,8 +1,7 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { get } from 'lodash';
 import { debounceTime } from 'rxjs/operators';
-import { BUCKETS, FILE_UPLOAD_MODULES } from '@helpers/constants';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BooksService } from '@services/books.service';
 import { AuthorService } from '@services/author.service';
@@ -15,12 +14,18 @@ import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { MatIcon } from '@angular/material/icon';
 import { TitleCasePipe } from '@angular/common';
+import { apiErrorMessage } from '@services/api-client';
+import { AdminFileModule } from '@pageaters/shared';
+import { DemoAdminService } from '@services/demo-admin.service';
+import { DemoReadOnlyNoticeComponent } from '@components/demo-read-only-notice/demo-read-only-notice.component';
+import { FileDropDirective } from '@core/directives/file-drop.directive';
 
 @Component({
   selector: 'app-author-update',
   templateUrl: 'author-update.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [
+  imports: [FileDropDirective, 
+    DemoReadOnlyNoticeComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButton,
@@ -36,6 +41,8 @@ import { TitleCasePipe } from '@angular/common';
   ],
 })
 export class AuthorUpdateComponent implements OnInit {
+  protected demoAdmin = inject(DemoAdminService);
+
   authorFormGroup: UntypedFormGroup;
   avatar;
   selectedFile: File;
@@ -83,13 +90,12 @@ export class AuthorUpdateComponent implements OnInit {
     author$.subscribe(
       (res) => {
         this.author = res;
-        this.author.avatar = `${BUCKETS.AUTHORS}/${this.author.avatar}`;
         this.getBooks();
         this.buildForm(res);
         this.isReady = true;
       },
       (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -100,7 +106,7 @@ export class AuthorUpdateComponent implements OnInit {
         this.books = res.docs;
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -133,7 +139,11 @@ export class AuthorUpdateComponent implements OnInit {
       const file = event.target.files[0];
 
       const reader = new FileReader();
-      reader.onload = (e) => (this.author.avatar = reader.result);
+      // Upload as soon as the preview is ready, so a save can't send the local data: URL.
+      reader.onload = () => {
+        this.author.avatar = reader.result;
+        this.uploadImage();
+      };
 
       reader.readAsDataURL(file);
 
@@ -146,18 +156,19 @@ export class AuthorUpdateComponent implements OnInit {
       return this.snackBar.open('Please enter the name first before file upload', 'OKAY', { duration: 3000 });
     }
 
-    const formData: FormData = new FormData();
-    formData.append('file', this.selectedFile, this.selectedFile.name);
-    formData.append('title', this.authorFormGroup.get('name').value);
-    formData.append('fileModule', FILE_UPLOAD_MODULES.AUTHOR);
-    const file$ = this.filesService.upload(formData);
+    const file$ = this.filesService.upload({
+      file: this.selectedFile,
+      fileName: this.selectedFile.name,
+      title: this.authorFormGroup.get('name').value,
+      fileModule: AdminFileModule.AUTHOR,
+    });
     file$.subscribe(
       (res) => {
-        this.author.avatar = `${BUCKETS.AUTHORS}/${res.fileUrl}`;
+        this.author.avatar = res.fileUrl;
         this.snackBar.open('Author Image Uploaded!', 'OKAY', { duration: 5000 });
       },
       (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -168,7 +179,7 @@ export class AuthorUpdateComponent implements OnInit {
       ...this.author,
       ...rest,
       books: books.map((x) => x._id),
-      avatar: this.author.avatar.split('/').pop(),
+      avatar: this.author.avatar,
     };
     const author$ = this.authorService.update(this.author._id, payload);
     author$.subscribe(
@@ -177,7 +188,7 @@ export class AuthorUpdateComponent implements OnInit {
         this.snackBar.open('Author Info Updated', 'OKAY', { duration: 5000 });
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }

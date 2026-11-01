@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatChipInputEvent, MatChipGrid, MatChipRow, MatChipRemove, MatChipInput } from '@angular/material/chips';
@@ -6,6 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { debounceTime } from 'rxjs/operators';
 import { get } from 'lodash';
 import { range } from 'lodash';
+import { FileDropDirective } from '@core/directives/file-drop.directive';
 
 import { CategoryService } from '@services/category.service';
 import { CollectionService } from '@services/collection.service';
@@ -13,7 +14,6 @@ import { BooksService } from '@services/books.service';
 import { AuthorService } from '@services/author.service';
 import { FilesService } from '@services/files.service';
 
-import { BUCKETS, FILE_UPLOAD_MODULES } from '@helpers/constants';
 import { MatButton, MatFabButton } from '@angular/material/button';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
@@ -21,12 +21,17 @@ import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
 import { MatIcon } from '@angular/material/icon';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { TitleCasePipe } from '@angular/common';
+import { apiErrorMessage } from '@services/api-client';
+import { AdminFileModule } from '@pageaters/shared';
+import { DemoAdminService } from '@services/demo-admin.service';
+import { DemoReadOnlyNoticeComponent } from '@components/demo-read-only-notice/demo-read-only-notice.component';
 
 @Component({
   selector: 'app-collection-update',
   templateUrl: 'collection-update.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [
+  imports: [FileDropDirective, 
+    DemoReadOnlyNoticeComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButton,
@@ -46,6 +51,8 @@ import { TitleCasePipe } from '@angular/common';
   ],
 })
 export class CollectionUpdateComponent implements OnInit {
+  protected demoAdmin = inject(DemoAdminService);
+
   collectionFormGroup: UntypedFormGroup;
   poster;
   collection;
@@ -128,7 +135,6 @@ export class CollectionUpdateComponent implements OnInit {
   getCollectionDetails(id): void {
     this.collectionService.getById(id).subscribe((res) => {
       this.collection = res;
-      this.collection.poster = `${BUCKETS.COLLECTIONS}/${this.collection.poster}`;
       this.buildForm(res);
     });
   }
@@ -244,7 +250,11 @@ export class CollectionUpdateComponent implements OnInit {
       const file = event.target.files[0];
 
       const reader = new FileReader();
-      reader.onload = (e) => (this.collection.poster = reader.result);
+      // Upload as soon as the preview is ready, so a save can't send the local data: URL.
+      reader.onload = () => {
+        this.collection.poster = reader.result;
+        this.uploadImage();
+      };
 
       reader.readAsDataURL(file);
 
@@ -257,18 +267,19 @@ export class CollectionUpdateComponent implements OnInit {
       return this.snackBar.open('Please enter the title before file upload', 'OKAY', { duration: 3000 });
     }
 
-    const formData: FormData = new FormData();
-    formData.append('file', this.selectedFile, this.selectedFile.name);
-    formData.append('title', this.collectionFormGroup.get('title').value);
-    formData.append('fileModule', FILE_UPLOAD_MODULES.COLLECTION);
-    const file$ = this.filesService.upload(formData);
+    const file$ = this.filesService.upload({
+      file: this.selectedFile,
+      fileName: this.selectedFile.name,
+      title: this.collectionFormGroup.get('title').value,
+      fileModule: AdminFileModule.COLLECTION,
+    });
     file$.subscribe(
       (res) => {
-        this.collection.poster = `${BUCKETS.COLLECTIONS}/${res.fileUrl}`;
+        this.collection.poster = res.fileUrl;
         this.snackBar.open('Image Uploaded!', 'OKAY', { duration: 5000 });
       },
       (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -282,7 +293,7 @@ export class CollectionUpdateComponent implements OnInit {
       relatedCollections: relatedCollections.map((x) => x._id),
       relatedCategories: relatedCategories.map((x) => x._id),
       featuredAuthors: featuredAuthors.map((x) => x._id),
-      poster: this.collection.poster.split('/').pop(),
+      poster: this.collection.poster,
     };
 
     const collection$ = this.collectionService.update(this.collection._id, payload);
@@ -292,7 +303,7 @@ export class CollectionUpdateComponent implements OnInit {
         this.snackBar.open('Collection Updated', 'OKAY', { duration: 5000 });
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }

@@ -2,10 +2,7 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CustomerService } from '@services/customer.service';
-import { IUser } from '@schema/user';
-import { ICart } from '@schema/cart';
-import { IAddress } from '@schema/address';
-import { IOrder } from '@schema/order';
+import type { AdminUserDetails } from '@pageaters/shared';
 import { ORDER_STATUSES } from '@helpers/constants';
 import { MatCard, MatCardContent, MatCardTitle, MatCardSubtitle } from '@angular/material/card';
 import { DecimalPipe, CurrencyPipe } from '@angular/common';
@@ -17,7 +14,7 @@ import { DecimalPipe, CurrencyPipe } from '@angular/common';
   imports: [MatCard, MatCardContent, MatCardTitle, MatCardSubtitle, DecimalPipe, CurrencyPipe],
 })
 export class ViewCustomerComponent implements OnInit {
-  details: { user: IUser; cart: ICart; addresses: Array<IAddress>; orders: Array<IOrder> } = {
+  details: AdminUserDetails = {
     user: null,
     cart: null,
     addresses: [],

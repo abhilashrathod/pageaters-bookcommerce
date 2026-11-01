@@ -1,8 +1,8 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FileDropDirective } from '@core/directives/file-drop.directive';
 
 import { FilesService } from '@services/files.service';
-import { BUCKETS, FILE_UPLOAD_MODULES } from '@helpers/constants';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BooksService } from '@services/books.service';
 import { debounceTime } from 'rxjs/operators';
@@ -15,12 +15,17 @@ import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { MatIcon } from '@angular/material/icon';
 import { TitleCasePipe } from '@angular/common';
+import { apiErrorMessage } from '@services/api-client';
+import { AdminFileModule } from '@pageaters/shared';
+import { DemoAdminService } from '@services/demo-admin.service';
+import { DemoReadOnlyNoticeComponent } from '@components/demo-read-only-notice/demo-read-only-notice.component';
 
 @Component({
   selector: 'app-author-create',
   templateUrl: 'author-create.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [
+  imports: [FileDropDirective, 
+    DemoReadOnlyNoticeComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButton,
@@ -36,6 +41,8 @@ import { TitleCasePipe } from '@angular/common';
   ],
 })
 export class AuthorCreateComponent implements OnInit {
+  protected demoAdmin = inject(DemoAdminService);
+
   authorFormGroup: UntypedFormGroup;
   avatar;
   selectedFile: File;
@@ -87,7 +94,7 @@ export class AuthorCreateComponent implements OnInit {
         this.books = res.docs;
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -110,7 +117,11 @@ export class AuthorCreateComponent implements OnInit {
       const file = event.target.files[0];
 
       const reader = new FileReader();
-      reader.onload = (e) => (this.avatar = reader.result);
+      // Upload as soon as the preview is ready, so a save can't send the local data: URL.
+      reader.onload = () => {
+        this.avatar = reader.result;
+        this.uploadImage();
+      };
 
       reader.readAsDataURL(file);
 
@@ -127,18 +138,19 @@ export class AuthorCreateComponent implements OnInit {
       return this.snackBar.open('Please select a file to upload', 'OKAY', { duration: 3000 });
     }
 
-    const formData: FormData = new FormData();
-    formData.append('file', this.selectedFile, this.selectedFile.name);
-    formData.append('title', this.authorFormGroup.get('name').value);
-    formData.append('fileModule', FILE_UPLOAD_MODULES.AUTHOR);
-    const file$ = this.filesService.upload(formData);
+    const file$ = this.filesService.upload({
+      file: this.selectedFile,
+      fileName: this.selectedFile.name,
+      title: this.authorFormGroup.get('name').value,
+      fileModule: AdminFileModule.AUTHOR,
+    });
     file$.subscribe(
       (res) => {
-        this.avatar = `${BUCKETS.AUTHORS}/${res.fileUrl}`;
+        this.avatar = res.fileUrl;
         this.snackBar.open('Author Image Uploaded!', 'OKAY', { duration: 5000 });
       },
       (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -148,7 +160,7 @@ export class AuthorCreateComponent implements OnInit {
     const payload = {
       ...rest,
       books: books.map((x) => x._id),
-      avatar: this.avatar.split('/').pop(),
+      avatar: this.avatar,
     };
     const author$ = this.authorService.create(payload);
     author$.subscribe(
@@ -157,7 +169,7 @@ export class AuthorCreateComponent implements OnInit {
         this.snackBar.open('New Author Added', 'OKAY', { duration: 5000 });
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }

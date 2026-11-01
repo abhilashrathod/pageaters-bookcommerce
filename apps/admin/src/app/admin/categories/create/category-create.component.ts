@@ -1,21 +1,26 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, RouterLink } from '@angular/router';
 import { FilesService } from '@services/files.service';
 import { CategoryService } from '@services/category.service';
-import { BUCKETS, FILE_UPLOAD_MODULES } from '@helpers/constants';
 import { MatButton, MatFabButton } from '@angular/material/button';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { MatIcon } from '@angular/material/icon';
+import { apiErrorMessage } from '@services/api-client';
+import { AdminFileModule } from '@pageaters/shared';
+import { DemoAdminService } from '@services/demo-admin.service';
+import { DemoReadOnlyNoticeComponent } from '@components/demo-read-only-notice/demo-read-only-notice.component';
+import { FileDropDirective } from '@core/directives/file-drop.directive';
 
 @Component({
   selector: 'app-category-create',
   templateUrl: 'category-create.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [
+  imports: [FileDropDirective, 
+    DemoReadOnlyNoticeComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButton,
@@ -29,6 +34,8 @@ import { MatIcon } from '@angular/material/icon';
   ],
 })
 export class CategoryCreateComponent implements OnInit {
+  protected demoAdmin = inject(DemoAdminService);
+
   categoryFormGroup: UntypedFormGroup;
   avatar;
   selectedFile: File;
@@ -59,7 +66,11 @@ export class CategoryCreateComponent implements OnInit {
       const file = event.target.files[0];
 
       const reader = new FileReader();
-      reader.onload = (e) => (this.avatar = reader.result);
+      // Upload as soon as the preview is ready, so a save can't send the local data: URL.
+      reader.onload = () => {
+        this.avatar = reader.result;
+        this.uploadImage();
+      };
 
       reader.readAsDataURL(file);
 
@@ -76,18 +87,19 @@ export class CategoryCreateComponent implements OnInit {
       return this.snackBar.open('Please select a file to upload', 'OKAY', { duration: 3000 });
     }
 
-    const formData: FormData = new FormData();
-    formData.append('file', this.selectedFile, this.selectedFile.name);
-    formData.append('title', this.categoryFormGroup.get('title').value);
-    formData.append('fileModule', FILE_UPLOAD_MODULES.CATEGORY);
-    const file$ = this.filesService.upload(formData);
+    const file$ = this.filesService.upload({
+      file: this.selectedFile,
+      fileName: this.selectedFile.name,
+      title: this.categoryFormGroup.get('title').value,
+      fileModule: AdminFileModule.CATEGORY,
+    });
     file$.subscribe(
       (res) => {
-        this.avatar = `${BUCKETS.CATEGORIES}/${res.fileUrl}`;
+        this.avatar = res.fileUrl;
         this.snackBar.open('Category Thumbnail Uploaded!', 'OKAY', { duration: 5000 });
       },
       (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -95,7 +107,7 @@ export class CategoryCreateComponent implements OnInit {
   onSubmit(): void {
     const payload = {
       ...this.categoryFormGroup.value,
-      thumbnail: this.avatar.split('/').pop(),
+      thumbnail: this.avatar,
     };
     const category$ = this.categoryService.create(payload);
     category$.subscribe(
@@ -104,7 +116,7 @@ export class CategoryCreateComponent implements OnInit {
         this.snackBar.open('New Category Added', 'OKAY', { duration: 5000 });
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }

@@ -71,3 +71,21 @@
 .form-card {
   padding: 5rem;
 }
+
+// Upload areas accept dropped images (FileDropDirective).
+.image-upload-thumbnail::after {
+  content: 'Click or drop an image';
+  position: absolute;
+  bottom: 1rem;
+  font-size: small;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.image-upload-thumbnail {
+  position: relative;
+}
+
+.file-drop-over {
+  outline: 2px dashed #ff5f25;
+  outline-offset: 4px;
+}

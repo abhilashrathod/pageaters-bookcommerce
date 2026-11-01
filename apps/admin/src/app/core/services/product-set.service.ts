@@ -1,62 +1,28 @@
-import {Injectable} from '@angular/core';
-import {Observable, throwError} from 'rxjs';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import {environment} from '@env/environment';
-import {catchError, map} from 'rxjs/operators';
-import {IResponse} from '@schema/responses';
+import { Injectable, inject } from '@angular/core';
+import { defer } from 'rxjs';
+import { adminProductSetCreatePayloadSchema, adminProductSetUpdatePayloadSchema } from '@pageaters/shared';
+import { API_CLIENT } from './api-client';
+import { parsePayload, type AdminBody } from './payload';
 
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ProductSetService {
+  private client = inject(API_CLIENT);
 
-  constructor(private _http: HttpClient) {
+  getAllProductSet(filters: { page: number; limit: number; categories?: string }) {
+    return defer(() => this.client.admin.productSets.list(filters));
   }
 
-  getAllProductSet(filters): Observable<any> {
-    const url = `${environment.BASE_PATH}/product-sets`;
-    let params = new HttpParams();
-    params = params.append('page', filters.page);
-    params = params.append('limit', filters.limit);
-    if (filters.categories) {
-      params = params.append('categories', filters.categories);
-    }
-    return this._http.get(url, {params})
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  create(payload: unknown) {
+    return defer(() => this.client.admin.productSets.create(parsePayload<AdminBody<'productSets', 'create'>>(adminProductSetCreatePayloadSchema, payload)));
   }
 
-  create(payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/product-sets`;
-    return this._http.post(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  getById(id: string) {
+    return defer(() => this.client.admin.productSets.detail({ id }));
   }
 
-  getById(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/product-sets/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-  update(id, payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/product-sets/${id}`;
-    return this._http.put(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-  handleError(err: any): any {
-    return throwError(err.error);
+  update(id: string, payload: unknown) {
+    return defer(() =>
+      this.client.admin.productSets.update({ ...parsePayload<AdminBody<'productSets', 'update'>>(adminProductSetUpdatePayloadSchema, payload), id }),
+    );
   }
 }

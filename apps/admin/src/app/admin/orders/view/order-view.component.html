@@ -118,9 +118,9 @@
                           </li>
                         }
                       </ul>
-                      @if (request.type === 'cancel') {
+                      @if (request.type === 'cancel' && canCancel()) {
                         <div>
-                          <button class="me-3" (click)="cancelShipment()" mat-stroked-button>Cancel Shipment</button>
+                          <button class="me-3" (click)="cancelShipmentConfirmation()" mat-stroked-button>Cancel Shipment</button>
                         </div>
                       }
                       @if (request.type === 'return') {
@@ -274,9 +274,11 @@
 }
 
 <div class="action-button-row">
-  <button mat-fab color="warn" class="me-2" (click)="cancelShipmentConfirmation()" [matTooltip]="'Cancel Order'">
-    <mat-icon>close</mat-icon>
-  </button>
+  @if (canCancel()) {
+    <button mat-fab color="warn" class="me-2" (click)="cancelShipmentConfirmation()" [matTooltip]="'Cancel Order'">
+      <mat-icon>close</mat-icon>
+    </button>
+  }
   <button mat-fab class="me-2" color="primary" (click)="openStoreCreditDialog()" [matTooltip]="'Send Store Credit'">
     <mat-icon>card_giftcard</mat-icon>
   </button>

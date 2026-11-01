@@ -10,7 +10,7 @@ import type { RequestSpec } from '../../core/http.ts';
 //
 //   await client.request(fileUploadRequest(fileUploadForm({ file, fileName: 'cover.jpg', title, fileModule })));
 //
-// The legacy API answers with the stored object's key in `fileUrl`, not a URL (see `adminFileUploadResultSchema`).
+// The answer's `fileUrl` is the full Vercel Blob URL (see `adminFileUploadResultSchema`).
 
 export interface FileUploadInput {
   // Any Blob (a browser File, or a Blob in Node/Next).

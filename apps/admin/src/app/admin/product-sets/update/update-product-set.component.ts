@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -6,7 +6,7 @@ import { debounceTime } from 'rxjs/operators';
 import { get } from 'lodash';
 import { BooksService } from '@services/books.service';
 import { ProductSetService } from '@services/product-set.service';
-import { IProductSet } from '@schema/product-set';
+import type { ProductSet } from '@pageaters/shared';
 import { CategoryService } from '@services/category.service';
 import { MatCard, MatCardHeader, MatCardTitle, MatCardContent, MatCardActions } from '@angular/material/card';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
@@ -17,12 +17,16 @@ import { SortablejsModule } from '@dustfoundation/ngx-sortablejs';
 import { MatFabButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { TitleCasePipe, CurrencyPipe } from '@angular/common';
+import { apiErrorMessage } from '@services/api-client';
+import { DemoAdminService } from '@services/demo-admin.service';
+import { DemoReadOnlyNoticeComponent } from '@components/demo-read-only-notice/demo-read-only-notice.component';
 
 @Component({
   selector: 'app-create-product-set',
   templateUrl: 'update-product-set.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
+    DemoReadOnlyNoticeComponent,
     FormsModule,
     ReactiveFormsModule,
     MatCard,
@@ -44,11 +48,13 @@ import { TitleCasePipe, CurrencyPipe } from '@angular/common';
   ],
 })
 export class UpdateProductSetComponent implements OnInit {
+  protected demoAdmin = inject(DemoAdminService);
+
   productSetFormGroup: UntypedFormGroup;
   books = [];
   categories = [];
   selectedBooks = [];
-  productSet: IProductSet;
+  productSet: ProductSet;
   isReady = false;
 
   DROPDOWN_OPTIONS = {
@@ -108,7 +114,7 @@ export class UpdateProductSetComponent implements OnInit {
         this.selectedBooks = this.productSet.products.map((x) => x.product);
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -129,7 +135,7 @@ export class UpdateProductSetComponent implements OnInit {
     this.categoryService.searchCategories(q).subscribe((res) => (this.categories = res));
   }
 
-  buildForm(data: IProductSet): void {
+  buildForm(data: ProductSet): void {
     const products = data.products.map((x) => x.product);
     this.productSetFormGroup = this.formBuilder.group({
       title: [get(data, 'title', ''), Validators.required],
@@ -175,7 +181,7 @@ export class UpdateProductSetComponent implements OnInit {
 
     const selectedBooks = this.selectedBooks.map((item, index) => {
       return {
-        product: item,
+        product: item._id,
         priority: index + 1,
       };
     });
@@ -194,7 +200,7 @@ export class UpdateProductSetComponent implements OnInit {
         this.snackBar.open('Set Updated', 'OKAY', { duration: 5000 });
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }

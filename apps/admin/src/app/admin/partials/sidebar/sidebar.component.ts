@@ -1,6 +1,5 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { MatList, MatListItem } from '@angular/material/list';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 
 @Component({
@@ -8,7 +7,7 @@ import { MatIcon } from '@angular/material/icon';
   templateUrl: 'sidebar.component.html',
   styleUrls: ['./sidebar.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [MatList, RouterLink, MatListItem, MatIcon],
+  imports: [RouterLink, RouterLinkActive, MatIcon],
 })
 export class SidebarComponent implements OnInit {
   menuItems = [
@@ -56,6 +55,11 @@ export class SidebarComponent implements OnInit {
       icon: 'shopping_cart',
       path: ['/', 'admin', 'carts'],
       title: 'Carts',
+    },
+    {
+      icon: 'outbox',
+      path: ['/', 'admin', 'outbox'],
+      title: 'Outbox',
     },
     {
       icon: 'layers',

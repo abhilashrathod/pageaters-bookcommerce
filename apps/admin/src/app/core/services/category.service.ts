@@ -1,77 +1,34 @@
-import {Injectable} from '@angular/core';
-import {Observable, throwError} from 'rxjs';
-import {environment} from '@env/environment';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import {catchError, map} from 'rxjs/operators';
-import {IResponse} from '@schema/responses';
+import { Injectable, inject } from '@angular/core';
+import { defer } from 'rxjs';
+import { adminCategoryCreatePayloadSchema, adminCategoryUpdatePayloadSchema } from '@pageaters/shared';
+import { API_CLIENT } from './api-client';
+import { parsePayload, type AdminBody } from './payload';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class CategoryService {
+  private client = inject(API_CLIENT);
 
-  constructor(private _http: HttpClient) {
+  getAllCategories(filters: { page: number; limit: number }) {
+    return defer(() => this.client.categories.list({ page: filters.page, limit: filters.limit }));
   }
 
-  getAllCategories(filters): Observable<any> {
-    const url = `${environment.BASE_PATH}/categories`;
-    let params = new HttpParams();
-    params = params.append('page', filters.page);
-    params = params.append('limit', filters.limit);
-    return this._http.get(url, {params})
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  searchCategories(q: string) {
+    return defer(() => this.client.categories.search({ q }));
   }
 
-  searchCategories(title): Observable<any> {
-    const url = `${environment.BASE_PATH}/categories/search/${title}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  create(payload: unknown) {
+    return defer(() => this.client.admin.categories.create(parsePayload<AdminBody<'categories', 'create'>>(adminCategoryCreatePayloadSchema, payload)));
   }
 
-  create(payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/categories`;
-    return this._http.post(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  getById(id: string) {
+    return defer(() => this.client.admin.categories.detail({ id }));
   }
 
-  getById(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/categories/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
+  getByUniqueId(id: string) {
+    return defer(() => this.client.categories.detail({ id }));
   }
 
-  getByUniqueId(id): Observable<any> {
-    const url = `${environment.BASE_PATH}/categories/unique/${id}`;
-    return this._http.get(url)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-
-  update(id, payload): Observable<any> {
-    const url = `${environment.BASE_PATH}/categories/${id}`;
-    return this._http.put(url, payload)
-      .pipe(
-        map((dt: IResponse) => dt.data),
-        catchError((err) => this.handleError(err))
-      );
-  }
-
-  handleError(err: any): any {
-    return throwError(err.error);
+  update(id: string, payload: unknown) {
+    return defer(() => this.client.admin.categories.update({ ...parsePayload<AdminBody<'categories', 'update'>>(adminCategoryUpdatePayloadSchema, payload), id }));
   }
 }

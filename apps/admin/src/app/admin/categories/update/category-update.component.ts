@@ -1,22 +1,27 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { get } from 'lodash';
 import { CategoryService } from '@services/category.service';
 import { FilesService } from '@services/files.service';
-import { BUCKETS, FILE_UPLOAD_MODULES } from '@helpers/constants';
 import { MatButton, MatFabButton } from '@angular/material/button';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { MatIcon } from '@angular/material/icon';
+import { apiErrorMessage } from '@services/api-client';
+import { AdminFileModule } from '@pageaters/shared';
+import { DemoAdminService } from '@services/demo-admin.service';
+import { DemoReadOnlyNoticeComponent } from '@components/demo-read-only-notice/demo-read-only-notice.component';
+import { FileDropDirective } from '@core/directives/file-drop.directive';
 
 @Component({
   selector: 'app-category-update',
   templateUrl: 'category-update.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [
+  imports: [FileDropDirective, 
+    DemoReadOnlyNoticeComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButton,
@@ -30,6 +35,8 @@ import { MatIcon } from '@angular/material/icon';
   ],
 })
 export class CategoryUpdateComponent implements OnInit {
+  protected demoAdmin = inject(DemoAdminService);
+
   categoryFormGroup: UntypedFormGroup;
   avatar;
   selectedFile: File;
@@ -57,7 +64,6 @@ export class CategoryUpdateComponent implements OnInit {
     const category$ = this.categoryService.getById(id);
     category$.subscribe((res) => {
       this.category = res;
-      this.category.thumbnail = `${BUCKETS.CATEGORIES}/${this.category.thumbnail}`;
       this.buildForm(res);
       this.isReady = true;
     });
@@ -77,7 +83,11 @@ export class CategoryUpdateComponent implements OnInit {
       const file = event.target.files[0];
 
       const reader = new FileReader();
-      reader.onload = (e) => (this.category.thumbnail = reader.result);
+      // Upload as soon as the preview is ready, so a save can't send the local data: URL.
+      reader.onload = () => {
+        this.category.thumbnail = reader.result;
+        this.uploadImage();
+      };
 
       reader.readAsDataURL(file);
 
@@ -94,18 +104,19 @@ export class CategoryUpdateComponent implements OnInit {
       return this.snackBar.open('Please select a file to upload', 'OKAY', { duration: 3000 });
     }
 
-    const formData: FormData = new FormData();
-    formData.append('file', this.selectedFile, this.selectedFile.name);
-    formData.append('title', this.categoryFormGroup.get('title').value);
-    formData.append('fileModule', FILE_UPLOAD_MODULES.CATEGORY);
-    const file$ = this.filesService.upload(formData);
+    const file$ = this.filesService.upload({
+      file: this.selectedFile,
+      fileName: this.selectedFile.name,
+      title: this.categoryFormGroup.get('title').value,
+      fileModule: AdminFileModule.CATEGORY,
+    });
     file$.subscribe(
       (res) => {
-        this.category.thumbnail = `${BUCKETS.CATEGORIES}/${res.fileUrl}`;
+        this.category.thumbnail = res.fileUrl;
         this.snackBar.open('Category Thumbnail Uploaded!', 'OKAY', { duration: 5000 });
       },
       (err) => {
-        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(err), 'OKAY', { duration: 5000 });
       },
     );
   }
@@ -114,7 +125,7 @@ export class CategoryUpdateComponent implements OnInit {
     const payload = {
       ...this.category,
       ...this.categoryFormGroup.value,
-      thumbnail: this.category.thumbnail.split('/').pop(),
+      thumbnail: this.category.thumbnail,
     };
     const category$ = this.categoryService.update(this.category._id, payload);
     category$.subscribe(
@@ -123,7 +134,7 @@ export class CategoryUpdateComponent implements OnInit {
         this.snackBar.open('Category Updated', 'OKAY', { duration: 5000 });
       },
       (error) => {
-        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+        this.snackBar.open(apiErrorMessage(error), 'OKAY', { duration: 5000 });
       },
     );
   }

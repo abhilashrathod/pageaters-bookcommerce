@@ -51,6 +51,10 @@ const routes: Routes = [
         loadChildren: () => import('./carts/cart.module').then(m => m.CartModule)
       },
       {
+        path: 'outbox',
+        loadComponent: () => import('./outbox/outbox.component').then(m => m.OutboxComponent)
+      },
+      {
         path: 'sets',
         loadChildren: () => import('./product-sets/product-sets.module').then(m => m.ProductSetsModule)
       },
