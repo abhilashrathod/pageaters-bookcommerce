@@ -69,8 +69,8 @@ const productsDescription = (order) =>
 /**
  * Books a surface shipment with the courier for a paid (prepaid) or confirmed (COD, collecting the total) order,
  * ships the order with the courier's tracking URL and e-mails the buyer.
- * Legacy (PLAN.md security step): the route is guarded only as USER, with no owner check — any shopper can ship any
- * paid order. A courier failure rejects with the adapter's clean error (→ 500; the controller logs only that).
+ * Admin only (the route guards it). A courier failure rejects with the adapter's clean error (→ 500; the controller
+ * logs only that).
  * @param {string} orderId Order `_id`.
  * @param {{ width: number, height: number, weight: number }} dimensions
  * @returns {Promise<object>} The courier's answer.
