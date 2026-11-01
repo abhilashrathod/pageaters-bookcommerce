@@ -48,6 +48,9 @@ app.use(
   }),
 );
 app.set('views', path.join(PROJECT_ROOT, 'src', 'views'));
+// Registered explicitly: Express's own lookup requires `ejs` from inside its package, which pnpm + Vercel's file
+// tracing don't provide (MODULE_NOT_FOUND on Vercel).
+app.engine('ejs', require('ejs').__express);
 app.set('view engine', 'ejs');
 
 // i18n
