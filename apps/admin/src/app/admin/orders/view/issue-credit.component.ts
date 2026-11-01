@@ -1,18 +1,20 @@
-import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {MatDialogRef} from '@angular/material/dialog';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-issue-credit',
-  templateUrl: 'issue-credit.component.html'
+  templateUrl: 'issue-credit.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class IssueCreditComponent implements OnInit {
-  creditFormGroup: FormGroup;
+  creditFormGroup: UntypedFormGroup;
 
-  constructor(private formBuilder: FormBuilder,
-              public dialogRef: MatDialogRef<IssueCreditComponent>) {
-  }
+  constructor(
+    private formBuilder: UntypedFormBuilder,
+    public dialogRef: MatDialogRef<IssueCreditComponent>,
+  ) {}
 
   ngOnInit(): void {
     this.prepareCreditForm();

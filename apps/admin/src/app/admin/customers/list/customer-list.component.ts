@@ -1,32 +1,17 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-customer-list',
-  templateUrl: 'customer-list.component.html'
+  templateUrl: 'customer-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class CustomerListComponent implements OnInit {
+  public editResourceUrl: string[] = ['/', 'admin', 'customers', 'update'];
 
-  public editResourceUrl: string[] = [
-    '/',
-    'admin',
-    'customers',
-    'update',
-  ];
+  public createResourceUrl: string[] = ['/', 'admin', 'customers', 'create'];
 
-  public createResourceUrl: string[] = [
-    '/',
-    'admin',
-    'customers',
-    'create',
-  ];
-
-  public viewResourceUrl: string[] = [
-    '/',
-    'admin',
-    'customers',
-    'view',
-  ];
+  public viewResourceUrl: string[] = ['/', 'admin', 'customers', 'view'];
 
   resourceColumns = [
     {
@@ -55,9 +40,7 @@ export class CustomerListComponent implements OnInit {
   public getAllBaseUrl = '/users';
   public searchResource = '/users/search';
 
-  constructor() {
-  }
+  constructor() {}
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 }

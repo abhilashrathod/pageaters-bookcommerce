@@ -3,8 +3,8 @@ import {CommonModule} from '@angular/common';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {AngularMultiSelectModule} from 'angular2-multiselect-dropdown';
 
-import {SharedModule} from '../../core/shared/shared.module';
-import {EntityTableModule} from '../../core/components/entity-table/entity-table.module';
+import {SharedModule} from '@core/shared/shared.module';
+import {EntityTableModule} from '@components/entity-table/entity-table.module';
 
 import {BooksRoutingModule} from './books-routing.module';
 

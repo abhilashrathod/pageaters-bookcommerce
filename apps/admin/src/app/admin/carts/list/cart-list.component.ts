@@ -1,32 +1,17 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-cart-list',
-  templateUrl: 'cart-list.component.html'
+  templateUrl: 'cart-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class CartListComponent implements OnInit {
+  public editResourceUrl: string[] = ['/', 'admin', 'customers', 'update'];
 
-  public editResourceUrl: string[] = [
-    '/',
-    'admin',
-    'customers',
-    'update',
-  ];
+  public createResourceUrl: string[] = ['/', 'admin', 'customers', 'create'];
 
-  public createResourceUrl: string[] = [
-    '/',
-    'admin',
-    'customers',
-    'create',
-  ];
-
-  public viewResourceUrl: string[] = [
-    '/',
-    'admin',
-    'carts',
-    'view',
-  ];
+  public viewResourceUrl: string[] = ['/', 'admin', 'carts', 'view'];
 
   resourceColumns = [
     {
@@ -54,9 +39,7 @@ export class CartListComponent implements OnInit {
   public deleteBaseUrl = `/users`;
   public getAllBaseUrl = '/cart';
 
-  constructor() {
-  }
+  constructor() {}
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 }

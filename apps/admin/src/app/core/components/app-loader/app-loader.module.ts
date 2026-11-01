@@ -9,10 +9,9 @@ import {AppLoaderService} from './app-loader.service';
 import {AppLoaderComponent} from './app-loader.component';
 
 @NgModule({
-  imports: [CommonModule, MatDialogModule, MatIconModule, MatProgressSpinnerModule],
-  providers: [AppLoaderService],
-  declarations: [AppLoaderComponent],
-  entryComponents: [AppLoaderComponent]
+    imports: [CommonModule, MatDialogModule, MatIconModule, MatProgressSpinnerModule],
+    providers: [AppLoaderService],
+    declarations: [AppLoaderComponent]
 })
 export class AppLoaderModule {
 }

@@ -1,33 +1,18 @@
-import {Component, OnInit} from '@angular/core';
-import * as moment from 'moment';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import moment from 'moment';
 
 @Component({
   selector: 'app-order-list',
-  templateUrl: 'order-list.component.html'
+  templateUrl: 'order-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class OrderListComponent implements OnInit {
+  public editResourceUrl: string[] = ['/', 'admin', 'orders', 'update'];
 
-  public editResourceUrl: string[] = [
-    '/',
-    'admin',
-    'orders',
-    'update',
-  ];
+  public viewResourceUrl: string[] = ['/', 'admin', 'orders', 'view'];
 
-  public viewResourceUrl: string[] = [
-    '/',
-    'admin',
-    'orders',
-    'view',
-  ];
-
-  public createResourceUrl: string[] = [
-    '/',
-    'admin',
-    'orders',
-    'create',
-  ];
+  public createResourceUrl: string[] = ['/', 'admin', 'orders', 'create'];
 
   viewOrderStatus = '';
 
@@ -72,17 +57,15 @@ export class OrderListComponent implements OnInit {
   public getAllBaseUrl = `/orders`;
   public searchResourceUrl = `/orders/search`;
 
-  constructor() {
-  }
+  constructor() {}
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   returnProductItems(products, bundles, boxes, addOns): string {
-    const books = products.map((x) => x.product.title +' x '+ x.quantity);
-    const bundle = bundles.map((x) => x.bundle.title +' x '+x.quantity);
-    const box = boxes.map((x) => x.box.title +' x '+ x.quantity);
-    const addOn = addOns.map((x) => x.addOn.name +' x '+ x.quantity);
+    const books = products.map((x) => x.product.title + ' x ' + x.quantity);
+    const bundle = bundles.map((x) => x.bundle.title + ' x ' + x.quantity);
+    const box = boxes.map((x) => x.box.title + ' x ' + x.quantity);
+    const addOn = addOns.map((x) => x.addOn.name + ' x ' + x.quantity);
     return `${books.join(`<br />`)} <br/> ${bundle.join(`<br />`)} <br/> ${box.join(`<br />`)} <br/> ${addOn.join(`<br />`)}`;
   }
 

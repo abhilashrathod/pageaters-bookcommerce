@@ -16,27 +16,28 @@ import {MatTableDataSource} from '@angular/material/table';
 import {merge, of} from 'rxjs';
 import {catchError, debounceTime, map, startWith, switchMap} from 'rxjs/operators';
 
-import {SharedService} from '../../services/shared.service';
+import {SharedService} from '@services/shared.service';
 
-import {IPaginationResponse} from '../../schema/responses';
-import {FormControl} from '@angular/forms';
-import {AppConfirmService} from '../app-confirm/app-confirm.service';
-import {AppLoaderService} from '../app-loader/app-loader.service';
+import {IPaginationResponse} from '@schema/responses';
+import {UntypedFormControl} from '@angular/forms';
+import {AppConfirmService} from '@components/app-confirm/app-confirm.service';
+import {AppLoaderService} from '@components/app-loader/app-loader.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {ActivatedRoute, Router} from '@angular/router';
-import { ORDER_STATUS, PRODUCT_TYPES } from '../../helpers/constants';
+import { ORDER_STATUS, PRODUCT_TYPES } from '@helpers/constants';
 
 
 @Component({
-  selector: 'app-entity-table',
-  templateUrl: 'entity-table-component.html',
-  styleUrls: ['./entity-table.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-entity-table',
+    templateUrl: 'entity-table-component.html',
+    styleUrls: ['./entity-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 
 export class EntityTableComponent implements OnInit, AfterViewInit, OnChanges {
 
-  search = new FormControl();
+  search = new UntypedFormControl();
 
   // inputs
   @Input() public columns;

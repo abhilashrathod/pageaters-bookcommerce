@@ -1,25 +1,15 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-category-list',
-  templateUrl: 'category-list.component.html'
+  templateUrl: 'category-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class CategoryListComponent implements OnInit {
+  public editResourceUrl: string[] = ['/', 'admin', 'categories', 'update'];
 
-  public editResourceUrl: string[] = [
-    '/',
-    'admin',
-    'categories',
-    'update',
-  ];
-
-  public createResourceUrl: string[] = [
-    '/',
-    'admin',
-    'categories',
-    'create',
-  ];
+  public createResourceUrl: string[] = ['/', 'admin', 'categories', 'create'];
 
   resourceColumns = [
     {
@@ -43,9 +33,7 @@ export class CategoryListComponent implements OnInit {
   public getAllBaseUrl = '/categories';
   public searchBaseUrl = '/categories/search';
 
-  constructor() {
-  }
+  constructor() {}
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 }

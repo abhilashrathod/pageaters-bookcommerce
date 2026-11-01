@@ -1,106 +1,97 @@
-<div *ngIf="isReady" class="row">
-  <div class="col-12">
-    <h1>{{book?.title}}</h1>
+@if (isReady) {
+  <div class="row">
+    <div class="col-12">
+      <h1>{{ book?.title }}</h1>
+    </div>
+    <div class="col-3">
+      <mat-card appearance="outlined" class="mb-4">
+        <mat-card-title>Ordered: {{ 1 }}</mat-card-title>
+        <mat-card-content>
+          <p>This card indeterminates progress bar.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-3">
+      <mat-card appearance="outlined" class="mb-4">
+        <mat-card-title>Rented: {{ 1 }}</mat-card-title>
+        <mat-card-content>
+          <p>This card indeterminates progress bar.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-3">
+      <mat-card appearance="outlined" class="mb-4">
+        <mat-card-title>Wishlisted: {{ 1 }}</mat-card-title>
+        <mat-card-content>
+          <p>This card indeterminates progress bar.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-3">
+      <mat-card appearance="outlined" class="mb-4">
+        <mat-card-title>Waitlisted: {{ 1 }}</mat-card-title>
+        <mat-card-content>
+          <p>This card indeterminates progress bar.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-3">
+      <mat-card appearance="outlined" class="mb-4">
+        <mat-card-title>Cart but Not Checkout: {{ 1 }}</mat-card-title>
+        <mat-card-content>
+          <p>This card indeterminates progress bar.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-3">
+      <mat-card appearance="outlined" class="mb-4">
+        <mat-card-title>Total Revenue: {{ 1 }}</mat-card-title>
+        <mat-card-content>
+          <p>This card indeterminates progress bar.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-3">
+      <mat-card appearance="outlined" class="mb-4">
+        <mat-card-title>Total Revenue (this Month): {{ 1 }}</mat-card-title>
+        <mat-card-content>
+          <p>This card indeterminates progress bar.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-3">
+      <mat-card appearance="outlined" class="mb-4">
+        <mat-card-title>Popularity: {{ 1 }}</mat-card-title>
+        <mat-card-content>
+          <p>This card indeterminates progress bar.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-3">
+      <mat-card appearance="outlined" class="mb-4">
+        <mat-card-title>Priority: {{ 1 }}</mat-card-title>
+        <mat-card-content>
+          <p>This card indeterminates progress bar.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-3">
+      <mat-card appearance="outlined" class="mb-4">
+        <mat-card-title>Stock: {{ 1 }}</mat-card-title>
+        <mat-card-content>
+          <p>This card indeterminates progress bar.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
   </div>
-  <div class="col-3">
-    <mat-card class="mb-4">
-      <mat-card-title>Ordered: {{1}}</mat-card-title>
-      <mat-card-content>
-        <p>This card indeterminates progress bar.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-  <div class="col-3">
-    <mat-card class="mb-4">
-      <mat-card-title>Rented: {{1}}</mat-card-title>
-      <mat-card-content>
-        <p>This card indeterminates progress bar.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-
-  <div class="col-3">
-    <mat-card class="mb-4">
-      <mat-card-title>Wishlisted: {{1}}</mat-card-title>
-      <mat-card-content>
-        <p>This card indeterminates progress bar.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-
-  <div class="col-3">
-    <mat-card class="mb-4">
-      <mat-card-title>Waitlisted: {{1}}</mat-card-title>
-      <mat-card-content>
-        <p>This card indeterminates progress bar.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-  <div class="col-3">
-    <mat-card class="mb-4">
-      <mat-card-title>Cart but Not Checkout: {{1}}</mat-card-title>
-      <mat-card-content>
-        <p>This card indeterminates progress bar.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-  <div class="col-3">
-    <mat-card class="mb-4">
-      <mat-card-title>Total Revenue: {{1}}</mat-card-title>
-      <mat-card-content>
-        <p>This card indeterminates progress bar.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-  <div class="col-3">
-    <mat-card class="mb-4">
-      <mat-card-title>Total Revenue (this Month): {{1}}</mat-card-title>
-      <mat-card-content>
-        <p>This card indeterminates progress bar.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-  <div class="col-3">
-    <mat-card class="mb-4">
-      <mat-card-title>Popularity: {{1}}</mat-card-title>
-      <mat-card-content>
-        <p>This card indeterminates progress bar.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-  <div class="col-3">
-    <mat-card class="mb-4">
-      <mat-card-title>Priority: {{1}}</mat-card-title>
-      <mat-card-content>
-        <p>This card indeterminates progress bar.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-  <div class="col-3">
-    <mat-card class="mb-4">
-      <mat-card-title>Stock: {{1}}</mat-card-title>
-      <mat-card-content>
-        <p>This card indeterminates progress bar.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Delectus ea, expedita natus perferendis unde voluptatibus!</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-</div>
+}

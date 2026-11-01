@@ -1,14 +1,13 @@
-import {Component, OnInit} from '@angular/core';
-import {DealsService} from '../../../core/services/deals.service';
-
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { DealsService } from '@services/deals.service';
 
 @Component({
   selector: 'app-dashboard',
-  templateUrl: 'dashboard.component.html'
+  templateUrl: 'dashboard.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class DashboardComponent implements OnInit {
-
   announcement = '';
   contactNo = '';
   email = '';
@@ -16,17 +15,15 @@ export class DashboardComponent implements OnInit {
 
   dealsStat = 0;
 
-  constructor(private dealsService: DealsService) {
-  }
+  constructor(private dealsService: DealsService) {}
 
   ngOnInit(): void {
     this.getDealsStats();
   }
 
   getDealsStats(): void {
-    this.dealsService.getAllDeals({page: 1, limit: 3})
-      .subscribe(res => {
-        this.dealsStat = res.totalDocs;
-      });
+    this.dealsService.getAllDeals({ page: 1, limit: 3 }).subscribe((res) => {
+      this.dealsStat = res.totalDocs;
+    });
   }
 }

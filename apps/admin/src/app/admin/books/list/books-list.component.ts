@@ -1,34 +1,19 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
-import {get} from 'lodash';
+import { get } from 'lodash';
 
 @Component({
   selector: 'app-books-list',
-  templateUrl: 'books-list.component.html'
+  templateUrl: 'books-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class BooksListComponent implements OnInit {
+  public editResourceUrl: string[] = ['/', 'admin', 'books', 'update'];
 
-  public editResourceUrl: string[] = [
-    '/',
-    'admin',
-    'books',
-    'update',
-  ];
+  public viewResourceUrl: string[] = ['/', 'admin', 'books', 'view'];
 
-  public viewResourceUrl: string[] = [
-    '/',
-    'admin',
-    'books',
-    'view',
-  ];
-
-  public createResourceUrl: string[] = [
-    '/',
-    'admin',
-    'books',
-    'create',
-  ];
+  public createResourceUrl: string[] = ['/', 'admin', 'books', 'create'];
 
   public resourceColumns: any[] = [
     {
@@ -72,9 +57,7 @@ export class BooksListComponent implements OnInit {
   public getAllBaseUrl = '/store-books';
   public searchBaseUrl = '/store-books/search';
 
-  constructor(private router: Router) {
-  }
+  constructor(private router: Router) {}
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 }

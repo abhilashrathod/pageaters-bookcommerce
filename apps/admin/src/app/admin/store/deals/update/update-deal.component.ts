@@ -1,32 +1,36 @@
-import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
-import {MatSnackBar} from '@angular/material/snack-bar';
-import {ActivatedRoute, Router} from '@angular/router';
-import {get} from 'lodash';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActivatedRoute, Router } from '@angular/router';
+import { get } from 'lodash';
 
-import {FilesService} from '../../../../core/services/files.service';
-import {BUCKETS, FILE_UPLOAD_MODULES} from '../../../../core/helpers/constants';
-import {IProductSet} from '../../../../core/schema/product-set';
-import {DropdownSettings} from 'angular2-multiselect-dropdown/lib/multiselect.interface';
-import {DealsService} from '../../../../core/services/deals.service';
-import {CategoryService} from '../../../../core/services/category.service';
-import {ProductSetService} from '../../../../core/services/product-set.service';
-import {IDeal} from '../../../../core/schema/deal';
+import { FilesService } from '@services/files.service';
+import { BUCKETS, FILE_UPLOAD_MODULES } from '@helpers/constants';
+import { IProductSet } from '@schema/product-set';
+import { AngularMultiSelect } from 'angular2-multiselect-dropdown';
+import { DealsService } from '@services/deals.service';
+import { CategoryService } from '@services/category.service';
+import { ProductSetService } from '@services/product-set.service';
+import { IDeal } from '@schema/deal';
+
+// The settings interface is not exported from the package entry point.
+type DropdownSettings = AngularMultiSelect['settings'];
 
 @Component({
   selector: 'app-update-deal',
-  templateUrl: 'update-deal.component.html'
+  templateUrl: 'update-deal.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class UpdateDealComponent implements OnInit {
-  dealFormGroup: FormGroup;
+  dealFormGroup: UntypedFormGroup;
   poster;
   selectedFile;
   selectedSets: Array<IProductSet> = [];
   categories = [];
   productSets = [];
 
-  searchCategoriesCtrl = new FormControl();
+  searchCategoriesCtrl = new UntypedFormControl();
 
   DROPDOWN_OPTIONS: DropdownSettings = {
     enableSearchFilter: true,
@@ -35,7 +39,7 @@ export class UpdateDealComponent implements OnInit {
     classes: 'custom-dropdown',
     primaryKey: '_id',
     labelKey: 'title',
-    singleSelection: false
+    singleSelection: false,
   };
 
   productSetDropdownSettings = {
@@ -58,15 +62,16 @@ export class UpdateDealComponent implements OnInit {
   isReady = false;
   deal: IDeal;
 
-  constructor(private formBuilder: FormBuilder,
-              private dealsService: DealsService,
-              private filesService: FilesService,
-              private snackBar: MatSnackBar,
-              private categoryService: CategoryService,
-              private activatedRoute: ActivatedRoute,
-              private productSetService: ProductSetService,
-              private router: Router) {
-  }
+  constructor(
+    private formBuilder: UntypedFormBuilder,
+    private dealsService: DealsService,
+    private filesService: FilesService,
+    private snackBar: MatSnackBar,
+    private categoryService: CategoryService,
+    private activatedRoute: ActivatedRoute,
+    private productSetService: ProductSetService,
+    private router: Router,
+  ) {}
 
   ngOnInit(): void {
     this.activatedRoute.params.subscribe((params) => {
@@ -78,20 +83,23 @@ export class UpdateDealComponent implements OnInit {
 
   getDetails(id): void {
     const deal$ = this.dealsService.getById(id);
-    deal$.subscribe(res => {
-      this.deal = res;
-      this.poster = `${BUCKETS.ASSETS}/${this.deal.poster}`;
-      this.selectedSets = this.deal.productSets.map(x => x.set);
-      this.buildForm(this.deal);
-      this.getCategories();
-      this.getProductSets();
-    }, error => {
-      this.snackBar.open(error.message, 'OKAY', {duration: 5000});
-    });
+    deal$.subscribe(
+      (res) => {
+        this.deal = res;
+        this.poster = `${BUCKETS.ASSETS}/${this.deal.poster}`;
+        this.selectedSets = this.deal.productSets.map((x) => x.set);
+        this.buildForm(this.deal);
+        this.getCategories();
+        this.getProductSets();
+      },
+      (error) => {
+        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 
   buildForm(deal: IDeal): void {
-    const sets = deal.productSets.map(x => x.set);
+    const sets = deal.productSets.map((x) => x.set);
 
     this.dealFormGroup = this.formBuilder.group({
       title: [get(deal, 'title', ''), Validators.compose([Validators.required])],
@@ -109,24 +117,21 @@ export class UpdateDealComponent implements OnInit {
   }
 
   getCategories(): void {
-    this.categoryService.getAllCategories(this.filters)
-      .subscribe(res => this.categories = res.docs);
+    this.categoryService.getAllCategories(this.filters).subscribe((res) => (this.categories = res.docs));
   }
 
   getProductSets(): void {
-    this.productSetService.getAllProductSet({page: 1, limit: 1000})
-      .subscribe(res => this.productSets = res.docs);
+    this.productSetService.getAllProductSet({ page: 1, limit: 1000 }).subscribe((res) => (this.productSets = res.docs));
   }
 
   addOrUpdateSelectedCategory(evt): void {
-    let {categories} = this.dealFormGroup.value;
-    categories = categories.map(x => x._id);
-    this.productSetService.getAllProductSet({page: 1, limit: 1000, categories})
-      .subscribe(res => this.productSets = res.docs);
+    let { categories } = this.dealFormGroup.value;
+    categories = categories.map((x) => x._id);
+    this.productSetService.getAllProductSet({ page: 1, limit: 1000, categories }).subscribe((res) => (this.productSets = res.docs));
   }
 
   addOrUpdateSelectedBooks(evt): void {
-    const idx = this.selectedSets.findIndex(x => x._id === evt._id);
+    const idx = this.selectedSets.findIndex((x) => x._id === evt._id);
     if (idx === -1) {
       this.selectedSets.push(evt);
     } else {
@@ -139,7 +144,7 @@ export class UpdateDealComponent implements OnInit {
       const file = event.target.files[0];
 
       const reader = new FileReader();
-      reader.onload = e => this.poster = reader.result;
+      reader.onload = (e) => (this.poster = reader.result);
 
       reader.readAsDataURL(file);
 
@@ -149,7 +154,7 @@ export class UpdateDealComponent implements OnInit {
 
   uploadImage(): any {
     if (!this.dealFormGroup.get('title').value) {
-      return this.snackBar.open('Please enter the title before file upload', 'OKAY', {duration: 3000});
+      return this.snackBar.open('Please enter the title before file upload', 'OKAY', { duration: 3000 });
     }
 
     const formData: FormData = new FormData();
@@ -157,37 +162,43 @@ export class UpdateDealComponent implements OnInit {
     formData.append('title', this.dealFormGroup.get('title').value);
     formData.append('fileModule', FILE_UPLOAD_MODULES.ASSETS);
     const file$ = this.filesService.upload(formData);
-    file$.subscribe(res => {
-      this.poster = `${BUCKETS.ASSETS}/${res.fileUrl}`;
-      this.snackBar.open('Image Uploaded!', 'OKAY', {duration: 5000});
-    }, err => {
-      this.snackBar.open(err.message, 'OKAY', {duration: 5000});
-    });
+    file$.subscribe(
+      (res) => {
+        this.poster = `${BUCKETS.ASSETS}/${res.fileUrl}`;
+        this.snackBar.open('Image Uploaded!', 'OKAY', { duration: 5000 });
+      },
+      (err) => {
+        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 
   onSubmit(): void {
-    const {categories, ...rest} = this.dealFormGroup.value;
+    const { categories, ...rest } = this.dealFormGroup.value;
 
     const selectedSets = this.selectedSets.map((item, index) => {
       return {
         set: item,
-        priority: index + 1
+        priority: index + 1,
       };
     });
 
     const payload = {
       ...rest,
-      categories: categories.map(x => x._id),
+      categories: categories.map((x) => x._id),
       productSets: selectedSets,
-      poster: this.poster.split('/').pop()
+      poster: this.poster.split('/').pop(),
     };
 
     const update$ = this.dealsService.update(this.deal._id, payload);
-    update$.subscribe(res => {
-      this.router.navigate(['/', 'admin', 'store', 'deals']);
-      this.snackBar.open('Deal Info Updated', 'OKAY', {duration: 5000});
-    }, error => {
-      this.snackBar.open(error.message, 'OKAY', {duration: 5000});
-    });
+    update$.subscribe(
+      (res) => {
+        this.router.navigate(['/', 'admin', 'store', 'deals']);
+        this.snackBar.open('Deal Info Updated', 'OKAY', { duration: 5000 });
+      },
+      (error) => {
+        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 }

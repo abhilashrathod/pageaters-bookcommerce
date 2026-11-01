@@ -1,8 +1,8 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {SharedModule} from '../../core/shared/shared.module';
+import {SharedModule} from '@core/shared/shared.module';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {EntityTableModule} from '../../core/components/entity-table/entity-table.module';
+import {EntityTableModule} from '@components/entity-table/entity-table.module';
 import {AngularMultiSelectModule} from 'angular2-multiselect-dropdown';
 
 import {CollectionRoutingModule} from './collection-routing.module';

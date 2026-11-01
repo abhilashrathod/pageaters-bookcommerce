@@ -3,7 +3,7 @@ import {CommonModule} from '@angular/common';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
 import {AdminRoutingModule} from './admin-routing.module';
-import {SharedModule} from '../core/shared/shared.module';
+import {SharedModule} from '@core/shared/shared.module';
 
 import {HeaderComponent} from './partials/header/header.component';
 import {SidebarComponent} from './partials/sidebar/sidebar.component';

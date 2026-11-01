@@ -798,7 +798,14 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
 
 ## Phase 8 — Admin upgrade (Angular)
 
-- [ ] Stepwise `ng update` from 12 to latest stable, one major at a time, building after each
+- [x] Stepwise `ng update` from 12 to latest stable, one major at a time, building after each
+  - Done 2026-11-01 (admin-engineer): Angular 12.1.1 → 22.2.4, TypeScript 6.0.3; build passed after every major.
+    Versions set in `package.json` then `ng update --migrate-only` per major (`ng update` picked npm here); CLI
+    package manager now pnpm. `--openssl-legacy-provider` gone (v13), `ngcc` gone (v16); `ngx-sortablejs` (abandoned,
+    blocked v16) → `@dustfoundation/ngx-sortablejs`; unused CKEditor removed; multiselect 5 → 10. `strict: false`
+    keeps TS 6's new strict default off. The v21 update also ran the control-flow migration (kept: step 3 wants it).
+    Build output moved to `dist/pageaters-admin/browser` (Phase 10 deploy config must use it). Root: `allowBuilds`
+    denies `lmdb`, `msgpackr-extract`, `nice-napi` (prebuilt/optional). Lint/test still red until the next step
 - [ ] TSLint → angular-eslint; remove Protractor; Karma → Vitest (today `ng test` runs Karma in watch mode and never
       exits)
 - [ ] Standalone components and the new control flow through Angular's own migration schematics (no hand rewrite);

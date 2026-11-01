@@ -3,10 +3,10 @@ import {CommonModule} from '@angular/common';
 import {RouterModule} from '@angular/router';
 
 import {EntityTableComponent} from './entity-table-component';
-import {SharedModule} from '../../shared/shared.module';
+import {SharedModule} from '@core/shared/shared.module';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {AppConfirmModule} from '../app-confirm/app-confirm.module';
-import {AppLoaderModule} from '../app-loader/app-loader.module';
+import {AppConfirmModule} from '@components/app-confirm/app-confirm.module';
+import {AppLoaderModule} from '@components/app-loader/app-loader.module';
 
 
 @NgModule({

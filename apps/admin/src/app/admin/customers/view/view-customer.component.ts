@@ -1,20 +1,21 @@
-import {Component, OnInit} from '@angular/core';
-import {MatSnackBar} from '@angular/material/snack-bar';
-import {ActivatedRoute, Router} from '@angular/router';
-import {CustomerService} from '../../../core/services/customer.service';
-import {IUser} from '../../../core/schema/user';
-import {ICart} from '../../../core/schema/cart';
-import {IAddress} from '../../../core/schema/address';
-import {IOrder} from '../../../core/schema/order';
-import { ORDER_STATUSES } from 'src/app/core/helpers/constants';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CustomerService } from '@services/customer.service';
+import { IUser } from '@schema/user';
+import { ICart } from '@schema/cart';
+import { IAddress } from '@schema/address';
+import { IOrder } from '@schema/order';
+import { ORDER_STATUSES } from '@helpers/constants';
 
 @Component({
   selector: 'app-view-customer',
-  templateUrl: 'view-customer.component.html'
+  templateUrl: 'view-customer.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class ViewCustomerComponent implements OnInit {
-  details: { user: IUser, cart: ICart, addresses: Array<IAddress>, orders: Array<IOrder> } = {
+  details: { user: IUser; cart: ICart; addresses: Array<IAddress>; orders: Array<IOrder> } = {
     user: null,
     cart: null,
     addresses: [],
@@ -27,17 +28,17 @@ export class ViewCustomerComponent implements OnInit {
   cancelled = 0;
   pending = 0;
   refunded = 0;
-  returned = 0
+  returned = 0;
 
   constructor(
     private snackBar: MatSnackBar,
     private router: Router,
     private route: ActivatedRoute,
-    private customerService: CustomerService) {
-  }
+    private customerService: CustomerService,
+  ) {}
 
   ngOnInit() {
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       if (params.id) {
         this.getOrderDetails(params.id);
       }
@@ -46,17 +47,20 @@ export class ViewCustomerComponent implements OnInit {
 
   getOrderDetails(id): void {
     const user$ = this.customerService.getById(id);
-    user$.subscribe(res => {
-      this.details = res;
-      this.isReady = true;
+    user$.subscribe(
+      (res) => {
+        this.details = res;
+        this.isReady = true;
 
-      console.log('user', this.details);
+        console.log('user', this.details);
 
-      this.details.orders = this.details.orders.filter((x) => x.orderStatus !== ORDER_STATUSES.ATTEMPTED);
-      this.getPastOrderStats(this.details.orders);
-    }, err => {
-      this.snackBar.open(err.message, 'OKAY', {duration: 5000});
-    });
+        this.details.orders = this.details.orders.filter((x) => x.orderStatus !== ORDER_STATUSES.ATTEMPTED);
+        this.getPastOrderStats(this.details.orders);
+      },
+      (err) => {
+        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 
   getPastOrderStats(orders): void {
@@ -64,10 +68,13 @@ export class ViewCustomerComponent implements OnInit {
     this.fulfilled = orders.filter((x) => x.orderStatus === ORDER_STATUSES.FULFILLED).length;
     this.cancelled = orders.filter((x) => x.orderStatus === ORDER_STATUSES.CANCELLED).length;
     this.shipped = orders.filter((x) => x.orderStatus === ORDER_STATUSES.SHIPPED).length;
-    this.returned = orders.filter((x) => x.orderStatus === ORDER_STATUSES.RETURNED ||
-                                         x.orderStatus === ORDER_STATUSES.REPLACEMENT ||
-                                         x.orderStatus === ORDER_STATUSES.REPLACEMENT_IN_PROGRESS ||
-                                         x.orderStatus === ORDER_STATUSES.RETURNED_IN_PROGRESS).length;
+    this.returned = orders.filter(
+      (x) =>
+        x.orderStatus === ORDER_STATUSES.RETURNED ||
+        x.orderStatus === ORDER_STATUSES.REPLACEMENT ||
+        x.orderStatus === ORDER_STATUSES.REPLACEMENT_IN_PROGRESS ||
+        x.orderStatus === ORDER_STATUSES.RETURNED_IN_PROGRESS,
+    ).length;
     this.shipped = orders.filter((x) => x.orderStatus === ORDER_STATUSES.SHIPPED).length;
     this.refunded = orders.filter((x) => x.orderStatus === ORDER_STATUSES.REFUNDED).length;
   }

@@ -1,41 +1,43 @@
-import {Component, OnInit} from '@angular/core';
-import {FormBuilder} from '@angular/forms';
-import {MatSnackBar} from '@angular/material/snack-bar';
-import {ActivatedRoute, Router} from '@angular/router';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { UntypedFormBuilder } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActivatedRoute, Router } from '@angular/router';
 
-import {BundleService} from '../../../core/services/bundle.service';
-import {CategoryService} from '../../../core/services/category.service';
-import {AuthorService} from '../../../core/services/author.service';
-import {CollectionService} from '../../../core/services/collection.service';
-import {BooksService} from '../../../core/services/books.service';
-import {FilesService} from '../../../core/services/files.service';
+import { BundleService } from '@services/bundle.service';
+import { CategoryService } from '@services/category.service';
+import { AuthorService } from '@services/author.service';
+import { CollectionService } from '@services/collection.service';
+import { BooksService } from '@services/books.service';
+import { FilesService } from '@services/files.service';
 
-import {IBook} from '../../../core/schema/book';
-import {BUCKETS} from '../../../core/helpers/constants';
+import { IBook } from '@schema/book';
+import { BUCKETS } from '@helpers/constants';
 
 @Component({
   selector: 'app-book-view',
-  templateUrl: 'book-view.component.html'
+  templateUrl: 'book-view.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class BookViewComponent implements OnInit {
   book: IBook;
   isReady = false;
 
-  constructor(private formBuilder: FormBuilder,
-              private snackBar: MatSnackBar,
-              private bundleService: BundleService,
-              private categoryService: CategoryService,
-              private authorService: AuthorService,
-              private collectionService: CollectionService,
-              private router: Router,
-              private route: ActivatedRoute,
-              private booksService: BooksService,
-              private filesService: FilesService) {
-  }
+  constructor(
+    private formBuilder: UntypedFormBuilder,
+    private snackBar: MatSnackBar,
+    private bundleService: BundleService,
+    private categoryService: CategoryService,
+    private authorService: AuthorService,
+    private collectionService: CollectionService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private booksService: BooksService,
+    private filesService: FilesService,
+  ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       if (params.id) {
         this.getBookDetails(params.id);
       }
@@ -44,12 +46,15 @@ export class BookViewComponent implements OnInit {
 
   getBookDetails(id): void {
     const book$ = this.booksService.getById(id);
-    book$.subscribe(res => {
-      this.book = res;
-      this.book.poster = `${BUCKETS.BOOKS}/${this.book.poster}`;
-      this.isReady = true;
-    }, err => {
-      this.snackBar.open(err.message, 'OKAY', {duration: 5000});
-    });
+    book$.subscribe(
+      (res) => {
+        this.book = res;
+        this.book.poster = `${BUCKETS.BOOKS}/${this.book.poster}`;
+        this.isReady = true;
+      },
+      (err) => {
+        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 }

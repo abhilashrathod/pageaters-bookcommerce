@@ -1,36 +1,38 @@
-import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {MatSnackBar} from '@angular/material/snack-bar';
-import {ActivatedRoute, Router} from '@angular/router';
-import {OrderServices} from '../../../core/services/order.services';
-import {IOrder} from '../../../core/schema/order';
-import {AlignShipmentDialogComponent} from './align-shipment-dialog.component';
-import {MatDialog} from '@angular/material/dialog';
-import {IssueCreditComponent} from './issue-credit.component';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActivatedRoute, Router } from '@angular/router';
+import { OrderServices } from '@services/order.services';
+import { IOrder } from '@schema/order';
+import { AlignShipmentDialogComponent } from './align-shipment-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import { IssueCreditComponent } from './issue-credit.component';
 import { CreateShipmentComponent } from './create-shipment.component';
 import { CancelOrderDialogComponent } from './cancel-order-dialog.component';
 
 @Component({
   selector: 'app-order-view',
-  templateUrl: 'order-view.component.html'
+  templateUrl: 'order-view.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class OrderViewComponent implements OnInit {
   order: IOrder;
   isReady = false;
 
-  shipmentFormGroup: FormGroup;
+  shipmentFormGroup: UntypedFormGroup;
 
-  constructor(private formBuilder: FormBuilder,
-              private snackBar: MatSnackBar,
-              private router: Router,
-              private dialog: MatDialog,
-              private route: ActivatedRoute,
-              private orderServices: OrderServices) {
-  }
+  constructor(
+    private formBuilder: UntypedFormBuilder,
+    private snackBar: MatSnackBar,
+    private router: Router,
+    private dialog: MatDialog,
+    private route: ActivatedRoute,
+    private orderServices: OrderServices,
+  ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       if (params.id) {
         this.getOrderDetails(params.id);
       }
@@ -39,20 +41,22 @@ export class OrderViewComponent implements OnInit {
 
   getOrderDetails(id): void {
     const order$ = this.orderServices.getById(id);
-    order$.subscribe(res => {
-      this.order = res;
-      this.isReady = true;
+    order$.subscribe(
+      (res) => {
+        this.order = res;
+        this.isReady = true;
 
-      this.prepareShipmentForm();
-      this.prepareRequestInfo();
-    }, err => {
-      this.snackBar.open(err.message, 'OKAY', {duration: 5000});
-    });
+        this.prepareShipmentForm();
+        this.prepareRequestInfo();
+      },
+      (err) => {
+        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 
   prepareRequestInfo(): void {
     for (const req of this.order.requests) {
-
     }
   }
 
@@ -67,12 +71,11 @@ export class OrderViewComponent implements OnInit {
       width: '400px',
     });
 
-    dialogRef.afterClosed()
-      .subscribe(res => {
-        if (res) {
-          this.cancelShipment(res);
-        }
-      });
+    dialogRef.afterClosed().subscribe((res) => {
+      if (res) {
+        this.cancelShipment(res);
+      }
+    });
   }
 
   cancelShipment(data: any): void {
@@ -84,12 +87,15 @@ export class OrderViewComponent implements OnInit {
     };
 
     const cancel$ = this.orderServices.cancelOrder(payload);
-    cancel$.subscribe(res => {
-      this.snackBar.open('Order marked as cancelled', 'OKAY', {duration: 3000});
-      this.getOrderDetails(this.order._id);
-    }, err => {
-      this.snackBar.open(err, 'OKAY', {duration: 5000});
-    })
+    cancel$.subscribe(
+      (res) => {
+        this.snackBar.open('Order marked as cancelled', 'OKAY', { duration: 3000 });
+        this.getOrderDetails(this.order._id);
+      },
+      (err) => {
+        this.snackBar.open(err, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 
   dumpRecord(): string {
@@ -97,7 +103,7 @@ export class OrderViewComponent implements OnInit {
   }
 
   handleShipmentSubmit(): void {
-    const {value} = this.shipmentFormGroup;
+    const { value } = this.shipmentFormGroup;
 
     const payload = {
       ...value,
@@ -105,22 +111,28 @@ export class OrderViewComponent implements OnInit {
     };
 
     const update$ = this.orderServices.ship(payload);
-    update$.subscribe(res => {
-      this.snackBar.open('Order Shipped', 'OKAY', {duration: 3000});
-      this.getOrderDetails(this.order._id);
-    }, err => {
-      this.snackBar.open(err, 'OKAY', {duration: 5000});
-    });
+    update$.subscribe(
+      (res) => {
+        this.snackBar.open('Order Shipped', 'OKAY', { duration: 3000 });
+        this.getOrderDetails(this.order._id);
+      },
+      (err) => {
+        this.snackBar.open(err, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 
   markAsDelivered(): void {
     const update$ = this.orderServices.fulfilled(this.order._id);
-    update$.subscribe(res => {
-      this.snackBar.open('Order Marked as Fulfilled', 'OKAY', {duration: 3000});
-      this.getOrderDetails(this.order._id);
-    }, err => {
-      this.snackBar.open(err, 'OKAY', {duration: 5000});
-    });
+    update$.subscribe(
+      (res) => {
+        this.snackBar.open('Order Marked as Fulfilled', 'OKAY', { duration: 3000 });
+        this.getOrderDetails(this.order._id);
+      },
+      (err) => {
+        this.snackBar.open(err, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 
   /* RETURNS */
@@ -130,12 +142,11 @@ export class OrderViewComponent implements OnInit {
       width: '400px',
     });
 
-    dialogRef.afterClosed()
-      .subscribe(res => {
-        if (res) {
-          this.doReverseShipment(requestId, res);
-        }
-      });
+    dialogRef.afterClosed().subscribe((res) => {
+      if (res) {
+        this.doReverseShipment(requestId, res);
+      }
+    });
   }
 
   openStoreCreditDialog(): void {
@@ -143,12 +154,11 @@ export class OrderViewComponent implements OnInit {
       width: '400px',
     });
 
-    dialogRef.afterClosed()
-      .subscribe(res => {
-        if (res) {
-          this.doIssueCredit(res.credit);
-        }
-      });
+    dialogRef.afterClosed().subscribe((res) => {
+      if (res) {
+        this.doIssueCredit(res.credit);
+      }
+    });
   }
 
   doIssueCredit(creditAmount): void {
@@ -158,8 +168,8 @@ export class OrderViewComponent implements OnInit {
       userId: this.order.userId,
     };
     const obs$ = this.orderServices.issueStoreCredit(payload);
-    obs$.subscribe(res => {
-      this.snackBar.open('Store credit issued.', 'OKAY', {duration: 3000});
+    obs$.subscribe((res) => {
+      this.snackBar.open('Store credit issued.', 'OKAY', { duration: 3000 });
     });
   }
 
@@ -168,12 +178,11 @@ export class OrderViewComponent implements OnInit {
       width: '400px',
     });
 
-    dialogRef.afterClosed()
-      .subscribe(res => {
-        if (res) {
-          this.doShipShipment(res);
-        }
-      });
+    dialogRef.afterClosed().subscribe((res) => {
+      if (res) {
+        this.doShipShipment(res);
+      }
+    });
   }
 
   doShipShipment(dimensions): void {
@@ -182,37 +191,39 @@ export class OrderViewComponent implements OnInit {
       dimensions,
     };
     const obs$ = this.orderServices.creteShipment(this.order._id, payload);
-    obs$.subscribe(res => {
-      this.snackBar.open('Shipment Created', 'OKAY', {duration: 3000});
-      this.getOrderDetails(this.order._id);
-    }, err => {
-      console.log(err);
-      this.snackBar.open(err.message, 'OKAY', {duration: 3000});
-    });
+    obs$.subscribe(
+      (res) => {
+        this.snackBar.open('Shipment Created', 'OKAY', { duration: 3000 });
+        this.getOrderDetails(this.order._id);
+      },
+      (err) => {
+        console.log(err);
+        this.snackBar.open(err.message, 'OKAY', { duration: 3000 });
+      },
+    );
   }
-
 
   closeReturnRequest(requestId: string): void {
     const obs$ = this.orderServices.closeReturnShipment(this.order._id, requestId);
-    obs$.subscribe(res => {
+    obs$.subscribe((res) => {
       this.getOrderDetails(this.order._id);
-      this.snackBar.open('Request closed', 'OKAY', {duration: 3000});
+      this.snackBar.open('Request closed', 'OKAY', { duration: 3000 });
     });
   }
 
   closeReplaceRequest(requestId: string): void {
     const obs$ = this.orderServices.closeReplacementShipment(this.order._id, requestId);
-    obs$.subscribe(res => {
+    obs$.subscribe((res) => {
       this.getOrderDetails(this.order._id);
-      this.snackBar.open('Replacement closed', 'OKAY', {duration: 3000});
+      this.snackBar.open('Replacement closed', 'OKAY', { duration: 3000 });
     });
   }
 
   doReverseShipment(requestId: string, data: any): void {
     const obs$ = this.orderServices.alignReturnShipment(this.order._id, requestId, data);
-    obs$.subscribe(res => {
+    obs$.subscribe((res) => {
       this.getOrderDetails(this.order._id);
-      this.snackBar.open('Return shipment aligned.', 'OKAY', {duration: 3000});
+      this.snackBar.open('Return shipment aligned.', 'OKAY', { duration: 3000 });
     });
   }
 }

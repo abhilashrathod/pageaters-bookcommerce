@@ -6,11 +6,10 @@ import {NgModule} from '@angular/core';
 import {AppComfirmComponent} from './app-confirm.component';
 
 @NgModule({
-  imports: [MatDialogModule, MatButtonModule],
-  exports: [AppComfirmComponent],
-  declarations: [AppComfirmComponent],
-  providers: [AppConfirmService],
-  entryComponents: [AppComfirmComponent]
+    imports: [MatDialogModule, MatButtonModule],
+    exports: [AppComfirmComponent],
+    declarations: [AppComfirmComponent],
+    providers: [AppConfirmService]
 })
 export class AppConfirmModule {
 }

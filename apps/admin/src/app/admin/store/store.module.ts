@@ -1,12 +1,11 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {CKEditorModule} from '@ckeditor/ckeditor5-angular';
-import {SortablejsModule} from 'ngx-sortablejs';
+import {SortablejsModule} from '@dustfoundation/ngx-sortablejs';
 import {AngularMultiSelectModule} from 'angular2-multiselect-dropdown';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
-import {SharedModule} from '../../core/shared/shared.module';
-import {EntityTableModule} from '../../core/components/entity-table/entity-table.module';
+import {SharedModule} from '@core/shared/shared.module';
+import {EntityTableModule} from '@components/entity-table/entity-table.module';
 import {StoreRoutingModule} from './store-routing.module';
 
 import {DashboardComponent} from './dashboard/dashboard.component';
@@ -23,7 +22,6 @@ import {UpdateDealComponent} from './deals/update/update-deal.component';
     StoreRoutingModule,
     FormsModule,
     ReactiveFormsModule,
-    CKEditorModule,
     SortablejsModule,
   ],
   exports: [],

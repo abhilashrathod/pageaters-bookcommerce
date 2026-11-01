@@ -12,4 +12,7 @@ allowBuilds:
   es5-ext: false # postinstall message
   esbuild: false # prebuilt binary via optional deps
   fsevents: false # optional native watcher (legacy chokidar)
+  lmdb: false # prebuilt binary via optional deps (Angular build cache)
+  msgpackr-extract: false # prebuilt binary via optional deps
+  nice-napi: false # optional native addon for piscina (Angular build workers)
   unrs-resolver: false # prebuilt binary via optional deps

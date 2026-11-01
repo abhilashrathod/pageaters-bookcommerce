@@ -1,22 +1,22 @@
-import {Component, OnInit} from '@angular/core';
-import {AuthorService} from '../../core/services/auth.service';
-import {Router} from '@angular/router';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { AuthorService } from '@services/auth.service';
+import { Router } from '@angular/router';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 
 @Component({
   templateUrl: 'login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrls: ['./login.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class LoginComponent implements OnInit {
+  loginFormGroup: UntypedFormGroup;
 
-
-  loginFormGroup: FormGroup;
-
-  constructor(private auth: AuthorService,
-              private formBuilder: FormBuilder,
-              private router: Router) {
-  }
+  constructor(
+    private auth: AuthorService,
+    private formBuilder: UntypedFormBuilder,
+    private router: Router,
+  ) {}
 
   ngOnInit(): void {
     this.buildForm();
@@ -30,17 +30,20 @@ export class LoginComponent implements OnInit {
   }
 
   handleSubmit(event): void {
-    const {valid} = this.loginFormGroup;
+    const { valid } = this.loginFormGroup;
 
     if (!valid) {
       return;
     }
 
     const login$ = this.auth.authenticate(event);
-    login$.subscribe(res => {
-      this.router.navigate(['/', 'admin']);
-    }, error => {
-      alert(error);
-    });
+    login$.subscribe(
+      (res) => {
+        this.router.navigate(['/', 'admin']);
+      },
+      (error) => {
+        alert(error);
+      },
+    );
   }
 }

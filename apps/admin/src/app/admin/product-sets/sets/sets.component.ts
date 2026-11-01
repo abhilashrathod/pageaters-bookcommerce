@@ -1,24 +1,15 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-sets',
-  templateUrl: 'sets.component.html'
+  templateUrl: 'sets.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class SetsComponent implements OnInit {
-  public editResourceUrl: string[] = [
-    '/',
-    'admin',
-    'sets',
-    'update',
-  ];
+  public editResourceUrl: string[] = ['/', 'admin', 'sets', 'update'];
 
-  public createResourceUrl: string[] = [
-    '/',
-    'admin',
-    'sets',
-    'create',
-  ];
+  public createResourceUrl: string[] = ['/', 'admin', 'sets', 'create'];
 
   public resourceColumns: any[] = [
     {
@@ -41,9 +32,7 @@ export class SetsComponent implements OnInit {
   public deleteBaseUrl = `/product-sets`;
   public getAllBaseUrl = '/product-sets';
 
-  constructor() {
-  }
+  constructor() {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 }

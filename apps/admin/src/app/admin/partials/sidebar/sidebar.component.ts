@@ -1,28 +1,28 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-sidebar',
   templateUrl: 'sidebar.component.html',
-  styleUrls: ['./sidebar.component.scss']
+  styleUrls: ['./sidebar.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class SidebarComponent implements OnInit {
-
   menuItems = [
     {
       icon: 'dashboard',
       path: ['/', 'admin', 'dashboard'],
-      title: 'Dashboard'
+      title: 'Dashboard',
     },
     {
       icon: 'book',
       path: ['/', 'admin', 'books'],
-      title: 'Books'
+      title: 'Books',
     },
     {
       icon: 'group_work',
       path: ['/', 'admin', 'bundles'],
-      title: 'Bundles'
+      title: 'Bundles',
     },
     {
       icon: 'brush',
@@ -32,54 +32,51 @@ export class SidebarComponent implements OnInit {
     {
       icon: 'auto_awesome_motion',
       path: ['/', 'admin', 'categories'],
-      title: 'Categories'
+      title: 'Categories',
     },
     {
       icon: 'collections',
       path: ['/', 'admin', 'collections'],
-      title: 'Collections'
+      title: 'Collections',
     },
     {
       icon: 'person',
       path: ['/', 'admin', 'customers'],
-      title: 'Customers'
+      title: 'Customers',
     },
     {
       icon: 'shopping_bag',
       path: ['/', 'admin', 'orders'],
-      title: 'Orders'
+      title: 'Orders',
     },
     {
       icon: 'shopping_cart',
       path: ['/', 'admin', 'carts'],
-      title: 'Carts'
+      title: 'Carts',
     },
     {
       icon: 'layers',
       path: ['/', 'admin', 'sets'],
-      title: 'Product Sets'
+      title: 'Product Sets',
     },
     {
       icon: 'paid',
       path: [],
-      title: 'Discounts'
+      title: 'Discounts',
     },
     {
       icon: 'star',
       path: [],
-      title: 'Reviews'
+      title: 'Reviews',
     },
     {
       icon: 'store',
       path: ['/', 'admin', 'store'],
-      title: 'Store'
+      title: 'Store',
     },
-
   ];
 
-  constructor() {
-  }
+  constructor() {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 }

@@ -4,25 +4,26 @@
   </div>
 </div>
 <div class="row" [sortablejs]="bundles">
-  <div class="col-3" *ngFor="let bundle of bundles;">
-    <mat-card class="example-card">
-      <mat-card-header>
-        <div mat-card-avatar class="example-header-image"></div>
-        <mat-card-title>{{bundle.title}}</mat-card-title>
-        <mat-card-subtitle>{{bundle.price | currency:'INR'}} | {{bundle.currentDiscount | number:'1.2-2'}}</mat-card-subtitle>
-      </mat-card-header>
-      <img mat-card-image [src]="IMAGE_BASE + '/' + bundle.poster" alt="Photo of a Shiba Inu" style="object-fit: cover;">
-      <mat-card-content>
-        <p>
-          The Shiba Inu is the smallest of the six original and distinct spitz breeds of dog from Japan.
-          A small, agile dog that copes very well with mountainous terrain, the Shiba Inu was originally
-          bred for hunting.
-        </p>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-button>LIKE</button>
-        <button mat-button>SHARE</button>
-      </mat-card-actions>
-    </mat-card>
-  </div>
+  @for (bundle of bundles; track bundle) {
+    <div class="col-3">
+      <mat-card appearance="outlined" class="example-card">
+        <mat-card-header>
+          <div mat-card-avatar class="example-header-image"></div>
+          <mat-card-title>{{ bundle.title }}</mat-card-title>
+          <mat-card-subtitle>{{ bundle.price | currency: 'INR' }} | {{ bundle.currentDiscount | number: '1.2-2' }}</mat-card-subtitle>
+        </mat-card-header>
+        <img mat-card-image [src]="IMAGE_BASE + '/' + bundle.poster" alt="Photo of a Shiba Inu" style="object-fit: cover" />
+        <mat-card-content>
+          <p>
+            The Shiba Inu is the smallest of the six original and distinct spitz breeds of dog from Japan. A small, agile dog that copes
+            very well with mountainous terrain, the Shiba Inu was originally bred for hunting.
+          </p>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-button>LIKE</button>
+          <button mat-button>SHARE</button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  }
 </div>

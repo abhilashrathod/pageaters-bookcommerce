@@ -1,24 +1,15 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-collection-list',
-  templateUrl: 'collection-list.component.html'
+  templateUrl: 'collection-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class CollectionListComponent implements OnInit {
-  public editResourceUrl: string[] = [
-    '/',
-    'admin',
-    'collections',
-    'update',
-  ];
+  public editResourceUrl: string[] = ['/', 'admin', 'collections', 'update'];
 
-  public createResourceUrl: string[] = [
-    '/',
-    'admin',
-    'collections',
-    'create',
-  ];
+  public createResourceUrl: string[] = ['/', 'admin', 'collections', 'create'];
 
   resourceColumns = [
     {
@@ -47,9 +38,7 @@ export class CollectionListComponent implements OnInit {
   public getAllBaseUrl = '/collections';
   public searchBaseUrl = '/collections/search';
 
-  constructor() {
-  }
+  constructor() {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 }

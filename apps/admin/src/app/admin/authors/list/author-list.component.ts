@@ -1,24 +1,15 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-author-list',
-  templateUrl: 'author-list.component.html'
+  templateUrl: 'author-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class AuthorListComponent implements OnInit {
-  public editResourceUrl: string[] = [
-    '/',
-    'admin',
-    'authors',
-    'update',
-  ];
+  public editResourceUrl: string[] = ['/', 'admin', 'authors', 'update'];
 
-  public createResourceUrl: string[] = [
-    '/',
-    'admin',
-    'authors',
-    'create',
-  ];
+  public createResourceUrl: string[] = ['/', 'admin', 'authors', 'create'];
 
   resourceColumns = [
     {
@@ -39,7 +30,7 @@ export class AuthorListComponent implements OnInit {
     {
       header: 'Deleted',
       columnDef: 'isDeleted',
-      cell: (el) => el.isDeleted ? `${new Date(el.deletedAt).toDateString()}` : '',
+      cell: (el) => (el.isDeleted ? `${new Date(el.deletedAt).toDateString()}` : ''),
     },
     {
       header: 'Action',
@@ -52,9 +43,7 @@ export class AuthorListComponent implements OnInit {
   public getAllBaseUrl = '/authors';
   public searchBaseUrl = '/authors/search';
 
-  constructor() {
-  }
+  constructor() {}
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 }

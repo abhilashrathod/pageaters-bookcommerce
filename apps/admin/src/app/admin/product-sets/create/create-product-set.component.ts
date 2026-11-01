@@ -1,20 +1,24 @@
-import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
-import {debounceTime} from 'rxjs/operators';
-import {BooksService} from '../../../core/services/books.service';
-import {ProductSetService} from '../../../core/services/product-set.service';
-import {Router} from '@angular/router';
-import {MatSnackBar} from '@angular/material/snack-bar';
-import {DropdownSettings} from 'angular2-multiselect-dropdown/lib/multiselect.interface';
-import {CategoryService} from '../../../core/services/category.service';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { debounceTime } from 'rxjs/operators';
+import { BooksService } from '@services/books.service';
+import { ProductSetService } from '@services/product-set.service';
+import { Router } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { AngularMultiSelect } from 'angular2-multiselect-dropdown';
+import { CategoryService } from '@services/category.service';
+
+// The settings interface is not exported from the package entry point.
+type DropdownSettings = AngularMultiSelect['settings'];
 
 @Component({
   selector: 'app-create-product-set',
-  templateUrl: 'create-product-set.component.html'
+  templateUrl: 'create-product-set.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class CreateProductSetComponent implements OnInit {
-  productSetFormGroup: FormGroup;
+  productSetFormGroup: UntypedFormGroup;
   books = [];
   categories = [];
   selectedBooks = [];
@@ -25,7 +29,7 @@ export class CreateProductSetComponent implements OnInit {
     badgeShowLimit: 10,
     classes: 'custom-dropdown',
     primaryKey: '_id',
-    singleSelection: false
+    singleSelection: false,
   };
 
   booksDropdownSettings = {
@@ -40,22 +44,22 @@ export class CreateProductSetComponent implements OnInit {
     ...this.DROPDOWN_OPTIONS,
   };
 
-  searchBooksCtrl = new FormControl();
-  searchCategoriesCtrl = new FormControl();
+  searchBooksCtrl = new UntypedFormControl();
+  searchCategoriesCtrl = new UntypedFormControl();
 
   filters = {
     limit: 25,
     page: 1,
   };
 
-
-  constructor(private formBuilder: FormBuilder,
-              private router: Router,
-              private snackBar: MatSnackBar,
-              private productSetService: ProductSetService,
-              private categoryService: CategoryService,
-              private booksService: BooksService) {
-  }
+  constructor(
+    private formBuilder: UntypedFormBuilder,
+    private router: Router,
+    private snackBar: MatSnackBar,
+    private productSetService: ProductSetService,
+    private categoryService: CategoryService,
+    private booksService: BooksService,
+  ) {}
 
   ngOnInit(): void {
     this.buildForm();
@@ -64,23 +68,19 @@ export class CreateProductSetComponent implements OnInit {
   }
 
   getBooks(): void {
-    this.booksService.getAllBooks(this.filters)
-      .subscribe(res => this.books = res.docs);
+    this.booksService.getAllBooks(this.filters).subscribe((res) => (this.books = res.docs));
   }
 
   searchBooks(q): void {
-    this.booksService.searchBooks(q)
-      .subscribe(res => this.books = res);
+    this.booksService.searchBooks(q).subscribe((res) => (this.books = res));
   }
 
   getCategories(): void {
-    this.categoryService.getAllCategories(this.filters)
-      .subscribe(res => this.categories = res.docs);
+    this.categoryService.getAllCategories(this.filters).subscribe((res) => (this.categories = res.docs));
   }
 
   searchCategories(q): void {
-    this.categoryService.searchCategories(q)
-      .subscribe(res => this.categories = res);
+    this.categoryService.searchCategories(q).subscribe((res) => (this.categories = res));
   }
 
   buildForm(): void {
@@ -91,37 +91,29 @@ export class CreateProductSetComponent implements OnInit {
       categories: [[]],
     });
 
-    this.searchCategoriesCtrl.valueChanges
-      .pipe(
-        debounceTime(500),
-      )
-      .subscribe((res) => {
-        if (res) {
-          this.searchCategories(res);
-        } else {
-          this.filters.limit = 25;
-          this.filters.page = 1;
-          this.getCategories();
-        }
-      });
+    this.searchCategoriesCtrl.valueChanges.pipe(debounceTime(500)).subscribe((res) => {
+      if (res) {
+        this.searchCategories(res);
+      } else {
+        this.filters.limit = 25;
+        this.filters.page = 1;
+        this.getCategories();
+      }
+    });
 
-    this.searchBooksCtrl.valueChanges
-      .pipe(
-        debounceTime(500),
-      )
-      .subscribe((res) => {
-        if (res) {
-          this.searchBooks(res);
-        } else {
-          this.filters.limit = 25;
-          this.filters.page = 1;
-          this.getBooks();
-        }
-      });
+    this.searchBooksCtrl.valueChanges.pipe(debounceTime(500)).subscribe((res) => {
+      if (res) {
+        this.searchBooks(res);
+      } else {
+        this.filters.limit = 25;
+        this.filters.page = 1;
+        this.getBooks();
+      }
+    });
   }
 
   addOrUpdateSelectedBooks(evt): void {
-    const idx = this.selectedBooks.findIndex(x => x.bookId === evt.bookId);
+    const idx = this.selectedBooks.findIndex((x) => x.bookId === evt.bookId);
     if (idx === -1) {
       this.selectedBooks.push(evt);
     } else {
@@ -130,28 +122,31 @@ export class CreateProductSetComponent implements OnInit {
   }
 
   onSubmit(): void {
-    const {title, categories, description} = this.productSetFormGroup.value;
+    const { title, categories, description } = this.productSetFormGroup.value;
 
     const selectedBooks = this.selectedBooks.map((item, index) => {
       return {
         product: item,
-        priority: index + 1
+        priority: index + 1,
       };
     });
 
     const payload = {
       title,
       description,
-      categories: categories.map(x => x._id),
+      categories: categories.map((x) => x._id),
       products: selectedBooks,
     };
 
     const create$ = this.productSetService.create(payload);
-    create$.subscribe(res => {
-      this.router.navigate(['/', 'admin', 'sets']);
-      this.snackBar.open('New Set Added', 'OKAY', {duration: 5000});
-    }, error => {
-      this.snackBar.open(error.message, 'OKAY', {duration: 5000});
-    });
+    create$.subscribe(
+      (res) => {
+        this.router.navigate(['/', 'admin', 'sets']);
+        this.snackBar.open('New Set Added', 'OKAY', { duration: 5000 });
+      },
+      (error) => {
+        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 }

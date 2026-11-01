@@ -1,75 +1,87 @@
-<div class="row" *ngIf="searchResource">
+@if (searchResource) {
+<div class="row">
   <div class="col-6">
-    <mat-form-field appearance="standard" class="w-100">
+    <mat-form-field class="w-100">
       <mat-label>Search..</mat-label>
-      <input matInput type="search" [formControl]="search">
+      <input matInput type="search" [formControl]="search" />
     </mat-form-field>
   </div>
-  <div class="col-6" *ngIf="showStatuses">
+  @if (showStatuses) {
+  <div class="col-6">
     <div class="d-flex">
-      <mat-form-field appearance="standard">
+      <mat-form-field>
         <mat-label>Status</mat-label>
         <mat-select (selectionChange)="handleFilterChange($event)">
-          <mat-option *ngFor="let status of statuses" [value]="status.value">
-            {{status.text}}
-          </mat-option>
+          @for (status of statuses; track status) {
+          <mat-option [value]="status.value"> {{status.text}} </mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </div>
   </div>
-  <div class="col-6" *ngIf="showTypes">
+  } @if (showTypes) {
+  <div class="col-6">
     <div class="d-flex">
-      <mat-form-field appearance="standard">
+      <mat-form-field>
         <mat-label>Product Type</mat-label>
         <mat-select (selectionChange)="handleTypeChange($event)">
-          <mat-option *ngFor="let type of types" [value]="type">
-            {{type | titlecase}}
-          </mat-option>
+          @for (type of types; track type) {
+          <mat-option [value]="type"> {{type | titlecase}} </mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </div>
   </div>
+  }
 </div>
+}
 
 <mat-table #table [dataSource]="dataSource" class="entity-table">
-  <ng-container *ngFor="let col of columns" [matColumnDef]="col.columnDef">
+  @for (col of columns; track col) {
+  <ng-container [matColumnDef]="col.columnDef">
     <mat-header-cell *matHeaderCellDef> {{col.header}}</mat-header-cell>
     <mat-cell *matCellDef="let row">
-      <span *ngIf="col.columnDef == 'action'">
-        <button *ngIf="editResource" mat-icon-button color="primary" [routerLink]="col.cell(row)" matTooltip="Edit" class="me-1">
+      @if (col.columnDef == 'action') {
+      <span>
+        @if (editResource) {
+        <button mat-icon-button color="primary" [routerLink]="col.cell(row)" matTooltip="Edit" class="me-1">
           <mat-icon>edit</mat-icon>
         </button>
-        <button *ngIf="deleteResource" mat-icon-button color="warn" (click)="deleteRecord(col.cell(row))" matTooltip="Delete">
+        } @if (deleteResource) {
+        <button mat-icon-button color="warn" (click)="deleteRecord(col.cell(row))" matTooltip="Delete">
           <mat-icon>delete</mat-icon>
         </button>
+        }
       </span>
-
-      <span *ngIf="col.columnDef == 'view'">
-         <button mat-icon-button color="secondary" [routerLink]="col.cell(row)" matTooltip="View" class="me-1">
-            <mat-icon>visibility</mat-icon>
-          </button>
+      } @if (col.columnDef == 'view') {
+      <span>
+        <button mat-icon-button color="secondary" [routerLink]="col.cell(row)" matTooltip="View" class="me-1">
+          <mat-icon>visibility</mat-icon>
+        </button>
       </span>
-
-      <span *ngIf="col.columnDef == 'image'">
-        <img *ngIf="col.cell(row)" width="100px" class="img-fluid img-thumbnail" [src]="col.cell(row)"/>
+      } @if (col.columnDef == 'image') {
+      <span>
+        @if (col.cell(row)) {
+        <img width="100px" class="img-fluid img-thumbnail" [src]="col.cell(row)" />
+        }
       </span>
-
-      <span *ngIf="col.columnDef !== 'action' && col.columnDef !== 'view' && col.columnDef !== 'image'"
-            [title]="col.isShortText ? col.cell(row) : ''"
-            [innerHTML]="col.cell(row)">
-      </span>
+      } @if (col.columnDef !== 'action' && col.columnDef !== 'view' && col.columnDef !== 'image') {
+      <span [title]="col.isShortText ? col.cell(row) : ''" [innerHTML]="col.cell(row)"> </span>
+      }
     </mat-cell>
   </ng-container>
+  }
 
   <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
 
   <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-
 </mat-table>
-<mat-paginator #paginator
-               [length]="total"
-               [pageIndex]="filterObject.page - 1"
-               [pageSize]="filterObject.limit"
-               [pageSizeOptions]="[5, 10, 25, 100]"
-               (page)="onPageChange($event)">
+<mat-paginator
+  #paginator
+  [length]="total"
+  [pageIndex]="filterObject.page - 1"
+  [pageSize]="filterObject.limit"
+  [pageSizeOptions]="[5, 10, 25, 100]"
+  (page)="onPageChange($event)"
+>
 </mat-paginator>

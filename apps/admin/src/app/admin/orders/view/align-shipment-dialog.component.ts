@@ -1,18 +1,20 @@
-import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {MatDialogRef} from '@angular/material/dialog';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-align-shipment-dialog',
-  templateUrl: 'align-shipment-dialog.component.html'
+  templateUrl: 'align-shipment-dialog.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class AlignShipmentDialogComponent implements OnInit {
-  shipmentFormGroup: FormGroup;
+  shipmentFormGroup: UntypedFormGroup;
 
-  constructor(private formBuilder: FormBuilder,
-              public dialogRef: MatDialogRef<AlignShipmentDialogComponent>) {
-  }
+  constructor(
+    private formBuilder: UntypedFormBuilder,
+    public dialogRef: MatDialogRef<AlignShipmentDialogComponent>,
+  ) {}
 
   ngOnInit(): void {
     this.prepareShipmentForm();

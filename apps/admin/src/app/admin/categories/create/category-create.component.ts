@@ -1,29 +1,29 @@
-import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup} from '@angular/forms';
-import {MatSnackBar} from '@angular/material/snack-bar';
-import {Router} from '@angular/router';
-import {FilesService} from '../../../core/services/files.service';
-import {CategoryService} from '../../../core/services/category.service';
-import {BUCKETS, FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
+import { FilesService } from '@services/files.service';
+import { CategoryService } from '@services/category.service';
+import { BUCKETS, FILE_UPLOAD_MODULES } from '@helpers/constants';
 
 @Component({
   selector: 'app-category-create',
-  templateUrl: 'category-create.component.html'
+  templateUrl: 'category-create.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class CategoryCreateComponent implements OnInit {
-
-  categoryFormGroup: FormGroup;
+  categoryFormGroup: UntypedFormGroup;
   avatar;
   selectedFile: File;
 
-
-  constructor(private formBuilder: FormBuilder,
-              private snackBar: MatSnackBar,
-              private categoryService: CategoryService,
-              private router: Router,
-              private filesService: FilesService) {
-  }
+  constructor(
+    private formBuilder: UntypedFormBuilder,
+    private snackBar: MatSnackBar,
+    private categoryService: CategoryService,
+    private router: Router,
+    private filesService: FilesService,
+  ) {}
 
   ngOnInit(): void {
     this.buildForm();
@@ -43,7 +43,7 @@ export class CategoryCreateComponent implements OnInit {
       const file = event.target.files[0];
 
       const reader = new FileReader();
-      reader.onload = e => this.avatar = reader.result;
+      reader.onload = (e) => (this.avatar = reader.result);
 
       reader.readAsDataURL(file);
 
@@ -53,11 +53,11 @@ export class CategoryCreateComponent implements OnInit {
 
   uploadImage(): any {
     if (!this.categoryFormGroup.get('title').value) {
-      return this.snackBar.open('Please enter the name first before file upload', 'OKAY', {duration: 3000});
+      return this.snackBar.open('Please enter the name first before file upload', 'OKAY', { duration: 3000 });
     }
 
     if (!this.selectedFile) {
-      return this.snackBar.open('Please select a file to upload', 'OKAY', {duration: 3000});
+      return this.snackBar.open('Please select a file to upload', 'OKAY', { duration: 3000 });
     }
 
     const formData: FormData = new FormData();
@@ -65,12 +65,15 @@ export class CategoryCreateComponent implements OnInit {
     formData.append('title', this.categoryFormGroup.get('title').value);
     formData.append('fileModule', FILE_UPLOAD_MODULES.CATEGORY);
     const file$ = this.filesService.upload(formData);
-    file$.subscribe(res => {
-      this.avatar = `${BUCKETS.CATEGORIES}/${res.fileUrl}`;
-      this.snackBar.open('Category Thumbnail Uploaded!', 'OKAY', {duration: 5000});
-    }, err => {
-      this.snackBar.open(err.message, 'OKAY', {duration: 5000});
-    });
+    file$.subscribe(
+      (res) => {
+        this.avatar = `${BUCKETS.CATEGORIES}/${res.fileUrl}`;
+        this.snackBar.open('Category Thumbnail Uploaded!', 'OKAY', { duration: 5000 });
+      },
+      (err) => {
+        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 
   onSubmit(): void {
@@ -79,11 +82,14 @@ export class CategoryCreateComponent implements OnInit {
       thumbnail: this.avatar.split('/').pop(),
     };
     const category$ = this.categoryService.create(payload);
-    category$.subscribe(res => {
-      this.router.navigate(['/', 'admin', 'categories']);
-      this.snackBar.open('New Category Added', 'OKAY', {duration: 5000});
-    }, error => {
-      this.snackBar.open(error.message, 'OKAY', {duration: 5000});
-    });
+    category$.subscribe(
+      (res) => {
+        this.router.navigate(['/', 'admin', 'categories']);
+        this.snackBar.open('New Category Added', 'OKAY', { duration: 5000 });
+      },
+      (error) => {
+        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 }

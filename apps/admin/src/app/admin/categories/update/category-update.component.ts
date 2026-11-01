@@ -1,35 +1,36 @@
-import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup} from '@angular/forms';
-import {ActivatedRoute, Router} from '@angular/router';
-import {MatSnackBar} from '@angular/material/snack-bar';
-import {get} from 'lodash';
-import {CategoryService} from '../../../core/services/category.service';
-import {FilesService} from '../../../core/services/files.service';
-import {BUCKETS, FILE_UPLOAD_MODULES} from '../../../core/helpers/constants';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { get } from 'lodash';
+import { CategoryService } from '@services/category.service';
+import { FilesService } from '@services/files.service';
+import { BUCKETS, FILE_UPLOAD_MODULES } from '@helpers/constants';
 
 @Component({
   selector: 'app-category-update',
-  templateUrl: 'category-update.component.html'
+  templateUrl: 'category-update.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class CategoryUpdateComponent implements OnInit {
-
-  categoryFormGroup: FormGroup;
+  categoryFormGroup: UntypedFormGroup;
   avatar;
   selectedFile: File;
   category;
   isReady = false;
 
-  constructor(private formBuilder: FormBuilder,
-              private snackBar: MatSnackBar,
-              private categoryService: CategoryService,
-              private route: ActivatedRoute,
-              private router: Router,
-              private filesService: FilesService) {
-  }
+  constructor(
+    private formBuilder: UntypedFormBuilder,
+    private snackBar: MatSnackBar,
+    private categoryService: CategoryService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private filesService: FilesService,
+  ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe(param => {
+    this.route.params.subscribe((param) => {
       if (param.id) {
         this.getCategoryDetails(param.id);
       }
@@ -38,7 +39,7 @@ export class CategoryUpdateComponent implements OnInit {
 
   getCategoryDetails(id): void {
     const category$ = this.categoryService.getById(id);
-    category$.subscribe(res => {
+    category$.subscribe((res) => {
       this.category = res;
       this.category.thumbnail = `${BUCKETS.CATEGORIES}/${this.category.thumbnail}`;
       this.buildForm(res);
@@ -60,7 +61,7 @@ export class CategoryUpdateComponent implements OnInit {
       const file = event.target.files[0];
 
       const reader = new FileReader();
-      reader.onload = e => this.category.thumbnail = reader.result;
+      reader.onload = (e) => (this.category.thumbnail = reader.result);
 
       reader.readAsDataURL(file);
 
@@ -70,11 +71,11 @@ export class CategoryUpdateComponent implements OnInit {
 
   uploadImage(): any {
     if (!this.categoryFormGroup.get('title').value) {
-      return this.snackBar.open('Please enter the name first before file upload', 'OKAY', {duration: 3000});
+      return this.snackBar.open('Please enter the name first before file upload', 'OKAY', { duration: 3000 });
     }
 
     if (!this.selectedFile) {
-      return this.snackBar.open('Please select a file to upload', 'OKAY', {duration: 3000});
+      return this.snackBar.open('Please select a file to upload', 'OKAY', { duration: 3000 });
     }
 
     const formData: FormData = new FormData();
@@ -82,26 +83,32 @@ export class CategoryUpdateComponent implements OnInit {
     formData.append('title', this.categoryFormGroup.get('title').value);
     formData.append('fileModule', FILE_UPLOAD_MODULES.CATEGORY);
     const file$ = this.filesService.upload(formData);
-    file$.subscribe(res => {
-      this.category.thumbnail = `${BUCKETS.CATEGORIES}/${res.fileUrl}`;
-      this.snackBar.open('Category Thumbnail Uploaded!', 'OKAY', {duration: 5000});
-    }, err => {
-      this.snackBar.open(err.message, 'OKAY', {duration: 5000});
-    });
+    file$.subscribe(
+      (res) => {
+        this.category.thumbnail = `${BUCKETS.CATEGORIES}/${res.fileUrl}`;
+        this.snackBar.open('Category Thumbnail Uploaded!', 'OKAY', { duration: 5000 });
+      },
+      (err) => {
+        this.snackBar.open(err.message, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 
   onSubmit(): void {
     const payload = {
       ...this.category,
       ...this.categoryFormGroup.value,
-      thumbnail: this.category.thumbnail.split('/').pop()
+      thumbnail: this.category.thumbnail.split('/').pop(),
     };
     const category$ = this.categoryService.update(this.category._id, payload);
-    category$.subscribe(res => {
-      this.router.navigate(['/', 'admin', 'categories']);
-      this.snackBar.open('Category Updated', 'OKAY', {duration: 5000});
-    }, error => {
-      this.snackBar.open(error.message, 'OKAY', {duration: 5000});
-    });
+    category$.subscribe(
+      (res) => {
+        this.router.navigate(['/', 'admin', 'categories']);
+        this.snackBar.open('Category Updated', 'OKAY', { duration: 5000 });
+      },
+      (error) => {
+        this.snackBar.open(error.message, 'OKAY', { duration: 5000 });
+      },
+    );
   }
 }

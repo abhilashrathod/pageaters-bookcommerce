@@ -4,12 +4,14 @@
       <mat-list>
         <ul class="nav flex-column">
           <li class="nav-item">
-            <a class="nav-link active" *ngFor="let menuItem of menuItems" [routerLink]="menuItem.path">
-              <mat-list-item>
-                <mat-icon mat-list-icon>{{menuItem.icon}}</mat-icon>
-                <div mat-line>{{menuItem.title}}</div>
-              </mat-list-item>
-            </a>
+            @for (menuItem of menuItems; track menuItem) {
+              <a class="nav-link active" [routerLink]="menuItem.path">
+                <mat-list-item>
+                  <mat-icon mat-list-icon>{{ menuItem.icon }}</mat-icon>
+                  <div mat-line>{{ menuItem.title }}</div>
+                </mat-list-item>
+              </a>
+            }
           </li>
         </ul>
       </mat-list>

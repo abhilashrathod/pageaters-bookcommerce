@@ -1,11 +1,11 @@
 import {Injectable} from '@angular/core';
 import {Observable, throwError} from 'rxjs';
 import {catchError, map} from 'rxjs/operators';
-import {HttpClient} from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 
-import {IResponse} from '../schema/responses';
+import {IResponse} from '@schema/responses';
 
-import {environment} from '../../../environments/environment';
+import {environment} from '@env/environment';
 
 @Injectable({
   providedIn: 'root'

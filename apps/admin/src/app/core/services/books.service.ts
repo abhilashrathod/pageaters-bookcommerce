@@ -1,9 +1,9 @@
 import {Injectable} from '@angular/core';
 import {Observable, throwError} from 'rxjs';
-import {HttpClient, HttpParams} from '@angular/common/http';
-import {environment} from '../../../environments/environment';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import {environment} from '@env/environment';
 import {catchError, map} from 'rxjs/operators';
-import {IResponse} from '../schema/responses';
+import {IResponse} from '@schema/responses';
 
 
 @Injectable({

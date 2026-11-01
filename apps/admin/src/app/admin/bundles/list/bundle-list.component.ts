@@ -1,25 +1,15 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-bundle-list',
-  templateUrl: 'bundle-list.component.html'
+  templateUrl: 'bundle-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
-
 export class BundleListComponent implements OnInit {
+  public editResourceUrl: string[] = ['/', 'admin', 'bundles', 'update'];
 
-  public editResourceUrl: string[] = [
-    '/',
-    'admin',
-    'bundles',
-    'update',
-  ];
-
-  public createResourceUrl: string[] = [
-    '/',
-    'admin',
-    'bundles',
-    'create',
-  ];
+  public createResourceUrl: string[] = ['/', 'admin', 'bundles', 'create'];
 
   public resourceColumns: any[] = [
     {
@@ -58,10 +48,7 @@ export class BundleListComponent implements OnInit {
   public getAllBaseUrl = '/bundles';
   public searchBaseUrl = '/bundles/search';
 
+  constructor() {}
 
-  constructor() {
-  }
-
-  ngOnInit() {
-  }
+  ngOnInit() {}
 }

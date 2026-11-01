@@ -132,6 +132,8 @@ Add new scripts to the relevant `package.json` and register them in `turbo.json`
 - Angular latest stable: standalone components, new control flow, signals where state is local.
 - Services return typed `Observable<T>` using `packages/shared` types — never `Observable<any>`.
 - ESLint via angular-eslint; tests with Jest or Vitest. No TSLint, Karma or Protractor.
+- Imports across folders use the `tsconfig.json` path aliases (`@services/…`, `@schema/…`, `@helpers/…`,
+  `@components/…`, `@interceptors/…`, `@core/…`, `@env/…`), never `../` chains; same-folder imports stay `./`.
 
 ### apps/cms (Payload)
 

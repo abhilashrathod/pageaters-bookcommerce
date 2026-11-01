@@ -1,13 +1,13 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {SortablejsModule} from 'ngx-sortablejs';
+import {SortablejsModule} from '@dustfoundation/ngx-sortablejs';
 import {AngularMultiSelectModule} from 'angular2-multiselect-dropdown';
-import {SharedModule} from '../../core/shared/shared.module';
+import {SharedModule} from '@core/shared/shared.module';
 
 import {BundlesRoutingModule} from './bundles-routing.module';
-import {EntityTableModule} from '../../core/components/entity-table/entity-table.module';
-import {AppLoaderModule} from '../../core/components/app-loader/app-loader.module';
+import {EntityTableModule} from '@components/entity-table/entity-table.module';
+import {AppLoaderModule} from '@components/app-loader/app-loader.module';
 
 import {BundleListComponent} from './list/bundle-list.component';
 import {BundleCreateComponent} from './create/bundle-create.component';

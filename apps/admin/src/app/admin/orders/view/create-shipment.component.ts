@@ -1,16 +1,19 @@
-import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {MatDialogRef} from '@angular/material/dialog';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   templateUrl: 'create-shipment.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class CreateShipmentComponent implements OnInit {
-  weightFormGroup: FormGroup;
+  weightFormGroup: UntypedFormGroup;
 
-  constructor(private formBuilder: FormBuilder,
-              public dialogRef: MatDialogRef<CreateShipmentComponent>) {
-  }
+  constructor(
+    private formBuilder: UntypedFormBuilder,
+    public dialogRef: MatDialogRef<CreateShipmentComponent>,
+  ) {}
 
   ngOnInit(): void {
     this.prepareForm();
