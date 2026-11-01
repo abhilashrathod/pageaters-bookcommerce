@@ -11,7 +11,8 @@ working, and keep reports short.
 
 ## 1. What this project is
 
-Pageaters was a real online bookstore for India (2022–2024, ~10k customers). The business is closed.
+Pageaters was a real online bookstore for India (2022–2026: 5,000+ customers, 50,000+ orders). Business overhead
+closed it in 2026.
 This repo is a **portfolio showcase** of its architecture, rebuilt as a Turborepo monorepo and deployed as a
 public, sandboxed demo. It is **not** a live store.
 

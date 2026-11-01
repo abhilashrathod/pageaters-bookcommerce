@@ -891,11 +891,12 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
 
 ## Phase 11 — Documentation & launch
 
-- [ ] Root README: story (real business, ~10k customers, hand-built 2022–24, re-architected 2026), Mermaid
+- [x] Root README: story (real business 2022–26, 5k+ customers, 50k+ orders, closed over business overhead; code hand-built 2022–24, re-architected 2026), Mermaid
       architecture diagram, live links, demo logins, screenshots, 3-command local setup
-- [ ] `docs/*.md` per AGENTS.md §9
-- [ ] ADRs (short): monorepo, Payload CMS & the content/commerce boundary, App Router + Tailwind/shadcn, serverless
+- [x] `docs/*.md` per AGENTS.md §9
+- [x] ADRs (short): monorepo, Payload CMS & the content/commerce boundary, App Router + Tailwind/shadcn, serverless
       API & adapters, demo-mode sandbox, history preservation
+- [x] About page back on the storefront (`/about`, static): legacy mission, story, "Us vs Them" and tagline in past tense, plus the 2022–2026 story and stats; "About us" link under the footer Contact block, and sitemap. Also added the missing admin demo banner (AGENTS.md §6). Done 2026-11-01
 - [ ] Final gitleaks + manual sensitive-data sweep; final look at the `agents/` roster
 - [ ] Make the GitHub repo public
 - [ ] Archive the decision log to `docs/adr/`, delete PLAN.md
