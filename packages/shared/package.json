@@ -6,6 +6,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
       "default": "./dist/index.js"
     },
     "./gift-packages": {
@@ -21,7 +22,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && esbuild src/index.ts --bundle --platform=node --format=cjs --target=node22 --packages=external --outfile=dist/index.cjs --log-level=warning",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "tsc -p tsconfig.build.json && node --test 'src/**/*.test.ts'"
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@pageaters/config": "workspace:*",
     "@types/node": "22.20.5",
+    "esbuild": "0.28.2",
     "eslint": "9.39.5",
     "typescript": "6.0.3"
   },
