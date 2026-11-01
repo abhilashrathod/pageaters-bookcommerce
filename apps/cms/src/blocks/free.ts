@@ -35,9 +35,7 @@ export const Banner: Block = {
       name: 'image',
       type: 'upload',
       relationTo: 'media',
-      admin: { description: 'Required for every layout but the promo strip.' },
-      validate: (value: unknown, { siblingData }: { siblingData: unknown }) =>
-        Boolean(value) || (siblingData as { layout?: string }).layout === 'promo' || 'This layout needs an image',
+      admin: { description: 'Optional: without one the banner shows a plain backdrop. Consecutive hero banners play as one slideshow.' },
     },
     { name: 'link', type: 'group', admin: { description: 'Optional call to action.' }, fields: linkFields({ required: false }) },
   ],
@@ -85,6 +83,17 @@ export const Carousel: Block = {
         { label: 'Categories', value: 'categories' },
         { label: 'Bundles', value: 'bundles' },
         { label: 'Deals', value: 'deals' },
+      ],
+    },
+    // A listing page shows its items as the legacy grid, under the page heading; elsewhere a row is the carousel.
+    {
+      name: 'display',
+      type: 'select',
+      required: true,
+      defaultValue: 'row',
+      options: [
+        { label: 'Row (carousel)', value: 'row' },
+        { label: 'Grid (listing page, with the page heading)', value: 'grid' },
       ],
     },
     limit(12),

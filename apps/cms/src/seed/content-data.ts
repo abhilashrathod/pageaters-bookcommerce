@@ -11,31 +11,70 @@ type SeedPage = Pick<Page, 'title' | 'slug' | 'layout'>;
 
 const link = (label: string, href: string) => ({ label, href, newTab: false });
 
-/** The homepage, with one product set row per id given (the API's first sets, when it is reachable). */
-export const homePage = (productSetIds: string[]): SeedPage => ({
-  title: 'Home',
-  slug: 'home',
-  layout: [
-    {
-      blockType: 'banner',
-      layout: 'promo',
-      heading: 'Books, boxes and bundles for every reader',
-      text: 'A portfolio demo store: browse the catalog, fill a cart and try the checkout. Nothing is shipped or charged.',
-      link: link('Browse collections', '/collections'),
-    },
-    { blockType: 'featuredBooks', heading: 'Best sellers', list: 'bestSeller', limit: 12 },
-    ...productSetIds.map((productSet) => ({ blockType: 'productSetRow' as const, productSet, limit: 12 })),
-    { blockType: 'carousel', heading: 'Collections', source: 'collections', limit: 12 },
-    { blockType: 'featuredBooks', heading: 'New releases', list: 'newRelease', limit: 12 },
-    { blockType: 'carousel', heading: 'Bundles', source: 'bundles', limit: 8 },
-  ] satisfies PageLayout,
+type HomeBlock = PageLayout[number];
+
+const hero = (heading: string, text: string, label: string, href: string): HomeBlock => ({
+  blockType: 'banner',
+  layout: 'hero',
+  heading,
+  text,
+  link: link(label, href),
 });
 
-// Listing pages: CMS pages (the storefront serves any page at its slug) with one carousel each.
+// Stand-ins for missing product set rows (fewer sets in the API, or the API unreachable at seed time).
+const FALLBACK_ROWS: HomeBlock[] = [
+  { blockType: 'featuredBooks', heading: 'Best sellers', list: 'bestSeller', limit: 12 },
+  { blockType: 'featuredBooks', heading: 'New releases', list: 'newRelease', limit: 12 },
+  { blockType: 'featuredBooks', heading: 'Editors’ picks', list: 'editorsPick', limit: 12 },
+];
+
+/** How many product set rows the homepage holds (the legacy home had seven). */
+export const HOME_ROWS = 7;
+
+/**
+ * The homepage in the legacy order (pages/index.tsx): the hero slideshow (consecutive hero banners), categories,
+ * product rows, "Spectacular Bundles", more rows, "Spotlight Collections", rows, the "Try Bookish Box" square banner,
+ * a row and the "Try Mystery Box" square banner. One product set row per id given (up to seven); missing rows fall
+ * back to the catalog's featured lists. Banners have no image: the owner uploads them in the CMS.
+ */
+export const homePage = (productSetIds: string[]): SeedPage => {
+  const fallbacks = [...FALLBACK_ROWS];
+  const rows: HomeBlock[] = Array.from({ length: HOME_ROWS }, (_, index) => {
+    const productSet = productSetIds[index];
+    return productSet ? { blockType: 'productSetRow' as const, productSet, limit: 12 } : fallbacks.shift();
+  }).filter((row): row is HomeBlock => Boolean(row));
+  const take = (count: number) => rows.splice(0, count);
+  return {
+    title: 'Home',
+    slug: 'home',
+    layout: [
+      hero('Pageaters: India’s most loved bookstore!', 'Novels • Literature • Self-Help', 'Explore', '/collections'),
+      hero(
+        'Introducing Bookish Boxes!',
+        'A gorgeous book and themed, exclusive goodies in every curated box.',
+        'Learn More',
+        '/book-boxes',
+      ),
+      hero('Spectacular Bundles', 'Book sets that are high in value and low in price.', 'Shop Bundles', '/bundles'),
+      { blockType: 'carousel', heading: 'Categories', source: 'categories', display: 'row', limit: 24 },
+      ...take(2),
+      { blockType: 'carousel', heading: 'Spectacular Bundles', source: 'bundles', display: 'row', limit: 12 },
+      ...take(2),
+      { blockType: 'carousel', heading: 'Spotlight Collections', source: 'collections', display: 'row', limit: 10 },
+      ...take(2),
+      { blockType: 'banner', layout: 'square', heading: 'Try Bookish Box', link: link('Learn More', '/book-boxes') },
+      ...take(1),
+      // The rebuild has no mystery box page: the boxes are on /book-boxes.
+      { blockType: 'banner', layout: 'square', heading: 'Try Mystery Box', link: link('Buy Now', '/book-boxes') },
+    ] satisfies PageLayout,
+  };
+};
+
+// Listing pages: CMS pages (the storefront serves any page at its slug) with one grid each (the legacy index pages).
 const listingPage = (slug: string, title: string, source: 'collections' | 'categories' | 'bundles' | 'deals'): SeedPage => ({
   title,
   slug,
-  layout: [{ blockType: 'carousel', heading: title, source, limit: 24 }],
+  layout: [{ blockType: 'carousel', heading: title, source, display: 'grid', limit: 24 }],
 });
 
 // A rich text block of plain paragraphs (Lexical's JSON).
@@ -90,7 +129,10 @@ export const templates: Pick<Template, 'type' | 'layout'>[] = [
   },
   {
     type: 'bundle',
-    layout: [{ blockType: 'productInfo' }, { blockType: 'carousel', heading: 'More bundles', source: 'bundles', limit: 8 }],
+    layout: [
+      { blockType: 'productInfo' },
+      { blockType: 'carousel', heading: 'Suggested Bundles', source: 'bundles', display: 'row', limit: 8 },
+    ],
   },
   {
     type: 'book-box',
@@ -101,7 +143,7 @@ export const templates: Pick<Template, 'type' | 'layout'>[] = [
     layout: [
       { blockType: 'listingHeader', showDescription: true },
       { blockType: 'listingGrid', pageSize: '24' },
-      { blockType: 'carousel', heading: 'More collections', source: 'collections', limit: 8 },
+      { blockType: 'carousel', heading: 'More collections', source: 'collections', display: 'row', limit: 8 },
     ],
   },
   {
@@ -109,7 +151,7 @@ export const templates: Pick<Template, 'type' | 'layout'>[] = [
     layout: [
       { blockType: 'listingHeader', showDescription: true },
       { blockType: 'listingGrid', pageSize: '24' },
-      { blockType: 'carousel', heading: 'Other categories', source: 'categories', limit: 12 },
+      { blockType: 'carousel', heading: 'Other categories', source: 'categories', display: 'row', limit: 12 },
     ],
   },
 ];
@@ -136,7 +178,7 @@ export const globals: {
       {
         label: 'Explore Store',
         links: [
-          link('Book Boxes', '/book-boxes'),
+          link('Bookish Box', '/book-boxes'),
           link('Categories', '/categories'),
           link('Collections', '/collections'),
           link('Bundles', '/bundles'),

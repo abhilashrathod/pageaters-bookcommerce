@@ -30,14 +30,15 @@ export function AddToCartButton({ kind, id, disabled }: { kind: 'book' | 'bundle
   };
 
   return (
-    <div className="flex flex-col gap-1" aria-live="polite">
+    <div className="flex flex-col items-start gap-1" aria-live="polite">
+      {/* items-start: a long error message mustn't stretch the button to its width. */}
       {state === 'added' ? (
         <Button variant="outline" asChild>
           <Link href="/cart">Added — view cart</Link>
         </Button>
       ) : (
         <Button variant="accent" onClick={() => void onClick()} disabled={disabled || status === 'loading' || state === 'busy'}>
-          {state === 'busy' ? 'Adding…' : 'Add to cart'}
+          {state === 'busy' ? 'Adding…' : 'Add to Cart'}
         </Button>
       )}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}

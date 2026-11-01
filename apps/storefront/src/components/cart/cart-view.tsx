@@ -1,9 +1,12 @@
 'use client';
 
+import { Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { LineItem, PriceBreakdown } from '@/components/cart/line-item.tsx';
+import { LineItem, PANEL, PriceBreakdown, WithSummary } from '@/components/cart/line-item.tsx';
+import { Price } from '@/components/cards/price.tsx';
+import { EmptyState } from '@/components/empty-state.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Skeleton } from '@/components/ui/skeleton.tsx';
 import { refreshCart } from '@/lib/session.ts';
@@ -13,6 +16,26 @@ import { useLoad } from '@/lib/use-load.ts';
 const loadCart = () => shopperApi.cart.detail();
 // The API allows 2 of each book; bundles, boxes are 1 each.
 const BOOK_QUANTITIES = [1, 2];
+
+// The legacy cart skeleton: three rows of a cover and text lines.
+export function LinesSkeleton() {
+  return (
+    <div className="page-container">
+      <div className={`${PANEL} md:w-2/3`}>
+        {[1, 2, 3].map((row) => (
+          <div key={row} className="mb-5 flex gap-3.5">
+            <Skeleton className="h-[75px] w-[75px] rounded-full" />
+            <div className="flex-1 space-y-3">
+              <Skeleton className="h-3 w-3/4 rounded-full" />
+              <Skeleton className="h-3 w-1/2 rounded-full" />
+              <Skeleton className="h-3 w-1/4 rounded-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function CartView() {
   const { data: cart, error, reload } = useLoad(loadCart);
@@ -28,35 +51,76 @@ export function CartView() {
       .finally(() => setBusy(false));
   };
 
-  if (error) return <p role="alert" className="text-destructive">{error}</p>;
-  if (!cart) return <Skeleton className="h-60 w-full" />;
+  if (error) return <p role="alert" className="page-container text-destructive">{error}</p>;
+  if (!cart) return <LinesSkeleton />;
   const empty = !cart.products.length && !cart.bundles.length && !cart.mysteryBoxes.length && !cart.addOns.length;
   if (empty) {
     return (
-      <div className="flex flex-col items-center gap-4 py-12 text-center">
-        <p className="text-lg">Add some books here. Your cart is empty.</p>
-        <Button asChild variant="accent">
-          <Link href="/">Browse books</Link>
-        </Button>
+      <div className="page-container">
+        <EmptyState illustration="empty-cart" title="Add Some Books Here. Cart is Empty">
+          <Button asChild variant="accent">
+            <Link href="/">Browse books</Link>
+          </Button>
+        </EmptyState>
       </div>
     );
   }
 
   const remove = (label: string, action: () => Promise<unknown>) => (
-    <Button variant="link" size="sm" className="h-auto self-start p-0 text-destructive" disabled={busy} onClick={() => run(action)}>
-      Remove<span className="sr-only"> {label}</span>
+    <Button variant="ghost" className="pl-0" disabled={busy} onClick={() => run(action)}>
+      <Trash2 aria-hidden />
+      Delete<span className="sr-only"> {label}</span>
     </Button>
   );
 
+  const summary = (
+    <>
+      <PriceBreakdown subTotal={cart.subTotal} shipping="Calculated at Checkout" />
+      {actionError ? (
+        <p role="alert" className="mb-3.5 text-sm text-destructive">
+          {actionError}
+        </p>
+      ) : null}
+      {/* `disabled` doesn't reach a Link through asChild: show a plain disabled button while the cart updates. */}
+      {busy ? (
+        <Button variant="accent" className="w-full" disabled>
+          Proceed to Buy
+        </Button>
+      ) : (
+        <Button asChild variant="accent" className="w-full">
+          <Link href="/checkout/address">Proceed to Buy</Link>
+        </Button>
+      )}
+    </>
+  );
+
   return (
-    <div className="grid gap-8 md:grid-cols-3">
-      <ul className="md:col-span-2" aria-busy={busy}>
+    <WithSummary title="Bill Details" summary={summary}>
+      <ul className={PANEL} aria-busy={busy}>
         {cart.products.map(({ _id, product, quantity, productTotal }) => (
-          <LineItem key={_id} image={product.poster} title={product.title} detail={product.author?.name ?? undefined} total={productTotal}>
-            <label className="flex items-center gap-2 text-sm">
-              Qty
+          <LineItem
+            key={_id}
+            image={product.poster}
+            title={product.title}
+            total={productTotal}
+            detail={
+              <>
+                {product.author?.name ? (
+                  <p>
+                    By <strong>{product.author.name}</strong>
+                  </p>
+                ) : null}
+                <p>
+                  <Price price={product.price} discount={product.currentDiscount} className="font-normal" /> × {quantity}
+                  {product.currentDiscount ? <small className="text-xs text-success">&nbsp;({product.currentDiscount} % Off)</small> : null}
+                </p>
+              </>
+            }
+          >
+            <label className="flex items-center gap-1">
+              Qty:
               <select
-                className="rounded-md border bg-background px-2 py-1"
+                className="rounded-[4px] border border-[#d1d1d1] bg-background px-1 py-0.5"
                 value={quantity}
                 disabled={busy}
                 onChange={(event) => run(() => shopperApi.cart.updateQuantity({ product: product._id, quantity: Number(event.target.value) }))}
@@ -70,41 +134,21 @@ export function CartView() {
           </LineItem>
         ))}
         {cart.bundles.map(({ _id, bundle, total }) => (
-          <LineItem key={_id} image={bundle.poster} title={bundle.title} detail={`Bundle of ${bundle.bundledBooks.length} books`} total={total}>
+          <LineItem key={_id} image={bundle.poster} title={bundle.title} detail={<p>Bundle of {bundle.bundledBooks.length} books</p>} total={total}>
             {remove(bundle.title, () => shopperApi.cart.removeBundle({ bundle: bundle._id }))}
           </LineItem>
         ))}
         {cart.mysteryBoxes.map(({ _id, box, total }) => (
-          <LineItem key={_id} image={box.images[0]} title={box.title} detail="Mystery box" total={total}>
+          <LineItem key={_id} image={box.images[0]} title={box.title} detail={<p>Mystery box</p>} total={total}>
             {remove(box.title, () => shopperApi.cart.removeBox({ box: box._id }))}
           </LineItem>
         ))}
         {cart.addOns.map(({ _id, addOn, quantity, total }) => (
-          <LineItem key={_id} image={addOn.poster} title={addOn.name} detail={`Add-on × ${quantity}`} total={total}>
+          <LineItem key={_id} image={addOn.poster} title={addOn.name} detail={<p>Add-on × {quantity}</p>} total={total}>
             {remove(addOn.name, () => shopperApi.cart.removeAddOn({ addOn: addOn._id }))}
           </LineItem>
         ))}
       </ul>
-      <aside className="flex h-fit flex-col gap-4 rounded-lg border p-4">
-        <h2 className="font-semibold">Order summary</h2>
-        <PriceBreakdown subTotal={cart.subTotal} />
-        <p className="text-xs text-muted-foreground">Shipping is added at checkout.</p>
-        {actionError ? (
-          <p role="alert" className="text-sm text-destructive">
-            {actionError}
-          </p>
-        ) : null}
-        {/* `disabled` doesn't reach a Link through asChild: show a plain disabled button while the cart updates. */}
-        {busy ? (
-          <Button variant="accent" disabled>
-            Proceed to checkout
-          </Button>
-        ) : (
-          <Button asChild variant="accent">
-            <Link href="/checkout/address">Proceed to checkout</Link>
-          </Button>
-        )}
-      </aside>
-    </div>
+    </WithSummary>
   );
 }

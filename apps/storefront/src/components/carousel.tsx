@@ -1,11 +1,10 @@
 'use client';
 
 import useEmblaCarousel from 'embla-carousel-react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { CircleChevronLeft, CircleChevronRight } from 'lucide-react';
 import { Children, type ReactNode } from 'react';
 
 import { SectionHeading } from '@/components/section-heading.tsx';
-import { Button } from '@/components/ui/button.tsx';
 
 // Slide widths from the legacy keen-slider settings (slides per view, small → large screens), as 100 / perView.
 const SIZES = {
@@ -18,19 +17,21 @@ const SIZES = {
 
 export type CarouselSize = keyof typeof SIZES;
 
-// A titled, free-dragging row of cards with prev/next arrows on wider screens (the legacy carousels).
+const ARROW = 'rounded-full text-primary transition-colors hover:text-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 outline-none';
+
+// A titled, free-dragging row of cards with the legacy chevron-circle arrows on wider screens (the legacy carousels).
 export function Carousel({ title, size, children }: { title?: string | null; size: CarouselSize; children: ReactNode }) {
   const [viewportRef, api] = useEmblaCarousel({ align: 'start', dragFree: true, containScroll: 'trimSnaps' });
   return (
-    <section className="page-container my-8" aria-label={title ?? undefined} aria-roledescription="carousel">
+    <section className="page-container mb-9" aria-label={title ?? undefined} aria-roledescription="carousel">
       <SectionHeading title={title}>
-        <div className="hidden gap-1 md:flex">
-          <Button variant="ghost" size="icon" aria-label="Previous" onClick={() => api?.scrollPrev()}>
-            <ChevronLeft className="size-6" />
-          </Button>
-          <Button variant="ghost" size="icon" aria-label="Next" onClick={() => api?.scrollNext()}>
-            <ChevronRight className="size-6" />
-          </Button>
+        <div className="mb-3.5 hidden md:flex">
+          <button type="button" className={ARROW} aria-label="Previous" onClick={() => api?.scrollPrev()}>
+            <CircleChevronLeft className="size-7" strokeWidth={1.25} aria-hidden />
+          </button>
+          <button type="button" className={ARROW} aria-label="Next" onClick={() => api?.scrollNext()}>
+            <CircleChevronRight className="size-7" strokeWidth={1.25} aria-hidden />
+          </button>
         </div>
       </SectionHeading>
       <div ref={viewportRef} className="overflow-hidden">

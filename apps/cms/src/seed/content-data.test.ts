@@ -18,6 +18,14 @@ void test('the homepage holds free blocks only, one row per product set', () => 
   assert.equal(validateCoreBlocks(homePage([]).layout, 'none'), true);
 });
 
+void test('the homepage follows the legacy order: hero slides first, the two square banners last', () => {
+  const layout = homePage(Array.from({ length: 7 }, (_, index) => String(index).repeat(24))).layout ?? [];
+  const kinds = layout.map((block) => (block.blockType === 'banner' ? `banner:${block.layout}` : block.blockType));
+  assert.deepEqual(kinds.slice(0, 4), ['banner:hero', 'banner:hero', 'banner:hero', 'carousel']);
+  assert.deepEqual(kinds.slice(-3), ['banner:square', 'productSetRow', 'banner:square']);
+  assert.equal(kinds.filter((kind) => kind === 'productSetRow').length, 7);
+});
+
 void test('every seeded link is a safe href', () => {
   const hrefs = JSON.stringify({ globals, home: homePage([]), pages }).match(/"href":"[^"]*"/g) ?? [];
   assert.ok(hrefs.length > 10);

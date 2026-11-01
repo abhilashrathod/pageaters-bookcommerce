@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 
 import { OrderDetail } from '@/components/cart/orders.tsx';
 import { ShopperGate } from '@/components/cart/shopper-gate.tsx';
+import { PageHeading } from '@/components/page-heading.tsx';
 
 export const metadata: Metadata = { title: 'Order | Pageaters' };
 
@@ -10,10 +10,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   return (
     <>
-      <Link href="/account/orders" className="text-sm text-primary hover:underline">
-        ← My orders
-      </Link>
-      <h1 className="mt-2 mb-6 text-2xl font-bold">Order details</h1>
+      <PageHeading title="Order Details" trail={[{ title: 'Orders', href: '/account/orders' }]} />
       <ShopperGate>
         <OrderDetail orderId={id} />
       </ShopperGate>

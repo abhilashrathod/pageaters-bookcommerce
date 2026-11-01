@@ -31,6 +31,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       (category) => `/categories/${category.categoryId}`,
     ),
     ids(
+      () => catalogApi.authors.list(LIMIT),
+      (author) => `/authors/${author.authorId}`,
+    ),
+    ids(
       () => catalogApi.bundles.list(LIMIT),
       (bundle) => `/bundles/${bundle.bundleId}`,
     ),

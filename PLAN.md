@@ -781,6 +781,19 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
   - Done 2026-10-31 (track A agent): titles/descriptions/share image from the CMS SEO global (`lib/seo.ts`,
     `lib/metadata.ts`), `generateMetadata` per route, noindex everywhere (root layout default too), `robots.ts`
     disallows all, `sitemap.ts` (CMS pages + 50 of each item type, hourly). 29 storefront tests
+- [x] Legacy design fidelity pass (owner: the rebuild looked generic, not like their design)
+  - Done 2026-11-01 (storefront agent; reviewed + audited, two fixes applied): every route and shared piece matched
+    to its legacy component (`git show 02bf3d4^:apps/storefront/…`): wordmark header with book search
+    (`/store-books/search`), grid "Explore Store" menu, account and cart icons, mobile bottom bar; full-bleed hero
+    slideshow (consecutive hero banners, 3s, pauses on hover/focus/reduced motion); legacy buttons, banners, cards,
+    book/bundle pages, listings, cart/checkout/address dialog, orders, footer, empty states, new 404. Body text 300,
+    semibold headings; the owner keeps the root at 16px (legacy 14px). CMS: banner image optional, carousel
+    `display` row|grid, seed homepage in the legacy order. Review fixes: search results clickable in Safari, guest demo
+    sign-in reachable by keyboard; Read More clamps whole lines. Owner follow-ups: Add to Cart no longer stretches to a
+    long error; the book page's availability note follows `availability` (green available, cyan procurement, purple
+    import, orange pre-order, with the book's message); `/authors/[id]` restored (legacy profile: round avatar, intro,
+    all the author's books), linked from the book page's author name and in the sitemap. Known limits: legacy S3
+    banner photos are gone (owner uploads), no mystery-box page ("Try Mystery Box" → `/book-boxes`), no wishlist page
 - **Checkpoint:** owner browses home → book → cart → checkout → order
 
 ## Phase 8 — Admin upgrade (Angular)

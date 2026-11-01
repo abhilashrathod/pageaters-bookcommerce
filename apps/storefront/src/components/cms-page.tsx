@@ -23,7 +23,7 @@ export async function CmsPage({ slug }: { slug: string }) {
   const blocks = <RenderBlocks blocks={page?.layout} />;
   if (draft.isEnabled) {
     return (
-      <main className="py-4">
+      <main>
         <LivePreview initialData={{ layout: page?.layout ?? [] }} serverURL={env.CMS_URL} render={renderPreview.bind(null, null)}>
           {blocks}
         </LivePreview>
@@ -31,5 +31,5 @@ export async function CmsPage({ slug }: { slug: string }) {
     );
   }
   if (!page && !(slug === 'home' && page === undefined)) notFound();
-  return <main className="py-4">{blocks}</main>;
+  return <main>{blocks}</main>;
 }

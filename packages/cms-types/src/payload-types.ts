@@ -160,7 +160,7 @@ export interface BannerBlock {
   heading: string;
   text?: string | null;
   /**
-   * Required for every layout but the promo strip.
+   * Optional: without one the banner shows a plain backdrop. Consecutive hero banners play as one slideshow.
    */
   image?: (string | null) | Media;
   /**
@@ -231,6 +231,7 @@ export interface FeaturedBooksBlock {
 export interface CarouselBlock {
   heading?: string | null;
   source: 'collections' | 'categories' | 'bundles' | 'deals';
+  display: 'row' | 'grid';
   limit: number;
   id?: string | null;
   blockName?: string | null;
@@ -509,6 +510,7 @@ export interface FeaturedBooksBlockSelect<T extends boolean = true> {
 export interface CarouselBlockSelect<T extends boolean = true> {
   heading?: T;
   source?: T;
+  display?: T;
   limit?: T;
   id?: T;
   blockName?: T;

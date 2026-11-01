@@ -5,5 +5,5 @@ import type { ReactNode } from 'react';
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default function ShopLayout({ children }: { children: ReactNode }) {
-  return <main className="mx-auto w-full max-w-6xl px-4 py-8">{children}</main>;
+  return <main className="pb-9">{children}</main>;
 }

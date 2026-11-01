@@ -3,19 +3,19 @@ import { createApiClient } from '@pageaters/api-client';
 import { getPayload } from 'payload';
 
 import { parseEnv } from '../env.ts';
-import { globals, homePage, pages, templates } from './content-data.ts';
+import { globals, HOME_ROWS, homePage, pages, templates } from './content-data.ts';
 
 // Seeds the CMS's starting content (`pnpm seed:content`), published so visitors see it: the homepage, the listing and
 // help pages, the templates and the globals. Creates only what is missing: a page by slug, a template by type, a
 // global never saved; anything that exists (the owner's edits) is left alone,
-// so a rerun changes nothing. The homepage gets rows for the API's first two product sets when the API is reachable.
+// so a rerun changes nothing. The homepage gets rows for the API's first seven product sets when the API is reachable.
 
 const env = parseEnv(process.env);
 const payload = await getPayload({ config });
 
 const firstProductSets = async (): Promise<string[]> => {
   try {
-    const { docs } = await createApiClient({ baseUrl: env.API_URL }).productSets.list({ page: 1, limit: 2 });
+    const { docs } = await createApiClient({ baseUrl: env.API_URL }).productSets.list({ page: 1, limit: HOME_ROWS });
     return docs.map((set) => String(set._id));
   } catch {
     payload.logger.warn(`The API at ${env.API_URL} is unreachable: the homepage is seeded without product set rows`);

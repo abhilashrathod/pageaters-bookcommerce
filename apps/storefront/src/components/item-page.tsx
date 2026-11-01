@@ -6,7 +6,7 @@ import { getOverride, getTemplate, itemLayout, type PageType } from '@/lib/conte
 export async function ItemPage({ type, item, page }: { type: PageType; item: PageItem; page?: number }) {
   const [template, override] = await Promise.all([getTemplate(type), getOverride(type, item.data._id)]);
   return (
-    <main className="py-4">
+    <main>
       <RenderBlocks blocks={itemLayout(type, template, override)} context={{ item, page }} />
     </main>
   );
