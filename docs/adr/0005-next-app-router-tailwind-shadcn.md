@@ -6,7 +6,7 @@
 ## Context
 
 The original storefront was a Next.js Pages Router app styled with styled-components (last legacy state in git at
-`117c451`). It had no way to render CMS-driven pages, pulled data per page in `getStaticPaths`/props, and its styling
+`11f22aa`). It had no way to render CMS-driven pages, pulled data per page in `getStaticPaths`/props, and its styling
 hard-coded brand colours. Upgrading it in place would have meant migrating every page to the App Router and every
 component off styled-components anyway, while also adding the CMS block model (ADR 0004).
 

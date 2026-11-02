@@ -1,7 +1,7 @@
 # storefront
 
 The Pageaters shop front — Next.js 16 (App Router), Tailwind CSS v4 and shadcn/ui. Being rebuilt in Phase 7; the
-legacy Pages Router app is in git history (before this rebuild, at commit `117c451`).
+legacy Pages Router app is in git history (before this rebuild, at commit `11f22aa`).
 
 Content and layout come from the CMS (Payload REST API), commerce data from the API through `@pageaters/api-client`.
 Theme tokens: the defaults are in `@pageaters/config/tailwind/theme.css`; the CMS Theme global overrides them as

@@ -25,7 +25,7 @@ on the full history.
 ## Consequences
 
 - **Tech:** `git log` shows the system's real evolution, and the legacy apps stay readable (for example the Pages
-  Router storefront at `117c451`).
+  Router storefront at `11f22aa`).
 - **Business:** the history is the evidence that a real, hand-built store sits behind the demo, while customers'
   and the business's data stay private.
 - Any future leak found in history needs an explicit owner decision; it is not fixed by routine rewrites.

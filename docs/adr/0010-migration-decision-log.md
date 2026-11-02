@@ -6,7 +6,7 @@
 ## Context
 
 The 2026 re-architecture ran from a phased checklist, `PLAN.md` (Phases 0–11, 2026-10-25 to 2026-11-02). It is done
-and deleted; its last version is in git history: `git show 4314694:PLAN.md`. Code comments and earlier ADRs that cite
+and deleted; its last version is in git history: `git show 17c0955:PLAN.md`. Code comments and earlier ADRs that cite
 "PLAN.md Phase N" refer to that file. This record keeps its two lasting parts: the decisions and what was left out.
 
 ## Decision
