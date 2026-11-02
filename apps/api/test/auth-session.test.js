@@ -45,7 +45,9 @@ const assertSessionCookie = (cookie) => {
 
 const CLEARED_SESSION_COOKIE = '_PID=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax';
 
-const cartCookie = (cartId) => `_CID=j%3A%22${cartId}%22; Path=/; HttpOnly`;
+// The cart cookie lives as long as the session cookie; `Expires` moves with the clock, `Max-Age` pins it.
+const withoutExpires = (cookie) => cookie.replace(/; Expires=[^;]+/, '');
+const cartCookie = (cartId) => `_CID=j%3A%22${cartId}%22; Max-Age=2592000; Path=/; HttpOnly; SameSite=Lax`;
 
 // GET /auth/me's profile projection (User.getProfile) for a createUser() account.
 const profileOf = (user) => ({
@@ -83,7 +85,7 @@ describe('POST /auth/register', () => {
     const cart = await Cart().findOne({ user: user._id });
     const [session, cartSet] = cookiesOf(res);
     const token = assertSessionCookie(session);
-    assert.equal(cartSet, cartCookie(cart._id));
+    assert.equal(withoutExpires(cartSet), cartCookie(cart._id));
 
     assert.equal(user.role, 'USER');
     assert.equal(user.emailVerified, false);
@@ -146,7 +148,7 @@ describe('POST /auth/login', () => {
     assert.ok(res.body.data.lastLoginAt);
     const [session, cartSet] = cookiesOf(res);
     const token = assertSessionCookie(session);
-    assert.equal(cartSet, cartCookie(cart._id));
+    assert.equal(withoutExpires(cartSet), cartCookie(cart._id));
     assert.ok(await AccessTokens().findOne({ token: hashSessionToken(token) }));
   });
 
@@ -164,7 +166,7 @@ describe('POST /auth/login', () => {
     const { user } = await createUser();
     await Cart().deleteMany({ user: user._id });
     const res = await api.request('/auth/login', { method: 'POST', body: { email: user.email, password: PASSWORD } });
-    assert.equal(cookiesOf(res)[1], '_CID=; Path=/; HttpOnly');
+    assert.equal(withoutExpires(cookiesOf(res)[1]), '_CID=; Max-Age=2592000; Path=/; HttpOnly; SameSite=Lax');
   });
 
   test('a wrong password, an unknown email or an inactive account answer INVALID_LOGIN_ATTEMPT without cookies', async () => {
@@ -192,7 +194,12 @@ test('POST /auth/demo-login is an unknown route without DEMO_MODE (test/demo-mod
 
 test('without DEMO_MODE the outbox stores nothing and GET /outbox is an unknown route', async () => {
   const { cookie, user } = await createUser();
-  await require('../src/adapters/email').send({ from: 'no-reply@demo.pageaters.com', to: user.email, subject: 'Reset', html: '<p>token</p>' });
+  await require('../src/adapters/email').send({
+    from: 'no-reply@demo.pageaters.com',
+    to: user.email,
+    subject: 'Reset',
+    html: '<p>token</p>',
+  });
   assert.equal(await mongoose.model('outbox').countDocuments(), 0);
   assert.equal((await api.request('/outbox', { cookie })).status, 404);
 });
@@ -221,7 +228,10 @@ describe('POST /auth/logout (revoke token)', () => {
     const res = await api.request('/auth/logout', { method: 'POST', cookie });
 
     assertBody(res, 200, ok('TOKEN_REVOKED', {}));
-    assert.deepEqual(cookiesOf(res), [CLEARED_SESSION_COOKIE, '_CID=; Path=/; HttpOnly']);
+    assert.deepEqual(cookiesOf(res), [
+      CLEARED_SESSION_COOKIE,
+      '_CID=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax',
+    ]);
     const stored = await AccessTokens().findOne({ token: hashSessionToken(token), userId: user._id });
     assert.ok(stored.revoked instanceof Date);
     assert.equal(stored.revokedByIp, '127.0.0.1');

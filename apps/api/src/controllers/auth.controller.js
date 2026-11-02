@@ -23,15 +23,11 @@ const ACCESS_TOKEN_OPTIONS = { ...SESSION_COOKIE_BASE, maxAge: 30 * 24 * 60 * 60
 
 const ACCESS_TOKEN_CLEARED_OPTIONS = { ...SESSION_COOKIE_BASE, expires: new Date(0) };
 
-// The cart cookie keeps its legacy options here (aligned with cart.controller separately).
-const CART_COOKIE_OPTIONS = {
-  httpOnly: true,
-};
+// The cart cookie lives exactly as long as the session cookie: a session-only cart cookie was dropped when the browser
+// closed, leaving a logged-in shopper with no cart (400 CART_NOT_EXIST on every cart call).
+const CART_COOKIE_OPTIONS = ACCESS_TOKEN_OPTIONS;
 
-const CART_COOKIE_CLEARED_OPTIONS = {
-  httpOnly: true,
-  expires: 0,
-};
+const CART_COOKIE_CLEARED_OPTIONS = ACCESS_TOKEN_CLEARED_OPTIONS;
 
 const userIdOf = (req) => get(req, 'user.userId', '');
 

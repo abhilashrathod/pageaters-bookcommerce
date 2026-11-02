@@ -73,7 +73,13 @@ const productLines = [
 ];
 
 const addOnLine = (n, addOn, quantity, totals) => ({ quantity, addedOn: ADDED, addOn, _id: String(line(n)), ...totals });
-const ADD_ON = { _id: String(cartIds.addOn), name: 'Test Bookmark', poster: 'https://images.example.com/test-addon.png', price: 99, currentDiscount: 0 };
+const ADD_ON = {
+  _id: String(cartIds.addOn),
+  name: 'Test Bookmark',
+  poster: 'https://images.example.com/test-addon.png',
+  price: 99,
+  currentDiscount: 0,
+};
 const ADD_ON_DISCOUNTED = { _id: String(cartIds.addOnDiscounted), name: 'Test Wrap', poster: '', price: 149, currentDiscount: 33 };
 
 const bundleLine = {
@@ -160,7 +166,10 @@ describe('GET /cart/retrieve', () => {
     ];
     assertBody(res, 200, ok('CART_LIST_SUCCESS', cartBody(cart, 3595, addOns)));
     // legacy: the cart id is an ObjectId, so Express serialises the cookie as JSON (`j:"<id>"`).
-    assert.deepEqual(res.headers.getSetCookie(), [`_CID=j%3A%22${cart._id}%22; Path=/; HttpOnly; SameSite=Lax`]);
+    assert.deepEqual(
+      res.headers.getSetCookie().map((cookie) => cookie.replace(/; Expires=[^;]+/, '')),
+      [`_CID=j%3A%22${cart._id}%22; Max-Age=2592000; Path=/; HttpOnly; SameSite=Lax`],
+    );
   });
 
   test('an empty cart totals 0', async () => {
@@ -211,8 +220,17 @@ describe('GET /cart/retrieve', () => {
   // Phase 4: the cart cookie must be a cart id (was: a malformed id answered 500, and a JSON cookie such as
   // `j:{"$ne":null}` reached the cart queries as an operator object).
   test('a cart cookie that is not an ObjectId answers CART_NOT_EXIST, operator objects included', async () => {
-    for (const value of ['not-an-id', encodeURIComponent('j:{"$ne":null}'), encodeURIComponent('j:{"$in":["a"]}'), encodeURIComponent('j:["a"]')]) {
-      assertBody(await api.request('/cart/retrieve', { cookie: `${shopper.cookie}; _CID=${value}` }), 400, envelopes.badRequest('CART_NOT_EXIST'));
+    for (const value of [
+      'not-an-id',
+      encodeURIComponent('j:{"$ne":null}'),
+      encodeURIComponent('j:{"$in":["a"]}'),
+      encodeURIComponent('j:["a"]'),
+    ]) {
+      assertBody(
+        await api.request('/cart/retrieve', { cookie: `${shopper.cookie}; _CID=${value}` }),
+        400,
+        envelopes.badRequest('CART_NOT_EXIST'),
+      );
     }
   });
 });
@@ -248,7 +266,17 @@ describe('admin GET /cart', () => {
     const { docs, ...paging } = res.body.data;
     assert.equal(
       JSON.stringify(paging),
-      JSON.stringify({ totalDocs: 2, limit: 1, totalPages: 2, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: true, prevPage: null, nextPage: 2 }),
+      JSON.stringify({
+        totalDocs: 2,
+        limit: 1,
+        totalPages: 2,
+        page: 1,
+        pagingCounter: 1,
+        hasPrevPage: false,
+        hasNextPage: true,
+        prevPage: null,
+        nextPage: 2,
+      }),
     );
     assert.equal(docs.length, 1);
     assert.deepEqual(Object.keys(docs[0].user), ['_id', 'fullName', 'email', 'id']);

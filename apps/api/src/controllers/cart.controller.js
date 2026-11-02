@@ -17,6 +17,8 @@ const CART_COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: 'lax',
   secure: !['development', 'test'].includes(ENVIRONMENT),
+  // As long as the session cookie (auth.controller.js), so the cart survives a browser restart.
+  maxAge: 30 * 24 * 60 * 60 * 1000,
 };
 
 const cartOf = (req) => ({
@@ -68,7 +70,7 @@ module.exports.remove = async (req, res) => {
 
 // Revokes the cart cookie only; the cart itself is untouched.
 module.exports.clear = async (req, res) => {
-  res.cookie(enums.TOKEN_ID.CART_COOKIE, '', { ...CART_COOKIE_OPTIONS, expires: new Date(0) });
+  res.cookie(enums.TOKEN_ID.CART_COOKIE, '', { ...CART_COOKIE_OPTIONS, maxAge: undefined, expires: new Date(0) });
   return res.ok('CART_DELETE_SUCCESS');
 };
 
