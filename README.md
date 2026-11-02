@@ -63,7 +63,37 @@ These links start working once the Phase 10 deployment is done.
 
 ## Screenshots
 
-<!-- TODO(owner): add storefront, checkout, admin orders and CMS editor screenshots. -->
+| Home page                                                 | Book page                                                       |
+| --------------------------------------------------------- | --------------------------------------------------------------- |
+| ![Storefront home](docs/screenshots/storefront-home.webp) | ![Book page](docs/screenshots/book-page.webp)                   |
+| **Type-ahead search**                                     | **Collection page, CMS-built banner**                           |
+| ![Search](docs/screenshots/search-typeahead.webp)         | ![Collection](docs/screenshots/collection-dark-academia.webp)   |
+| **Checkout, cash on delivery or Razorpay test mode**      | **Order details with its history**                              |
+| ![Checkout](docs/screenshots/checkout.webp)               | ![Order details](docs/screenshots/order-details-fulfilled.webp) |
+| **Admin: dashboard (Angular)**                            | **Admin: shipping an order**                                    |
+| ![Admin dashboard](docs/screenshots/admin-dashboard.webp) | ![Admin order](docs/screenshots/admin-order-details.webp)       |
+| **CMS: home page built from blocks (Payload)**            | **Admin: book editor**                                          |
+| ![CMS home editor](docs/screenshots/cms-home-editor.webp) | ![Admin book editor](docs/screenshots/admin-book-editor.webp)   |
+
+<details>
+<summary>More screenshots</summary>
+
+| Page                 | Screenshot                                                        |
+| -------------------- | ----------------------------------------------------------------- |
+| Category             | ![Romance](docs/screenshots/category-romance.webp)                |
+| Category             | ![Non-fiction](docs/screenshots/category-nonfiction.webp)         |
+| Author               | ![Author](docs/screenshots/author-page.webp)                      |
+| Bundle               | ![Bundle](docs/screenshots/bundle-page.webp)                      |
+| Cart                 | ![Cart](docs/screenshots/cart.webp)                               |
+| Add an address       | ![Add address](docs/screenshots/checkout-add-address.webp)        |
+| Order placed         | ![Order confirmation](docs/screenshots/order-confirmation.webp)   |
+| Order just confirmed | ![Order confirmed](docs/screenshots/order-details-confirmed.webp) |
+| Orders               | ![Orders](docs/screenshots/orders-list.webp)                      |
+| About: our story     | ![About](docs/screenshots/about-story.webp)                       |
+| About: us vs them    | ![Us vs them](docs/screenshots/about-us-vs-them.webp)             |
+| CMS: pages           | ![CMS pages](docs/screenshots/cms-pages-list.webp)                |
+
+</details>
 
 ## Tech stack (and why)
 
