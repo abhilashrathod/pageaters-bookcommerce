@@ -9,6 +9,10 @@ const ADMIN_BUILT_API = 'http://localhost:5005';
 const API_URL = process.env.E2E_API_URL ?? ADMIN_BUILT_API;
 
 test('shopper orders a book, admin ships and delivers it', async ({ page }) => {
+  // Start from an empty cart: the demo shopper's cart outlives earlier runs, and a title allows 2 copies at most.
+  await page.request.post(`${API_URL}/api/v1/auth/demo-login`);
+  await page.request.delete(`${API_URL}/api/v1/cart/empty`);
+
   // Browse: open the first book on the home page that can be added to the cart.
   await page.goto('/');
   const books = await page
@@ -19,7 +23,12 @@ test('shopper orders a book, admin ships and delivers it', async ({ page }) => {
   for (const href of books) {
     await page.goto(href);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    if (await addToCart.isEnabled()) break;
+    // The button stays disabled until the sign-in check answers; a book out of stock keeps it disabled.
+    const enabled = await expect(addToCart)
+      .toBeEnabled({ timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (enabled) break;
   }
 
   // Add to cart (signs in as the demo shopper on the way).
@@ -46,7 +55,8 @@ test('shopper orders a book, admin ships and delivers it', async ({ page }) => {
   }
   await page.goto(ADMIN_URL);
   await page.getByRole('button', { name: 'Sign in as demo admin' }).click();
-  await page.waitForURL(/\/admin/);
+  // The path, not the whole URL: the live host admin.demo.pageaters.com would match /\/admin/ before sign-in ends.
+  await page.waitForURL((url) => url.pathname.startsWith('/admin'));
   await page.goto(`${ADMIN_URL}/admin/orders/list`);
   await page.getByRole('searchbox').fill(orderNo);
   const row = page.getByRole('row').filter({ hasText: orderNo });

@@ -879,15 +879,15 @@ batch gets one combined review (AGENTS.md §10). Each step brings its own tests.
 ## Phase 10 — CI/CD & deployment
 
 - [x] GitHub Actions: lint, typecheck, test, build via Turbo (affected only) and gitleaks
-- [ ] Vercel projects ×4 with root directories, `turbo-ignore`, preview deploys per PR
-- [ ] Environment variables per project (test-mode Razorpay, Atlas, Blob, CMS secret, `DEMO_MODE=true`); the API
+- [x] Vercel projects ×4 with root directories, `turbo-ignore`, preview deploys per PR
+- [x] Environment variables per project (test-mode Razorpay, Atlas, Blob, CMS secret, `DEMO_MODE=true`); the API
       needs `PAYMENTS_ADAPTER=razorpay` (test keys + webhook secret) and `STORAGE_ADAPTER=blob`; email, SMS and
       shipping stay `mock`
 - [x] Vercel Cron: weekly demo cleanup
 - [x] Serverless rate limits: let the storefront's server-side requests through (they all arrive from one IP; a
       shared-secret header) and drop slow-down on Vercel (it holds a billed invocation open)
-- [ ] DNS for the four `*.demo.pageaters.com` hosts; check the `one_pending_order_per_user` index exists (MongoDB 6.0+)
-- **Checkpoint:** all four apps live, E2E passing against the demo
+- [x] DNS for the four `*.demo.pageaters.com` hosts; check the `one_pending_order_per_user` index exists (MongoDB 6.0+)
+- **Checkpoint:** all four apps live, E2E passing against the demo ✅ (2026-11-02)
 
 ## Phase 11 — Documentation & launch
 
