@@ -30,7 +30,7 @@ When `eslint --fix` would apply a rule with semantic effects, review its diff an
 
 - Only the workspaces in your brief. Legacy apps listed in `.prettierignore` stay unformatted until the
   orchestrator removes them from it — don't reformat them on your own.
-- Never edit root files (`package.json`, `pnpm-lock.yaml`, `turbo.json`, `.prettierignore`, `.husky/`, `PLAN.md`,
+- Never edit root files (`package.json`, `pnpm-lock.yaml`, `turbo.json`, `.prettierignore`, `.husky/`,
   `AGENTS.md`), and never add or upgrade dependencies.
 
 ## Git

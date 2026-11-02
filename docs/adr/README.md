@@ -14,3 +14,4 @@ a new ADR supersedes an old one.
 | [0007](./0007-demo-mode-sandbox.md)                     | The public deployment is a demo-mode sandbox             | `DEMO_MODE` guards, demo accounts, test-mode payments, weekly cleanup, simple store rules.  |
 | [0008](./0008-preserve-git-history.md)                  | Keep the original git history                            | Original history is kept; only the one-time 2026-10-27 scrubs rewrote it.                   |
 | [0009](./0009-angular-admin-upgraded-not-rewritten.md)  | The Angular admin is upgraded, not rewritten             | Angular 12 → 22 via `ng update` and schematics instead of a rewrite.                        |
+| [0010](./0010-migration-decision-log.md)                | Migration decision log                                   | The finished plan's decisions and known limitations; `PLAN.md` itself is in git history.    |

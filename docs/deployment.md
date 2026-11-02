@@ -1,7 +1,6 @@
 # Deployment
 
-> **Status:** the CI workflow and the Vercel config are in the repo (Phase 10 of `PLAN.md`); the Vercel projects,
-> their variables and DNS are **owner actions** and not live yet.
+> **Status:** live since 2026-11-02. All four apps run on Vercel, and the checkout E2E test passes against the demo.
 
 The deployment is a sandboxed portfolio demo, not a live store. Every project runs with `DEMO_MODE=true`
 ([demo-mode.md](./demo-mode.md)). The root domain `pageaters.com` is never used.

@@ -1,7 +1,8 @@
 # AGENTS.md — Pageaters Monorepo
 
 Standing rules for any agent (or human) working in this repository. Read this fully before making changes.
-The phased migration plan lives in [`PLAN.md`](./PLAN.md); this file holds the rules that outlive it.
+The phased migration plan is finished; its decisions and known limitations are archived in
+[ADR 0010](./docs/adr/0010-migration-decision-log.md).
 
 **Top priority: spend as few tokens as the job needs.** Tokens are money. Keep code simple, refactor only when a
 change needs it, and don't overcomplicate. Read only the files a step needs, run only the tests it touches while
@@ -26,7 +27,7 @@ public, sandboxed demo. It is **not** a live store.
 
 The original git history (2022–2024, hand-written before AI coding tools) is preserved on purpose.
 Never rewrite, squash or rebase historical commits. The only sanctioned history rewrites are the one-time
-scrubs recorded in PLAN.md Phase 1 (secrets; personal and business contact data).
+scrubs recorded in ADR 0008 (secrets; personal and business contact data).
 
 ---
 
@@ -50,7 +51,6 @@ pageaters/
 ├─ agents/          Subagent definitions (see §9); `.claude/agents` symlinks here
 ├─ AGENTS.md        This file
 ├─ CLAUDE.md        Imports AGENTS.md for Claude Code
-├─ PLAN.md          Phased migration plan with checkboxes
 ├─ LICENSE          All Rights Reserved
 ├─ turbo.json
 └─ pnpm-workspace.yaml
@@ -231,7 +231,7 @@ Rules:
   `main` (see §10).
 - Conventional Commits (`feat(storefront): …`, `fix(api): …`, `chore(repo): …`), enforced by commitlint. When handing
   work over, the orchestrator suggests a commit split and messages; the owner decides.
-- Small, focused commits. One logical change per commit; at least one commit per PLAN.md step.
+- Small, focused commits. One logical change per commit.
 - Never force-push `main`.
 
 ---
@@ -252,31 +252,26 @@ Rules:
 
 ---
 
-## 10. Working with PLAN.md
+## 10. How work is done
 
-**How a run is triggered.** The owner starts each run with a short instruction such as
-"execute the next step" or "do Phase 2, step 3". With no step named, take the **first unticked checkbox** in
-PLAN.md (respecting phase order and checkpoints). Before starting, restate in one line which checkbox you are
-executing. If a step needs something only the owner can provide (an account, a repo, a key, a decision), stop
-and ask for exactly that — never invent credentials or create accounts. Secrets are entered by the owner into
-`.env` / Vercel directly; never ask for them to be pasted into the conversation.
+**How a run is triggered.** The owner names a task. Before starting, restate it in one line. If it needs something
+only the owner can provide (an account, a repo, a key, a decision), stop and ask for exactly that — never invent
+credentials or create accounts. Secrets are entered by the owner into `.env` / Vercel directly; never ask for them to
+be pasted into the conversation.
 
-- **Execute one checkbox at a time — never a whole phase in one go.** Phases are large; a checkbox is the unit of work.
-  For each checkbox: do only that step → run the relevant gates (lint, typecheck, test, build for affected
-  workspaces) → secret scan of the uncommitted changes → tick the box → report what changed and how, with suggested
-  commit messages → **stop and wait**. The owner reviews (`git diff --staged`), commits and pushes; the next step
-  starts only after the go-ahead.
-- If a checkbox is itself too big to finish and verify in one focused session, first split it into sub-checkboxes
-  in PLAN.md, get them approved, then execute them one at a time the same way.
-- Work phases in order; don't start a phase until the previous one's checkpoint passes.
-- Tick checkboxes in PLAN.md as steps complete, in the same uncommitted change set as the work.
-- At each **Checkpoint**, stop and report to the user before continuing.
-- If a step turns out wrong or impossible, say so and propose a change to PLAN.md — don't silently deviate.
+- **One task at a time.** Do only that task → run the relevant gates (lint, typecheck, test, build for affected
+  workspaces) → secret scan of the uncommitted changes → report what changed and how, with suggested commit
+  messages → **stop and wait**. The owner reviews (`git diff --staged`), commits and pushes; the next task starts
+  only after the go-ahead.
+- If a task is too big to finish and verify in one focused session, propose a split, get it approved, then do the
+  parts one at a time the same way.
+- A lasting decision gets a short ADR in `docs/adr/`.
+- If a task turns out wrong or impossible, say so and propose a change — don't silently deviate.
 
 ### Subagent workflow
 
-The main session is the **orchestrator**; the subagents in `agents/` do the work. The one-checkbox-at-a-time rule
-above still applies — subagents split a checkbox, they don't widen it.
+The main session is the **orchestrator**; the subagents in `agents/` do the work. The one-task-at-a-time rule
+above still applies — subagents split a task, they don't widen it.
 
 | Agent                                                   | Scope         | Edits                             |
 | ------------------------------------------------------- | ------------- | --------------------------------- |
@@ -287,8 +282,8 @@ above still applies — subagents split a checkbox, they don't widen it.
 | `deploy-engineer`                                       | Whole repo    | CI, Vercel and build config       |
 | `code-reviewer`, `security-auditor`                     | Whole repo    | Nothing (read-only)               |
 
-- **Orchestrator owns** `PLAN.md`, `AGENTS.md`, root files, `pnpm-lock.yaml` and bringing finished work into `main`
-  (uncommitted). It briefs each subagent with one checkbox (or sub-task), its allowed files and the gates to run.
+- **Orchestrator owns** `AGENTS.md`, root files, `pnpm-lock.yaml` and bringing finished work into `main`
+  (uncommitted). It briefs each subagent with one task (or sub-task), its allowed files and the gates to run.
   The owner commits and pushes.
 - **Parallel work** runs in separate git worktrees, one branch per subagent (`<agent>/<short-task>`), so agents never
   share a working tree. Agents commit on their branch with hooks enforced (that is how work leaves a worktree) and
@@ -299,7 +294,7 @@ above still applies — subagents split a checkbox, they don't widen it.
   pass (verdicts merge and clear). The orchestrator fixes small findings itself; only a real security hole gets a
   second look. Agents run their gates on each branch as usual.
 - The orchestrator brings each branch into `main` with `git merge --squash` (staged, not committed), makes any
-  integration fixes, runs the root gates and a secret scan, regenerates the lockfile if needed, ticks PLAN.md,
+  integration fixes, runs the root gates and a secret scan, regenerates the lockfile if needed,
   removes the worktree and branch, and stops for the owner's review.
 - Changes a subagent needs outside its scope go in its report; the orchestrator makes them or briefs the owner agent.
 - Deployments to production, domain changes and anything needing an account or secret still stop for the owner.
