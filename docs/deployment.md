@@ -65,6 +65,10 @@ the framework preset and the domain. `ignoreCommand` is `npx turbo-ignore`, so a
 its app nor a workspace package it depends on changed. Preview deploys per PR are Vercel's default once the GitHub repo
 is connected.
 
+The api, storefront and cms functions run in `bom1` (Mumbai, `"regions"` in `vercel.json`), next to the Atlas cluster
+(AWS `ap-south-1`). A function in another region pays a round trip across the world on every database query: in
+Washington (`iad1`, Vercel's default) one API call took 1–2 s. Keep the functions and the database in one region.
+
 | Project    | Root directory    | Framework preset | Install                          | Build (from the repo root)                | Output                         | Domain                     |
 | ---------- | ----------------- | ---------------- | -------------------------------- | ----------------------------------------- | ------------------------------ | -------------------------- |
 | storefront | `apps/storefront` | Next.js          | `pnpm install --frozen-lockfile` | `turbo run build --filter=storefront`     | Next.js default                | `demo.pageaters.com`       |
