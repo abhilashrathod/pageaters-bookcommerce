@@ -6,6 +6,10 @@ import { pageMetadata } from '@/lib/seo.ts';
 
 type Props = { params: Promise<{ id: string }> };
 
+// ISR: rendered on the first visit, then served from the CDN; catalog data refreshes hourly, a CMS publish at once.
+export const revalidate = 3600;
+export const generateStaticParams = () => [];
+
 const getBundle = (id: string) => catalogApi.bundles.detail({ id }).catch(() => notFound());
 
 export async function generateMetadata({ params }: Props) {

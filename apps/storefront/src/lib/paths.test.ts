@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { cmsQuery } from './cms-query.ts';
-import { parsePage, slugFromSegments } from './paths.ts';
+import { listingPage, parsePage, slugFromSegments } from './paths.ts';
 
 void test('catch-all segments map to a slug; home only lives at /', () => {
   assert.equal(slugFromSegments(['shipping']), 'shipping');
@@ -14,6 +14,13 @@ void test('page numbers are positive whole numbers, else 1', () => {
   assert.equal(parsePage('3'), 3);
   assert.equal(parsePage(['2', '5']), 2);
   for (const bad of [undefined, '', '0', '-1', '1.5', 'abc']) assert.equal(parsePage(bad), 1);
+});
+
+void test('listing pages come from the path: none is page 1, one number above 1 is that page, else null', () => {
+  assert.equal(listingPage(), 1);
+  assert.equal(listingPage([]), 1);
+  assert.equal(listingPage(['2']), 2);
+  for (const bad of [['1'], ['0'], ['01'], ['abc'], ['2', '3']]) assert.equal(listingPage(bad), null);
 });
 
 void test('CMS queries ask for one published document and encode values', () => {

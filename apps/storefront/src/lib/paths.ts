@@ -12,3 +12,11 @@ export const parsePage = (value: string | string[] | undefined): number => {
   const page = Number(Array.isArray(value) ? value[0] : value);
   return Number.isInteger(page) && page > 0 ? page : 1;
 };
+
+/** A listing's page from its path segments (`/collections/x` → 1, `/collections/x/2` → 2); null for anything else. */
+export const listingPage = (segments: string[] = []): number | null => {
+  const [first, ...rest] = segments;
+  if (first === undefined) return 1;
+  const page = rest.length === 0 && /^[1-9]\d*$/.test(first) ? Number(first) : 0;
+  return page > 1 ? page : null;
+};
