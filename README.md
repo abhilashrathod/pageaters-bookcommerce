@@ -140,7 +140,7 @@ pnpm dev       # runs all four apps through Turborepo
 - [`docs/`](./docs/): [architecture](./docs/architecture.md), [business flows](./docs/business-flows.md),
   [order lifecycle](./docs/order-lifecycle.md), [demo mode](./docs/demo-mode.md), [API](./docs/api.md),
   [CMS](./docs/cms.md), [local development](./docs/local-development.md), [deployment](./docs/deployment.md)
-- [`docs/adr/`](./docs/adr/): architecture decision records (0001–0009)
+- [`docs/adr/`](./docs/adr/): architecture decision records (0001–0010)
 
 ## License
 
